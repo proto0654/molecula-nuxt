@@ -1,49 +1,50 @@
 import {
-  BufferGeometry,
-  Float32BufferAttribute,
-  Line,
-  LineBasicMaterial,
+  CylinderGeometry,
+  Mesh,
+  MeshStandardMaterial,
   Vector3,
   type Object3D,
+  type Vector3Like,
 } from 'three';
-import type { BondData } from './types';
+import type { BondConfig } from './types';
+
+const Y_AXIS = new Vector3(0, 1, 0);
 
 export class Bond {
   readonly id: string;
-  readonly line: Line;
+  readonly mesh: Mesh;
 
-  constructor(
-    data: BondData,
-    from: Vector3 | { x: number; y: number; z: number },
-    to: Vector3 | { x: number; y: number; z: number },
-  ) {
-    this.id = data.id;
+  constructor(config: BondConfig, from: Vector3Like, to: Vector3Like) {
+    this.id = config.id;
 
-    const geometry = new BufferGeometry();
-    geometry.setAttribute(
-      'position',
-      new Float32BufferAttribute(
-        [from.x, from.y, from.z, to.x, to.y, to.z],
-        3,
-      ),
-    );
+    const start = new Vector3(from.x, from.y, from.z);
+    const end = new Vector3(to.x, to.y, to.z);
+    const direction = new Vector3().subVectors(end, start);
+    const length = direction.length();
 
-    const material = new LineBasicMaterial({
+    const geometry = new CylinderGeometry(0.06, 0.06, length, 12);
+    const material = new MeshStandardMaterial({
       color: 0x9aa3ad,
-      linewidth: 1,
+      roughness: 0.55,
+      metalness: 0.1,
     });
 
-    this.line = new Line(geometry, material);
-    this.line.name = `bond-${data.id}`;
+    this.mesh = new Mesh(geometry, material);
+    this.mesh.name = `bond-${config.id}`;
+    this.mesh.position.copy(start).add(end).multiplyScalar(0.5);
+
+    if (length > 1e-6) {
+      this.mesh.quaternion.setFromUnitVectors(Y_AXIS, direction.normalize());
+    }
   }
 
   get object(): Object3D {
-    return this.line;
+    return this.mesh;
   }
 
   dispose(): void {
-    this.line.geometry.dispose();
-    const material = this.line.material;
+    this.mesh.geometry.dispose();
+    const material = this.mesh.material;
     if (Array.isArray(material)) {
       material.forEach((item) => item.dispose());
     } else {

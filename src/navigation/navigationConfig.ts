@@ -5,6 +5,6 @@ export interface NavigationConfig {
 }
 
 export const navigationConfig: NavigationConfig = {
-  atomOrder: ['O', 'H1', 'H2'],
+  atomOrder: ['C', 'H1', 'H2', 'H3', 'H4'],
   loop: true,
 };

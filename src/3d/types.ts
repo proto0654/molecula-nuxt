@@ -1,25 +1,17 @@
-export interface Vec3 {
-  x: number;
-  y: number;
-  z: number;
-}
-
-export interface AtomData {
+export type AtomConfig = {
   id: string;
-  element: string;
-  position: Vec3;
+  label: string;
+  position: [number, number, number];
   radius: number;
-  color: number;
-}
+};
 
-export interface BondData {
+export type BondConfig = {
   id: string;
-  fromAtomId: string;
-  toAtomId: string;
-}
+  from: string;
+  to: string;
+};
 
-export interface MoleculeData {
-  id: string;
-  atoms: AtomData[];
-  bonds: BondData[];
-}
+export type MoleculeConfig = {
+  atoms: AtomConfig[];
+  bonds: BondConfig[];
+};

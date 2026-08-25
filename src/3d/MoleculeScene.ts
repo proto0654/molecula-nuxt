@@ -8,9 +8,8 @@ import {
   WebGLRenderer,
 } from 'three';
 import { Atom } from './Atom';
-import { AtomLabel } from './AtomLabel';
 import { Bond } from './Bond';
-import type { MoleculeData } from './types';
+import type { MoleculeConfig } from './types';
 
 export class MoleculeScene {
   readonly scene: Scene;
@@ -20,7 +19,6 @@ export class MoleculeScene {
 
   private readonly atoms: Atom[] = [];
   private readonly bonds: Bond[] = [];
-  private readonly labels: AtomLabel[] = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new Scene();
@@ -49,28 +47,24 @@ export class MoleculeScene {
     this.resize(window.innerWidth, window.innerHeight);
   }
 
-  buildMolecule(data: MoleculeData): void {
+  buildMolecule(config: MoleculeConfig): void {
     this.clearMolecule();
 
     const atomById = new Map<string, Atom>();
 
-    for (const atomData of data.atoms) {
-      const atom = new Atom(atomData);
+    for (const atomConfig of config.atoms) {
+      const atom = new Atom(atomConfig);
       atomById.set(atom.id, atom);
       this.atoms.push(atom);
       this.moleculeGroup.add(atom.object);
-
-      const label = new AtomLabel(atom.element, atom.mesh.position);
-      this.labels.push(label);
-      this.moleculeGroup.add(label.object);
     }
 
-    for (const bondData of data.bonds) {
-      const from = atomById.get(bondData.fromAtomId);
-      const to = atomById.get(bondData.toAtomId);
+    for (const bondConfig of config.bonds) {
+      const from = atomById.get(bondConfig.from);
+      const to = atomById.get(bondConfig.to);
       if (!from || !to) continue;
 
-      const bond = new Bond(bondData, from.mesh.position, to.mesh.position);
+      const bond = new Bond(bondConfig, from.mesh.position, to.mesh.position);
       this.bonds.push(bond);
       this.moleculeGroup.add(bond.object);
     }
@@ -106,12 +100,7 @@ export class MoleculeScene {
       this.moleculeGroup.remove(bond.object);
       bond.dispose();
     }
-    for (const label of this.labels) {
-      this.moleculeGroup.remove(label.object);
-      label.dispose();
-    }
     this.atoms.length = 0;
     this.bonds.length = 0;
-    this.labels.length = 0;
   }
 }
