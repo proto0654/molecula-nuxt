@@ -23,6 +23,7 @@
 - [x] Dev-only throttled perf overlay (`DEBUG_PERF` / `?debug=0`)
 - [x] Faceted matte graphite look (flatShading icosahedrons, dashed bonds, orbital ghost, selection reticle, no postprocessing)
 - [x] HTML sidebar / SVG connectors via `projectAtom` (keep HUD out of WebGL); desktop composition bias
+- [x] Mobile composition (profiles, SiteHeader + MENU overlay, compact rail, touch drag/tap, hub/orbit compact layout)
 
 ## Next
 

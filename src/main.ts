@@ -1,22 +1,24 @@
 import './styles.css';
+import {
+  COMPOSITION_PROFILES,
+  resolveViewportMode,
+} from './3d/composition/profiles';
 import { MoleculeController } from './3d/MoleculeController';
 import { QualityManager } from './3d/quality/QualityManager';
 import { PerfOverlay } from './debug/PerfOverlay';
 import { getItemByAtomId, getItemById } from './navigation/navigationConfig';
 import { Navigator } from './navigation/Navigator';
 import { NavigationState } from './navigation/NavigationState';
-import { DesktopHeader } from './ui/DesktopHeader';
 import { DestinationView } from './ui/DestinationView';
 import { HudFrame } from './ui/HudFrame';
+import { MobileNavOverlay } from './ui/MobileNavOverlay';
 import { Navigation } from './ui/Navigation';
 import { NavigationConnector } from './ui/NavigationConnector';
+import { SiteHeader } from './ui/SiteHeader';
 
 const MOBILE_MQ = '(max-width: 767px)';
 const TABLET_MQ = '(min-width: 768px) and (max-width: 1023px)';
 const DESKTOP_MQ = '(min-width: 1024px)';
-
-/** Desktop visual center of the molecule (viewport X fraction). */
-const DESKTOP_COMPOSITION_X = 0.62;
 
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) {
@@ -42,7 +44,7 @@ const unsubscribePerf = perfOverlay
 
 const navigationState = new NavigationState();
 const hud = new HudFrame(app);
-const desktopHeader = new DesktopHeader(app, navigationState);
+const siteHeader = new SiteHeader(app, navigationState);
 
 const mobileMq = window.matchMedia(MOBILE_MQ);
 const tabletMq = window.matchMedia(TABLET_MQ);
@@ -134,6 +136,23 @@ function clearSelection(): void {
 
 const navigation = new Navigation(app, navigationState, selectItem);
 
+const mobileNav = new MobileNavOverlay(app, navigationState, {
+  onSelect: (itemId) => {
+    selectItem(itemId);
+    setMenuOpen(false);
+  },
+  onClose: () => setMenuOpen(false),
+});
+
+function setMenuOpen(open: boolean): void {
+  mobileNav.setOpen(open);
+  siteHeader.setMenuOpen(open);
+}
+
+siteHeader.onToggleMenu(() => {
+  setMenuOpen(!mobileNav.isOpen);
+});
+
 const connector = new NavigationConnector(
   app,
   navigation,
@@ -142,10 +161,17 @@ const connector = new NavigationConnector(
 );
 
 function applyViewportMode(): void {
-  controller.setCaptionsCompact(mobileMq.matches);
-  controller.setCaptionRemainderScale(tabletMq.matches ? 0.82 : 1);
-  controller.setCompositionBias(desktopMq.matches ? DESKTOP_COMPOSITION_X : 0.5);
-  connector.setEnabled(desktopMq.matches);
+  const mode = resolveViewportMode({
+    desktop: desktopMq.matches,
+    tablet: tabletMq.matches,
+  });
+  controller.setCaptionsCompact(false);
+  controller.setCaptionRemainderScale(mode === 'tablet' ? 0.82 : 1);
+  controller.setCompositionProfile(COMPOSITION_PROFILES[mode]);
+  connector.setEnabled(mode === 'desktop');
+  if (mode !== 'mobile' && mobileNav.isOpen) {
+    setMenuOpen(false);
+  }
 }
 
 const unsubscribeConnector = controller.onAfterUpdate((delta) => {
@@ -199,7 +225,8 @@ if (import.meta.hot) {
     navigator.dispose();
     connector.dispose();
     navigation.dispose();
-    desktopHeader.dispose();
+    mobileNav.dispose();
+    siteHeader.dispose();
     destination.dispose();
     hud.dispose();
     controller.dispose();

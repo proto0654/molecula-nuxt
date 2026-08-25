@@ -1,5 +1,6 @@
 import { navigationConfig } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
+import { attachTapGuard } from './tapGuard';
 
 export type NavSelectListener = (itemId: string) => void;
 
@@ -11,6 +12,7 @@ export class Navigation {
   readonly root: HTMLElement;
   private readonly state: NavigationState;
   private readonly itemElements = new Map<string, HTMLElement>();
+  private readonly listEl: HTMLElement;
   private readonly statusNode: HTMLElement;
   private readonly statusSignal: HTMLElement;
   private readonly unsubscribe: () => void;
@@ -31,11 +33,11 @@ export class Navigation {
     const mark = document.createElement('span');
     mark.className = 'nav__mark';
     mark.setAttribute('aria-hidden', 'true');
-    mark.textContent = '⟨ NAV ⟩';
+    mark.textContent = '/ NAV';
     this.root.append(mark);
 
-    const list = document.createElement('div');
-    list.className = 'nav__list';
+    this.listEl = document.createElement('div');
+    this.listEl.className = 'nav__list';
 
     navigationConfig.items.forEach((item, index) => {
       if (index > 0) {
@@ -43,7 +45,7 @@ export class Navigation {
         sep.className = 'nav__sep';
         sep.setAttribute('aria-hidden', 'true');
         sep.textContent = '·';
-        list.append(sep);
+        this.listEl.append(sep);
       }
 
       const button = document.createElement('button');
@@ -66,14 +68,14 @@ export class Navigation {
       button.addEventListener('pointerenter', () => {
         this.state.setNavHover(item.id);
       });
-      button.addEventListener('click', () => {
+      attachTapGuard(button, () => {
         this.onSelect?.(item.id);
       });
-      list.append(button);
+      this.listEl.append(button);
       this.itemElements.set(item.id, button);
     });
 
-    this.root.append(list);
+    this.root.append(this.listEl);
 
     const status = document.createElement('div');
     status.className = 'nav__status';
@@ -99,6 +101,7 @@ export class Navigation {
         el.classList.toggle('is-committed', id === committed);
       }
       this.syncStatus();
+      this.scrollActiveIntoView();
     });
     this.syncStatus();
   }
@@ -126,6 +129,20 @@ export class Navigation {
   setZoomSoftness(amount: number): void {
     const t = Math.max(0, Math.min(1, amount));
     this.root.style.setProperty('--nav-zoom-fade', String(t));
+  }
+
+  private scrollActiveIntoView(): void {
+    const id = this.state.committedItemId ?? this.state.activeItemId;
+    if (!id) return;
+    const el = this.itemElements.get(id);
+    if (!el) return;
+    // Only horizontal rails need this; desktop column is always fully visible.
+    if (this.listEl.scrollWidth <= this.listEl.clientWidth + 1) return;
+    el.scrollIntoView({
+      inline: 'center',
+      block: 'nearest',
+      behavior: 'smooth',
+    });
   }
 
   private syncStatus(): void {

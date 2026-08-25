@@ -28,19 +28,24 @@ const HIGHLIGHT_EMISSIVE = 0x4a525a;
 export class Atom {
   readonly id: string;
   readonly label: string;
-  readonly radius: number;
+  /** Live radius (may shrink on mobile hub compact layout). */
+  radius: number;
   readonly mesh: Mesh;
   readonly atomLabel: AtomLabel;
   readonly selection: AtomSelectionIndicator;
   private readonly group: Group;
   private readonly color: number;
+  private readonly baseRadius: number;
+  private readonly basePosition: [number, number, number];
   private material: MeshStandardMaterial | MeshLambertMaterial;
   private highlighted = false;
 
   constructor(config: AtomConfig, cache: GeometryCache, settings: QualitySettings) {
     this.id = config.id;
     this.label = config.label;
+    this.baseRadius = config.radius;
     this.radius = config.radius;
+    this.basePosition = [...config.position];
     this.color = COLOR_BY_LABEL[config.label] ?? 0x2c3036;
 
     this.group = new Group();
@@ -74,6 +79,32 @@ export class Atom {
 
   get object(): Object3D {
     return this.group;
+  }
+
+  get isHub(): boolean {
+    const [x, y, z] = this.basePosition;
+    return x * x + y * y + z * z < 1e-12;
+  }
+
+  /**
+   * Mobile compact layout only: hub sphere scale + radial orbit scale.
+   * Peripheral atom radii stay unchanged.
+   */
+  applyCompactLayout(orbitScale: number, hubRadiusScale: number): void {
+    if (this.isHub) {
+      this.radius = this.baseRadius * hubRadiusScale;
+      this.mesh.scale.setScalar(this.radius);
+      this.selection.setRadius(this.radius);
+      this.atomLabel.setSurfaceRadius(this.radius);
+      this.group.position.set(0, 0, 0);
+      return;
+    }
+
+    this.group.position.set(
+      this.basePosition[0] * orbitScale,
+      this.basePosition[1] * orbitScale,
+      this.basePosition[2] * orbitScale,
+    );
   }
 
   applyQuality(settings: QualitySettings, cache: GeometryCache): void {

@@ -46,8 +46,10 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Scene / clear / fog | `0x14161c` | `MoleculeScene` |
 | Carbon (hub) | `0x3a4048` | `Atom.ts` `COLOR_BY_LABEL.C` |
 | Hydrogen (peripheral) | `0x25292e` | `Atom.ts` `COLOR_BY_LABEL.H` |
-| Caption letter | `0xd6dbe0` | `AtomLabel` `LETTER_COLOR` (same as `--color-ink`) |
-| Caption remainder | `0xb8c0c8` | `AtomLabel` `REMAINDER_COLOR` |
+| Caption letter (idle) | `0x000000` | Fully black non-focused title |
+| Caption letter (active) | `0xd6dbe0` | Committed atom title (`--color-ink`) |
+| Caption remainder (idle) | `0x000000` | Matches idle letter |
+| Caption remainder (active) | `0xb8c0c8` | Committed remainder |
 | Caption blurb | `0x8b949e` | `AtomLabel` `BLURB_COLOR` |
 | Selection rings | `0xb8c0c8` | `AtomSelectionIndicator` `RING_COLOR` |
 | Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell |
@@ -64,7 +66,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 - 1px lines at `--grid-opacity` on `--grid-size`.
 - Radial **mask**: center transparent so the molecule sits in empty space; grid reads only at the edges.
-- Desktop: mask centered near ~62% X (main stage). Tablet/mobile: centered.
+- Desktop: mask centered near ~62% X (main stage). Tablet/mobile: near center, slightly high for bottom chrome.
 - `pointer-events: none`. Markup: `.hud__grid` via [`HudFrame`](../src/ui/HudFrame.ts).
 
 ### 2. Corner ticks + coords
@@ -75,10 +77,12 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 - Inset via `--hud-inset` / `--hud-inset-desktop` (desktop left inset is a normal edge pad so the sidebar is inside the frame).
 - Not a full rectangular frame.
 
-### 3. Desktop header
+### 3. Site header
 
-- [`DesktopHeader`](../src/ui/DesktopHeader.ts): `[ MARK ] LOGO` · `SYS // MOLECULE` · `NODE 04 / WORK`.
-- Light absolute overlay; no background blocks. Hidden below 1024px (`.hud__meta` keeps `SYS // MOLECULE` on tablet/mobile).
+- [`SiteHeader`](../src/ui/SiteHeader.ts):
+  - **Desktop (≥1024):** `[ MARK ] LOGO` · `SYS // MOLECULE` · `NODE 04 / WORK`. Pointer-events none; no background blocks.
+  - **Mobile (≤767):** LOGO left + text control `MENU / NAV` (toggles to `CLOSE / NAV`). Safe-area top padding. No hamburger glyph, no card.
+  - **Tablet:** header hidden; `.hud__meta` keeps `SYS // MOLECULE`.
 
 ### 4. Hairline rule / rail divider
 
@@ -89,24 +93,33 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 - `01` muted index + uppercase label.
 - **Desktop (≥1024):** left vertical rail (`--sidebar-width`), column stack. Footer `NODE nn` + `SIGNAL ACTIVE|READY|IDLE` is centered under the **full** HUD frame (not the rail alone). Active via brighter text + thin left marker — no pills / filled rects.
-- **Tablet/mobile:** bottom bar; separators `·` (hidden on mobile). Commit wraps label with `⟨ … ⟩`.
+- **Tablet (768–1023):** bottom bar; separators `·`. Commit wraps label with `⟨ … ⟩`.
+- **Mobile (≤767):** compact bottom rail `/ NAV` + `01 HOME · 02 ABOUT · …` (horizontal scroll; active item scrolled into view). Safe-area bottom. Tap vs scroll-drag via `attachTapGuard`. Full index opens in [`MobileNavOverlay`](../src/ui/MobileNavOverlay.ts).
 - No background, no border.
 
-### 6. SVG navigation connector
+### 6. Mobile nav overlay
+
+- Full-viewport veil (`--color-bg`), not a card. Large numbering, thin item hairlines, subtle crosshair, status strip.
+- Open from MENU; close via CLOSE / ESC / backdrop / item select.
+- Same `selectItem` path as the rail.
+
+### 7. SVG navigation connector
 
 - [`NavigationConnector`](../src/ui/NavigationConnector.ts): elbow polyline from rail item → projected atom; tiny tip marker; stops short of the mesh.
 - States: idle hidden · hover fade-in · active stay visible · zoom fades with `zoomProgress`/`fillProgress`.
 - Endpoint tracks `projectAtom` 1:1. Soft distance fade when the span is extreme.
 - 1px stroke; short opacity pulse on section change. No glow, no looping dash.
+- Desktop-only (`≥1024`).
 
-### 7. Destination stub
+### 8. Destination stub
 
 - Same kicker + tracked title + `// /route` + `[ ← RETURN ]` as a text control (no fill).
 - Veil is solid `--color-bg`, not a card.
 
-### 8. Atom caption block (troika, not DOM)
+### 9. Atom caption block (troika, not DOM)
 
 - First letter centered on the camera-facing surface point; remainder to local `+X`.
+- Idle titles are pure black; committed atom brightens letter + remainder via `setTitleActive` (tied to blurb commit).
 - On commit, typewriter `// blurb` under the title in the **same** group.
 - Screen-flat: scene-parented group, `quaternion.copy(camera.quaternion)`, scale by distance. Lift toward camera (`SURFACE_PAD`) so glyphs clear the atom.
 - Selection: `AtomSelectionIndicator` — concentric `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; not raycast targets.
@@ -115,9 +128,9 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 ## 3D vs HTML
 
-Three.js: molecule, bonds, troika captions, selection indicator, wireframe, decorative ghost, composition crosshair (behind hub), lights, composition bias (world offset from viewport fraction).  
-HTML/CSS/SVG: grid, corners, header, nav rail, SVG connector, overlay.  
-Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connector never mutates Three.js objects. Composition bias never reads CSS sidebar width.
+Three.js: molecule, bonds, troika captions, selection indicator, wireframe, decorative ghost, composition crosshair (behind hub), lights, composition profile (world offset from viewport fractions + approach).  
+HTML/CSS/SVG: grid, corners, header, nav rail, mobile nav overlay, SVG connector, overlay.  
+Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connector never mutates Three.js objects. Composition profile never reads CSS sidebar width.
 
 ## Copy conventions
 

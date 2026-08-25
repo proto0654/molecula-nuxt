@@ -1,8 +1,11 @@
 import { Group, type Camera, type Object3D, Vector3 } from 'three';
 import { Text } from 'troika-three-text';
 
-const LETTER_COLOR = 0xd6dbe0;
-const REMAINDER_COLOR = 0xb8c0c8;
+/** Idle titles stay muted so the committed atom reads as primary. */
+const LETTER_COLOR_IDLE = 0x000000;
+const LETTER_COLOR_ACTIVE = 0xd6dbe0;
+const REMAINDER_COLOR_IDLE = 0x000000;
+const REMAINDER_COLOR_ACTIVE = 0xb8c0c8;
 const BLURB_COLOR = 0x8b949e;
 const REMAINDER_GAP = 0.08;
 const TYPE_SECONDS = 0.028;
@@ -29,11 +32,12 @@ export class AtomLabel {
   private readonly letter: Text;
   private readonly remainder: Text;
   private readonly blurb: Text;
-  private readonly radius: number;
+  private radius: number;
   private readonly letterFontSize: number;
   private readonly remainderBaseFontSize: number;
   private remainderScale = 1;
   private remainderVisible = true;
+  private titleActive = false;
 
   private fullBlurb = '';
   private typed = '';
@@ -60,7 +64,7 @@ export class AtomLabel {
     this.letter = new Text();
     this.letter.text = letter;
     this.letter.fontSize = fontSize;
-    this.letter.color = LETTER_COLOR;
+    this.letter.color = LETTER_COLOR_IDLE;
     this.letter.anchorX = 'center';
     this.letter.anchorY = 'middle';
     this.letter.raycast = () => {};
@@ -70,7 +74,7 @@ export class AtomLabel {
     this.remainder = new Text();
     this.remainder.text = rest;
     this.remainder.fontSize = this.remainderBaseFontSize;
-    this.remainder.color = REMAINDER_COLOR;
+    this.remainder.color = REMAINDER_COLOR_IDLE;
     this.remainder.anchorX = 'left';
     this.remainder.anchorY = 'middle';
     this.remainder.raycast = () => {};
@@ -95,6 +99,25 @@ export class AtomLabel {
     this.object.add(this.letter, this.remainder, this.blurb);
   }
 
+  /**
+   * Bright title for the committed / focused atom; muted for the rest.
+   */
+  setTitleActive(active: boolean): void {
+    if (this.titleActive === active) return;
+    this.titleActive = active;
+    this.letter.color = active ? LETTER_COLOR_ACTIVE : LETTER_COLOR_IDLE;
+    this.remainder.color = active
+      ? REMAINDER_COLOR_ACTIVE
+      : REMAINDER_COLOR_IDLE;
+    this.letter.sync();
+    this.remainder.sync();
+  }
+
+  /** Surface radius used for camera-facing lift (hub compact layout). */
+  setSurfaceRadius(radius: number): void {
+    this.radius = Math.max(radius, 1e-6);
+  }
+
   setRemainderVisible(visible: boolean): void {
     this.remainderVisible = visible;
     this.remainder.visible = visible && this.remainder.text.length > 0;
@@ -110,6 +133,7 @@ export class AtomLabel {
 
   /** Type `// blurb` under the title. Pass null to hide immediately. */
   setBlurb(blurb: string | null): void {
+    this.setTitleActive(blurb !== null);
     this.typing = false;
     this.typeAccum = 0;
     this.typed = '';

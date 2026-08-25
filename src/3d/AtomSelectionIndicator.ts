@@ -35,7 +35,7 @@ export class AtomSelectionIndicator {
   private readonly ticksMaterial: LineBasicMaterial;
   private readonly cross: LineSegments;
   private readonly crossMaterial: LineBasicMaterial;
-  private readonly radius: number;
+  private radius: number;
   private mode: HaloMode = 'idle';
   private opacity = 0;
   private pulse = 0;
@@ -143,6 +143,15 @@ export class AtomSelectionIndicator {
 
   setCenterVisible(visible: boolean): void {
     this.centerEnabled = visible;
+  }
+
+  /** Keep rings / ticks sized to the live atom radius (hub compact layout). */
+  setRadius(radius: number): void {
+    this.radius = Math.max(radius, 1e-6);
+    for (let i = 0; i < this.rings.length; i += 1) {
+      this.rings[i]!.scale.setScalar(this.radius * RING_SCALES[i]!);
+    }
+    this.cross.scale.setScalar(this.radius);
   }
 
   /**

@@ -26,8 +26,10 @@ export class DecorativeNodes {
   readonly object: Group;
   private readonly materials: Material[];
   private readonly baseOpacities: number[];
+  private readonly orbitLoops: LineLoop[] = [];
   private enabled = true;
   private zoomFade = 1;
+  private orbitScale = 1;
   private readonly scratchQ = new Quaternion();
 
   constructor(cache: GeometryCache) {
@@ -53,6 +55,7 @@ export class DecorativeNodes {
       orbit.scale.setScalar(def.radius);
       orbit.quaternion.copy(orbitQuaternion(def, this.scratchQ));
       orbit.raycast = () => {};
+      this.orbitLoops.push(orbit);
       this.object.add(orbit);
     }
 
@@ -78,6 +81,15 @@ export class DecorativeNodes {
 
     this.materials = materials;
     this.baseOpacities = baseOpacities;
+  }
+
+  /** Match decorative rings to compact peripheral layout. */
+  setOrbitScale(scale: number): void {
+    this.orbitScale = scale;
+    for (let i = 0; i < this.orbitLoops.length; i += 1) {
+      const def = MOLECULE_ORBITS[i]!;
+      this.orbitLoops[i]!.scale.setScalar(def.radius * this.orbitScale);
+    }
   }
 
   setVisible(visible: boolean): void {

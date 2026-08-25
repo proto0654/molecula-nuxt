@@ -21,10 +21,22 @@ import type { QualityManager } from './quality/QualityManager';
 import type { QualitySettings } from './quality/types';
 import { GeometryCache } from './resources/GeometryCache';
 import type { MoleculeConfig } from './types';
+
 const SCENE_BG = 0x14161c;
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
 const BOND_COLOR = 0x5a636c;
+
+/** Mobile-only: pull peripherals closer so the molecule fits the portrait stage. */
+const MOBILE_ORBIT_SCALE = 0.7;
+/** Mobile-only: shrink the hub sphere (peripherals keep base radius). */
+const MOBILE_HUB_RADIUS_SCALE = 0.7;
+
+type BondLink = {
+  bond: Bond;
+  fromId: string;
+  toId: string;
+};
 
 export class MoleculeScene {
   readonly scene: Scene;
@@ -37,6 +49,7 @@ export class MoleculeScene {
   private readonly cache = new GeometryCache();
   private readonly atoms: Atom[] = [];
   private readonly bonds: Bond[] = [];
+  private readonly bondLinks: BondLink[] = [];
   /** Atom meshes only — used for hover raycasting (bonds excluded). */
   private readonly atomMeshes: Mesh[] = [];
   private readonly bondMaterial: LineDashedMaterial;
@@ -48,6 +61,7 @@ export class MoleculeScene {
   private wireframeAtomId: string | null = null;
   private lastWidth = 1;
   private lastHeight = 1;
+  private compactLayout = false;
 
   constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
     this.quality = quality;
@@ -151,10 +165,51 @@ export class MoleculeScene {
         this.bondMaterial,
       );
       this.bonds.push(bond);
+      this.bondLinks.push({
+        bond,
+        fromId: bondConfig.from,
+        toId: bondConfig.to,
+      });
       this.moleculeGroup.add(bond.object);
     }
 
+    this.applyCompactLayout(this.compactLayout);
     this.syncWireframe();
+  }
+
+  /**
+   * Mobile portrait: tighter orbits + smaller hub sphere.
+   * Desktop / tablet stay at authored layout. No other properties change.
+   */
+  setCompactLayout(compact: boolean): void {
+    if (this.compactLayout === compact) return;
+    this.compactLayout = compact;
+    this.applyCompactLayout(compact);
+  }
+
+  private applyCompactLayout(compact: boolean): void {
+    const orbitScale = compact ? MOBILE_ORBIT_SCALE : 1;
+    const hubScale = compact ? MOBILE_HUB_RADIUS_SCALE : 1;
+    for (const atom of this.atoms) {
+      atom.applyCompactLayout(orbitScale, hubScale);
+    }
+    this.decorativeNodes.setOrbitScale(orbitScale);
+    this.syncBondEndpoints();
+    this.syncWireframe();
+  }
+
+  private syncBondEndpoints(): void {
+    for (const link of this.bondLinks) {
+      const from = this.getAtom(link.fromId);
+      const to = this.getAtom(link.toId);
+      if (!from || !to) continue;
+      link.bond.setEndpoints(
+        from.object.position,
+        to.object.position,
+        from.radius,
+        to.radius,
+      );
+    }
   }
 
   /**
@@ -280,6 +335,7 @@ export class MoleculeScene {
     }
     this.atoms.length = 0;
     this.bonds.length = 0;
+    this.bondLinks.length = 0;
     this.atomMeshes.length = 0;
   }
 }

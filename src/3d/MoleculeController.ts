@@ -1,6 +1,10 @@
 import { Quaternion, Vector2, Vector3 } from 'three';
 import { AtomHover, type AtomHoverListener } from './AtomHover';
 import type { HaloMode } from './AtomSelectionIndicator';
+import {
+  COMPOSITION_PROFILES,
+  type CompositionProfile,
+} from './composition/profiles';
 import { getStableFocusQuaternion } from './math/focusAtom';
 import {
   getAtomFocusDistance,
@@ -16,6 +20,12 @@ import { readQualitySearchParam } from './quality/QualityManager';
 /** Limited yaw / pitch from pointer (radians) — not a full turn. */
 const MAX_YAW = Math.PI / 5;
 const MAX_PITCH = Math.PI / 7;
+
+/** Movement below this (CSS px) counts as tap; above as drag. */
+const TAP_MOVE_THRESHOLD_PX = 10;
+
+/** Touch drag sensitivity relative to canvas size → full max tilt. */
+const TOUCH_DRAG_GAIN = 1.35;
 
 /** Higher = snappier slerp toward `targetMouseOrientation`. */
 const MOUSE_FOLLOW = 6;
@@ -128,13 +138,28 @@ export class MoleculeController {
   private readonly baseMoleculePosition = new Vector3();
 
   /**
-   * Desired visual center of the molecule as a viewport X fraction (0.5 = center).
-   * Applied via world offset along camera right — never reads CSS sidebar width.
+   * Desired visual center of the molecule as viewport fractions + approach.
+   * Applied via world offset along camera axes — never reads CSS sidebar width.
    */
-  private compositionScreenX = 0.5;
+  private compositionProfile: CompositionProfile = COMPOSITION_PROFILES.mobile;
 
   /** Look-at used for composition distance (matches MoleculeScene camera). */
   private readonly compositionLookAt = new Vector3(0, 0.2, 0);
+
+  /** Accumulated touch-drag yaw / pitch (clamped to MAX_*). */
+  private dragYaw = 0;
+  private dragPitch = 0;
+
+  /** Atom id last passed to `focusAtom` while focus is active. */
+  private focusedAtomId: string | null = null;
+
+  private touchPointerId: number | null = null;
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchLastX = 0;
+  private touchLastY = 0;
+  private touchDragging = false;
+  private suppressNextClick = false;
 
   /** Last orientation used for hover picking — dirty when it diverges. */
   private readonly lastHoverQuaternion = new Quaternion();
@@ -167,6 +192,9 @@ export class MoleculeController {
   private readonly scratchLookDir = new Vector3();
   private readonly scratchZoomOffset = new Vector3();
   private readonly scratchCameraRight = new Vector3();
+  private readonly scratchCameraUp = new Vector3();
+  private readonly scratchRandomAxis = new Vector3();
+  private readonly scratchHalfTurn = new Quaternion();
   private readonly pointerNorm: PointerNorm = { x: 0, y: 0 };
   private readonly atomHover = new AtomHover();
   private readonly atomClickListeners = new Set<AtomClickListener>();
@@ -185,6 +213,9 @@ export class MoleculeController {
   private readonly onPointerMoveBound: (event: PointerEvent) => void;
   private readonly onPointerLeaveBound: () => void;
   private readonly onClickBound: (event: MouseEvent) => void;
+  private readonly onPointerDownBound: (event: PointerEvent) => void;
+  private readonly onPointerUpBound: (event: PointerEvent) => void;
+  private readonly onPointerCancelBound: (event: PointerEvent) => void;
 
   constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
     this.canvas = canvas;
@@ -213,6 +244,13 @@ export class MoleculeController {
     };
 
     this.onPointerMoveBound = (event: PointerEvent) => {
+      if (this.touchPointerId !== null) {
+        this.handleTouchMove(event);
+        return;
+      }
+      if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+        return;
+      }
       const rect = this.canvas.getBoundingClientRect();
       const w = Math.max(rect.width, 1);
       const h = Math.max(rect.height, 1);
@@ -222,37 +260,125 @@ export class MoleculeController {
       const ndcX = fracX * 2 - 1;
       const ndcY = -(fracY * 2 - 1);
       // Mouse tilt origin follows composition bias (visual molecule center).
-      this.pointerNorm.x = (fracX - this.compositionScreenX) * 2;
-      this.pointerNorm.y = ndcY;
+      this.pointerNorm.x = (fracX - this.compositionProfile.screenX) * 2;
+      this.pointerNorm.y =
+        (this.compositionProfile.screenY - fracY) * 2;
       this.updateMouseInfluence(this.pointerNorm);
+      this.syncDragAnglesFromPointer(this.pointerNorm);
       this.atomHover.setPointerNdc(ndcX, ndcY);
     };
 
     this.onPointerLeaveBound = () => {
+      if (this.touchPointerId !== null) return;
       this.atomHover.clear();
     };
 
     this.onClickBound = (event: MouseEvent) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const w = Math.max(rect.width, 1);
-      const h = Math.max(rect.height, 1);
-      const ndcX = ((event.clientX - rect.left) / w) * 2 - 1;
-      const ndcY = -(((event.clientY - rect.top) / h) * 2 - 1);
+      if (this.suppressNextClick) {
+        this.suppressNextClick = false;
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
 
-      // Matrices must match the last composed orientation before pick.
-      this.scene.moleculeGroup.updateMatrixWorld(true);
-      const atomId = this.atomHover.pickAt(
-        ndcX,
-        ndcY,
-        this.scene.camera,
-        this.scene.getAtomMeshes(),
-      );
+      this.emitPickAtClient(event.clientX, event.clientY);
+    };
 
-      // Pick only — zoom / page transition are owned by `Navigator` via `onAtomClick`.
-      for (const listener of this.atomClickListeners) {
-        listener(atomId);
+    this.onPointerDownBound = (event: PointerEvent) => {
+      if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+      if (this.touchPointerId !== null) return;
+      this.touchPointerId = event.pointerId;
+      this.touchStartX = event.clientX;
+      this.touchStartY = event.clientY;
+      this.touchLastX = event.clientX;
+      this.touchLastY = event.clientY;
+      this.touchDragging = false;
+      this.canvas.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    };
+
+    this.onPointerUpBound = (event: PointerEvent) => {
+      if (event.pointerId !== this.touchPointerId) return;
+      const wasDragging = this.touchDragging;
+      const x = event.clientX;
+      const y = event.clientY;
+      this.endTouchGesture(event.pointerId);
+      // Always swallow the synthetic click that follows touch.
+      this.suppressNextClick = true;
+      if (!wasDragging) {
+        this.emitPickAtClient(x, y);
       }
     };
+
+    this.onPointerCancelBound = (event: PointerEvent) => {
+      if (event.pointerId !== this.touchPointerId) return;
+      this.endTouchGesture(event.pointerId);
+      this.suppressNextClick = true;
+    };
+  }
+
+  private handleTouchMove(event: PointerEvent): void {
+    if (event.pointerId !== this.touchPointerId) return;
+    const dx = event.clientX - this.touchStartX;
+    const dy = event.clientY - this.touchStartY;
+    if (!this.touchDragging) {
+      if (Math.hypot(dx, dy) < TAP_MOVE_THRESHOLD_PX) return;
+      this.touchDragging = true;
+    }
+
+    const rect = this.canvas.getBoundingClientRect();
+    const w = Math.max(rect.width, 1);
+    const h = Math.max(rect.height, 1);
+    const stepX = event.clientX - this.touchLastX;
+    const stepY = event.clientY - this.touchLastY;
+    this.touchLastX = event.clientX;
+    this.touchLastY = event.clientY;
+
+    this.dragYaw += (stepX / w) * MAX_YAW * TOUCH_DRAG_GAIN * 2;
+    this.dragPitch += (stepY / h) * MAX_PITCH * TOUCH_DRAG_GAIN * 2;
+    this.dragYaw = Math.max(-MAX_YAW, Math.min(MAX_YAW, this.dragYaw));
+    this.dragPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.dragPitch));
+    this.applyDragOrientation();
+    event.preventDefault();
+  }
+
+  private endTouchGesture(pointerId: number): void {
+    if (this.canvas.hasPointerCapture(pointerId)) {
+      this.canvas.releasePointerCapture(pointerId);
+    }
+    this.touchPointerId = null;
+    this.touchDragging = false;
+  }
+
+  private emitPickAtClient(clientX: number, clientY: number): void {
+    const rect = this.canvas.getBoundingClientRect();
+    const w = Math.max(rect.width, 1);
+    const h = Math.max(rect.height, 1);
+    const ndcX = ((clientX - rect.left) / w) * 2 - 1;
+    const ndcY = -(((clientY - rect.top) / h) * 2 - 1);
+
+    this.scene.moleculeGroup.updateMatrixWorld(true);
+    const atomId = this.atomHover.pickAt(
+      ndcX,
+      ndcY,
+      this.scene.camera,
+      this.scene.getAtomMeshes(),
+    );
+
+    for (const listener of this.atomClickListeners) {
+      listener(atomId);
+    }
+  }
+
+  private syncDragAnglesFromPointer(pointer: PointerNorm): void {
+    this.dragYaw = Math.max(-1, Math.min(1, pointer.x)) * MAX_YAW;
+    this.dragPitch = Math.max(-1, Math.min(1, pointer.y)) * MAX_PITCH;
+  }
+
+  private applyDragOrientation(): void {
+    this.scratchYaw.setFromAxisAngle(AXIS_Y, this.dragYaw);
+    this.scratchPitch.setFromAxisAngle(AXIS_X, this.dragPitch);
+    this.targetMouseOrientation.copy(this.scratchYaw).multiply(this.scratchPitch);
   }
 
   getHoveredAtomId(): string | null {
@@ -282,31 +408,74 @@ export class MoleculeController {
    * Uses rest-frame atom position (local + molecule translation) so the result
    * is an absolute focus orientation, independent of the mouse layer.
    * Twist/roll is locked relative to the current `focusOrientation`.
+   *
+   * Hub / Home (zero offset): no unique forward — on enter, apply a π flip about
+   * a random axis so the molecule turns and the core is not left “behind” the pose.
+   * Clears residual pointer/touch tilt so the focused atom actually faces the camera.
    */
   focusAtom(atomId: string): void {
     const atom = this.scene.getAtom(atomId);
     if (!atom) return;
 
+    const alreadyFocused =
+      this.focusedAtomId === atomId && this.targetFocusStrength > 0.5;
+
     // Rest-frame molecule origin (ignore live zoom translation).
     this.scratchMoleculePos.copy(this.baseMoleculePosition);
     // Rest pose: ignore current group rotation so focus Q stays absolute.
-    // Atom world rest = group local position (mesh sits at the group origin).
     this.scratchAtomPos.copy(atom.object.position).add(this.scratchMoleculePos);
-    this.scene.camera.getWorldPosition(this.scratchCameraPos);
 
-    getStableFocusQuaternion(
-      this.scratchAtomPos,
-      this.scratchMoleculePos,
-      this.scratchCameraPos,
-      this.focusOrientation,
-      this.targetFocusOrientation,
-    );
+    if (atom.object.position.lengthSq() < 1e-12) {
+      // Center atom: keep target if already focused; otherwise half-turn the molecule.
+      if (!alreadyFocused) {
+        this.scratchRandomAxis.set(
+          Math.random() * 2 - 1,
+          Math.random() * 2 - 1,
+          Math.random() * 2 - 1,
+        );
+        if (this.scratchRandomAxis.lengthSq() < 1e-8) {
+          this.scratchRandomAxis.set(0, 1, 0);
+        } else {
+          this.scratchRandomAxis.normalize();
+        }
+        this.scratchHalfTurn.setFromAxisAngle(this.scratchRandomAxis, Math.PI);
+        this.targetFocusOrientation
+          .copy(this.scratchHalfTurn)
+          .multiply(this.focusOrientation);
+      }
+    } else {
+      this.scene.camera.getWorldPosition(this.scratchCameraPos);
+      getStableFocusQuaternion(
+        this.scratchAtomPos,
+        this.scratchMoleculePos,
+        this.scratchCameraPos,
+        this.focusOrientation,
+        this.targetFocusOrientation,
+      );
+    }
+
+    this.focusedAtomId = atomId;
     this.targetFocusStrength = 1;
+
+    // Drop leftover touch drag / mouse tilt so focus lands on the look axis.
+    // Fine pointers rewrite tilt on the next `pointermove`.
+    if (!alreadyFocused) {
+      this.resetPointerTilt();
+    }
   }
 
   /** Fade focus influence out via `focusStrength` → 0; keep last focus pose. */
   clearFocus(): void {
     this.targetFocusStrength = 0;
+    this.focusedAtomId = null;
+  }
+
+  /** Clears accumulated yaw/pitch and both mouse orientation layers. */
+  private resetPointerTilt(): void {
+    this.dragYaw = 0;
+    this.dragPitch = 0;
+    this.targetMouseOrientation.identity();
+    this.mouseOrientation.identity();
   }
 
   /**
@@ -398,14 +567,27 @@ export class MoleculeController {
   }
 
   /**
-   * Shifts rest framing so the molecule projects near `screenX` (viewport fraction).
-   * World atom locals stay unchanged; offset is along camera right from FOV + aspect.
+   * Shifts rest framing from a viewport composition profile.
+   * World atom locals stay unchanged; offsets use FOV + aspect + camera axes.
    */
-  setCompositionBias(screenX: number): void {
-    const next = Math.max(0.35, Math.min(0.75, screenX));
-    if (Math.abs(next - this.compositionScreenX) < 1e-4) return;
-    this.compositionScreenX = next;
+  setCompositionProfile(profile: CompositionProfile): void {
+    const same =
+      this.compositionProfile.mode === profile.mode &&
+      Math.abs(this.compositionProfile.screenX - profile.screenX) < 1e-4 &&
+      Math.abs(this.compositionProfile.screenY - profile.screenY) < 1e-4 &&
+      Math.abs(this.compositionProfile.approach - profile.approach) < 1e-4;
+    this.compositionProfile = profile;
+    this.scene.setCompactLayout(profile.mode === 'mobile');
+    if (same) return;
     this.applyCompositionBias();
+  }
+
+  /** @deprecated Prefer `setCompositionProfile` — keeps X-only callers working. */
+  setCompositionBias(screenX: number): void {
+    this.setCompositionProfile({
+      ...this.compositionProfile,
+      screenX: Math.max(0.35, Math.min(0.75, screenX)),
+    });
   }
 
   /**
@@ -542,6 +724,10 @@ export class MoleculeController {
     window.addEventListener('pointermove', this.onPointerMoveBound);
     document.addEventListener('pointerleave', this.onPointerLeaveBound);
     this.canvas.addEventListener('click', this.onClickBound);
+    this.canvas.addEventListener('pointerdown', this.onPointerDownBound);
+    this.canvas.addEventListener('pointerup', this.onPointerUpBound);
+    this.canvas.addEventListener('pointercancel', this.onPointerCancelBound);
+    this.canvas.style.touchAction = 'none';
     this.onResizeBound();
     this.lastTime = performance.now();
     this.rafId = requestAnimationFrame(this.tick);
@@ -560,6 +746,9 @@ export class MoleculeController {
     window.removeEventListener('pointermove', this.onPointerMoveBound);
     document.removeEventListener('pointerleave', this.onPointerLeaveBound);
     this.canvas.removeEventListener('click', this.onClickBound);
+    this.canvas.removeEventListener('pointerdown', this.onPointerDownBound);
+    this.canvas.removeEventListener('pointerup', this.onPointerUpBound);
+    this.canvas.removeEventListener('pointercancel', this.onPointerCancelBound);
     cancelAnimationFrame(this.rafId);
   }
 
@@ -604,22 +793,29 @@ export class MoleculeController {
   }
 
   /**
-   * Writes `baseMoleculePosition` from compositionScreenX using FOV + aspect.
+   * Writes `baseMoleculePosition` from composition profile using FOV + aspect.
    * Does not read CSS layout.
    */
   private applyCompositionBias(): void {
     const camera = this.scene.camera;
     camera.updateMatrixWorld(true);
     this.scratchCameraRight.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+    this.scratchCameraUp.setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+    camera.getWorldDirection(this.scratchLookDir);
 
     const dist = camera.position.distanceTo(this.compositionLookAt);
     const vFov = (camera.fov * Math.PI) / 180;
-    const halfW = Math.tan(vFov / 2) * dist * camera.aspect;
-    const ndcX = (this.compositionScreenX - 0.5) * 2;
+    const halfH = Math.tan(vFov / 2) * dist;
+    const halfW = halfH * camera.aspect;
+    const ndcX = (this.compositionProfile.screenX - 0.5) * 2;
+    const ndcY = (0.5 - this.compositionProfile.screenY) * 2;
 
+    // Positive approach pulls toward the camera (larger on-screen presence).
     this.baseMoleculePosition
       .set(0, 0, 0)
-      .addScaledVector(this.scratchCameraRight, ndcX * halfW);
+      .addScaledVector(this.scratchCameraRight, ndcX * halfW)
+      .addScaledVector(this.scratchCameraUp, ndcY * halfH)
+      .addScaledVector(this.scratchLookDir, -this.compositionProfile.approach);
 
     // Apply immediately when not mid-zoom; zoom path recomposes each frame.
     if (!this.zoomAtomId || this.zoomProgress <= 0) {

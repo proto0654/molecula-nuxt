@@ -8,12 +8,13 @@ Fullscreen interactive molecule hero built with vanilla TypeScript and Three.js.
 main.ts
   ├─ QualityManager          start HIGH (MEDIUM on coarse/narrow); ?quality= override
   ├─ canvas (#hero-canvas)
-  ├─ MoleculeController  → pointermove → updateMouseInfluence + AtomHover NDC
-  │                      → click → onAtomClick(atomId | null)  [pick only]
+  ├─ MoleculeController  → mouse pointermove → absolute tilt + AtomHover NDC
+  │                      → touch/pen drag → incremental tilt; tap → pick
+  │                      → click → onAtomClick(atomId | null)  [mouse pick]
   │                      → rAF → compose + zoom/fill → labels (dirty) → selection → hover → onAfterUpdate
   │                         → render → PerformanceSampler (lock-once)
   │                         └─ Atom (Group: icosahedron + AtomSelectionIndicator) + AtomLabel / Bond / DecorativeNodes
-  ├─ HudFrame / DesktopHeader / Navigation / NavigationConnector  (DOM/SVG overlay, no Three.js)
+  ├─ HudFrame / SiteHeader / Navigation / MobileNavOverlay / NavigationConnector
   ├─ PerfOverlay             (dev-only, throttled DOM)
   ├─ NavigationState
   │     atomHover (raycast) · navHover (DOM) · committed (first click)
@@ -22,7 +23,7 @@ main.ts
   │     hover → highlight / pulse only (no focus)
   │     first click → setCommitted + focusAtom + typewriter blurb (troika)
   │     second click same item → Navigator.navigateTo (zoom → fill → overlay)
-  ├─ desktop MQ → setCompositionBias(0.62) + connector.enable
+  ├─ viewport MQ → setCompositionProfile(desktop|tablet|mobile) + connector.enable (desktop)
   │     onAfterUpdate → projectAtom → SVG elbow
   └─ Navigator → overlay veil → DestinationView stub (Return → cancel)
 ```
@@ -30,7 +31,7 @@ main.ts
 - **3D logic** lives under `src/3d/` and does not import DOM navigation or routes.
 - **Pure math** (`src/3d/math/`) is side-effect free: `getStableFocusQuaternion` (writes into an `out` quaternion), `getFocusQuaternion`, `getAtomFocusDistance`, orientation, `projectToScreenInto`.
 - **UI** (`src/ui/*`) never touches Three.js objects. HUD look: [`DESIGN.md`](DESIGN.md) (CSS `:root` tokens + decorative patterns). Title + typewriter blurb are a scene-parented screen-flat troika block (`AtomLabel`).
-- **3D vs screen-space:** Three.js owns the molecule world (atoms, bonds, captions, selection indicator, wireframe, decorative ghost, composition crosshair behind hub) and viewport-fraction composition bias. HTML/CSS/SVG owns grid, corners, header, nav rail, SVG connectors, overlay. Bridge: world position → `projectToScreenInto` / `projectAtom` → CSS pixels. Do not drive atom locals from CSS sidebar width.
+- **3D vs screen-space:** Three.js owns the molecule world (atoms, bonds, captions, selection indicator, wireframe, decorative ghost, composition crosshair behind hub) and viewport composition profiles. HTML/CSS/SVG owns grid, corners, header, nav rail, mobile overlay, SVG connectors, transition veil. Bridge: world position → `projectToScreenInto` / `projectAtom` → CSS pixels. Do not drive atom locals from CSS sidebar width.
 - **Page transition / routing seam** lives in `src/navigation/Navigator.ts`. `onNavigate` currently shows a destination stub; swap later for a real router using `NavigationItem.route`.
 - **Wiring** lives in `main.ts`.
 
@@ -139,11 +140,27 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../src/3d/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
 
-### Composition bias
+### Composition profiles
 
-`setCompositionBias(screenX)` shifts rest `baseMoleculePosition` along camera right so the molecule visual center projects near viewport fraction `screenX` (desktop `0.62`, else `0.5`). Offset is derived from FOV + aspect + look-at distance — **never** from measuring the CSS sidebar. Atom local positions stay unchanged. Recomputed on resize. Zoom still layers on top of this rest translation.
+[`composition/profiles.ts`](../src/3d/composition/profiles.ts) defines `desktop` / `tablet` / `mobile` rest framing. `setCompositionProfile` writes `baseMoleculePosition` from viewport fractions `screenX` / `screenY` (camera right / up) plus `approach` (pull toward camera along look). Derived from FOV + aspect + look-at distance — **never** from measuring CSS chrome. Atom locals stay unchanged. Recomputed on resize. Zoom still layers on top of this rest translation.
+
+| Mode | screenX | screenY | approach |
+|------|---------|---------|----------|
+| desktop | 0.62 | 0.50 | 0 |
+| tablet | 0.50 | 0.47 | 0.12 |
+| mobile | 0.50 | 0.44 | 0.28 |
+
+**Mobile compact layout** (`MoleculeScene.setCompactLayout`): when mode is `mobile`, hub sphere radius ×0.7 and peripheral positions ×0.7 (bonds + decorative orbits follow). Desktop/tablet keep authored `moleculeConfig` / orbit radii. No other scene properties change.
+
+Committed atom titles use bright ink; idle titles are pure black (`0x000000`) so they do not compete with the focused caption.
+
+### Pointer / touch
+
+- **Mouse (fine):** window `pointermove` absolute tilt around the composition center; canvas `click` raycasts.
+- **Touch / pen:** canvas capture; movement &lt; ~10px → tap pick; larger → incremental yaw/pitch drag (clamped to the same `MAX_YAW` / `MAX_PITCH`). Synthetic click after touch is suppressed. Canvas `touch-action: none`.
+- Nav / overlay items use [`tapGuard`](../src/ui/tapGuard.ts) so horizontal scroll-drag does not fire selection.
 
 When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` owns progress via GSAP.
 
@@ -205,7 +222,8 @@ Dev overlay: [`PerfOverlay`](../src/debug/PerfOverlay.ts) — FPS, frame time, q
 | File | Role |
 |------|------|
 | `MoleculeScene.ts` | Scene, camera, renderer, lights, fog, `buildMolecule`, `applyQuality`, dirty-gated labels, selection tick |
-| `MoleculeController.ts` | rAF, pointer / viewport resize, orientation layers, zoom/fill, composition bias, pick, `projectAtom`, selection/caption/wireframe APIs, sampler |
+| `MoleculeController.ts` | rAF, pointer / touch / viewport resize, orientation layers, zoom/fill, composition profile, pick, `projectAtom`, selection/caption/wireframe APIs, sampler |
+| `composition/profiles.ts` | desktop / tablet / mobile framing (`screenX` / `screenY` / `approach`) |
 | `quality/QualityManager.ts` | Lock-once quality presets; `?quality=` / coarse-pointer start heuristic |
 | `quality/PerformanceSampler.ts` | Startup sample → lock + one emergency downgrade |
 | `resources/GeometryCache.ts` | Shared unit icosahedron / edges / circle / ticks / cross |
@@ -223,8 +241,10 @@ Dev overlay: [`PerfOverlay`](../src/debug/PerfOverlay.ts) — FPS, frame time, q
 | `navigation/Navigator.ts` | GSAP page-transition coordinator; `navigateTo` / `onNavigate` / `cancel` |
 | `navigation/TransitionState.ts` | Centralized transition phase / progress snapshot |
 | `ui/HudFrame.ts` | Grid + corners + coord marks (pointer-events none); crosshair is WebGL |
-| `ui/DesktopHeader.ts` | Desktop logo / SYS / NODE meta overlay |
+| `ui/SiteHeader.ts` | Desktop logo / SYS / NODE; mobile LOGO + MENU / NAV |
+| `ui/MobileNavOverlay.ts` | Editorial full-screen mobile nav index |
 | `ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); `getItemAnchor`; zoom softness |
+| `ui/tapGuard.ts` | Tap vs scroll-drag for nav controls |
 | `ui/NavigationConnector.ts` | SVG elbow; sync `projectAtom` follow; idle/hover/active/zoom |
 | `ui/DestinationView.ts` | Stub section + Return |
 | `ui/TransitionOverlay.ts` | Full-viewport veil opacity |
@@ -232,12 +252,11 @@ Dev overlay: [`PerfOverlay`](../src/debug/PerfOverlay.ts) — FPS, frame time, q
 ## Scene constraints (current stage)
 
 - Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`.
-- Techno HUD overlay (grid, corners, header, nav rail, SVG connector) + WebGL composition crosshair behind hub — see [`DESIGN.md`](DESIGN.md); no client router — `route` on items is declarative only.
-- Responsive: desktop ≥1024 (rail + header + composition bias `0.62` + connector; full captions), tablet 768–1023 (bottom nav, smaller remainder), mobile ≤767 (first-letter captions).
+- Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) + WebGL composition crosshair behind hub — see [`DESIGN.md`](DESIGN.md); no client router — `route` on items is declarative only.
+- Responsive: desktop ≥1024 (rail + header + composition profile + connector; full captions), tablet 768–1023 (bottom nav, tablet framing, smaller remainder), mobile ≤767 (header + compact rail + MENU overlay, mobile framing, full captions, touch drag/tap).
 - No postprocessing, bloom, particle systems, physics, realtime shadows, or environment maps. Scene uses a matching `Fog` for slight depth only.
-- Pixel ratio capped by the locked quality preset (`maxPixelRatio` 1.75 / 1.5 / 1), refreshed on every resize (monitor / OS DPR changes).
+- Pixel ratio capped by the locked quality preset (`maxPixelRatio` 1.75 / 1.5 / 1), refreshed on every resize (monitor / OS DPR changes). Mobile starts MEDIUM (DPR ≤1.5, no ghosts/ticks); sampler may lock LOW (DPR 1, no wireframe). Never disable rotation, touch, raycast, focus, labels, zoom, or navigation.
 - GSAP drives the page-transition timeline; idle spin is unused.
-
 ## Render-loop hygiene
 
 Separate concerns so nothing hidden reallocates every frame:
@@ -277,10 +296,11 @@ Resize sizing prefers `window.visualViewport` when present, else `innerWidth` / 
 - Mid-flight `navigateTo` retargets without hard-resetting zoom/fill/overlay; `cancel` builds an unwind timeline from live values (do not `timeline.reverse()` after a retarget that started mid-progress).
 - While `Navigator.busy` (including `complete`), `main.ts` skips hover-driven focus updates.
 - Focus uses **rest-frame** atom position (ignore current group rotation) so the focus quaternion stays absolute and independent of the mouse layer.
-- `setCompositionBias` must use FOV/aspect only — never `getBoundingClientRect` on the sidebar. Atom locals stay fixed.
+- `setCompositionProfile` must use FOV/aspect only — never `getBoundingClientRect` on the sidebar. Atom locals stay fixed. Prefer profiles over ad-hoc `setCompositionBias`.
 - `NavigationConnector` consumes screen pixels only (`projectAtom` + DOM anchors). Do not import scene graph objects into UI modules. Tip + tiny marker stop short of the atom.
-- Desktop rail / header / connector are CSS ≥1024 only; tablet/mobile keep the bottom nav and hide the connector.- `clearFocus` only lowers `focusStrength`; do not slerp focus orientation to identity on leave (avoids a long unused arc).
-- Central atom (zero offset from molecule origin) has no unique focus forward; stable math keeps the reference quaternion.
+- Desktop rail / header / connector are CSS ≥1024; tablet keeps bottom nav; mobile uses header + compact rail + MENU overlay and hides the connector.
+- `clearFocus` only lowers `focusStrength`; do not slerp focus orientation to identity on leave (avoids a long unused arc).
+- Central / Home atom (zero offset): no unique focus forward — on enter, apply a π flip about a random axis from the current focus pose (idempotent while already focused on hub). Peripheral focus still uses `getStableFocusQuaternion`. `focusAtom` also clears residual pointer/touch tilt so the atom faces the camera.
 - Do not write `moleculeGroup.rotation.x/y += …`; apply composed absolute layers each frame (no rotation accumulation).
 - Do not `new Vector3` / `new Quaternion` / options literals inside `tick` / `update` — use scratches and persistent options bags.
 - Hover stays dirty every frame while orientation/zoom is still damping (correct under a still pointer); idle settled frames do not raycast.
