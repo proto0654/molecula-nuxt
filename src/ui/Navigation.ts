@@ -5,11 +5,14 @@ export type NavSelectListener = (itemId: string) => void;
 
 /**
  * Minimal techno nav overlay. Hover previews; click is decided by the app layer.
+ * Desktop: left vertical rail. Tablet/mobile: bottom bar.
  */
 export class Navigation {
   readonly root: HTMLElement;
   private readonly state: NavigationState;
   private readonly itemElements = new Map<string, HTMLElement>();
+  private readonly statusNode: HTMLElement;
+  private readonly statusSignal: HTMLElement;
   private readonly unsubscribe: () => void;
   private readonly onSelect: NavSelectListener | undefined;
 
@@ -71,6 +74,17 @@ export class Navigation {
     });
 
     this.root.append(list);
+
+    const status = document.createElement('div');
+    status.className = 'nav__status';
+    status.setAttribute('aria-hidden', 'true');
+    this.statusNode = document.createElement('span');
+    this.statusNode.className = 'nav__status-node';
+    this.statusSignal = document.createElement('span');
+    this.statusSignal.className = 'nav__status-signal';
+    status.append(this.statusNode, this.statusSignal);
+    this.root.append(status);
+
     this.root.addEventListener('pointerleave', () => {
       this.state.setNavHover(null);
     });
@@ -84,11 +98,49 @@ export class Navigation {
         el.classList.toggle('is-active', id === active);
         el.classList.toggle('is-committed', id === committed);
       }
+      this.syncStatus();
     });
+    this.syncStatus();
   }
 
   get navigationState(): NavigationState {
     return this.state;
+  }
+
+  /**
+   * Label right-edge mid-point in viewport CSS pixels (connector start).
+   * Uses the label, not the full button width, so the line meets the text.
+   */
+  getItemAnchor(itemId: string): { x: number; y: number } | null {
+    const el = this.itemElements.get(itemId);
+    if (!el) return null;
+    const label = el.querySelector('.nav__label') ?? el;
+    const rect = label.getBoundingClientRect();
+    if (rect.width <= 0 && rect.height <= 0) return null;
+    return {
+      x: rect.right + 10,
+      y: rect.top + rect.height * 0.5,
+    };
+  }
+
+  setZoomSoftness(amount: number): void {
+    const t = Math.max(0, Math.min(1, amount));
+    this.root.style.setProperty('--nav-zoom-fade', String(t));
+  }
+
+  private syncStatus(): void {
+    const id = this.state.committedItemId ?? this.state.activeItemId;
+    if (!id) {
+      this.statusNode.textContent = 'NODE --';
+      this.statusSignal.textContent = 'SIGNAL IDLE';
+      this.statusSignal.classList.remove('is-live');
+      return;
+    }
+    const index = navigationConfig.items.findIndex((entry) => entry.id === id);
+    this.statusNode.textContent = `NODE ${String(index + 1).padStart(2, '0')}`;
+    const live = this.state.committedItemId !== null;
+    this.statusSignal.textContent = live ? 'SIGNAL ACTIVE' : 'SIGNAL READY';
+    this.statusSignal.classList.toggle('is-live', live);
   }
 
   dispose(): void {

@@ -2,15 +2,29 @@ import {
   AmbientLight,
   Color,
   DirectionalLight,
+  Fog,
   Group,
+  LineBasicMaterial,
+  LineDashedMaterial,
+  LineSegments,
   Mesh,
   PerspectiveCamera,
   Scene,
+  Vector3,
   WebGLRenderer,
 } from 'three';
 import { Atom } from './Atom';
 import { Bond } from './Bond';
+import { CompositionGuides } from './CompositionGuides';
+import { DecorativeNodes } from './DecorativeNodes';
+import type { QualityManager } from './quality/QualityManager';
+import type { QualitySettings } from './quality/types';
+import { GeometryCache } from './resources/GeometryCache';
 import type { MoleculeConfig } from './types';
+const SCENE_BG = 0x14161c;
+const WIREFRAME_SCALE = 1.04;
+const WIREFRAME_COLOR = 0xd6dbe0;
+const BOND_COLOR = 0x5a636c;
 
 export class MoleculeScene {
   readonly scene: Scene;
@@ -19,14 +33,28 @@ export class MoleculeScene {
   readonly moleculeGroup: Group;
   readonly labelsGroup: Group;
 
+  private readonly quality: QualityManager;
+  private readonly cache = new GeometryCache();
   private readonly atoms: Atom[] = [];
   private readonly bonds: Bond[] = [];
   /** Atom meshes only — used for hover raycasting (bonds excluded). */
   private readonly atomMeshes: Mesh[] = [];
+  private readonly bondMaterial: LineDashedMaterial;
+  private readonly wireframeMaterial: LineBasicMaterial;
+  private readonly wireframe: LineSegments;
+  private readonly decorativeNodes: DecorativeNodes;
+  private readonly compositionGuides: CompositionGuides;
+  private readonly scratchHub = new Vector3();
+  private wireframeAtomId: string | null = null;
+  private lastWidth = 1;
+  private lastHeight = 1;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
+    this.quality = quality;
+
     this.scene = new Scene();
-    this.scene.background = new Color(0x0f1115);
+    this.scene.background = new Color(SCENE_BG);
+    this.scene.fog = new Fog(SCENE_BG, 5, 16);
 
     this.camera = new PerspectiveCamera(45, 1, 0.1, 100);
     this.camera.position.set(0, 0.6, 4.5);
@@ -36,8 +64,10 @@ export class MoleculeScene {
       canvas,
       antialias: true,
       alpha: false,
+      powerPreference: 'high-performance',
     });
-    this.renderer.setClearColor(0x0f1115, 1);
+    this.renderer.setClearColor(SCENE_BG, 1);
+    this.renderer.shadowMap.enabled = false;
 
     this.moleculeGroup = new Group();
     this.scene.add(this.moleculeGroup);
@@ -46,10 +76,48 @@ export class MoleculeScene {
     this.labelsGroup.name = 'atom-labels';
     this.scene.add(this.labelsGroup);
 
-    const ambient = new AmbientLight(0xffffff, 0.55);
-    const key = new DirectionalLight(0xffffff, 0.85);
+    const ambient = new AmbientLight(0xffffff, 0.38);
+    const key = new DirectionalLight(0xffffff, 0.9);
     key.position.set(3, 4, 5);
-    this.scene.add(ambient, key);
+    key.castShadow = false;
+    const fill = new DirectionalLight(0xd8dde4, 0.28);
+    fill.position.set(-2.5, 1.2, -2);
+    fill.castShadow = false;
+    this.scene.add(ambient, key, fill);
+
+    this.bondMaterial = new LineDashedMaterial({
+      color: BOND_COLOR,
+      transparent: true,
+      opacity: 0.55,
+      dashSize: 0.07,
+      gapSize: 0.05,
+      scale: 1,
+      depthWrite: false,
+    });
+
+    this.wireframeMaterial = new LineBasicMaterial({
+      color: WIREFRAME_COLOR,
+      transparent: true,
+      opacity: 0.22,
+      depthTest: true,
+      depthWrite: false,
+    });
+
+    this.wireframe = new LineSegments(
+      this.cache.getUnitIcosahedronEdges(quality.get().atomDetail),
+      this.wireframeMaterial,
+    );
+    this.wireframe.name = 'selection-wireframe';
+    this.wireframe.raycast = () => {};
+    this.wireframe.visible = false;
+    this.wireframe.renderOrder = 2;
+
+    this.decorativeNodes = new DecorativeNodes(this.cache);
+    this.decorativeNodes.setVisible(quality.get().decorativeNodes);
+    this.moleculeGroup.add(this.decorativeNodes.object);
+
+    this.compositionGuides = new CompositionGuides();
+    this.scene.add(this.compositionGuides.object);
 
     this.resize(window.innerWidth, window.innerHeight);
   }
@@ -57,10 +125,11 @@ export class MoleculeScene {
   buildMolecule(config: MoleculeConfig): void {
     this.clearMolecule();
 
+    const settings = this.quality.get();
     const atomById = new Map<string, Atom>();
 
     for (const atomConfig of config.atoms) {
-      const atom = new Atom(atomConfig);
+      const atom = new Atom(atomConfig, this.cache, settings);
       atomById.set(atom.id, atom);
       this.atoms.push(atom);
       this.atomMeshes.push(atom.mesh);
@@ -73,13 +142,49 @@ export class MoleculeScene {
       const to = atomById.get(bondConfig.to);
       if (!from || !to) continue;
 
-      const bond = new Bond(bondConfig, from.mesh.position, to.mesh.position);
+      const bond = new Bond(
+        bondConfig,
+        from.object.position,
+        to.object.position,
+        from.radius,
+        to.radius,
+        this.bondMaterial,
+      );
       this.bonds.push(bond);
       this.moleculeGroup.add(bond.object);
     }
+
+    this.syncWireframe();
   }
 
-  /** Atom sphere meshes for picking; never includes bonds. */
+  /**
+   * Apply a locked quality preset in place — do not rebuild the molecule
+   * (hover / commit / focus / zoom state must survive).
+   */
+  applyQuality(settings: QualitySettings): void {
+    for (const atom of this.atoms) {
+      atom.applyQuality(settings, this.cache);
+    }
+    this.wireframe.geometry = this.cache.getUnitIcosahedronEdges(
+      settings.atomDetail,
+    );
+    this.decorativeNodes.setVisible(settings.decorativeNodes);
+    this.syncWireframe();
+    this.resize(this.lastWidth, this.lastHeight);
+  }
+
+  /** Committed atom only — hover must not show the wireframe shell. */
+  setWireframeAtom(atomId: string | null): void {
+    this.wireframeAtomId = atomId;
+    this.syncWireframe();
+  }
+
+  setDecorativeZoomFade(zoomProgress: number, fillProgress: number): void {
+    this.decorativeNodes.setZoomFade(zoomProgress, fillProgress);
+    this.compositionGuides.setZoomFade(zoomProgress, fillProgress);
+  }
+
+  /** Atom meshes for picking; never includes bonds. */
   getAtomMeshes(): readonly Mesh[] {
     return this.atomMeshes;
   }
@@ -92,10 +197,17 @@ export class MoleculeScene {
     return this.atoms;
   }
 
+  getPixelRatio(): number {
+    return this.renderer.getPixelRatio();
+  }
+
   resize(width: number, height: number): void {
     const w = Math.max(width, 1);
     const h = Math.max(height, 1);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.lastWidth = w;
+    this.lastHeight = h;
+    const maxRatio = this.quality.get().maxPixelRatio;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxRatio));
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
@@ -103,7 +215,7 @@ export class MoleculeScene {
 
   /**
    * Updates atom labels when `updateLabels` is true.
-   * Typewriter + halos always tick.
+   * Typewriter + selection indicator always tick (indicator early-outs when idle).
    * Caller must have already refreshed `moleculeGroup` world matrices.
    */
   update(deltaSeconds: number, updateLabels = true, elapsed = 0): void {
@@ -112,7 +224,13 @@ export class MoleculeScene {
         atom.updateLabel(this.camera);
       }
       atom.tickLabelTypewriter(deltaSeconds);
-      atom.updateHalo(this.camera, deltaSeconds, elapsed);
+      atom.updateSelection(this.camera, deltaSeconds, elapsed);
+    }
+
+    const hub = this.getAtom('C');
+    if (hub) {
+      hub.mesh.getWorldPosition(this.scratchHub);
+      this.compositionGuides.update(this.camera, this.scratchHub);
     }
   }
 
@@ -122,11 +240,35 @@ export class MoleculeScene {
 
   dispose(): void {
     this.clearMolecule();
+    this.compositionGuides.dispose();
+    this.decorativeNodes.dispose();
+    this.wireframeMaterial.dispose();
+    this.bondMaterial.dispose();
+    this.cache.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
   }
 
+  private syncWireframe(): void {
+    const enabled = this.quality.get().selectedWireframe;
+    const atom = this.wireframeAtomId
+      ? this.getAtom(this.wireframeAtomId)
+      : undefined;
+    if (!enabled || !atom) {
+      this.wireframe.visible = false;
+      this.wireframe.removeFromParent();
+      return;
+    }
+    if (this.wireframe.parent !== atom.object) {
+      atom.object.add(this.wireframe);
+    }
+    this.wireframe.scale.setScalar(atom.radius * WIREFRAME_SCALE);
+    this.wireframe.visible = true;
+  }
+
   private clearMolecule(): void {
+    this.wireframe.removeFromParent();
+    this.wireframe.visible = false;
     for (const atom of this.atoms) {
       this.labelsGroup.remove(atom.atomLabel.object);
       this.moleculeGroup.remove(atom.object);

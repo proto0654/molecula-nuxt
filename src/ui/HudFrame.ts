@@ -1,5 +1,7 @@
 /**
- * Techno HUD chrome: edge grid + corner ticks. Pointer-events none.
+ * Techno HUD chrome: edge grid, corner ticks, coord marks.
+ * Guide crosshair lives in WebGL (`CompositionGuides`) behind the molecule.
+ * Pointer-events none.
  */
 export class HudFrame {
   readonly root: HTMLElement;
@@ -20,11 +22,25 @@ export class HudFrame {
       frame.append(tick);
     }
 
+    const coords = document.createElement('div');
+    coords.className = 'hud__coords';
+    for (const mark of [
+      { className: 'hud__coord hud__coord--tl', text: '0.0' },
+      { className: 'hud__coord hud__coord--tr', text: '1.0' },
+      { className: 'hud__coord hud__coord--bl', text: '0.0' },
+      { className: 'hud__coord hud__coord--br', text: '1.0' },
+    ] as const) {
+      const el = document.createElement('span');
+      el.className = mark.className;
+      el.textContent = mark.text;
+      coords.append(el);
+    }
+
     const meta = document.createElement('p');
     meta.className = 'hud__meta';
     meta.textContent = 'SYS // MOLECULE';
 
-    this.root.append(grid, frame, meta);
+    this.root.append(grid, frame, coords, meta);
     parent.append(this.root);
   }
 

@@ -1,14 +1,22 @@
 import './styles.css';
 import { MoleculeController } from './3d/MoleculeController';
+import { QualityManager } from './3d/quality/QualityManager';
+import { PerfOverlay } from './debug/PerfOverlay';
 import { getItemByAtomId, getItemById } from './navigation/navigationConfig';
 import { Navigator } from './navigation/Navigator';
 import { NavigationState } from './navigation/NavigationState';
+import { DesktopHeader } from './ui/DesktopHeader';
 import { DestinationView } from './ui/DestinationView';
 import { HudFrame } from './ui/HudFrame';
 import { Navigation } from './ui/Navigation';
+import { NavigationConnector } from './ui/NavigationConnector';
 
 const MOBILE_MQ = '(max-width: 767px)';
 const TABLET_MQ = '(min-width: 768px) and (max-width: 1023px)';
+const DESKTOP_MQ = '(min-width: 1024px)';
+
+/** Desktop visual center of the molecule (viewport X fraction). */
+const DESKTOP_COMPOSITION_X = 0.62;
 
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) {
@@ -19,14 +27,26 @@ const canvas = document.createElement('canvas');
 canvas.id = 'hero-canvas';
 app.append(canvas);
 
-const controller = new MoleculeController(canvas);
+const quality = new QualityManager();
+const controller = new MoleculeController(canvas, quality);
 controller.start();
+
+const perfOverlay = PerfOverlay.tryCreate(app, quality, () =>
+  controller.scene.getPixelRatio(),
+);
+const unsubscribePerf = perfOverlay
+  ? controller.onAfterUpdate((delta) => {
+      perfOverlay.record(delta);
+    })
+  : () => {};
 
 const navigationState = new NavigationState();
 const hud = new HudFrame(app);
+const desktopHeader = new DesktopHeader(app, navigationState);
 
 const mobileMq = window.matchMedia(MOBILE_MQ);
 const tabletMq = window.matchMedia(TABLET_MQ);
+const desktopMq = window.matchMedia(DESKTOP_MQ);
 
 const navigator = new Navigator({
   controller,
@@ -51,11 +71,6 @@ const unsubscribeTransition = navigator.transitionState.subscribe((snap) => {
   }
 });
 
-function applyViewportMode(): void {
-  controller.setCaptionsCompact(mobileMq.matches);
-  controller.setCaptionRemainderScale(tabletMq.matches ? 0.82 : 1);
-}
-
 function applyVisuals(): void {
   const committedId = navigationState.committedItemId;
   const previewId = navigationState.previewItemId;
@@ -66,11 +81,14 @@ function applyVisuals(): void {
   if (committedId) {
     const committed = getItemById(committedId);
     controller.setHaloAtom(committed?.atomId ?? null, 'committed');
+    controller.setWireframeAtom(committed?.atomId ?? null);
   } else if (previewId) {
     const preview = getItemById(previewId);
     controller.setHaloAtom(preview?.atomId ?? null, 'hover');
+    controller.setWireframeAtom(null);
   } else {
     controller.setHaloAtom(null, 'idle');
+    controller.setWireframeAtom(null);
   }
 
   if (!committedId) {
@@ -116,6 +134,30 @@ function clearSelection(): void {
 
 const navigation = new Navigation(app, navigationState, selectItem);
 
+const connector = new NavigationConnector(
+  app,
+  navigation,
+  navigationState,
+  (atomId, out) => controller.projectAtom(atomId, out),
+);
+
+function applyViewportMode(): void {
+  controller.setCaptionsCompact(mobileMq.matches);
+  controller.setCaptionRemainderScale(tabletMq.matches ? 0.82 : 1);
+  controller.setCompositionBias(desktopMq.matches ? DESKTOP_COMPOSITION_X : 0.5);
+  connector.setEnabled(desktopMq.matches);
+}
+
+const unsubscribeConnector = controller.onAfterUpdate((delta) => {
+  const zoomFade = Math.min(
+    1,
+    controller.zoomProgress * 0.55 + controller.fillProgress * 0.85,
+  );
+  connector.setZoomFade(zoomFade);
+  navigation.setZoomSoftness(zoomFade);
+  connector.update(delta);
+});
+
 const unsubscribeNav = navigationState.subscribe(() => {
   applyVisuals();
 });
@@ -140,17 +182,24 @@ function onViewportChange(): void {
 applyViewportMode();
 mobileMq.addEventListener('change', onViewportChange);
 tabletMq.addEventListener('change', onViewportChange);
+desktopMq.addEventListener('change', onViewportChange);
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     mobileMq.removeEventListener('change', onViewportChange);
     tabletMq.removeEventListener('change', onViewportChange);
+    desktopMq.removeEventListener('change', onViewportChange);
     unsubscribeNav();
     unsubscribeHover();
     unsubscribeClick();
     unsubscribeTransition();
+    unsubscribeConnector();
+    unsubscribePerf();
+    perfOverlay?.dispose();
     navigator.dispose();
+    connector.dispose();
     navigation.dispose();
+    desktopHeader.dispose();
     destination.dispose();
     hud.dispose();
     controller.dispose();

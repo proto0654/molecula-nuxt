@@ -1,6 +1,6 @@
 import { Quaternion, Vector2, Vector3 } from 'three';
 import { AtomHover, type AtomHoverListener } from './AtomHover';
-import type { HaloMode } from './AtomHalo';
+import type { HaloMode } from './AtomSelectionIndicator';
 import { getStableFocusQuaternion } from './math/focusAtom';
 import {
   getAtomFocusDistance,
@@ -9,6 +9,9 @@ import {
 import { projectToScreenInto } from './math/projection';
 import { moleculeConfig } from './moleculeConfig';
 import { MoleculeScene } from './MoleculeScene';
+import { PerformanceSampler } from './quality/PerformanceSampler';
+import type { QualityManager } from './quality/QualityManager';
+import { readQualitySearchParam } from './quality/QualityManager';
 
 /** Limited yaw / pitch from pointer (radians) — not a full turn. */
 const MAX_YAW = Math.PI / 5;
@@ -72,6 +75,7 @@ export type AtomScreenPoint = {
 
 export class MoleculeController {
   readonly scene: MoleculeScene;
+  readonly quality: QualityManager;
 
   /** Rest pose (identity for now). Absolute — never accumulated. */
   private readonly baseOrientation = new Quaternion();
@@ -123,6 +127,15 @@ export class MoleculeController {
   /** Rest translation of `moleculeGroup` (zoom offset is applied on top). */
   private readonly baseMoleculePosition = new Vector3();
 
+  /**
+   * Desired visual center of the molecule as a viewport X fraction (0.5 = center).
+   * Applied via world offset along camera right — never reads CSS sidebar width.
+   */
+  private compositionScreenX = 0.5;
+
+  /** Look-at used for composition distance (matches MoleculeScene camera). */
+  private readonly compositionLookAt = new Vector3(0, 0.2, 0);
+
   /** Last orientation used for hover picking — dirty when it diverges. */
   private readonly lastHoverQuaternion = new Quaternion();
 
@@ -153,6 +166,7 @@ export class MoleculeController {
   private readonly scratchCameraPos = new Vector3();
   private readonly scratchLookDir = new Vector3();
   private readonly scratchZoomOffset = new Vector3();
+  private readonly scratchCameraRight = new Vector3();
   private readonly pointerNorm: PointerNorm = { x: 0, y: 0 };
   private readonly atomHover = new AtomHover();
   private readonly atomClickListeners = new Set<AtomClickListener>();
@@ -165,20 +179,34 @@ export class MoleculeController {
   private lastTime = 0;
   private running = false;
   private readonly canvas: HTMLCanvasElement;
+  private readonly sampler: PerformanceSampler;
+  private readonly unsubscribeQuality: () => void;
   private readonly onResizeBound: () => void;
   private readonly onPointerMoveBound: (event: PointerEvent) => void;
   private readonly onPointerLeaveBound: () => void;
   private readonly onClickBound: (event: MouseEvent) => void;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
     this.canvas = canvas;
-    this.scene = new MoleculeScene(canvas);
+    this.quality = quality;
+    this.scene = new MoleculeScene(canvas, quality);
     this.scene.buildMolecule(moleculeConfig);
-    this.baseMoleculePosition.copy(this.scene.moleculeGroup.position);
+    this.baseMoleculePosition.set(0, 0, 0);
+    this.applyCompositionBias();
+
+    this.sampler = new PerformanceSampler(quality, {
+      skip: readQualitySearchParam() !== null,
+      cap: quality.get().level,
+    });
+
+    this.unsubscribeQuality = quality.subscribe((settings) => {
+      this.scene.applyQuality(settings);
+    });
 
     this.onResizeBound = () => {
       const { width, height } = getViewportSize();
       this.scene.resize(width, height);
+      this.applyCompositionBias();
       // Aspect / projection changed — refresh pick and label billboards.
       this.atomHover.markDirty();
       this.lastLabelZoomProgress = Number.NaN;
@@ -188,10 +216,16 @@ export class MoleculeController {
       const rect = this.canvas.getBoundingClientRect();
       const w = Math.max(rect.width, 1);
       const h = Math.max(rect.height, 1);
-      this.pointerNorm.x = ((event.clientX - rect.left) / w) * 2 - 1;
-      this.pointerNorm.y = -(((event.clientY - rect.top) / h) * 2 - 1);
+      const fracX = (event.clientX - rect.left) / w;
+      const fracY = (event.clientY - rect.top) / h;
+      // Pick / hover use true viewport NDC (screen center).
+      const ndcX = fracX * 2 - 1;
+      const ndcY = -(fracY * 2 - 1);
+      // Mouse tilt origin follows composition bias (visual molecule center).
+      this.pointerNorm.x = (fracX - this.compositionScreenX) * 2;
+      this.pointerNorm.y = ndcY;
       this.updateMouseInfluence(this.pointerNorm);
-      this.atomHover.setPointerNdc(this.pointerNorm.x, this.pointerNorm.y);
+      this.atomHover.setPointerNdc(ndcX, ndcY);
     };
 
     this.onPointerLeaveBound = () => {
@@ -256,7 +290,8 @@ export class MoleculeController {
     // Rest-frame molecule origin (ignore live zoom translation).
     this.scratchMoleculePos.copy(this.baseMoleculePosition);
     // Rest pose: ignore current group rotation so focus Q stays absolute.
-    this.scratchAtomPos.copy(atom.mesh.position).add(this.scratchMoleculePos);
+    // Atom world rest = group local position (mesh sits at the group origin).
+    this.scratchAtomPos.copy(atom.object.position).add(this.scratchMoleculePos);
     this.scene.camera.getWorldPosition(this.scratchCameraPos);
 
     getStableFocusQuaternion(
@@ -331,11 +366,16 @@ export class MoleculeController {
     }
   }
 
-  /** Concentric rings: idle / hover pulse / committed freeze. One atom at a time. */
+  /** Selection reticle: idle / hover pulse / committed freeze. One atom at a time. */
   setHaloAtom(atomId: string | null, mode: HaloMode): void {
     for (const atom of this.scene.getAtoms()) {
       atom.setHaloMode(atom.id === atomId ? mode : 'idle');
     }
+  }
+
+  /** Selected-atom wireframe shell (committed only; quality may hide it). */
+  setWireframeAtom(atomId: string | null): void {
+    this.scene.setWireframeAtom(atomId);
   }
 
   setCaptionsCompact(compact: boolean): void {
@@ -355,6 +395,17 @@ export class MoleculeController {
     for (const atom of this.scene.getAtoms()) {
       atom.setBlurb(atom.id === atomId ? blurb : null);
     }
+  }
+
+  /**
+   * Shifts rest framing so the molecule projects near `screenX` (viewport fraction).
+   * World atom locals stay unchanged; offset is along camera right from FOV + aspect.
+   */
+  setCompositionBias(screenX: number): void {
+    const next = Math.max(0.35, Math.min(0.75, screenX));
+    if (Math.abs(next - this.compositionScreenX) < 1e-4) return;
+    this.compositionScreenX = next;
+    this.applyCompositionBias();
   }
 
   /**
@@ -394,7 +445,8 @@ export class MoleculeController {
 
   /**
    * Maps normalized pointer [-1, 1] into a limited yaw/pitch target (no Euler).
-   * Center (0, 0) → identity. Absolute rewrite — not accumulated.
+   * (0, 0) is the composition bias (visual molecule center), not screen center.
+   * Absolute rewrite — not accumulated.
    */
   updateMouseInfluence(pointer: PointerNorm): void {
     const nx = Math.max(-1, Math.min(1, pointer.x));
@@ -410,6 +462,13 @@ export class MoleculeController {
    * `final = appliedFocus * mouseOrientation * baseOrientation`
    * where `appliedFocus = slerp(I, focusOrientation, focusStrength)`.
    * Zoom writes `moleculeGroup.position` only — not mixed into quaternion layers.
+   *
+   * Update layers (do not mix):
+   * - PER FRAME: quaternion follow, zoom translation, one matrix update
+   * - POINTER: raycast only when AtomHover is dirty
+   * - TRANSFORM DEPENDENT: labels when orientation / zoom / fill changed
+   * - STATE DRIVEN: highlight / selection / wireframe / blurb from NavigationState
+   * - DECORATIVE: selection pulse (early-out when idle); ghost layer zoom-fades
    */
   update(delta: number): void {
     const mouseT = 1 - Math.exp(-MOUSE_FOLLOW * delta);
@@ -436,6 +495,7 @@ export class MoleculeController {
     this.scene.moleculeGroup.quaternion.copy(this.scratchCompose);
 
     this.applyZoomTranslation();
+    this.scene.setDecorativeZoomFade(this.zoomProgress, this.fillProgress);
 
     // One forced matrix pass after all transforms — labels + hover consume it.
     this.scene.moleculeGroup.updateMatrixWorld(true);
@@ -505,6 +565,7 @@ export class MoleculeController {
 
   dispose(): void {
     this.stop();
+    this.unsubscribeQuality();
     this.atomClickListeners.clear();
     this.afterUpdateListeners.clear();
     this.scene.dispose();
@@ -540,6 +601,30 @@ export class MoleculeController {
   private isFocusReadyForZoom(): boolean {
     if (this.focusStrength < ZOOM_FOCUS_STRENGTH_GATE) return false;
     return this.focusOrientation.angleTo(this.targetFocusOrientation) <= ZOOM_FOCUS_ANGLE_GATE;
+  }
+
+  /**
+   * Writes `baseMoleculePosition` from compositionScreenX using FOV + aspect.
+   * Does not read CSS layout.
+   */
+  private applyCompositionBias(): void {
+    const camera = this.scene.camera;
+    camera.updateMatrixWorld(true);
+    this.scratchCameraRight.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+
+    const dist = camera.position.distanceTo(this.compositionLookAt);
+    const vFov = (camera.fov * Math.PI) / 180;
+    const halfW = Math.tan(vFov / 2) * dist * camera.aspect;
+    const ndcX = (this.compositionScreenX - 0.5) * 2;
+
+    this.baseMoleculePosition
+      .set(0, 0, 0)
+      .addScaledVector(this.scratchCameraRight, ndcX * halfW);
+
+    // Apply immediately when not mid-zoom; zoom path recomposes each frame.
+    if (!this.zoomAtomId || this.zoomProgress <= 0) {
+      this.scene.moleculeGroup.position.copy(this.baseMoleculePosition);
+    }
   }
 
   /**
@@ -598,6 +683,7 @@ export class MoleculeController {
     this.lastTime = time;
     this.update(deltaSeconds);
     this.scene.render();
+    this.sampler.tick(deltaSeconds);
     this.rafId = requestAnimationFrame(this.tick);
   };
 };

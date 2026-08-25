@@ -18,7 +18,7 @@ Interactive WebGL hero prototype for a molecule visualization block.
 
 ## Current focus
 
-Fullscreen techno HUD over the molecule. Hover = highlight + pulse halo (no centering). First click = `focusAtom` + typewriter blurb. Second click = `Navigator.navigateTo` (zoom → fill → stub) with Return. Captions are scene-parented screen-flat troika (title + blurb). HUD tokens: [`docs/DESIGN.md`](docs/DESIGN.md) / `src/styles.css` `:root`. No client router (`route` is data only).
+Matte flat-shaded icosahedron atoms, dashed-line bonds, and orbital placement (`moleculeOrbits`) under lock-once `QualityManager`. Desktop composition: left nav rail + header + SVG connector via `projectAtom`, molecule framed with `setCompositionBias(0.62)`, WebGL crosshair behind hub (`CompositionGuides`). Hover = highlight + pulse reticle (no centering). First click = `focusAtom` + typewriter blurb. Second click = `Navigator.navigateTo` (zoom → fill → stub) with Return. Captions stay scene-parented troika. HUD stays HTML/CSS/SVG. No client router (`route` is data only).
 
 ## Docs hub
 

@@ -1,24 +1,29 @@
 import {
   type Camera,
-  Color,
+  Group,
   Mesh,
+  MeshLambertMaterial,
   MeshStandardMaterial,
-  SphereGeometry,
   type Object3D,
 } from 'three';
-import { AtomHalo, type HaloMode } from './AtomHalo';
+import {
+  AtomSelectionIndicator,
+  type HaloMode,
+} from './AtomSelectionIndicator';
 import { AtomLabel } from './AtomLabel';
+import type { QualityMaterialKind, QualitySettings } from './quality/types';
+import type { GeometryCache } from './resources/GeometryCache';
 import type { AtomConfig } from './types';
 
 const COLOR_BY_LABEL: Record<string, number> = {
-  C: 0x2a3038,
-  H: 0x5a636e,
+  C: 0x3a4048,
+  H: 0x25292e,
   O: 0xc0392b,
   N: 0x2f6fed,
 };
 
-const HIGHLIGHT_EMISSIVE = new Color(0x6a7a8a);
-const HIGHLIGHT_INTENSITY = 0.45;
+const HIGHLIGHT_INTENSITY = 0.1;
+const HIGHLIGHT_EMISSIVE = 0x4a525a;
 
 export class Atom {
   readonly id: string;
@@ -26,27 +31,30 @@ export class Atom {
   readonly radius: number;
   readonly mesh: Mesh;
   readonly atomLabel: AtomLabel;
-  readonly halo: AtomHalo;
-  private readonly material: MeshStandardMaterial;
+  readonly selection: AtomSelectionIndicator;
+  private readonly group: Group;
+  private readonly color: number;
+  private material: MeshStandardMaterial | MeshLambertMaterial;
   private highlighted = false;
 
-  constructor(config: AtomConfig) {
+  constructor(config: AtomConfig, cache: GeometryCache, settings: QualitySettings) {
     this.id = config.id;
     this.label = config.label;
     this.radius = config.radius;
+    this.color = COLOR_BY_LABEL[config.label] ?? 0x2c3036;
 
-    const geometry = new SphereGeometry(config.radius, 32, 32);
-    this.material = new MeshStandardMaterial({
-      color: COLOR_BY_LABEL[config.label] ?? 0x7f8c9a,
-      roughness: 0.45,
-      metalness: 0.05,
-      emissive: 0x000000,
-      emissiveIntensity: 0,
-    });
+    this.group = new Group();
+    this.group.name = `atom-${config.id}`;
+    this.group.position.set(...config.position);
 
-    this.mesh = new Mesh(geometry, this.material);
-    this.mesh.position.set(...config.position);
-    this.mesh.name = `atom-${config.id}`;
+    this.material = createAtomMaterial(settings.material, this.color);
+
+    this.mesh = new Mesh(
+      cache.getUnitIcosahedron(settings.atomDetail),
+      this.material,
+    );
+    this.mesh.scale.setScalar(config.radius);
+    this.mesh.name = `atom-mesh-${config.id}`;
     this.mesh.userData.atomId = config.id;
 
     this.atomLabel = new AtomLabel(
@@ -54,28 +62,34 @@ export class Atom {
       config.radius,
     );
 
-    this.halo = new AtomHalo(config.radius);
-    this.mesh.add(this.halo.object);
+    this.selection = new AtomSelectionIndicator(config.radius, {
+      circle: cache.getUnitCircle(),
+      ticks: cache.getUnitTicks(),
+      cross: cache.getUnitCross(),
+    });
+    this.applySelectionQuality(settings);
+
+    this.group.add(this.mesh, this.selection.object);
   }
 
   get object(): Object3D {
-    return this.mesh;
+    return this.group;
+  }
+
+  applyQuality(settings: QualitySettings, cache: GeometryCache): void {
+    this.mesh.geometry = cache.getUnitIcosahedron(settings.atomDetail);
+    this.applyMaterialKind(settings.material);
+    this.applySelectionQuality(settings);
   }
 
   setHighlighted(highlighted: boolean): void {
     if (this.highlighted === highlighted) return;
     this.highlighted = highlighted;
-    if (highlighted) {
-      this.material.emissive.copy(HIGHLIGHT_EMISSIVE);
-      this.material.emissiveIntensity = HIGHLIGHT_INTENSITY;
-    } else {
-      this.material.emissive.setHex(0x000000);
-      this.material.emissiveIntensity = 0;
-    }
+    this.applyHighlight();
   }
 
   setHaloMode(mode: HaloMode): void {
-    this.halo.setMode(mode);
+    this.selection.setMode(mode);
   }
 
   setBlurb(blurb: string | null): void {
@@ -90,14 +104,65 @@ export class Atom {
     this.atomLabel.tickTypewriter(delta);
   }
 
-  updateHalo(camera: Camera, delta: number, elapsed: number): void {
-    this.halo.update(camera, delta, elapsed);
+  updateSelection(camera: Camera, delta: number, elapsed: number): void {
+    this.selection.update(camera, delta, elapsed);
   }
 
   dispose(): void {
     this.atomLabel.dispose();
-    this.halo.dispose();
-    this.mesh.geometry.dispose();
+    this.selection.dispose();
     this.material.dispose();
   }
+
+  private applySelectionQuality(settings: QualitySettings): void {
+    this.selection.setRingCount(settings.selectionRingCount);
+    this.selection.setSimple(settings.level === 'low');
+    this.selection.setTicksVisible(settings.selectionTicks);
+    this.selection.setCenterVisible(settings.level !== 'low');
+  }
+
+  private applyMaterialKind(kind: QualityMaterialKind): void {
+    const isLambert = this.material instanceof MeshLambertMaterial;
+    if (kind === 'lambert' && isLambert) return;
+    if (kind === 'standard' && !isLambert) return;
+
+    this.material.dispose();
+    this.material = createAtomMaterial(kind, this.color);
+    this.mesh.material = this.material;
+    this.applyHighlight();
+  }
+
+  private applyHighlight(): void {
+    if (this.highlighted) {
+      this.material.emissive.setHex(HIGHLIGHT_EMISSIVE);
+      this.material.emissiveIntensity = HIGHLIGHT_INTENSITY;
+      return;
+    }
+    this.material.emissive.setHex(0x000000);
+    this.material.emissiveIntensity = 0;
+  }
+}
+
+function createAtomMaterial(
+  kind: QualityMaterialKind,
+  color: number,
+): MeshStandardMaterial | MeshLambertMaterial {
+  if (kind === 'lambert') {
+    return new MeshLambertMaterial({
+      color,
+      flatShading: true,
+      emissive: 0x000000,
+      emissiveIntensity: 0,
+    });
+  }
+
+  // Matte graphite — no Fresnel, no metal gloss; facets via flatShading.
+  return new MeshStandardMaterial({
+    color,
+    roughness: 0.94,
+    metalness: 0.04,
+    flatShading: true,
+    emissive: 0x000000,
+    emissiveIntensity: 0,
+  });
 }
