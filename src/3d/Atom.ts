@@ -35,7 +35,8 @@ export class Atom {
   readonly selection: AtomSelectionIndicator;
   private readonly group: Group;
   private readonly color: number;
-  private readonly baseRadius: number;
+  /** Authored radius before mobile compact scaling. */
+  readonly baseRadius: number;
   private readonly basePosition: [number, number, number];
   private material: MeshStandardMaterial | MeshLambertMaterial;
   private highlighted = false;
@@ -93,6 +94,7 @@ export class Atom {
     orbitScale: number,
     hubRadiusScale: number,
     peripheralRadiusScale: number,
+    hubLabelFontScale = 1,
   ): void {
     const radiusScale = this.isHub ? hubRadiusScale : peripheralRadiusScale;
     this.radius = this.baseRadius * radiusScale;
@@ -101,6 +103,7 @@ export class Atom {
     this.atomLabel.setSurfaceRadius(this.radius);
 
     if (this.isHub) {
+      this.atomLabel.setFontScale(hubLabelFontScale);
       this.group.position.set(0, 0, 0);
       return;
     }

@@ -27,6 +27,7 @@
 - [x] Hero polish: spherical per-atom orbits, mouse-under-focus attenuation, screen-flat selection, quieter HUD
 - [x] Russian UI copy + JetBrains Mono (CSS + troika); captions from `navigationConfig`
 - [x] HUD USP headline (`UspHeadline` + scramble after `isFocusSettled`); desktop/mobile layout polish; atom hover cursor
+- [x] GitHub Pages deploy (Actions workflow; Vite `base` + troika font via `import.meta.env.BASE_URL`)
 
 ## Next
 

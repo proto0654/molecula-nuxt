@@ -186,8 +186,19 @@ export class MoleculeScene {
     const orbitScale = compact ? MOBILE_ORBIT_SCALE : 1;
     const hubScale = compact ? MOBILE_HUB_RADIUS_SCALE : 1;
     const peripheralScale = compact ? MOBILE_PERIPHERAL_RADIUS_SCALE : 1;
+    const hub = this.atoms.find((atom) => atom.isHub);
+    const peripheral = this.atoms.find((atom) => !atom.isHub);
+    const hubLabelFontScale =
+      compact && hub && peripheral
+        ? peripheral.baseRadius / hub.baseRadius
+        : 1;
     for (const atom of this.atoms) {
-      atom.applyCompactLayout(orbitScale, hubScale, peripheralScale);
+      atom.applyCompactLayout(
+        orbitScale,
+        hubScale,
+        peripheralScale,
+        hubLabelFontScale,
+      );
     }
     this.decorativeNodes.setOrbitScale(orbitScale);
     this.syncBondEndpoints();

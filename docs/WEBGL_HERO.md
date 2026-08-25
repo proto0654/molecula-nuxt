@@ -154,7 +154,7 @@ Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation
 | tablet | 0.50 | 0.47 | 0.12 |
 | mobile | 0.50 | 0.56 | 0.28 |
 
-**Mobile compact layout** (`MoleculeScene.setCompactLayout`): when mode is `mobile`, orbit span ×0.58; hub radius ×0.58; peripheral radii ×0.78 (peripherals read larger relative to the compact molecule). Bonds + decorative orbits follow orbit scale. Desktop/tablet keep authored layout.
+**Mobile compact layout** (`MoleculeScene.setCompactLayout`): when mode is `mobile`, orbit span ×0.58; hub radius ×0.58; peripheral radii ×0.78 (peripherals read larger relative to the compact molecule). Hub caption font scales to match peripheral caption size (`peripheral.baseRadius / hub.baseRadius` via `AtomLabel.setFontScale`). Bonds + decorative orbits follow orbit scale. Desktop/tablet keep authored layout.
 
 Committed atom titles use bright ink; idle titles are pure black (`0x000000`) so they do not compete with the focused caption.
 
@@ -239,7 +239,7 @@ Dev overlay: [`PerfOverlay`](../src/debug/PerfOverlay.ts) — FPS, frame time, q
 | `math/focusAtom.ts` | `getStableFocusQuaternion`, `getFocusQuaternion`, camera-framing helper |
 | `math/getAtomFocusDistance.ts` | FOV-based distance so an atom radius covers a viewport fraction |
 | `math/projection.ts` | `projectToScreenInto` (scratch) / `projectToScreen` |
-| `Atom.ts` / `Bond.ts` / `AtomLabel.ts` / `AtomSelectionIndicator.ts` | Group+flat icosahedron, dashed line, two-part caption (JetBrains Mono ttf via troika), screen-flat reticle |
+| `Atom.ts` / `Bond.ts` / `AtomLabel.ts` / `AtomSelectionIndicator.ts` | Group+flat icosahedron, dashed line, two-part caption (JetBrains Mono ttf via troika + `BASE_URL`), screen-flat reticle |
 | `DecorativeNodes.ts` | HIGH-only unpickable ghost (one hub orbit per atom + wireframe fragments); idle orbits black, active orbit dark gray via `setActiveOrbitAtom`; fades with zoom/fill |
 | `moleculeConfig.ts` / `types.ts` | Declarative molecule data; captions pulled from nav labels |
 | `navigation/navigationConfig.ts` | RU `NavigationItem[]` + blurbs + USPs + id/atom lookups |
@@ -286,19 +286,30 @@ Frame order after transforms: single forced matrix update, then labels (only whe
 
 Resize sizing prefers `window.visualViewport` when present, else `innerWidth` / `innerHeight`. Listeners: `resize`, `orientationchange`, and `visualViewport` `resize` / `scroll` (torn down in `stop()`).
 
+## Build & deploy
+
+| Target | Command | `base` |
+|--------|---------|--------|
+| Local dev / preview | `npm run dev`, `npm run build`, `npm run preview` | `/` |
+| GitHub Pages | push to `main` → [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) (`GITHUB_PAGES=true`) | `/molecule/` |
+
+Live site: [proto0654.github.io/molecule](https://proto0654.github.io/molecule/). Fonts live in `public/fonts/` (copied to dist root).
+
+**Subpath gotcha:** Vite rewrites CSS `url('/fonts/…')` at build time, but **JS string literals are not**. Troika and any runtime fetch must prefix with `import.meta.env.BASE_URL` (trailing slash included). Hard-coded `/fonts/JetBrainsMono-Regular.ttf` works locally and 404s on GitHub Pages.
+
 ## Gotchas
 
 - Bond connectors are dashed `Line`s inset from atom radii; `computeLineDistances()` is required for `LineDashedMaterial`. Not pick targets.
 - Atom materials are matte + `flatShading` (HIGH/MEDIUM standard, LOW lambert). Do not reintroduce Fresnel or high metalness — facets must stay readable.
 - Peripheral positions and decorative orbits must stay in sync via [`moleculeOrbits.ts`](../src/3d/moleculeOrbits.ts) (`ATOM_ORBIT_PLACEMENT` / `buildSphericalOrbitPlacements`). Each peripheral owns one hub-centered orbit (varied radius); directions use equal spherical spacing (not a shared ecliptic). Do not share one ring across multiple atoms or hard-code XYZ. Active orbit color follows highlight via `setActiveOrbitAtom` (black idle / dark gray active).
 - Atom colors are a local `COLOR_BY_LABEL` map in `Atom.ts`, not part of `AtomConfig`.
-- `AtomLabel`: parented to `labelsGroup` on the **scene**, not the atom mesh. World position follows the atom; `quaternion.copy(camera.quaternion)` keeps the plane screen-flat (no off-axis foreshortening); scale = distance / 4.5 keeps pixel size stable. First letter centered on the surface point toward the camera; remainder `+X`; blurb under the title. Mobile: `setBlurbWrapAtSlash(true)` breaks the typewriter line at the content ` / ` separator. Do not parent labels to the mesh or `lookAt` from a rotated parent.
+- `AtomLabel`: parented to `labelsGroup` on the **scene**, not the atom mesh. World position follows the atom; `quaternion.copy(camera.quaternion)` keeps the plane screen-flat (no off-axis foreshortening); scale = distance / 4.5 keeps pixel size stable. First letter centered on the surface point toward the camera; remainder `+X`; blurb under the title. Mobile: `setBlurbWrapAtSlash(true)` breaks the typewriter line at the content ` / ` separator; hub `setFontScale` matches peripheral caption pixel size (authored hub radius is larger). Do not parent labels to the mesh or `lookAt` from a rotated parent.
 - `AtomSelectionIndicator`: concentric `LineLoop`s + ticks + center cross parented to the atom **Group**; **screen-flat billboard** via camera quaternion composed against parent world quaternion (not world-tilted); `depthTest` on; not in `atomMeshes`. Quality hides extra rings / ticks; LOW skips the pulse scale wave.
 - Atom rest-frame position for focus is `atom.object.position` (the Group), not `mesh.position` (local origin after the unit-icosahedron scale wrap).
 - Shared geometries live in `GeometryCache` — do not `geometry.dispose()` on atom/selection teardown. Bond lines own their geometry and dispose it in `Bond.dispose()`. `applyQuality` must not call `buildMolecule`.
 - Wireframe shell is decorative and committed-only; quality may disable it. Never add it to `atomMeshes`.
 - Keep `navigationConfig.items[].atomId` aligned with molecule atom ids. Captions/blurbs/USPs/labels are authored once in `navigationConfig` (Russian); `moleculeConfig` reads captions via `getItemByAtomId`.
-- Troika captions load `/fonts/JetBrainsMono-Regular.ttf` (Cyrillic). HUD CSS uses the matching `.woff2`. Do not point troika at woff2.
+- Troika captions load JetBrains Mono ttf via `import.meta.env.BASE_URL` + `fonts/JetBrainsMono-Regular.ttf` (Cyrillic). HUD CSS uses the matching `.woff2` from `public/fonts/`. Do not point troika at woff2.
 - Hover may **not** call `focusAtom` — only highlight / selection reticle. Focus comes from `committed` (first click). Zoom starts on the second click via `navigateTo`.
 - USP reveal shares `isFocusSettled()` with zoom-in. Arm on commit; do not scramble on hover or before the gate. Fade USP with zoom/fill; dispose with other HUD on HMR.
 - Do not put route / history / `navigateTo` inside `MoleculeController` click handling — pick notifies; app layer decides.

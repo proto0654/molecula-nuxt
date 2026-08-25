@@ -58,8 +58,10 @@ export class AtomLabel {
   private readonly remainder: Text;
   private readonly blurb: Text;
   private radius: number;
-  private readonly letterFontSize: number;
-  private readonly remainderBaseFontSize: number;
+  private readonly baseLetterFontSize: number;
+  private readonly baseRemainderFontSize: number;
+  private readonly baseBlurbFontSize: number;
+  private fontScale = 1;
   private remainderScale = 1;
   private remainderVisible = true;
   private titleActive = false;
@@ -78,8 +80,9 @@ export class AtomLabel {
 
   constructor(caption: string, radius: number, fontSize = radius * 0.7) {
     this.radius = radius;
-    this.letterFontSize = fontSize;
-    this.remainderBaseFontSize = fontSize * 0.92;
+    this.baseLetterFontSize = fontSize;
+    this.baseRemainderFontSize = fontSize * 0.92;
+    this.baseBlurbFontSize = fontSize * 0.38;
 
     const { letter, rest } = splitCaption(caption);
 
@@ -91,7 +94,6 @@ export class AtomLabel {
     this.letter = new Text();
     this.letter.text = letter;
     this.letter.font = LABEL_FONT;
-    this.letter.fontSize = fontSize;
     this.letter.color = LETTER_COLOR_IDLE;
     this.letter.anchorX = 'center';
     this.letter.anchorY = 'middle';
@@ -102,31 +104,27 @@ export class AtomLabel {
     this.remainder = new Text();
     this.remainder.text = rest;
     this.remainder.font = LABEL_FONT;
-    this.remainder.fontSize = this.remainderBaseFontSize;
     this.remainder.color = REMAINDER_COLOR_IDLE;
     this.remainder.anchorX = 'left';
     this.remainder.anchorY = 'middle';
     this.remainder.raycast = () => {};
     this.remainder.frustumCulled = false;
     this.remainder.visible = rest.length > 0;
-    this.remainder.position.x = fontSize * 0.38;
     this.remainder.sync();
 
     this.blurb = new Text();
     this.blurb.text = '';
     this.blurb.font = LABEL_FONT;
-    this.blurb.fontSize = fontSize * 0.38;
     this.blurb.color = BLURB_COLOR;
     this.blurb.anchorX = 'left';
     this.blurb.anchorY = 'top';
-    this.blurb.maxWidth = fontSize * 14;
     this.blurb.visible = false;
-    this.blurb.position.y = -fontSize * 0.72;
     this.blurb.raycast = () => {};
     this.blurb.frustumCulled = false;
     this.blurb.sync();
 
     this.object.add(this.letter, this.remainder, this.blurb);
+    this.applyFontSizes();
   }
 
   /**
@@ -153,12 +151,19 @@ export class AtomLabel {
     this.remainder.visible = visible && this.remainder.text.length > 0;
   }
 
+  /** Scales title + blurb together (mobile hub matches peripheral caption size). */
+  setFontScale(scale: number): void {
+    const next = Math.max(0.25, scale);
+    if (next === this.fontScale) return;
+    this.fontScale = next;
+    this.applyFontSizes();
+  }
+
   setRemainderScale(scale: number): void {
     const next = Math.max(0.5, scale);
     if (next === this.remainderScale) return;
     this.remainderScale = next;
-    this.remainder.fontSize = this.remainderBaseFontSize * next;
-    this.remainder.sync(() => this.layoutBlock());
+    this.applyFontSizes();
   }
 
   /** Mobile: break the typewriter blurb onto a second line at the content `/`. */
@@ -232,7 +237,7 @@ export class AtomLabel {
       .copy(this.scratchAtom)
       .addScaledVector(
         this.scratchNormal,
-        this.radius + this.letterFontSize * SURFACE_PAD,
+        this.radius + this.effectiveLetterFontSize * SURFACE_PAD,
       );
 
     this.object.position.copy(this.scratchLabel);
@@ -249,15 +254,33 @@ export class AtomLabel {
     this.blurb.dispose();
   }
 
+  private get effectiveLetterFontSize(): number {
+    return this.baseLetterFontSize * this.fontScale;
+  }
+
+  private applyFontSizes(): void {
+    const letterSize = this.effectiveLetterFontSize;
+    this.letter.fontSize = letterSize;
+    this.remainder.fontSize =
+      this.baseRemainderFontSize * this.fontScale * this.remainderScale;
+    this.blurb.fontSize = this.baseBlurbFontSize * this.fontScale;
+    this.blurb.maxWidth = letterSize * 14;
+    this.blurb.position.y = -letterSize * 0.72;
+    this.letter.sync(() => this.layoutBlock());
+    this.remainder.sync();
+    this.blurb.sync();
+  }
+
   private layoutBlock(): void {
     const info = this.letter.textRenderInfo;
     if (!info) return;
     const left = info.blockBounds[0];
     const right = info.blockBounds[2];
-    this.remainder.position.x = right + this.letterFontSize * REMAINDER_GAP;
+    this.remainder.position.x =
+      right + this.effectiveLetterFontSize * REMAINDER_GAP;
     this.remainder.visible =
       this.remainderVisible && this.remainder.text.length > 0;
     this.blurb.position.x = left;
-    this.blurb.position.y = -this.letterFontSize * 0.72;
+    this.blurb.position.y = -this.effectiveLetterFontSize * 0.72;
   }
 }
