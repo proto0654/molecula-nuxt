@@ -1,5 +1,6 @@
 import './styles.css';
 import { MoleculeController } from './3d/MoleculeController';
+import { NavigationState } from './navigation/NavigationState';
 import { Navigation } from './ui/Navigation';
 
 const app = document.querySelector<HTMLDivElement>('#app');
@@ -14,21 +15,26 @@ app.append(canvas);
 const controller = new MoleculeController(canvas);
 controller.start();
 
-const navigation = new Navigation(app);
+const navigationState = new NavigationState();
+const navigation = new Navigation(app, navigationState);
 
-// Temporary hover debug overlay (no visual focus yet).
-const hoverOverlay = document.createElement('div');
-hoverOverlay.className = 'hover-debug';
-hoverOverlay.textContent = 'hover: —';
-app.append(hoverOverlay);
-
-const unsubscribeHover = controller.onAtomHover((atomId) => {
-  hoverOverlay.textContent = `hover: ${atomId ?? '—'}`;
+const unsubscribeNav = navigationState.subscribe((_activeItemId, item) => {
+  if (item) {
+    controller.focusAtom(item.atomId);
+    controller.setHighlightedAtom(item.atomId);
+  } else {
+    controller.clearFocus();
+    controller.setHighlightedAtom(null);
+  }
 });
 
-// Keep references for future wiring / HMR-friendly dispose.
+const unsubscribeHover = controller.onAtomHover((atomId) => {
+  navigationState.setAtomHover(atomId);
+});
+
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
+    unsubscribeNav();
     unsubscribeHover();
     navigation.dispose();
     controller.dispose();

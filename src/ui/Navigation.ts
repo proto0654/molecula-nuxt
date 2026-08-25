@@ -1,9 +1,10 @@
+import { navigationConfig } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
 
 export class Navigation {
   readonly root: HTMLElement;
   private readonly state: NavigationState;
-  private readonly label: HTMLElement;
+  private readonly itemElements = new Map<string, HTMLElement>();
   private readonly unsubscribe: () => void;
 
   constructor(parent: HTMLElement, state = new NavigationState()) {
@@ -11,32 +12,35 @@ export class Navigation {
 
     this.root = document.createElement('nav');
     this.root.className = 'nav';
-    this.root.setAttribute('aria-label', 'Atom navigation');
+    this.root.setAttribute('aria-label', 'Site navigation');
 
-    const prev = document.createElement('button');
-    prev.type = 'button';
-    prev.className = 'nav__btn';
-    prev.textContent = 'Prev';
-    prev.addEventListener('click', () => this.state.prev());
+    for (const item of navigationConfig.items) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'nav__item';
+      button.textContent = item.label;
+      button.dataset.navId = item.id;
+      if (item.route) {
+        button.dataset.route = item.route;
+      }
+      button.addEventListener('pointerenter', () => {
+        this.state.setNavHover(item.id);
+      });
+      this.root.append(button);
+      this.itemElements.set(item.id, button);
+    }
 
-    this.label = document.createElement('span');
-    this.label.className = 'nav__label';
-
-    const next = document.createElement('button');
-    next.type = 'button';
-    next.className = 'nav__btn';
-    next.textContent = 'Next';
-    next.addEventListener('click', () => this.state.next());
-
-    this.root.append(prev, this.label, next);
-    parent.append(this.root);
-
-    this.unsubscribe = this.state.subscribe((atomId, index) => {
-      this.label.textContent = `${atomId} (${index + 1}/${this.state.count})`;
+    this.root.addEventListener('pointerleave', () => {
+      this.state.setNavHover(null);
     });
 
-    // Initial label
-    this.label.textContent = `${this.state.currentAtomId} (1/${this.state.count})`;
+    parent.append(this.root);
+
+    this.unsubscribe = this.state.subscribe((activeItemId) => {
+      for (const [id, el] of this.itemElements) {
+        el.classList.toggle('is-active', id === activeItemId);
+      }
+    });
   }
 
   get navigationState(): NavigationState {

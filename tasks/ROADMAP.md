@@ -8,14 +8,15 @@
 - [x] Config-driven `Atom` (sphere) + `Bond` (oriented cylinder); `userData.atomId`
 - [x] Five-atom test molecule (methane-like)
 - [x] Pointer mouse influence via quaternion (`mouseQuaternion` / `targetMouseQuaternion`, slerp)
-- [x] Navigation state + Prev/Next DOM shell
 - [x] Pure math helpers (`getStableFocusQuaternion`, `getFocusQuaternion`, orientation, projection)
 - [x] Focus orientation layer on controller (`focusAtom`, `focusStrength`, compose with mouse)
-- [x] Atom hover picking (`AtomHover` raycast; debug overlay in `main.ts`)
+- [x] Atom hover picking (`AtomHover` raycast)
+- [x] Mount billboard / readable atom labels (`AtomLabel` via troika-three-text)
+- [x] Declarative nav config (`NavigationItem`) + HTML overlay; dual-hover `NavigationState`
+- [x] Wire navigation state → `focusAtom` / `clearFocus` + atom highlight (synced with nav `.is-active`)
 
 ## Next
 
-- [ ] Wire navigation to `MoleculeController.focusAtom` (+ optional GSAP camera motion)
-- [ ] Mount billboard / readable atom labels (`AtomLabel`)
-- [ ] Richer molecule data / interaction beyond hover debug
+- [ ] Optional GSAP camera motion on focus
+- [ ] Richer molecule data / committed nav selection (click → `setCommitted`)
 - [ ] Visual polish without heavy postprocessing (unless explicitly required)

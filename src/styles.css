@@ -34,44 +34,24 @@ body {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   z-index: 1;
   pointer-events: auto;
 }
 
-.nav__btn {
+.nav__item {
   appearance: none;
   border: 1px solid #3a414b;
   background: #1a1e24;
   color: #d6dbe0;
   padding: 0.4rem 0.75rem;
   font: inherit;
+  font-size: 0.875rem;
   cursor: pointer;
 }
 
-.nav__btn:hover {
-  border-color: #5b6570;
-}
-
-.nav__label {
-  min-width: 6rem;
-  text-align: center;
-  font-size: 0.875rem;
-  letter-spacing: 0.02em;
-}
-
-.hover-debug {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  z-index: 1;
-  padding: 0.35rem 0.55rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.03em;
-  font-variant-numeric: tabular-nums;
-  color: #c5ccd4;
-  background: rgba(15, 17, 21, 0.72);
-  border: 1px solid #3a414b;
-  pointer-events: none;
-  user-select: none;
+.nav__item:hover,
+.nav__item.is-active {
+  border-color: #8a949e;
+  color: #fff;
 }

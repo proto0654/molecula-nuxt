@@ -83,6 +83,10 @@ export class MoleculeScene {
     return this.atoms.find((atom) => atom.id === id);
   }
 
+  getAtoms(): readonly Atom[] {
+    return this.atoms;
+  }
+
   resize(width: number, height: number): void {
     const w = Math.max(width, 1);
     const h = Math.max(height, 1);
@@ -92,7 +96,10 @@ export class MoleculeScene {
   }
 
   update(_deltaSeconds: number): void {
-    // Reserved for future per-frame scene updates.
+    this.moleculeGroup.updateMatrixWorld(true);
+    for (const atom of this.atoms) {
+      atom.updateLabel(this.camera);
+    }
   }
 
   render(): void {

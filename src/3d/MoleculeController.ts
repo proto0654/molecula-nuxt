@@ -124,6 +124,18 @@ export class MoleculeController {
     );
   }
 
+  /** Return focus layer to rest (identity target). */
+  clearFocus(): void {
+    this.targetFocusQuaternion.identity();
+  }
+
+  /** Minimal emissive highlight; only one atom at a time. */
+  setHighlightedAtom(atomId: string | null): void {
+    for (const atom of this.scene.getAtoms()) {
+      atom.setHighlighted(atom.id === atomId);
+    }
+  }
+
   /**
    * Maps normalized pointer [-1, 1] into a limited yaw/pitch target.
    * Center (0, 0) → identity (base orientation).

@@ -1,60 +1,67 @@
 import {
+  getItemByAtomId,
+  getItemById,
   navigationConfig,
   type NavigationConfig,
+  type NavigationItem,
 } from './navigationConfig';
 
-export type NavigationListener = (atomId: string, index: number) => void;
+export type NavigationListener = (
+  activeItemId: string | null,
+  item: NavigationItem | null,
+) => void;
 
+/**
+ * Single source of truth for which nav item is active.
+ * Dual hover sources so canvas raycast `null` does not wipe overlay nav hover.
+ * Effective: navHover ?? atomHover ?? committed.
+ */
 export class NavigationState {
-  private index: number;
+  private navHoverItemId: string | null = null;
+  private atomHoverItemId: string | null = null;
+  private committedItemId: string | null = null;
   private readonly config: NavigationConfig;
   private readonly listeners = new Set<NavigationListener>();
 
-  constructor(config: NavigationConfig = navigationConfig, startIndex = 0) {
+  constructor(config: NavigationConfig = navigationConfig) {
     this.config = config;
-    this.index = this.clampIndex(startIndex);
   }
 
-  get currentIndex(): number {
-    return this.index;
+  get activeItemId(): string | null {
+    return this.navHoverItemId ?? this.atomHoverItemId ?? this.committedItemId;
   }
 
-  get currentAtomId(): string {
-    return this.config.atomOrder[this.index] ?? '';
+  get activeItem(): NavigationItem | null {
+    const id = this.activeItemId;
+    return id ? (getItemById(id) ?? null) : null;
   }
 
-  get count(): number {
-    return this.config.atomOrder.length;
-  }
-
-  next(): string {
-    if (this.count === 0) return '';
-    const nextIndex = this.index + 1;
-    if (nextIndex >= this.count) {
-      this.index = this.config.loop ? 0 : this.count - 1;
-    } else {
-      this.index = nextIndex;
-    }
+  setNavHover(itemId: string | null): void {
+    const next =
+      itemId && this.config.items.some((item) => item.id === itemId)
+        ? itemId
+        : null;
+    if (next === this.navHoverItemId) return;
+    this.navHoverItemId = next;
     this.emit();
-    return this.currentAtomId;
   }
 
-  prev(): string {
-    if (this.count === 0) return '';
-    const prevIndex = this.index - 1;
-    if (prevIndex < 0) {
-      this.index = this.config.loop ? this.count - 1 : 0;
-    } else {
-      this.index = prevIndex;
-    }
+  setAtomHover(atomId: string | null): void {
+    const next = atomId ? (getItemByAtomId(atomId)?.id ?? null) : null;
+    if (next === this.atomHoverItemId) return;
+    this.atomHoverItemId = next;
     this.emit();
-    return this.currentAtomId;
   }
 
-  setIndex(index: number): string {
-    this.index = this.clampIndex(index);
+  /** Optional commit for “restore pre-hover”; unused by hover-only UI for now. */
+  setCommitted(itemId: string | null): void {
+    const next =
+      itemId && this.config.items.some((item) => item.id === itemId)
+        ? itemId
+        : null;
+    if (next === this.committedItemId) return;
+    this.committedItemId = next;
     this.emit();
-    return this.currentAtomId;
   }
 
   subscribe(listener: NavigationListener): () => void {
@@ -64,15 +71,11 @@ export class NavigationState {
     };
   }
 
-  private clampIndex(index: number): number {
-    if (this.count === 0) return 0;
-    return Math.max(0, Math.min(index, this.count - 1));
-  }
-
   private emit(): void {
-    const atomId = this.currentAtomId;
+    const id = this.activeItemId;
+    const item = id ? (getItemById(id) ?? null) : null;
     for (const listener of this.listeners) {
-      listener(atomId, this.index);
+      listener(id, item);
     }
   }
 }

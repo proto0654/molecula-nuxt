@@ -7,18 +7,18 @@ Interactive WebGL hero prototype for a molecule visualization block.
 - Vite + TypeScript (no React / Vue / R3F)
 - Three.js
 - GSAP
-- troika-three-text (available; labels not mounted in the scene yet)
+- troika-three-text (3D atom labels via `AtomLabel`)
 
 ## Entry points
 
-- App bootstrap: [`src/main.ts`](src/main.ts)
+- App bootstrap / wiring: [`src/main.ts`](src/main.ts)
 - Scene / render loop: [`src/3d/MoleculeController.ts`](src/3d/MoleculeController.ts), [`src/3d/MoleculeScene.ts`](src/3d/MoleculeScene.ts)
 - Molecule data: [`src/3d/moleculeConfig.ts`](src/3d/moleculeConfig.ts) (`MoleculeConfig`)
-- Navigation UI: [`src/ui/Navigation.ts`](src/ui/Navigation.ts) → [`src/navigation/NavigationState.ts`](src/navigation/NavigationState.ts)
+- Navigation: [`src/navigation/navigationConfig.ts`](src/navigation/navigationConfig.ts) → [`NavigationState`](src/navigation/NavigationState.ts) → [`src/ui/Navigation.ts`](src/ui/Navigation.ts)
 
 ## Current focus
 
-Config-driven molecule (`Atom` / `Bond` from `MoleculeConfig`). Dual orientation layers on `moleculeGroup`: `focusQuaternion × mouseQuaternion` (stable focus via `getStableFocusQuaternion`; mouse yaw/pitch slerp). Atom hover picking (`AtomHover`) is live; navigation is not yet wired to `focusAtom`.
+Config-driven molecule with dual orientation layers (`focusQuaternion × mouseQuaternion`). Declarative HTML nav (`NavigationItem` → atom id) shares `NavigationState` with atom raycast hover; `main.ts` bridges state to `focusAtom` / `clearFocus` and emissive highlight. No client router yet (`route` is data only).
 
 ## Docs hub
 
