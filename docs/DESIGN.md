@@ -20,15 +20,16 @@ Principles: the molecule is primary; HUD is secondary. No cards, no filled butto
 | `--grid-opacity` | `0.032` | Edge grid stroke alpha |
 | `--frame-opacity` | `0.28` | Corner ticks / active rail marker |
 | `--line-opacity` | `0.22` | Divider, SVG connector |
-| `--font-ui` | `ui-monospace`, Cascadia / SF Mono / Consolas | All HUD type |
-| `--text-meta` | `0.625rem` | `SYS // …`, header, status |
+| `--font-ui` | `'JetBrains Mono'`, ui-monospace fallbacks | All HUD type (self-hosted Cyrillic) |
+| `--text-meta` | `0.625rem` | `⟨ SYS · … ⟩`, header, status |
 | `--text-index` | `0.5625rem` | Nav `01`–`05` |
 | `--text-nav` | `0.6875rem` | Nav labels, return control |
 | `--track-meta` / `--track-mark` / `--track-nav` / `--track-title` | `0.22em`–`0.32em` | Uppercase tracking |
 | `--grid-size` | `56px` (`44` tablet, `36` mobile) | HUD grid cell |
 | `--corner-size` | `18px` (`12` mobile) | L-ticks |
 | `--sidebar-width` | `clamp(220px, 20vw, 280px)` | Desktop rail width |
-| `--hud-inset-desktop` | top / right / bottom / left — left matches other edges so the rail sits **inside** the frame | Frame inset ≥1024 |
+| `--hud-inset-desktop` | `1.5rem` all sides — corner ticks on this frame | Frame inset ≥1024 |
+| `--hud-header-inset` | frame inset + corner size + `--hud-chrome-pad` | Desktop header / rail align inside ticks |
 | `--z-hud` / `--z-nav` / `--z-connector` / `--z-header` / `--z-overlay` / `--z-debug` | `1` / `2` / `2` / `2` / `3` / `10` | Canvas → HUD → chrome → veil |
 | `--glyph-angle-open` / `--glyph-angle-close` | `⟨ ` / ` ⟩` | Committed nav wrap (tablet/mobile) |
 | `--bp-mobile-max` | `767px` | Match `main.ts` `MOBILE_MQ` |
@@ -71,15 +72,15 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 ### 2. Corner ticks
 
 - Four L-shapes: 1px `--frame-opacity`, only two sides each (`.hud__corner--tl` … `--br`).
-- Inset via `--hud-inset` / `--hud-inset-desktop` (desktop left inset is a normal edge pad so the sidebar is inside the frame).
+- Inset via `--hud-inset` / `--hud-inset-desktop` (desktop uses equal edges; rail and header sit inside the frame).
 - Not a full rectangular frame. No corner coordinate marks.
 
 ### 3. Site header
 
 - [`SiteHeader`](../src/ui/SiteHeader.ts):
-  - **Desktop (≥1024):** `[ MARK ] LOGO` · `SYS // MOLECULE` · `NODE 04 / WORK`. Pointer-events none; no background blocks.
-  - **Mobile (≤767):** LOGO left + text control `MENU / NAV` (toggles to `CLOSE / NAV`). Safe-area top padding. No hamburger glyph, no card.
-  - **Tablet:** header hidden; `.hud__meta` keeps `SYS // MOLECULE`.
+  - **Desktop (≥1024):** `[ МАРК ] ЛОГО` · `⟨ SYS · МОЛЕКУЛА ⟩` (viewport center) · `УЗЕЛ 04 / РАБОТЫ`. Inset from corner ticks via `--hud-header-inset`. Pointer-events none; no background blocks.
+  - **Mobile (≤767):** ЛОГО left + text control `МЕНЮ / NAV` (toggles to `ЗАКРЫТЬ / NAV`). Safe-area top padding. No hamburger glyph, no card.
+  - **Tablet:** header hidden; `.hud__meta` keeps `⟨ SYS · МОЛЕКУЛА ⟩`.
 
 ### 4. Hairline rule / rail divider
 
@@ -89,7 +90,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 ### 5. Indexed text nav
 
 - `01` muted index + uppercase label.
-- **Desktop (≥1024):** left vertical rail (`--sidebar-width`), column stack. Footer `NODE nn` + `ACTIVE|READY|IDLE` is centered under the **full** HUD frame (not the rail alone). Active via brighter text + wider tracking + thin left marker — no pills / filled rects.
+- **Desktop (≥1024):** left vertical rail (`--sidebar-width`), column stack. Footer `УЗЕЛ nn` + `АКТИВЕН|ГОТОВ|ПРОСТОЙ` is centered under the **full** HUD frame (not the rail alone). Active via brighter text + wider tracking + thin left marker — no pills / filled rects.
 - **Tablet (768–1023):** bottom bar; separators `·`. Commit wraps label with `⟨ … ⟩`.
 - **Mobile (≤767):** compact bottom rail `/ NAV` + `01 HOME · 02 ABOUT · …` (horizontal scroll; active item scrolled into view). Safe-area bottom. Tap vs scroll-drag via `attachTapGuard`. Full index opens in [`MobileNavOverlay`](../src/ui/MobileNavOverlay.ts).
 - No background, no border.
@@ -110,7 +111,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 ### 8. Destination stub
 
-- Same kicker + tracked title + `// /route` + `[ ← RETURN ]` as a text control (no fill).
+- Same kicker + tracked title + `// /route` + `[ ← НАЗАД ]` as a text control (no fill).
 - Veil is solid `--color-bg`, not a card.
 
 ### 9. Atom caption block (troika, not DOM)
@@ -123,16 +124,27 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 - Selected wireframe: shared `EdgesGeometry` icosahedron shell (~1.04× radius) on the **committed** atom only; quality may disable it.
 - Decorative ghost: one hub-centered orbit per peripheral (black idle / dark gray active) + wireframe fragments on `moleculeGroup`; HIGH only; fades with zoom/fill.
 
+### 10. USP headline
+
+- [`UspHeadline`](../src/ui/UspHeadline.ts): short sentence per section (`navigationConfig.usp`).
+- **Desktop:** left void between rail and molecule; vertically centered (`top: 50%`); larger adaptive type (`clamp` ~1.35–2.15rem).
+- **Mobile:** golden section between header bottom and molecule center (`screenY` via `--composition-screen-y`); smaller segment on top (`1/φ²`).
+- **Tablet:** top band under meta, centered.
+- Appears only after focus settle; scramble via [`textScramble`](../src/ui/textScramble.ts) (~1s); uppercase tracked; muted ink while scrambling, bright when locked. Zoom/fill fades via `--usp-zoom-fade`.
+- No card, no background, `pointer-events: none`.
+
 ## 3D vs HTML
 
 Three.js: molecule, bonds, troika captions, billboarded selection rings, wireframe, decorative orbits/nodes, lights, composition profile (world offset from viewport fractions + approach).  
-HTML/CSS/SVG: grid, corners, header, nav rail, mobile nav overlay, screen-space SVG connector, overlay.  
+HTML/CSS/SVG: grid, corners, header, USP headline, nav rail, mobile nav overlay, screen-space SVG connector, overlay.  
 Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connector never mutates Three.js objects. Composition profile never reads CSS sidebar width.
 
 ## Copy conventions
 
-- Nav / HUD: English uppercase labels (`HOME`, `ABOUT`, …).
-- Blurbs: lowercase techno one-liners prefixed `// ` in the 3D typewriter.
+- UI language: **Russian** (`html lang="ru"`). Nav / HUD uppercase tracked labels (`ГЛАВНАЯ`, `О НАС`, …).
+- Blurbs: lowercase techno one-liners (RU) prefixed `// ` in the 3D typewriter; on mobile, break onto a second line at the content ` / ` separator.
+- USPs: short RU headlines in HUD space, uppercase tracked (`text-transform: uppercase`).
+- Font: self-hosted **JetBrains Mono** — `public/fonts/*.woff2` for CSS HUD; `*.ttf` for troika (`AtomLabel`) because troika needs ttf/woff, not woff2.
 - Decorative Unicode allowed: `⟨ ⟩`, `⟦ ⟧`, `·`, `//`. Avoid emoji and heavy box drawing.
 
 ## Do / do not

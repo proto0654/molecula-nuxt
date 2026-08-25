@@ -28,7 +28,7 @@ export class Navigation {
 
     this.root = document.createElement('nav');
     this.root.className = 'nav';
-    this.root.setAttribute('aria-label', 'Site navigation');
+    this.root.setAttribute('aria-label', 'Навигация сайта');
 
     const mark = document.createElement('span');
     mark.className = 'nav__mark';
@@ -148,15 +148,15 @@ export class Navigation {
   private syncStatus(): void {
     const id = this.state.committedItemId ?? this.state.activeItemId;
     if (!id) {
-      this.statusNode.textContent = 'NODE --';
-      this.statusSignal.textContent = 'IDLE';
+      this.statusNode.textContent = 'УЗЕЛ --';
+      this.statusSignal.textContent = 'ПРОСТОЙ';
       this.statusSignal.classList.remove('is-live');
       return;
     }
     const index = navigationConfig.items.findIndex((entry) => entry.id === id);
-    this.statusNode.textContent = `NODE ${String(index + 1).padStart(2, '0')}`;
+    this.statusNode.textContent = `УЗЕЛ ${String(index + 1).padStart(2, '0')}`;
     const live = this.state.committedItemId !== null;
-    this.statusSignal.textContent = live ? 'ACTIVE' : 'READY';
+    this.statusSignal.textContent = live ? 'АКТИВЕН' : 'ГОТОВ';
     this.statusSignal.classList.toggle('is-live', live);
   }
 

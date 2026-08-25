@@ -87,15 +87,20 @@ export class Atom {
   }
 
   /**
-   * Mobile compact layout only: hub sphere scale + radial orbit scale.
-   * Peripheral atom radii stay unchanged.
+   * Mobile compact layout: tighter orbit; peripherals keep a larger share of radius.
    */
-  applyCompactLayout(orbitScale: number, hubRadiusScale: number): void {
+  applyCompactLayout(
+    orbitScale: number,
+    hubRadiusScale: number,
+    peripheralRadiusScale: number,
+  ): void {
+    const radiusScale = this.isHub ? hubRadiusScale : peripheralRadiusScale;
+    this.radius = this.baseRadius * radiusScale;
+    this.mesh.scale.setScalar(this.radius);
+    this.selection.setRadius(this.radius);
+    this.atomLabel.setSurfaceRadius(this.radius);
+
     if (this.isHub) {
-      this.radius = this.baseRadius * hubRadiusScale;
-      this.mesh.scale.setScalar(this.radius);
-      this.selection.setRadius(this.radius);
-      this.atomLabel.setSurfaceRadius(this.radius);
       this.group.position.set(0, 0, 0);
       return;
     }

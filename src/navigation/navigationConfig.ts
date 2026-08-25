@@ -5,6 +5,8 @@ export type NavigationItem = {
   route?: string;
   /** One-line techno blurb shown under the atom title on commit. */
   blurb: string;
+  /** Short USP headline in HUD space after focus settles. */
+  usp: string;
 };
 
 export type NavigationConfig = {
@@ -15,38 +17,43 @@ export const navigationConfig: NavigationConfig = {
   items: [
     {
       id: 'home',
-      label: 'Home',
+      label: 'Главная',
       atomId: 'C',
       route: '/',
-      blurb: 'origin node / carbon core',
+      blurb: 'узел истока / углеродное ядро',
+      usp: 'Сборка смысла из хаоса',
     },
     {
       id: 'about',
-      label: 'About',
+      label: 'О нас',
       atomId: 'H1',
       route: '/about',
-      blurb: 'identity / who we are',
+      blurb: 'идентичность / кто мы',
+      usp: 'Системное мышление в продукте',
     },
     {
       id: 'services',
-      label: 'Services',
+      label: 'Услуги',
       atomId: 'H2',
       route: '/services',
-      blurb: 'capabilities / what we ship',
+      blurb: 'возможности / что делаем',
+      usp: 'От концепции до релиза',
     },
     {
       id: 'work',
-      label: 'Work',
+      label: 'Работы',
       atomId: 'H3',
       route: '/work',
-      blurb: 'selected signals / archive',
+      blurb: 'выбранные сигналы / архив',
+      usp: 'Сигналы, которые сработали',
     },
     {
       id: 'contact',
-      label: 'Contact',
+      label: 'Контакты',
       atomId: 'H4',
       route: '/contact',
-      blurb: 'open channel / handshake',
+      blurb: 'открытый канал / рукопожатие',
+      usp: 'Прямой канал без шума',
     },
   ],
 };

@@ -22,7 +22,7 @@ export class DestinationView {
 
     this.kickerEl = document.createElement('p');
     this.kickerEl.className = 'destination__kicker';
-    this.kickerEl.textContent = '⟨ SECTION ⟩';
+    this.kickerEl.textContent = '⟨ РАЗДЕЛ ⟩';
 
     this.titleEl = document.createElement('h1');
     this.titleEl.className = 'destination__title';
@@ -33,7 +33,7 @@ export class DestinationView {
     this.returnBtn = document.createElement('button');
     this.returnBtn.type = 'button';
     this.returnBtn.className = 'destination__return';
-    this.returnBtn.textContent = '[ ← RETURN ]';
+    this.returnBtn.textContent = '[ ← НАЗАД ]';
     this.returnBtn.addEventListener('click', () => {
       this.onReturn?.();
     });

@@ -18,7 +18,8 @@ export const COMPOSITION_PROFILES: Record<ViewportMode, CompositionProfile> = {
   desktop: {
     mode: 'desktop',
     screenX: 0.62,
-    screenY: 0.5,
+    // Camera lookAt is y=0.2; hub at origin reads low at screenY 0.5 — bias up slightly.
+    screenY: 0.45,
     approach: 0,
   },
   tablet: {
@@ -30,7 +31,8 @@ export const COMPOSITION_PROFILES: Record<ViewportMode, CompositionProfile> = {
   mobile: {
     mode: 'mobile',
     screenX: 0.5,
-    screenY: 0.44,
+    // Slight downward bias from center (desktop uses 0.12 on X).
+    screenY: 0.56,
     approach: 0.28,
   },
 };

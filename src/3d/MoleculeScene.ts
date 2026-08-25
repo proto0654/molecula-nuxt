@@ -25,10 +25,12 @@ const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
 const BOND_COLOR = 0x5a636c;
 
-/** Mobile-only: pull peripherals closer so the molecule fits the portrait stage. */
-const MOBILE_ORBIT_SCALE = 0.7;
-/** Mobile-only: shrink the hub sphere (peripherals keep base radius). */
-const MOBILE_HUB_RADIUS_SCALE = 0.7;
+/** Mobile-only: orbit span (peripheral positions + decorative rings). */
+const MOBILE_ORBIT_SCALE = 0.58;
+/** Mobile-only: hub sphere radius. */
+const MOBILE_HUB_RADIUS_SCALE = 0.58;
+/** Mobile-only: peripheral spheres — shrink less so they read larger vs the compact layout. */
+const MOBILE_PERIPHERAL_RADIUS_SCALE = 0.78;
 
 type BondLink = {
   bond: Bond;
@@ -183,8 +185,9 @@ export class MoleculeScene {
   private applyCompactLayout(compact: boolean): void {
     const orbitScale = compact ? MOBILE_ORBIT_SCALE : 1;
     const hubScale = compact ? MOBILE_HUB_RADIUS_SCALE : 1;
+    const peripheralScale = compact ? MOBILE_PERIPHERAL_RADIUS_SCALE : 1;
     for (const atom of this.atoms) {
-      atom.applyCompactLayout(orbitScale, hubScale);
+      atom.applyCompactLayout(orbitScale, hubScale, peripheralScale);
     }
     this.decorativeNodes.setOrbitScale(orbitScale);
     this.syncBondEndpoints();

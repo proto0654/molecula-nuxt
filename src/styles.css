@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Surfaces */
   --color-bg: #14161c;
@@ -25,8 +33,9 @@
   --frame-opacity: 0.28;
   --line-opacity: 0.22;
 
-  /* Type */
-  --font-ui: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+  /* Type — JetBrains Mono for reliable Cyrillic across OSes */
+  --font-ui: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Consolas,
+    monospace;
   --text-meta: 0.625rem;
   --text-index: 0.5625rem;
   --text-nav: 0.6875rem;
@@ -44,13 +53,22 @@
   --hud-inset: 1.15rem 1.35rem 4.75rem;
   --hud-inset-tablet: 1rem 1.1rem 4.5rem;
   --hud-inset-mobile: 2.75rem 0.75rem 5.5rem;
-  --hud-inset-desktop: 3.25rem 1.5rem 1.5rem 1.5rem;
+  /* Equal edges — corner ticks sit on this frame; header/nav pad inward from ticks */
+  --hud-inset-desktop: 1.5rem 1.5rem 1.5rem 1.5rem;
+  --hud-chrome-pad: 0.6rem;
+  --hud-header-inset: calc(1.5rem + var(--corner-size) + var(--hud-chrome-pad));
   --hud-meta-inset: 1.35rem 1.85rem;
   --sidebar-width: clamp(220px, 20vw, 280px);
   --glyph-angle-open: '⟨ ';
   --glyph-angle-close: ' ⟩';
   --glyph-sep: '·';
   --nav-zoom-fade: 0;
+  --usp-zoom-fade: 0;
+  /* Mirrored from composition profile in main.ts (for USP golden-section layout) */
+  --composition-screen-y: 0.5;
+  --usp-header-bottom: 2.5rem;
+  --phi-inv2: 0.381966;
+  --text-usp: clamp(1rem, 2.4vw, 1.35rem);
 
   /* Stacking */
   --z-hud: 1;
@@ -97,6 +115,10 @@ body {
   width: 100%;
   height: 100%;
   cursor: crosshair;
+}
+
+#hero-canvas.is-atom-hover {
+  cursor: pointer;
 }
 
 /* --- HUD chrome --- */
@@ -194,6 +216,42 @@ body {
 .site-header__menu:hover,
 .site-header.is-menu-open .site-header__menu {
   color: var(--accent);
+}
+
+/* --- USP headline (commit + focus settle) --- */
+
+.usp-headline {
+  position: absolute;
+  z-index: var(--z-header);
+  pointer-events: none;
+  max-width: min(24rem, 90vw);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+  /* Default / tablet: top band under chrome */
+  top: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.usp-headline.is-visible {
+  opacity: calc(1 - var(--usp-zoom-fade));
+  visibility: visible;
+}
+
+.usp-headline__text {
+  margin: 0;
+  font-size: var(--text-usp);
+  font-weight: 400;
+  letter-spacing: var(--track-title);
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--color-ink-bright);
+}
+
+.usp-headline.is-scrambling .usp-headline__text {
+  color: var(--ink-62);
 }
 
 /* --- Mobile nav overlay --- */
@@ -569,15 +627,15 @@ html.nav-overlay-open body {
   }
 
   .site-header {
-    display: grid;
-    grid-template-columns: var(--sidebar-width) 1fr auto;
+    display: flex;
+    justify-content: space-between;
     align-items: baseline;
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: var(--hud-header-inset);
+    left: var(--hud-header-inset);
+    right: var(--hud-header-inset);
     z-index: var(--z-header);
-    padding: 1.15rem 1.5rem 0;
+    padding: 0;
     pointer-events: none;
     font-size: var(--text-meta);
     letter-spacing: var(--track-meta);
@@ -588,20 +646,35 @@ html.nav-overlay-open body {
   .site-header__logo {
     color: var(--ui-primary);
     letter-spacing: 0.2em;
+    flex: 0 1 var(--sidebar-width);
   }
 
   .site-header__sys {
-    justify-self: start;
-    padding-left: 0.5rem;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--ink-38);
+    letter-spacing: var(--track-mark);
+    white-space: nowrap;
   }
 
   .site-header__node {
-    justify-self: end;
+    flex: 0 0 auto;
     color: var(--ink-38);
   }
 
   .site-header__menu {
     display: none;
+  }
+
+  .usp-headline {
+    --text-usp: clamp(1.35rem, 2.6vw, 2.15rem);
+    top: 50%;
+    left: calc(var(--sidebar-width) + 1.25rem);
+    right: auto;
+    transform: translateY(-50%);
+    text-align: left;
+    max-width: min(22rem, 26vw);
   }
 
   .nav {
@@ -612,7 +685,7 @@ html.nav-overlay-open body {
     transform: none;
     width: var(--sidebar-width);
     max-width: none;
-    padding: 3.75rem 1.35rem 1.5rem 1.5rem;
+    padding: calc(var(--hud-header-inset) + 1.1rem) 1.35rem 1.5rem var(--hud-header-inset);
     align-items: stretch;
     justify-content: center;
     gap: 1.5rem;
@@ -748,7 +821,7 @@ html.nav-overlay-open body {
 @media (max-width: 767px) {
   .hud__grid {
     background-size: var(--grid-size-mobile) var(--grid-size-mobile);
-    mask-image: radial-gradient(ellipse 70% 55% at 50% 42%, transparent 38%, #000 100%);
+    mask-image: radial-gradient(ellipse 70% 55% at 50% 54%, transparent 38%, #000 100%);
   }
 
   .hud__frame {
@@ -793,6 +866,21 @@ html.nav-overlay-open body {
 
   .site-header__menu {
     display: block;
+  }
+
+  .usp-headline {
+    --text-usp: clamp(1.05rem, 4.2vw, 1.35rem);
+    --usp-header-bottom: calc(2.35rem + env(safe-area-inset-top, 0px));
+    /* Golden section between header bottom and molecule center; smaller part on top */
+    top: calc(
+      var(--usp-header-bottom) +
+        (100dvh * var(--composition-screen-y) - var(--usp-header-bottom)) *
+        var(--phi-inv2)
+    );
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    max-width: min(22rem, 90vw);
   }
 
   .nav {
@@ -852,7 +940,8 @@ html.nav-overlay-open body {
 }
 
 @media (hover: none) {
-  #hero-canvas {
+  #hero-canvas,
+  #hero-canvas.is-atom-hover {
     cursor: default;
   }
 }

@@ -13,6 +13,8 @@ const TYPE_SECONDS = 0.028;
 const REF_DISTANCE = 4.5;
 /** Extra lift toward the camera, in letter-font units, so title + blurb clear the sphere. */
 const SURFACE_PAD = 0.55;
+/** Self-hosted JetBrains Mono (Cyrillic); troika needs ttf/woff, not woff2. */
+const LABEL_FONT = '/fonts/JetBrainsMono-Regular.ttf';
 
 function splitCaption(caption: string): { letter: string; rest: string } {
   const trimmed = caption.trim();
@@ -20,6 +22,29 @@ function splitCaption(caption: string): { letter: string; rest: string } {
     return { letter: trimmed, rest: '' };
   }
   return { letter: trimmed[0] ?? '', rest: trimmed.slice(1) };
+}
+
+/** Break before the content ` / ` separator (not the leading `//`). */
+function wrapBlurbAtSlash(prefixed: string): string {
+  const sep = ' / ';
+  const idx = prefixed.indexOf(sep);
+  if (idx === -1) return prefixed;
+  return `${prefixed.slice(0, idx)}\n/${prefixed.slice(idx + sep.length)}`;
+}
+
+function buildFullBlurb(blurb: string, wrapAtSlash: boolean): string {
+  const line = `// ${blurb}`;
+  return wrapAtSlash ? wrapBlurbAtSlash(line) : line;
+}
+
+function sliceByLogicalLength(text: string, logicalLen: number): string {
+  if (logicalLen <= 0) return '';
+  let count = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== '\n') count++;
+    if (count >= logicalLen) return text.slice(0, i + 1);
+  }
+  return text;
 }
 
 /**
@@ -40,6 +65,8 @@ export class AtomLabel {
   private titleActive = false;
 
   private fullBlurb = '';
+  private rawBlurb: string | null = null;
+  private blurbWrapAtSlash = false;
   private typed = '';
   private typeAccum = 0;
   private typing = false;
@@ -63,6 +90,7 @@ export class AtomLabel {
 
     this.letter = new Text();
     this.letter.text = letter;
+    this.letter.font = LABEL_FONT;
     this.letter.fontSize = fontSize;
     this.letter.color = LETTER_COLOR_IDLE;
     this.letter.anchorX = 'center';
@@ -73,6 +101,7 @@ export class AtomLabel {
 
     this.remainder = new Text();
     this.remainder.text = rest;
+    this.remainder.font = LABEL_FONT;
     this.remainder.fontSize = this.remainderBaseFontSize;
     this.remainder.color = REMAINDER_COLOR_IDLE;
     this.remainder.anchorX = 'left';
@@ -85,6 +114,7 @@ export class AtomLabel {
 
     this.blurb = new Text();
     this.blurb.text = '';
+    this.blurb.font = LABEL_FONT;
     this.blurb.fontSize = fontSize * 0.38;
     this.blurb.color = BLURB_COLOR;
     this.blurb.anchorX = 'left';
@@ -131,6 +161,22 @@ export class AtomLabel {
     this.remainder.sync(() => this.layoutBlock());
   }
 
+  /** Mobile: break the typewriter blurb onto a second line at the content `/`. */
+  setBlurbWrapAtSlash(wrap: boolean): void {
+    if (this.blurbWrapAtSlash === wrap) return;
+    this.blurbWrapAtSlash = wrap;
+    if (!this.rawBlurb) return;
+
+    const logicalTyped = this.typed.replace(/\n/g, '').length;
+    this.fullBlurb = buildFullBlurb(this.rawBlurb, wrap);
+    if (!this.blurb.visible) return;
+
+    this.typed = sliceByLogicalLength(this.fullBlurb, logicalTyped);
+    this.blurb.text = this.typed;
+    this.typing = this.typed.length < this.fullBlurb.length;
+    this.blurb.sync();
+  }
+
   /** Type `// blurb` under the title. Pass null to hide immediately. */
   setBlurb(blurb: string | null): void {
     this.setTitleActive(blurb !== null);
@@ -138,14 +184,16 @@ export class AtomLabel {
     this.typeAccum = 0;
     this.typed = '';
     if (!blurb) {
-      if (!this.fullBlurb && !this.blurb.visible) return;
+      if (!this.rawBlurb && !this.blurb.visible) return;
+      this.rawBlurb = null;
       this.fullBlurb = '';
       this.blurb.text = '';
       this.blurb.visible = false;
       this.blurb.sync();
       return;
     }
-    this.fullBlurb = `// ${blurb}`;
+    this.rawBlurb = blurb;
+    this.fullBlurb = buildFullBlurb(blurb, this.blurbWrapAtSlash);
     this.blurb.text = '';
     this.blurb.visible = true;
     this.typing = true;

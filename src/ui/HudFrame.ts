@@ -23,7 +23,7 @@ export class HudFrame {
 
     const meta = document.createElement('p');
     meta.className = 'hud__meta';
-    meta.textContent = 'SYS // MOLECULE';
+    meta.textContent = '⟨ SYS · МОЛЕКУЛА ⟩';
 
     this.root.append(grid, frame, meta);
     parent.append(this.root);

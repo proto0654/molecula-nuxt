@@ -15,6 +15,7 @@ import { MobileNavOverlay } from './ui/MobileNavOverlay';
 import { Navigation } from './ui/Navigation';
 import { NavigationConnector } from './ui/NavigationConnector';
 import { SiteHeader } from './ui/SiteHeader';
+import { UspHeadline } from './ui/UspHeadline';
 
 const MOBILE_MQ = '(max-width: 767px)';
 const TABLET_MQ = '(min-width: 768px) and (max-width: 1023px)';
@@ -45,6 +46,7 @@ const unsubscribePerf = perfOverlay
 const navigationState = new NavigationState();
 const hud = new HudFrame(app);
 const siteHeader = new SiteHeader(app, navigationState);
+const uspHeadline = new UspHeadline(app);
 
 const mobileMq = window.matchMedia(MOBILE_MQ);
 const tabletMq = window.matchMedia(TABLET_MQ);
@@ -96,6 +98,7 @@ function applyVisuals(): void {
 
   if (!committedId) {
     controller.setAtomBlurb(null, null);
+    uspHeadline.hide();
   }
 
   if (navigator.busy) return;
@@ -121,6 +124,7 @@ function selectItem(itemId: string): void {
   navigationState.setCommitted(itemId);
   controller.focusAtom(item.atomId);
   controller.setAtomBlurb(item.atomId, item.blurb);
+  uspHeadline.arm(item.usp);
 }
 
 function clearSelection(): void {
@@ -133,6 +137,7 @@ function clearSelection(): void {
   controller.clearZoom();
   controller.clearFocus();
   controller.setAtomBlurb(null, null);
+  uspHeadline.hide();
 }
 
 const navigation = new Navigation(app, navigationState, selectItem);
@@ -166,9 +171,14 @@ function applyViewportMode(): void {
     desktop: desktopMq.matches,
     tablet: tabletMq.matches,
   });
+  const profile = COMPOSITION_PROFILES[mode];
   controller.setCaptionsCompact(false);
   controller.setCaptionRemainderScale(mode === 'tablet' ? 0.82 : 1);
-  controller.setCompositionProfile(COMPOSITION_PROFILES[mode]);
+  controller.setCompositionProfile(profile);
+  document.documentElement.style.setProperty(
+    '--composition-screen-y',
+    String(profile.screenY),
+  );
   connector.setEnabled(mode === 'desktop');
   if (mode !== 'mobile' && mobileNav.isOpen) {
     setMenuOpen(false);
@@ -182,7 +192,16 @@ const unsubscribeConnector = controller.onAfterUpdate((delta) => {
   );
   connector.setZoomFade(zoomFade);
   navigation.setZoomSoftness(zoomFade);
+  uspHeadline.setZoomFade(zoomFade);
   connector.update(delta);
+
+  if (
+    !navigator.busy &&
+    navigationState.committedItemId &&
+    controller.isFocusSettled()
+  ) {
+    uspHeadline.tryReveal();
+  }
 });
 
 const unsubscribeNav = navigationState.subscribe(() => {
@@ -191,6 +210,7 @@ const unsubscribeNav = navigationState.subscribe(() => {
 
 const unsubscribeHover = controller.onAtomHover((atomId) => {
   navigationState.setAtomHover(atomId);
+  canvas.classList.toggle('is-atom-hover', atomId !== null);
 });
 
 const unsubscribeClick = controller.onAtomClick((atomId) => {
@@ -228,6 +248,7 @@ if (import.meta.hot) {
     navigation.dispose();
     mobileNav.dispose();
     siteHeader.dispose();
+    uspHeadline.dispose();
     destination.dispose();
     hud.dispose();
     controller.dispose();

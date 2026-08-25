@@ -21,11 +21,11 @@ export class SiteHeader {
 
     const logo = document.createElement('span');
     logo.className = 'site-header__logo';
-    logo.textContent = '[ MARK ] LOGO';
+    logo.textContent = '[ МАРК ] ЛОГО';
 
     const sys = document.createElement('span');
     sys.className = 'site-header__sys';
-    sys.textContent = 'SYS // MOLECULE';
+    sys.textContent = '⟨ SYS · МОЛЕКУЛА ⟩';
 
     this.nodeEl = document.createElement('span');
     this.nodeEl.className = 'site-header__node';
@@ -35,7 +35,7 @@ export class SiteHeader {
     this.menuBtn.className = 'site-header__menu';
     this.menuBtn.setAttribute('aria-expanded', 'false');
     this.menuBtn.setAttribute('aria-controls', 'mobile-nav-overlay');
-    this.menuBtn.textContent = 'MENU / NAV';
+    this.menuBtn.textContent = 'МЕНЮ / NAV';
     this.menuBtn.addEventListener('click', () => {
       this.onMenuToggle?.();
     });
@@ -56,7 +56,7 @@ export class SiteHeader {
   setMenuOpen(open: boolean): void {
     this.menuOpen = open;
     this.menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    this.menuBtn.textContent = open ? 'CLOSE / NAV' : 'MENU / NAV';
+    this.menuBtn.textContent = open ? 'ЗАКРЫТЬ / NAV' : 'МЕНЮ / NAV';
     this.root.classList.toggle('is-menu-open', open);
   }
 
@@ -67,14 +67,14 @@ export class SiteHeader {
   private syncNode(state: NavigationState): void {
     const id = state.committedItemId ?? state.activeItemId;
     if (!id) {
-      this.nodeEl.textContent = 'NODE -- / IDLE';
+      this.nodeEl.textContent = 'УЗЕЛ -- / ПРОСТОЙ';
       return;
     }
     const item = getItemById(id);
     const index = navigationConfig.items.findIndex((entry) => entry.id === id);
     const node = String(index + 1).padStart(2, '0');
     const label = (item?.label ?? id).toUpperCase();
-    this.nodeEl.textContent = `NODE ${node} / ${label}`;
+    this.nodeEl.textContent = `УЗЕЛ ${node} / ${label}`;
   }
 
   dispose(): void {

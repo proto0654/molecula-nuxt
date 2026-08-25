@@ -5,6 +5,8 @@ declare module 'troika-three-text' {
 
   export class Text extends Mesh {
     text: string;
+    /** URL of a custom font (.ttf / .otf / .woff — not .woff2). */
+    font: string | null;
     fontSize: number;
     color: Color | string | number;
     anchorX: string | number;

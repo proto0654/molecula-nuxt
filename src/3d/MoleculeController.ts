@@ -590,6 +590,9 @@ export class MoleculeController {
       Math.abs(this.compositionProfile.approach - profile.approach) < 1e-4;
     this.compositionProfile = profile;
     this.scene.setCompactLayout(profile.mode === 'mobile');
+    for (const atom of this.scene.getAtoms()) {
+      atom.atomLabel.setBlurbWrapAtSlash(profile.mode === 'mobile');
+    }
     if (same) return;
     this.applyCompositionBias();
   }
@@ -808,9 +811,17 @@ export class MoleculeController {
     }
   }
 
-  private isFocusReadyForZoom(): boolean {
+  /**
+   * True when focus strength and orientation have settled on the target.
+   * Shared gate for zoom-in and HUD USP reveal.
+   */
+  isFocusSettled(): boolean {
     if (this.focusStrength < ZOOM_FOCUS_STRENGTH_GATE) return false;
     return this.focusOrientation.angleTo(this.targetFocusOrientation) <= ZOOM_FOCUS_ANGLE_GATE;
+  }
+
+  private isFocusReadyForZoom(): boolean {
+    return this.isFocusSettled();
   }
 
   /**

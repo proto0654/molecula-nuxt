@@ -24,7 +24,9 @@
 - [x] Faceted matte graphite look (flatShading icosahedrons, dashed bonds, orbital ghost, selection rings, no postprocessing)
 - [x] HTML sidebar / SVG connectors via `projectAtom` (keep HUD out of WebGL); desktop composition bias
 - [x] Mobile composition (profiles, SiteHeader + MENU overlay, compact rail, touch drag/tap, hub/orbit compact layout)
-- [x] Hero final polish: mouse-under-focus attenuation, 3D selection rings, smoothed connector, visual noise cut
+- [x] Hero polish: spherical per-atom orbits, mouse-under-focus attenuation, screen-flat selection, quieter HUD
+- [x] Russian UI copy + JetBrains Mono (CSS + troika); captions from `navigationConfig`
+- [x] HUD USP headline (`UspHeadline` + scramble after `isFocusSettled`); desktop/mobile layout polish; atom hover cursor
 
 ## Next
 

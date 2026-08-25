@@ -36,7 +36,7 @@ export class MobileNavOverlay {
     this.root.className = 'mobile-nav-overlay';
     this.root.setAttribute('role', 'dialog');
     this.root.setAttribute('aria-modal', 'true');
-    this.root.setAttribute('aria-label', 'Navigation');
+    this.root.setAttribute('aria-label', 'Навигация');
     this.root.setAttribute('aria-hidden', 'true');
     this.root.hidden = true;
 
@@ -50,11 +50,11 @@ export class MobileNavOverlay {
     const header = document.createElement('div');
     header.className = 'mobile-nav-overlay__header';
     const kicker = document.createElement('span');
-    kicker.textContent = '/ NAV INDEX';
+    kicker.textContent = '/ ИНДЕКС NAV';
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'mobile-nav-overlay__close';
-    closeBtn.textContent = '[ CLOSE ]';
+    closeBtn.textContent = '[ ЗАКРЫТЬ ]';
     closeBtn.addEventListener('click', () => this.requestClose());
     header.append(kicker, closeBtn);
 
@@ -154,15 +154,15 @@ export class MobileNavOverlay {
     }
     const id = committed ?? active;
     if (!id) {
-      this.statusNode.textContent = 'NODE --';
-      this.statusSignal.textContent = 'STATUS IDLE';
+      this.statusNode.textContent = 'УЗЕЛ --';
+      this.statusSignal.textContent = 'СТАТУС ПРОСТОЙ';
       return;
     }
     const index = navigationConfig.items.findIndex((entry) => entry.id === id);
-    this.statusNode.textContent = `NODE ${String(index + 1).padStart(2, '0')}`;
+    this.statusNode.textContent = `УЗЕЛ ${String(index + 1).padStart(2, '0')}`;
     this.statusSignal.textContent = committed
-      ? 'STATUS ACTIVE'
-      : 'STATUS READY';
+      ? 'СТАТУС АКТИВЕН'
+      : 'СТАТУС ГОТОВ';
   }
 
   dispose(): void {
