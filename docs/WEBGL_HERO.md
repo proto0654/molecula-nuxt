@@ -172,7 +172,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 
 ### USP headline
 
-[`UspHeadline`](../src/ui/UspHeadline.ts) + [`textScramble`](../src/ui/textScramble.ts): short RU USP from `navigationConfig.items[].usp`. Armed on first-click commit; scramble starts only after `controller.isFocusSettled()`. Uppercase tracked type; ~1s scramble + fade-in. Fades with the same zoom/fill softness as the connector. Cleared on empty-canvas deselect. Hover never arms USP. `prefers-reduced-motion` snaps to the final string.
+[`UspHeadline`](../src/ui/UspHeadline.ts) + [`textScramble`](../src/ui/textScramble.ts): short RU USP from `navigationConfig.items[].usp`. Armed on first-click commit; scramble starts only after `controller.isFocusSettled()`. Uppercase tracked type; ~1s scramble + fade-in. Mobile type is larger than atom captions (`--text-usp` ~1.45–2rem). A hidden measure span (CSS grid stack) locks final line breaks; scramble picks glyphs only from the target string so width stays stable. Fades with the same zoom/fill softness as the connector. Cleared on empty-canvas deselect. Hover never arms USP. `prefers-reduced-motion` snaps to the final string.
 
 ## Page transition (`Navigator`)
 
@@ -311,7 +311,7 @@ Live site: [proto0654.github.io/molecule](https://proto0654.github.io/molecule/)
 - Keep `navigationConfig.items[].atomId` aligned with molecule atom ids. Captions/blurbs/USPs/labels are authored once in `navigationConfig` (Russian); `moleculeConfig` reads captions via `getItemByAtomId`.
 - Troika captions load JetBrains Mono ttf via `import.meta.env.BASE_URL` + `fonts/JetBrainsMono-Regular.ttf` (Cyrillic). HUD CSS uses the matching `.woff2` from `public/fonts/`. Do not point troika at woff2.
 - Hover may **not** call `focusAtom` — only highlight / selection reticle. Focus comes from `committed` (first click). Zoom starts on the second click via `navigateTo`.
-- USP reveal shares `isFocusSettled()` with zoom-in. Arm on commit; do not scramble on hover or before the gate. Fade USP with zoom/fill; dispose with other HUD on HMR.
+- USP reveal shares `isFocusSettled()` with zoom-in. Arm on commit; do not scramble on hover or before the gate. Fade USP with zoom/fill; dispose with other HUD on HMR. Scramble must use a hidden measure layer + target-only charset — a wide random charset or live `textContent` reflow will jump lines (especially on mobile where the block is vertically centered).
 - Do not put route / history / `navigateTo` inside `MoleculeController` click handling — pick notifies; app layer decides.
 - Mid-flight `navigateTo` retargets without hard-resetting zoom/fill/overlay; `cancel` builds an unwind timeline from live values (do not `timeline.reverse()` after a retarget that started mid-progress).
 - While `Navigator.busy` (including `complete`), `main.ts` skips hover-driven focus updates.

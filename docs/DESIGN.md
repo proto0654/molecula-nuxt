@@ -128,9 +128,9 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 - [`UspHeadline`](../src/ui/UspHeadline.ts): short sentence per section (`navigationConfig.usp`).
 - **Desktop:** left void between rail and molecule; vertically centered (`top: 50%`); larger adaptive type (`clamp` ~1.35–2.15rem).
-- **Mobile:** golden section between header bottom and molecule center (`screenY` via `--composition-screen-y`); smaller segment on top (`1/φ²`).
+- **Mobile:** golden section between header bottom and molecule center (`screenY` via `--composition-screen-y`); smaller segment on top (`1/φ²`); type `clamp` ~1.45–2rem — hierarchically above troika atom captions.
 - **Tablet:** top band under meta, centered.
-- Appears only after focus settle; scramble via [`textScramble`](../src/ui/textScramble.ts) (~1s); uppercase tracked; muted ink while scrambling, bright when locked. Zoom/fill fades via `--usp-zoom-fade`.
+- Appears only after focus settle; scramble via [`textScramble`](../src/ui/textScramble.ts) (~1s); uppercase tracked; muted ink while scrambling, bright when locked. Hidden measure span reserves final line breaks; scramble charset is limited to target glyphs so lines do not jump. Zoom/fill fades via `--usp-zoom-fade`.
 - No card, no background, `pointer-events: none`.
 
 ## 3D vs HTML
