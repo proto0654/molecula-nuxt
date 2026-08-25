@@ -59,3 +59,19 @@ body {
   font-size: 0.875rem;
   letter-spacing: 0.02em;
 }
+
+.hover-debug {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: #c5ccd4;
+  background: rgba(15, 17, 21, 0.72);
+  border: 1px solid #3a414b;
+  pointer-events: none;
+  user-select: none;
+}

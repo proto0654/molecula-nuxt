@@ -9,11 +9,13 @@
 - [x] Five-atom test molecule (methane-like)
 - [x] Pointer mouse influence via quaternion (`mouseQuaternion` / `targetMouseQuaternion`, slerp)
 - [x] Navigation state + Prev/Next DOM shell
-- [x] Pure math helpers (`focusAtom`, orientation, projection)
+- [x] Pure math helpers (`getStableFocusQuaternion`, `getFocusQuaternion`, orientation, projection)
+- [x] Focus orientation layer on controller (`focusAtom`, `focusStrength`, compose with mouse)
+- [x] Atom hover picking (`AtomHover` raycast; debug overlay in `main.ts`)
 
 ## Next
 
-- [ ] Wire navigation to camera focus (`focusAtom` + GSAP; compose with mouse layer)
+- [ ] Wire navigation to `MoleculeController.focusAtom` (+ optional GSAP camera motion)
 - [ ] Mount billboard / readable atom labels (`AtomLabel`)
-- [ ] Richer molecule data / interaction (hover, pick)
+- [ ] Richer molecule data / interaction beyond hover debug
 - [ ] Visual polish without heavy postprocessing (unless explicitly required)

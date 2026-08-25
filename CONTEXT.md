@@ -18,7 +18,7 @@ Interactive WebGL hero prototype for a molecule visualization block.
 
 ## Current focus
 
-Config-driven molecule mesh: `Atom` (`SphereGeometry`) + `Bond` (`CylinderGeometry`) built from `MoleculeConfig` (5-atom methane-like test layout). Fullscreen camera/renderer/resize/rAF; pointer drives molecule orientation via `mouseQuaternion` / `targetMouseQuaternion` (slerp). No hover, no scene labels, no physics.
+Config-driven molecule (`Atom` / `Bond` from `MoleculeConfig`). Dual orientation layers on `moleculeGroup`: `focusQuaternion × mouseQuaternion` (stable focus via `getStableFocusQuaternion`; mouse yaw/pitch slerp). Atom hover picking (`AtomHover`) is live; navigation is not yet wired to `focusAtom`.
 
 ## Docs hub
 

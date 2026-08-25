@@ -3,6 +3,7 @@ import {
   Color,
   DirectionalLight,
   Group,
+  Mesh,
   PerspectiveCamera,
   Scene,
   WebGLRenderer,
@@ -19,6 +20,8 @@ export class MoleculeScene {
 
   private readonly atoms: Atom[] = [];
   private readonly bonds: Bond[] = [];
+  /** Atom meshes only — used for hover raycasting (bonds excluded). */
+  private readonly atomMeshes: Mesh[] = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new Scene();
@@ -56,6 +59,7 @@ export class MoleculeScene {
       const atom = new Atom(atomConfig);
       atomById.set(atom.id, atom);
       this.atoms.push(atom);
+      this.atomMeshes.push(atom.mesh);
       this.moleculeGroup.add(atom.object);
     }
 
@@ -68,6 +72,15 @@ export class MoleculeScene {
       this.bonds.push(bond);
       this.moleculeGroup.add(bond.object);
     }
+  }
+
+  /** Atom sphere meshes for picking; never includes bonds. */
+  getAtomMeshes(): readonly Mesh[] {
+    return this.atomMeshes;
+  }
+
+  getAtom(id: string): Atom | undefined {
+    return this.atoms.find((atom) => atom.id === id);
   }
 
   resize(width: number, height: number): void {
@@ -102,5 +115,6 @@ export class MoleculeScene {
     }
     this.atoms.length = 0;
     this.bonds.length = 0;
+    this.atomMeshes.length = 0;
   }
 }
