@@ -6,12 +6,13 @@ import {
   SphereGeometry,
   type Object3D,
 } from 'three';
+import { AtomHalo, type HaloMode } from './AtomHalo';
 import { AtomLabel } from './AtomLabel';
 import type { AtomConfig } from './types';
 
 const COLOR_BY_LABEL: Record<string, number> = {
-  C: 0x4a5560,
-  H: 0xd6dbe0,
+  C: 0x2a3038,
+  H: 0x5a636e,
   O: 0xc0392b,
   N: 0x2f6fed,
 };
@@ -25,6 +26,7 @@ export class Atom {
   readonly radius: number;
   readonly mesh: Mesh;
   readonly atomLabel: AtomLabel;
+  readonly halo: AtomHalo;
   private readonly material: MeshStandardMaterial;
   private highlighted = false;
 
@@ -47,8 +49,13 @@ export class Atom {
     this.mesh.name = `atom-${config.id}`;
     this.mesh.userData.atomId = config.id;
 
-    this.atomLabel = new AtomLabel(config.label, config.radius);
-    this.mesh.add(this.atomLabel.object);
+    this.atomLabel = new AtomLabel(
+      config.caption ?? config.label,
+      config.radius,
+    );
+
+    this.halo = new AtomHalo(config.radius);
+    this.mesh.add(this.halo.object);
   }
 
   get object(): Object3D {
@@ -67,12 +74,29 @@ export class Atom {
     }
   }
 
+  setHaloMode(mode: HaloMode): void {
+    this.halo.setMode(mode);
+  }
+
+  setBlurb(blurb: string | null): void {
+    this.atomLabel.setBlurb(blurb);
+  }
+
   updateLabel(camera: Camera): void {
-    this.atomLabel.update(camera);
+    this.atomLabel.update(camera, this.mesh);
+  }
+
+  tickLabelTypewriter(delta: number): void {
+    this.atomLabel.tickTypewriter(delta);
+  }
+
+  updateHalo(camera: Camera, delta: number, elapsed: number): void {
+    this.halo.update(camera, delta, elapsed);
   }
 
   dispose(): void {
     this.atomLabel.dispose();
+    this.halo.dispose();
     this.mesh.geometry.dispose();
     this.material.dispose();
   }

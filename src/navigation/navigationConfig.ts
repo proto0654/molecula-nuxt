@@ -3,6 +3,8 @@ export type NavigationItem = {
   label: string;
   atomId: string;
   route?: string;
+  /** One-line techno blurb shown under the atom title on commit. */
+  blurb: string;
 };
 
 export type NavigationConfig = {
@@ -11,11 +13,41 @@ export type NavigationConfig = {
 
 export const navigationConfig: NavigationConfig = {
   items: [
-    { id: 'home', label: 'Home', atomId: 'C', route: '/' },
-    { id: 'about', label: 'About', atomId: 'H1', route: '/about' },
-    { id: 'services', label: 'Services', atomId: 'H2', route: '/services' },
-    { id: 'work', label: 'Work', atomId: 'H3', route: '/work' },
-    { id: 'contact', label: 'Contact', atomId: 'H4', route: '/contact' },
+    {
+      id: 'home',
+      label: 'Home',
+      atomId: 'C',
+      route: '/',
+      blurb: 'origin node / carbon core',
+    },
+    {
+      id: 'about',
+      label: 'About',
+      atomId: 'H1',
+      route: '/about',
+      blurb: 'identity / who we are',
+    },
+    {
+      id: 'services',
+      label: 'Services',
+      atomId: 'H2',
+      route: '/services',
+      blurb: 'capabilities / what we ship',
+    },
+    {
+      id: 'work',
+      label: 'Work',
+      atomId: 'H3',
+      route: '/work',
+      blurb: 'selected signals / archive',
+    },
+    {
+      id: 'contact',
+      label: 'Contact',
+      atomId: 'H4',
+      route: '/contact',
+      blurb: 'open channel / handshake',
+    },
   ],
 };
 

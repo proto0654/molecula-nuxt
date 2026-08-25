@@ -17,6 +17,7 @@ export class MoleculeScene {
   readonly camera: PerspectiveCamera;
   readonly renderer: WebGLRenderer;
   readonly moleculeGroup: Group;
+  readonly labelsGroup: Group;
 
   private readonly atoms: Atom[] = [];
   private readonly bonds: Bond[] = [];
@@ -37,10 +38,13 @@ export class MoleculeScene {
       alpha: false,
     });
     this.renderer.setClearColor(0x0f1115, 1);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     this.moleculeGroup = new Group();
     this.scene.add(this.moleculeGroup);
+
+    this.labelsGroup = new Group();
+    this.labelsGroup.name = 'atom-labels';
+    this.scene.add(this.labelsGroup);
 
     const ambient = new AmbientLight(0xffffff, 0.55);
     const key = new DirectionalLight(0xffffff, 0.85);
@@ -61,6 +65,7 @@ export class MoleculeScene {
       this.atoms.push(atom);
       this.atomMeshes.push(atom.mesh);
       this.moleculeGroup.add(atom.object);
+      this.labelsGroup.add(atom.atomLabel.object);
     }
 
     for (const bondConfig of config.bonds) {
@@ -90,15 +95,24 @@ export class MoleculeScene {
   resize(width: number, height: number): void {
     const w = Math.max(width, 1);
     const h = Math.max(height, 1);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
   }
 
-  update(_deltaSeconds: number): void {
-    this.moleculeGroup.updateMatrixWorld(true);
+  /**
+   * Updates atom labels when `updateLabels` is true.
+   * Typewriter + halos always tick.
+   * Caller must have already refreshed `moleculeGroup` world matrices.
+   */
+  update(deltaSeconds: number, updateLabels = true, elapsed = 0): void {
     for (const atom of this.atoms) {
-      atom.updateLabel(this.camera);
+      if (updateLabels) {
+        atom.updateLabel(this.camera);
+      }
+      atom.tickLabelTypewriter(deltaSeconds);
+      atom.updateHalo(this.camera, deltaSeconds, elapsed);
     }
   }
 
@@ -109,10 +123,12 @@ export class MoleculeScene {
   dispose(): void {
     this.clearMolecule();
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
   }
 
   private clearMolecule(): void {
     for (const atom of this.atoms) {
+      this.labelsGroup.remove(atom.atomLabel.object);
       this.moleculeGroup.remove(atom.object);
       atom.dispose();
     }

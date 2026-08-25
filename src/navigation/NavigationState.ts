@@ -13,13 +13,15 @@ export type NavigationListener = (
 
 /**
  * Single source of truth for which nav item is active.
- * Dual hover sources so canvas raycast `null` does not wipe overlay nav hover.
- * Effective: navHover ?? atomHover ?? committed.
+ * Dual hover sources so canvas raycast `null` does not wipe a nav hover.
+ *
+ * Effective highlight: atomHover ?? navHover ?? committed
+ * Focus: committed only (click). Hover never centers the molecule.
  */
 export class NavigationState {
-  private navHoverItemId: string | null = null;
   private atomHoverItemId: string | null = null;
-  private committedItemId: string | null = null;
+  private navHoverItemId: string | null = null;
+  private committedItemIdInternal: string | null = null;
   private readonly config: NavigationConfig;
   private readonly listeners = new Set<NavigationListener>();
 
@@ -28,12 +30,32 @@ export class NavigationState {
   }
 
   get activeItemId(): string | null {
-    return this.navHoverItemId ?? this.atomHoverItemId ?? this.committedItemId;
+    return this.atomHoverItemId ?? this.navHoverItemId ?? this.committedItemIdInternal;
   }
 
   get activeItem(): NavigationItem | null {
     const id = this.activeItemId;
     return id ? (getItemById(id) ?? null) : null;
+  }
+
+  get previewItemId(): string | null {
+    return this.atomHoverItemId ?? this.navHoverItemId;
+  }
+
+  get committedItemId(): string | null {
+    return this.committedItemIdInternal;
+  }
+
+  /** Orientation target — first click commit only. Hover never focuses. */
+  get focusItemId(): string | null {
+    return this.committedItemIdInternal;
+  }
+
+  setAtomHover(atomId: string | null): void {
+    const next = atomId ? (getItemByAtomId(atomId)?.id ?? null) : null;
+    if (next === this.atomHoverItemId) return;
+    this.atomHoverItemId = next;
+    this.emit();
   }
 
   setNavHover(itemId: string | null): void {
@@ -46,21 +68,14 @@ export class NavigationState {
     this.emit();
   }
 
-  setAtomHover(atomId: string | null): void {
-    const next = atomId ? (getItemByAtomId(atomId)?.id ?? null) : null;
-    if (next === this.atomHoverItemId) return;
-    this.atomHoverItemId = next;
-    this.emit();
-  }
-
-  /** Optional commit for “restore pre-hover”; unused by hover-only UI for now. */
+  /** Sticky selection from first click — drives focus + typewriter blurb (not zoom). */
   setCommitted(itemId: string | null): void {
     const next =
       itemId && this.config.items.some((item) => item.id === itemId)
         ? itemId
         : null;
-    if (next === this.committedItemId) return;
-    this.committedItemId = next;
+    if (next === this.committedItemIdInternal) return;
+    this.committedItemIdInternal = next;
     this.emit();
   }
 

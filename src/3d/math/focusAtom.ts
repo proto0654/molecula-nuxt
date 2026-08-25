@@ -83,6 +83,7 @@ function buildBasisFromForward(
 /**
  * Quaternion that maps rest-frame atom direction → camera direction,
  * with twist about the view axis chosen to stay closest to `referenceQuaternion`.
+ * Writes into `out` (no allocation).
  *
  * Construction (no Euler):
  * 1. FROM basis in rest space: +Z along atomDir, up from a stable local hint.
@@ -95,6 +96,7 @@ export function getStableFocusQuaternion(
   moleculeWorldPosition: Vector3Like,
   cameraPosition: Vector3Like,
   referenceQuaternion: Quaternion,
+  out: Quaternion,
 ): Quaternion {
   // --- Direction molecule → atom (rest / unrotated local offset in world) ---
   _atomDir.set(
@@ -104,7 +106,7 @@ export function getStableFocusQuaternion(
   );
   if (_atomDir.lengthSq() < 1e-12) {
     // Atom at center: no unique forward — keep current orientation.
-    return referenceQuaternion.clone();
+    return out.copy(referenceQuaternion);
   }
   _atomDir.normalize();
 
@@ -115,7 +117,7 @@ export function getStableFocusQuaternion(
     cameraPosition.z - moleculeWorldPosition.z,
   );
   if (_cameraDir.lengthSq() < 1e-12) {
-    return referenceQuaternion.clone();
+    return out.copy(referenceQuaternion);
   }
   _cameraDir.normalize();
 
@@ -149,7 +151,7 @@ export function getStableFocusQuaternion(
   _rotMatrix.copy(_fromMatrix).invert();
   _rotMatrix.premultiply(_toMatrix);
 
-  return new Quaternion().setFromRotationMatrix(_rotMatrix);
+  return out.setFromRotationMatrix(_rotMatrix);
 }
 
 /**

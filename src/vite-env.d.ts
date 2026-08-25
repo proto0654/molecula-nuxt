@@ -9,7 +9,11 @@ declare module 'troika-three-text' {
     color: Color | string | number;
     anchorX: string | number;
     anchorY: string | number;
+    maxWidth: number;
     material: Material;
+    textRenderInfo: {
+      blockBounds: [number, number, number, number];
+    } | null;
     sync: (callback?: () => void) => void;
     dispose: () => void;
   }

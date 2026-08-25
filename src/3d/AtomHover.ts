@@ -15,6 +15,7 @@ export type AtomHoverListener = (atomId: string | null) => void;
 export class AtomHover {
   private readonly raycaster = new Raycaster();
   private readonly ndc = new Vector2();
+  private readonly scratchPickNdc = new Vector2();
   private readonly listeners = new Set<AtomHoverListener>();
 
   private hoveredAtomId: string | null = null;
@@ -44,6 +45,23 @@ export class AtomHover {
     return () => {
       this.listeners.delete(listener);
     };
+  }
+
+  /**
+   * One-shot pick at NDC (e.g. click). Does not change hover dirty/hover state.
+   * Pass only atom meshes; world matrices must be current.
+   */
+  pickAt(
+    ndcX: number,
+    ndcY: number,
+    camera: Camera,
+    atomMeshes: readonly Object3D[],
+  ): string | null {
+    this.raycaster.setFromCamera(this.scratchPickNdc.set(ndcX, ndcY), camera);
+    const hits = this.raycaster.intersectObjects(atomMeshes as Object3D[], false);
+    if (hits.length === 0) return null;
+    const id = (hits[0].object as Mesh).userData.atomId;
+    return typeof id === 'string' ? id : null;
   }
 
   /**
