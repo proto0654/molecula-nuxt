@@ -14,10 +14,10 @@ Principles: the molecule is primary; HUD is secondary. No cards, no filled butto
 | `--color-ink-title` | `#e8ecef` | Destination title |
 | `--color-ink-white` | `#fff` | Committed nav label, return hover |
 | `--ink-04` … `--ink-78` | `rgb(214 219 224 / α)` | Legacy alpha steps |
-| `--ui-muted` | → `--ink-42` | Meta / status / coords |
+| `--ui-muted` | → `--ink-42` | Meta / status |
 | `--ui-primary` | → `--color-ink` | Default chrome text |
 | `--accent` | → `--color-ink-white` | Committed marker / signal |
-| `--grid-opacity` | `0.045` | Edge grid stroke alpha |
+| `--grid-opacity` | `0.032` | Edge grid stroke alpha |
 | `--frame-opacity` | `0.28` | Corner ticks / active rail marker |
 | `--line-opacity` | `0.22` | Divider, SVG connector |
 | `--font-ui` | `ui-monospace`, Cascadia / SF Mono / Consolas | All HUD type |
@@ -53,8 +53,7 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Caption blurb | `0x8b949e` | `AtomLabel` `BLURB_COLOR` |
 | Selection rings | `0xb8c0c8` | `AtomSelectionIndicator` `RING_COLOR` |
 | Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell |
-| Decorative orbits / node | `0x5c656e` / `0x6a737c` @ ~0.14–0.18 | `DecorativeNodes` (HIGH only) |
-| Composition crosshair | `0xd6dbe0` @ ~0.09–0.12 | `CompositionGuides` (behind hub) |
+| Decorative orbits / nodes | black @ ~0.42 / active `#3a3e44` @ ~0.55; nodes `0x6a737c` | `DecorativeNodes` (HIGH only) |
 | Highlight emissive | `0x4a525a` @ 0.1 | `Atom.ts` |
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
 
@@ -69,13 +68,11 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 - Desktop: mask centered near ~62% X (main stage). Tablet/mobile: near center, slightly high for bottom chrome.
 - `pointer-events: none`. Markup: `.hud__grid` via [`HudFrame`](../src/ui/HudFrame.ts).
 
-### 2. Corner ticks + coords
+### 2. Corner ticks
 
 - Four L-shapes: 1px `--frame-opacity`, only two sides each (`.hud__corner--tl` … `--br`).
-- Sparse guide hairlines live in WebGL ([`CompositionGuides`](../src/3d/CompositionGuides.ts)): camera-facing cross behind hub `C`, depth-tested so the molecule draws in front. Fade with zoom/fill.
-- Corner coordinate marks (`0.0` / `1.0`) — decorative only (HTML).
 - Inset via `--hud-inset` / `--hud-inset-desktop` (desktop left inset is a normal edge pad so the sidebar is inside the frame).
-- Not a full rectangular frame.
+- Not a full rectangular frame. No corner coordinate marks.
 
 ### 3. Site header
 
@@ -92,7 +89,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 ### 5. Indexed text nav
 
 - `01` muted index + uppercase label.
-- **Desktop (≥1024):** left vertical rail (`--sidebar-width`), column stack. Footer `NODE nn` + `SIGNAL ACTIVE|READY|IDLE` is centered under the **full** HUD frame (not the rail alone). Active via brighter text + thin left marker — no pills / filled rects.
+- **Desktop (≥1024):** left vertical rail (`--sidebar-width`), column stack. Footer `NODE nn` + `ACTIVE|READY|IDLE` is centered under the **full** HUD frame (not the rail alone). Active via brighter text + wider tracking + thin left marker — no pills / filled rects.
 - **Tablet (768–1023):** bottom bar; separators `·`. Commit wraps label with `⟨ … ⟩`.
 - **Mobile (≤767):** compact bottom rail `/ NAV` + `01 HOME · 02 ABOUT · …` (horizontal scroll; active item scrolled into view). Safe-area bottom. Tap vs scroll-drag via `attachTapGuard`. Full index opens in [`MobileNavOverlay`](../src/ui/MobileNavOverlay.ts).
 - No background, no border.
@@ -122,14 +119,14 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 - Idle titles are pure black; committed atom brightens letter + remainder via `setTitleActive` (tied to blurb commit).
 - On commit, typewriter `// blurb` under the title in the **same** group.
 - Screen-flat: scene-parented group, `quaternion.copy(camera.quaternion)`, scale by distance. Lift toward camera (`SURFACE_PAD`) so glyphs clear the atom.
-- Selection: `AtomSelectionIndicator` — concentric `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; not raycast targets.
+- Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; camera-quat billboard under molecule parent; not raycast targets.
 - Selected wireframe: shared `EdgesGeometry` icosahedron shell (~1.04× radius) on the **committed** atom only; quality may disable it.
-- Decorative ghost: orbital rings that peripheral atoms sit on + tiny wireframe node on `moleculeGroup`; HIGH only; fades with zoom/fill.
+- Decorative ghost: one hub-centered orbit per peripheral (black idle / dark gray active) + wireframe fragments on `moleculeGroup`; HIGH only; fades with zoom/fill.
 
 ## 3D vs HTML
 
-Three.js: molecule, bonds, troika captions, selection indicator, wireframe, decorative ghost, composition crosshair (behind hub), lights, composition profile (world offset from viewport fractions + approach).  
-HTML/CSS/SVG: grid, corners, header, nav rail, mobile nav overlay, SVG connector, overlay.  
+Three.js: molecule, bonds, troika captions, billboarded selection rings, wireframe, decorative orbits/nodes, lights, composition profile (world offset from viewport fractions + approach).  
+HTML/CSS/SVG: grid, corners, header, nav rail, mobile nav overlay, screen-space SVG connector, overlay.  
 Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connector never mutates Three.js objects. Composition profile never reads CSS sidebar width.
 
 ## Copy conventions

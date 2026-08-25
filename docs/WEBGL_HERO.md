@@ -31,7 +31,7 @@ main.ts
 - **3D logic** lives under `src/3d/` and does not import DOM navigation or routes.
 - **Pure math** (`src/3d/math/`) is side-effect free: `getStableFocusQuaternion` (writes into an `out` quaternion), `getFocusQuaternion`, `getAtomFocusDistance`, orientation, `projectToScreenInto`.
 - **UI** (`src/ui/*`) never touches Three.js objects. HUD look: [`DESIGN.md`](DESIGN.md) (CSS `:root` tokens + decorative patterns). Title + typewriter blurb are a scene-parented screen-flat troika block (`AtomLabel`).
-- **3D vs screen-space:** Three.js owns the molecule world (atoms, bonds, captions, selection indicator, wireframe, decorative ghost, composition crosshair behind hub) and viewport composition profiles. HTML/CSS/SVG owns grid, corners, header, nav rail, mobile overlay, SVG connectors, transition veil. Bridge: world position → `projectToScreenInto` / `projectAtom` → CSS pixels. Do not drive atom locals from CSS sidebar width.
+- **3D vs screen-space:** Three.js owns the molecule world (atoms, bonds, captions, billboarded selection indicator, wireframe, decorative orbits/nodes) and viewport composition profiles. HTML/CSS/SVG owns grid, corners, header, nav rail, mobile overlay, screen-space SVG connectors, transition veil. Bridge: world position → `projectToScreenInto` / `projectAtom` → CSS pixels. Do not drive atom locals from CSS sidebar width.
 - **Page transition / routing seam** lives in `src/navigation/Navigator.ts`. `onNavigate` currently shows a destination stub; swap later for a real router using `NavigationItem.route`.
 - **Wiring** lives in `main.ts`.
 
@@ -47,7 +47,7 @@ Types in [`src/3d/types.ts`](../src/3d/types.ts):
 | `BondConfig` | `id`, `from`, `to` (atom ids) |
 | `MoleculeConfig` | `atoms[]`, `bonds[]` |
 
-`MoleculeScene.buildMolecule` iterates config arrays (no hard-coded atom count). Test data: curated asymmetric 5-atom layout in [`moleculeConfig.ts`](../src/3d/moleculeConfig.ts) — hub `C` at origin; peripherals placed on shared orbital planes from [`moleculeOrbits.ts`](../src/3d/moleculeOrbits.ts) (IDs and bond graph stay stable).
+`MoleculeScene.buildMolecule` iterates config arrays (no hard-coded atom count). Test data: hub `C` at origin + peripherals in [`moleculeConfig.ts`](../src/3d/moleculeConfig.ts) at **equal spherical angles** about the hub (tetrahedron for 4; Fibonacci otherwise) on **individual** orbits with **varied radii** from [`moleculeOrbits.ts`](../src/3d/moleculeOrbits.ts) (`buildSphericalOrbitPlacements` / `ATOM_ORBIT_RADIUS`). IDs and bond graph stay stable.
 
 ### Navigation
 
@@ -109,20 +109,20 @@ Follow rates (`MOUSE_FOLLOW`, `FOCUS_ORIENT_FOLLOW`, `FOCUS_STRENGTH_FOLLOW`) us
 
 ### Mouse layer
 
-1. `pointermove` → normalize client coords to `[-1, 1]` (center = `0,0`).
+1. `pointermove` → normalize client coords to `[-1, 1]` (composition bias = `0,0`).
 2. `updateMouseInfluence(pointer)` → yaw about +Y and pitch about +X via `setFromAxisAngle`, then `targetMouse = qYaw × qPitch` (no Euler).
-3. Each frame: slerp mouse toward target (`MOUSE_FOLLOW`).
+3. Each frame: attenuate the mouse target by focus — `mouseScale = 1 - focusStrength * (1 - MOUSE_UNDER_FOCUS)` with `MOUSE_UNDER_FOCUS = 0.22`, then slerp `mouseOrientation` toward that attenuated target (`MOUSE_FOLLOW`).
 
-Screen center restores mouse identity. Max angles capped (`MAX_YAW` / `MAX_PITCH`). Scratch quaternions / vectors reused (no per-frame allocations for those paths).
+Focus orientation stays dominant; under focus the pointer remains a **subtle secondary** tilt so the molecule does not freeze and the selected atom stays in the focus zone. Screen center restores mouse identity. Max angles capped (`MAX_YAW` / `MAX_PITCH`). Scratch quaternions / vectors reused (no per-frame allocations for those paths).
 
 ### Focus layer
 
 1. `focusAtom(atomId)` → rest-frame atom position (`local + moleculeWorld`) + camera world position.
 2. `getStableFocusQuaternion(..., out = targetFocusOrientation)` (reference = current `focusOrientation`); set `targetFocusStrength = 1`.
 3. `clearFocus()` → `targetFocusStrength = 0` only (keeps last focus pose; influence fades via strength).
-4. Each frame: slerp focus orientation (`FOCUS_ORIENT_FOLLOW`), damp `focusStrength`, build `appliedFocus`, compose with mouse and base, apply to `moleculeGroup`.
+4. Each frame: slerp focus orientation (`FOCUS_ORIENT_FOLLOW`), damp `focusStrength`, build `appliedFocus`, compose with attenuated mouse and base, apply to `moleculeGroup`.
 
-Focus follows **click commit** only. Hover never calls `focusAtom`. Mouse keeps applying under focus.
+Focus follows **click commit** only. Hover never calls `focusAtom`. Mouse keeps applying under focus at reduced amplitude.
 
 **Stable focus math** (`getStableFocusQuaternion`): builds RH orthonormal bases with `+Z = forward` (FROM: atomDir in rest space; TO: cameraDir in world). World up-hint is `referenceQuaternion * localUp`, so twist about the view axis stays close to the current focus orientation. `R = M_to · M_from⁻¹`. No Euler. Degenerate cases (zero atom/camera dir, `up ∥ forward`) copy the reference into `out` or pick an alternate axis. Callers pass a persistent `out` quaternion — no allocation on the focus path.
 
@@ -227,20 +227,19 @@ Dev overlay: [`PerfOverlay`](../src/debug/PerfOverlay.ts) — FPS, frame time, q
 | `quality/QualityManager.ts` | Lock-once quality presets; `?quality=` / coarse-pointer start heuristic |
 | `quality/PerformanceSampler.ts` | Startup sample → lock + one emergency downgrade |
 | `resources/GeometryCache.ts` | Shared unit icosahedron / edges / circle / ticks / cross |
-| `moleculeOrbits.ts` | Curated orbital planes; peripheral atoms sit on rings |
+| `moleculeOrbits.ts` | One hub orbit per peripheral (varied radius); equal spherical angles |
 | `AtomHover.ts` | NDC raycast pick; enter/leave listeners |
 | `math/focusAtom.ts` | `getStableFocusQuaternion`, `getFocusQuaternion`, camera-framing helper |
 | `math/getAtomFocusDistance.ts` | FOV-based distance so an atom radius covers a viewport fraction |
 | `math/projection.ts` | `projectToScreenInto` (scratch) / `projectToScreen` |
-| `Atom.ts` / `Bond.ts` / `AtomLabel.ts` / `AtomSelectionIndicator.ts` | Group+flat icosahedron, dashed line connector, two-part caption, measurement reticle |
-| `DecorativeNodes.ts` | HIGH-only unpickable ghost (orbits matching atom placement + tiny wireframe node); fades with zoom/fill |
-| `CompositionGuides.ts` | Screen-aligned crosshair behind hub `C` (depth-tested); fades with zoom/fill |
+| `Atom.ts` / `Bond.ts` / `AtomLabel.ts` / `AtomSelectionIndicator.ts` | Group+flat icosahedron, dashed line connector, two-part caption, billboarded measurement reticle |
+| `DecorativeNodes.ts` | HIGH-only unpickable ghost (one hub orbit per atom + wireframe fragments); idle orbits black, active orbit dark gray via `setActiveOrbitAtom`; fades with zoom/fill |
 | `moleculeConfig.ts` / `types.ts` | Declarative molecule data (`caption` on atoms) |
 | `navigation/navigationConfig.ts` | `NavigationItem[]` + blurbs + id/atom lookups |
 | `navigation/NavigationState.ts` | atomHover + navHover + committed; `focusItemId`; subscribe |
 | `navigation/Navigator.ts` | GSAP page-transition coordinator; `navigateTo` / `onNavigate` / `cancel` |
 | `navigation/TransitionState.ts` | Centralized transition phase / progress snapshot |
-| `ui/HudFrame.ts` | Grid + corners + coord marks (pointer-events none); crosshair is WebGL |
+| `ui/HudFrame.ts` | Grid + corner ticks (pointer-events none) |
 | `ui/SiteHeader.ts` | Desktop logo / SYS / NODE; mobile LOGO + MENU / NAV |
 | `ui/MobileNavOverlay.ts` | Editorial full-screen mobile nav index |
 | `ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); `getItemAnchor`; zoom softness |
@@ -252,7 +251,7 @@ Dev overlay: [`PerfOverlay`](../src/debug/PerfOverlay.ts) — FPS, frame time, q
 ## Scene constraints (current stage)
 
 - Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`.
-- Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) + WebGL composition crosshair behind hub — see [`DESIGN.md`](DESIGN.md); no client router — `route` on items is declarative only.
+- Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) — see [`DESIGN.md`](DESIGN.md); no client router — `route` on items is declarative only.
 - Responsive: desktop ≥1024 (rail + header + composition profile + connector; full captions), tablet 768–1023 (bottom nav, tablet framing, smaller remainder), mobile ≤767 (header + compact rail + MENU overlay, mobile framing, full captions, touch drag/tap).
 - No postprocessing, bloom, particle systems, physics, realtime shadows, or environment maps. Scene uses a matching `Fog` for slight depth only.
 - Pixel ratio capped by the locked quality preset (`maxPixelRatio` 1.75 / 1.5 / 1), refreshed on every resize (monitor / OS DPR changes). Mobile starts MEDIUM (DPR ≤1.5, no ghosts/ticks); sampler may lock LOW (DPR 1, no wireframe). Never disable rotation, touch, raycast, focus, labels, zoom, or navigation.
@@ -283,10 +282,10 @@ Resize sizing prefers `window.visualViewport` when present, else `innerWidth` / 
 
 - Bond connectors are dashed `Line`s inset from atom radii; `computeLineDistances()` is required for `LineDashedMaterial`. Not pick targets.
 - Atom materials are matte + `flatShading` (HIGH/MEDIUM standard, LOW lambert). Do not reintroduce Fresnel or high metalness — facets must stay readable.
-- Peripheral positions and decorative orbits must stay in sync via [`moleculeOrbits.ts`](../src/3d/moleculeOrbits.ts) (`MOLECULE_ORBITS` + `ATOM_ORBIT_PLACEMENT`). Do not hard-code peripheral XYZ independently of the orbit defs.
+- Peripheral positions and decorative orbits must stay in sync via [`moleculeOrbits.ts`](../src/3d/moleculeOrbits.ts) (`ATOM_ORBIT_PLACEMENT` / `buildSphericalOrbitPlacements`). Each peripheral owns one hub-centered orbit (varied radius); directions use equal spherical spacing (not a shared ecliptic). Do not share one ring across multiple atoms or hard-code XYZ. Active orbit color follows highlight via `setActiveOrbitAtom` (black idle / dark gray active).
 - Atom colors are a local `COLOR_BY_LABEL` map in `Atom.ts`, not part of `AtomConfig`.
 - `AtomLabel`: parented to `labelsGroup` on the **scene**, not the atom mesh. World position follows the atom; `quaternion.copy(camera.quaternion)` keeps the plane screen-flat (no off-axis foreshortening); scale = distance / 4.5 keeps pixel size stable. First letter centered on the surface point toward the camera; remainder `+X`; blurb under the title. Do not parent labels to the mesh or `lookAt` from a rotated parent.
-- `AtomSelectionIndicator`: concentric `LineLoop`s + ticks + center cross parented to the atom **Group** (sibling of the scaled unit icosahedron, so ring radius is not squared); billboarded when visible; `depthTest` on; not in `atomMeshes`. Quality hides extra rings / ticks; LOW skips the pulse scale wave.
+- `AtomSelectionIndicator`: concentric `LineLoop`s + ticks + center cross parented to the atom **Group**; **screen-flat billboard** via camera quaternion composed against parent world quaternion (not world-tilted); `depthTest` on; not in `atomMeshes`. Quality hides extra rings / ticks; LOW skips the pulse scale wave.
 - Atom rest-frame position for focus is `atom.object.position` (the Group), not `mesh.position` (local origin after the unit-icosahedron scale wrap).
 - Shared geometries live in `GeometryCache` — do not `geometry.dispose()` on atom/selection teardown. Bond lines own their geometry and dispose it in `Bond.dispose()`. `applyQuality` must not call `buildMolecule`.
 - Wireframe shell is decorative and committed-only; quality may disable it. Never add it to `atomMeshes`.

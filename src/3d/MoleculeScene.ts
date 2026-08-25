@@ -10,12 +10,10 @@ import {
   Mesh,
   PerspectiveCamera,
   Scene,
-  Vector3,
   WebGLRenderer,
 } from 'three';
 import { Atom } from './Atom';
 import { Bond } from './Bond';
-import { CompositionGuides } from './CompositionGuides';
 import { DecorativeNodes } from './DecorativeNodes';
 import type { QualityManager } from './quality/QualityManager';
 import type { QualitySettings } from './quality/types';
@@ -56,8 +54,6 @@ export class MoleculeScene {
   private readonly wireframeMaterial: LineBasicMaterial;
   private readonly wireframe: LineSegments;
   private readonly decorativeNodes: DecorativeNodes;
-  private readonly compositionGuides: CompositionGuides;
-  private readonly scratchHub = new Vector3();
   private wireframeAtomId: string | null = null;
   private lastWidth = 1;
   private lastHeight = 1;
@@ -129,9 +125,6 @@ export class MoleculeScene {
     this.decorativeNodes = new DecorativeNodes(this.cache);
     this.decorativeNodes.setVisible(quality.get().decorativeNodes);
     this.moleculeGroup.add(this.decorativeNodes.object);
-
-    this.compositionGuides = new CompositionGuides();
-    this.scene.add(this.compositionGuides.object);
 
     this.resize(window.innerWidth, window.innerHeight);
   }
@@ -236,7 +229,11 @@ export class MoleculeScene {
 
   setDecorativeZoomFade(zoomProgress: number, fillProgress: number): void {
     this.decorativeNodes.setZoomFade(zoomProgress, fillProgress);
-    this.compositionGuides.setZoomFade(zoomProgress, fillProgress);
+  }
+
+  /** White orbit for the active peripheral atom (hover or committed). */
+  setActiveOrbitAtom(atomId: string | null): void {
+    this.decorativeNodes.setActiveOrbitAtom(atomId);
   }
 
   /** Atom meshes for picking; never includes bonds. */
@@ -281,12 +278,6 @@ export class MoleculeScene {
       atom.tickLabelTypewriter(deltaSeconds);
       atom.updateSelection(this.camera, deltaSeconds, elapsed);
     }
-
-    const hub = this.getAtom('C');
-    if (hub) {
-      hub.mesh.getWorldPosition(this.scratchHub);
-      this.compositionGuides.update(this.camera, this.scratchHub);
-    }
   }
 
   render(): void {
@@ -295,7 +286,6 @@ export class MoleculeScene {
 
   dispose(): void {
     this.clearMolecule();
-    this.compositionGuides.dispose();
     this.decorativeNodes.dispose();
     this.wireframeMaterial.dispose();
     this.bondMaterial.dispose();

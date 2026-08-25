@@ -30,6 +30,12 @@ const TOUCH_DRAG_GAIN = 1.35;
 /** Higher = snappier slerp toward `targetMouseOrientation`. */
 const MOUSE_FOLLOW = 6;
 
+/**
+ * Mouse amplitude scale at `focusStrength = 1`.
+ * Focus orientation stays dominant; pointer remains a subtle secondary tilt.
+ */
+const MOUSE_UNDER_FOCUS = 0.22;
+
 /** Higher = snappier slerp toward `targetFocusOrientation`. */
 const FOCUS_ORIENT_FOLLOW = 4;
 
@@ -185,6 +191,7 @@ export class MoleculeController {
   private readonly scratchPitch = new Quaternion();
   private readonly scratchIdentity = new Quaternion();
   private readonly scratchAppliedFocus = new Quaternion();
+  private readonly scratchAttenuatedMouse = new Quaternion();
   private readonly scratchCompose = new Quaternion();
   private readonly scratchMoleculePos = new Vector3();
   private readonly scratchAtomPos = new Vector3();
@@ -547,6 +554,11 @@ export class MoleculeController {
     this.scene.setWireframeAtom(atomId);
   }
 
+  /** White decorative orbit for the active peripheral (others stay black). */
+  setActiveOrbitAtom(atomId: string | null): void {
+    this.scene.setActiveOrbitAtom(atomId);
+  }
+
   setCaptionsCompact(compact: boolean): void {
     for (const atom of this.scene.getAtoms()) {
       atom.atomLabel.setRemainderVisible(!compact);
@@ -643,6 +655,7 @@ export class MoleculeController {
    * Frame-rate independent layer follow, then compose onto the group.
    * `final = appliedFocus * mouseOrientation * baseOrientation`
    * where `appliedFocus = slerp(I, focusOrientation, focusStrength)`.
+   * Under focus, mouse amplitude scales toward `MOUSE_UNDER_FOCUS` (secondary tilt).
    * Zoom writes `moleculeGroup.position` only — not mixed into quaternion layers.
    *
    * Update layers (do not mix):
@@ -653,14 +666,22 @@ export class MoleculeController {
    * - DECORATIVE: selection pulse (early-out when idle); ghost layer zoom-fades
    */
   update(delta: number): void {
-    const mouseT = 1 - Math.exp(-MOUSE_FOLLOW * delta);
-    this.mouseOrientation.slerp(this.targetMouseOrientation, mouseT);
-
     const focusOrientT = 1 - Math.exp(-FOCUS_ORIENT_FOLLOW * delta);
     this.focusOrientation.slerp(this.targetFocusOrientation, focusOrientT);
 
     const strengthT = 1 - Math.exp(-FOCUS_STRENGTH_FOLLOW * delta);
     this.focusStrength += (this.targetFocusStrength - this.focusStrength) * strengthT;
+
+    // Focus dominant: shrink pointer tilt as focusStrength rises (never zero).
+    const mouseScale =
+      1 - this.focusStrength * (1 - MOUSE_UNDER_FOCUS);
+    this.scratchAttenuatedMouse.slerpQuaternions(
+      this.scratchIdentity,
+      this.targetMouseOrientation,
+      mouseScale,
+    );
+    const mouseT = 1 - Math.exp(-MOUSE_FOLLOW * delta);
+    this.mouseOrientation.slerp(this.scratchAttenuatedMouse, mouseT);
 
     this.updateZoomProgress(delta);
 

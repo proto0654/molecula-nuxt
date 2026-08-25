@@ -4,6 +4,8 @@ import type { QualityManager } from '../3d/quality/QualityManager';
 export const DEBUG_PERF = true;
 
 const UPDATE_MS = 250;
+/** Match `MOBILE_MQ` in main.ts / `--bp-mobile-max`. */
+const MOBILE_MQ = '(max-width: 767px)';
 
 function isOverlayEnabled(): boolean {
   if (!import.meta.env.DEV) return false;
@@ -15,6 +17,7 @@ function isOverlayEnabled(): boolean {
 
 /**
  * Dev-only HUD: FPS, frame time, quality, pixel ratio.
+ * Visible only on non-mobile viewports at HIGH quality.
  * DOM writes are throttled — do not call `flush` from every rAF yourself.
  */
 export class PerfOverlay {
@@ -22,9 +25,12 @@ export class PerfOverlay {
   private readonly unsubscribeQuality: () => void;
   private readonly quality: QualityManager;
   private readonly getPixelRatio: () => number;
+  private readonly mobileMq: MediaQueryList;
+  private readonly onMobileChange: () => void;
   private fps = 0;
   private frameMs = 0;
   private lastDom = 0;
+  private visible = false;
 
   static tryCreate(
     parent: HTMLElement,
@@ -45,15 +51,26 @@ export class PerfOverlay {
     this.root = document.createElement('pre');
     this.root.className = 'perf-overlay';
     this.root.setAttribute('aria-hidden', 'true');
+    this.root.hidden = true;
     parent.append(this.root);
 
+    this.mobileMq = window.matchMedia(MOBILE_MQ);
+    this.onMobileChange = () => {
+      this.syncVisibility();
+    };
+    this.mobileMq.addEventListener('change', this.onMobileChange);
+
     this.unsubscribeQuality = quality.subscribe(() => {
-      this.flush();
+      this.syncVisibility();
+      if (this.visible) this.flush();
     });
-    this.flush();
+    this.syncVisibility();
+    if (this.visible) this.flush();
   }
 
   record(deltaSeconds: number): void {
+    if (!this.visible) return;
+
     this.frameMs = deltaSeconds * 1000;
     const instant = deltaSeconds > 1e-6 ? 1 / deltaSeconds : 0;
     this.fps += (instant - this.fps) * 0.2;
@@ -65,8 +82,16 @@ export class PerfOverlay {
   }
 
   dispose(): void {
+    this.mobileMq.removeEventListener('change', this.onMobileChange);
     this.unsubscribeQuality();
     this.root.remove();
+  }
+
+  private syncVisibility(): void {
+    const show =
+      !this.mobileMq.matches && this.quality.get().level === 'high';
+    this.visible = show;
+    this.root.hidden = !show;
   }
 
   private flush(): void {

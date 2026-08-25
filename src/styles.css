@@ -21,7 +21,7 @@
   --ui-muted: var(--ink-42);
   --ui-primary: var(--color-ink);
   --accent: var(--color-ink-white);
-  --grid-opacity: 0.045;
+  --grid-opacity: 0.032;
   --frame-opacity: 0.28;
   --line-opacity: 0.22;
 
@@ -156,40 +156,6 @@ body {
   right: 0;
   border-left: 0;
   border-top: 0;
-}
-
-.hud__coords {
-  position: absolute;
-  inset: var(--hud-inset);
-  font-size: 0.5rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ui-muted);
-  opacity: 0.7;
-}
-
-.hud__coord {
-  position: absolute;
-}
-
-.hud__coord--tl {
-  top: 0.35rem;
-  left: 0.45rem;
-}
-
-.hud__coord--tr {
-  top: 0.35rem;
-  right: 0.45rem;
-}
-
-.hud__coord--bl {
-  bottom: 0.35rem;
-  left: 0.45rem;
-}
-
-.hud__coord--br {
-  bottom: 0.35rem;
-  right: 0.45rem;
 }
 
 .hud__meta {
@@ -468,6 +434,10 @@ html.nav-overlay-open body {
   color: var(--color-ink-bright);
 }
 
+.nav__item.is-active .nav__label {
+  letter-spacing: 0.26em;
+}
+
 .nav__item:hover .nav__index,
 .nav__item.is-active .nav__index {
   color: var(--ink-70);
@@ -475,6 +445,7 @@ html.nav-overlay-open body {
 
 .nav__item.is-committed .nav__label {
   color: var(--accent);
+  letter-spacing: 0.28em;
 }
 
 .nav__item.is-committed .nav__label::before {
@@ -593,10 +564,6 @@ html.nav-overlay-open body {
     inset: var(--hud-inset-desktop);
   }
 
-  .hud__coords {
-    inset: var(--hud-inset-desktop);
-  }
-
   .hud__meta {
     display: none;
   }
@@ -653,17 +620,6 @@ html.nav-overlay-open body {
 
   .nav::before {
     content: none;
-  }
-
-  .nav::after {
-    content: '';
-    position: absolute;
-    top: 3.25rem;
-    bottom: 1.5rem;
-    right: 0;
-    width: 1px;
-    background: rgb(214 219 224 / var(--line-opacity));
-    pointer-events: none;
   }
 
   .nav__mark {
@@ -765,8 +721,7 @@ html.nav-overlay-open body {
     background-size: var(--grid-size-tablet) var(--grid-size-tablet);
   }
 
-  .hud__frame,
-  .hud__coords {
+  .hud__frame {
     inset: var(--hud-inset-tablet);
   }
 
@@ -796,8 +751,7 @@ html.nav-overlay-open body {
     mask-image: radial-gradient(ellipse 70% 55% at 50% 42%, transparent 38%, #000 100%);
   }
 
-  .hud__frame,
-  .hud__coords {
+  .hud__frame {
     inset: var(--hud-inset-mobile);
   }
 
@@ -807,10 +761,6 @@ html.nav-overlay-open body {
   }
 
   .hud__meta {
-    display: none;
-  }
-
-  .hud__coords {
     display: none;
   }
 
@@ -911,8 +861,10 @@ html.nav-overlay-open body {
 
 .perf-overlay {
   position: fixed;
-  top: 0.7rem;
-  left: 0.7rem;
+  top: 50%;
+  right: 0.7rem;
+  left: auto;
+  transform: translateY(-50%);
   z-index: var(--z-debug);
   margin: 0;
   padding: 0.45rem 0.55rem;

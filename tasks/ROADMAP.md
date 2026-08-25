@@ -15,15 +15,16 @@
 - [x] Declarative nav config (`NavigationItem` + `blurb`) + techno HTML overlay; `NavigationState` (atomHover + navHover + committed)
 - [x] Hover preview → highlight + pulse reticle (no focus); first click → `focusAtom` + frozen reticle + troika typewriter blurb
 - [x] Second click → GSAP `Navigator.navigateTo` (zoom); destination stub + Return (`cancel`)
-- [x] AtomSelectionIndicator concentric rings (pulse / freeze); HUD grid + corners; desktop / tablet / mobile layout
+- [x] AtomSelectionIndicator concentric rings (pulse / freeze; world-space); HUD grid + corners; desktop / tablet / mobile layout
 - [x] HUD design tokens (`:root` in `styles.css`) + [`docs/DESIGN.md`](../docs/DESIGN.md) decorative patterns
 - [x] Render-loop hygiene audit: single matrix update, dirty-gated labels, every-frame selection tick, `visualViewport` / DPR resize, dispose `forceContextLoss`, no hot-path allocs
 - [x] QualityManager (`high` / `medium` / `low`) + lock-once performance sample + capped pixel ratio
-- [x] Shared low-poly geometry (`GeometryCache`); selected wireframe; quality-gated selection rings + decorative ghost
+- [x] Shared low-poly geometry (`GeometryCache`); selected wireframe; quality-gated selection rings + decorative orbits
 - [x] Dev-only throttled perf overlay (`DEBUG_PERF` / `?debug=0`)
-- [x] Faceted matte graphite look (flatShading icosahedrons, dashed bonds, orbital ghost, selection reticle, no postprocessing)
+- [x] Faceted matte graphite look (flatShading icosahedrons, dashed bonds, orbital ghost, selection rings, no postprocessing)
 - [x] HTML sidebar / SVG connectors via `projectAtom` (keep HUD out of WebGL); desktop composition bias
 - [x] Mobile composition (profiles, SiteHeader + MENU overlay, compact rail, touch drag/tap, hub/orbit compact layout)
+- [x] Hero final polish: mouse-under-focus attenuation, 3D selection rings, smoothed connector, visual noise cut
 
 ## Next
 

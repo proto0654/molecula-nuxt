@@ -79,6 +79,7 @@ function applyVisuals(): void {
   const highlightId = committedId ?? previewId;
   const highlightItem = highlightId ? getItemById(highlightId) : undefined;
   controller.setHighlightedAtom(highlightItem?.atomId ?? null);
+  controller.setActiveOrbitAtom(highlightItem?.atomId ?? null);
 
   if (committedId) {
     const committed = getItemById(committedId);

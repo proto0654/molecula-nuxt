@@ -149,14 +149,14 @@ export class Navigation {
     const id = this.state.committedItemId ?? this.state.activeItemId;
     if (!id) {
       this.statusNode.textContent = 'NODE --';
-      this.statusSignal.textContent = 'SIGNAL IDLE';
+      this.statusSignal.textContent = 'IDLE';
       this.statusSignal.classList.remove('is-live');
       return;
     }
     const index = navigationConfig.items.findIndex((entry) => entry.id === id);
     this.statusNode.textContent = `NODE ${String(index + 1).padStart(2, '0')}`;
     const live = this.state.committedItemId !== null;
-    this.statusSignal.textContent = live ? 'SIGNAL ACTIVE' : 'SIGNAL READY';
+    this.statusSignal.textContent = live ? 'ACTIVE' : 'READY';
     this.statusSignal.classList.toggle('is-live', live);
   }
 

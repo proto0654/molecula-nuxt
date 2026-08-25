@@ -6,30 +6,53 @@ import {
   Quaternion,
   type Material,
 } from 'three';
-import { MOLECULE_ORBITS, orbitQuaternion } from './moleculeOrbits';
+import {
+  ATOM_ORBIT_PLACEMENT,
+  PERIPHERAL_ATOM_IDS,
+  orbitQuaternion,
+  type OrbitDef,
+} from './moleculeOrbits';
 import type { GeometryCache } from './resources/GeometryCache';
 
 const NODE_COLOR = 0x6a737c;
-const ORBIT_COLOR = 0x5c656e;
+const ORBIT_COLOR = 0x000000;
+/** Active orbit — dark gray, just above black idle. */
+const ORBIT_ACTIVE_COLOR = 0x3a3e44;
 
 const NODE_OPACITY = 0.18;
-const ORBIT_OPACITY = 0.14;
+const ORBIT_OPACITY = 0.42;
+const ORBIT_ACTIVE_OPACITY = 0.55;
+
+/** Extra ghost fragments that ride with the molecule (not pick targets). */
+const EXTRA_NODES: readonly {
+  position: readonly [number, number, number];
+  scale: number;
+}[] = [
+  { position: [0.15, 1.72, -0.55], scale: 0.05 },
+  { position: [-1.35, -0.55, 0.85], scale: 0.04 },
+  { position: [1.1, 0.95, 1.05], scale: 0.035 },
+];
 
 /**
  * Optional HIGH-only ghost geometry. Parent under `moleculeGroup`
  * so it rides molecule rotation. Never added to `atomMeshes`.
  *
- * Orbits share the same plane/radius as peripheral atom placements
- * (`moleculeOrbits.ts`) so atoms sit on the rings.
+ * One hub-centered orbit circle per peripheral atom (varied radius).
+ * Idle orbits are black; the active atom's orbit turns white.
  */
 export class DecorativeNodes {
   readonly object: Group;
   private readonly materials: Material[];
   private readonly baseOpacities: number[];
   private readonly orbitLoops: LineLoop[] = [];
+  private readonly orbitMaterials: LineBasicMaterial[] = [];
+  private readonly orbitAtomIds: string[] = [];
+  private readonly orbitDefs: OrbitDef[] = [];
+  private readonly nodeMaterialIndex: number;
   private enabled = true;
   private zoomFade = 1;
   private orbitScale = 1;
+  private activeAtomId: string | null = null;
   private readonly scratchQ = new Quaternion();
 
   constructor(cache: GeometryCache) {
@@ -39,19 +62,24 @@ export class DecorativeNodes {
     const materials: Material[] = [];
     const baseOpacities: number[] = [];
 
-    const orbitMaterial = new LineBasicMaterial({
-      color: ORBIT_COLOR,
-      transparent: true,
-      opacity: ORBIT_OPACITY,
-      depthWrite: false,
-    });
-    materials.push(orbitMaterial);
-    baseOpacities.push(ORBIT_OPACITY);
+    for (const atomId of PERIPHERAL_ATOM_IDS) {
+      const placement = ATOM_ORBIT_PLACEMENT[atomId]!;
+      const def = placement.orbit;
+      this.orbitDefs.push(def);
+      this.orbitAtomIds.push(atomId);
 
-    for (let i = 0; i < MOLECULE_ORBITS.length; i += 1) {
-      const def = MOLECULE_ORBITS[i]!;
+      const orbitMaterial = new LineBasicMaterial({
+        color: ORBIT_COLOR,
+        transparent: true,
+        opacity: ORBIT_OPACITY,
+        depthWrite: false,
+      });
+      materials.push(orbitMaterial);
+      baseOpacities.push(ORBIT_OPACITY);
+      this.orbitMaterials.push(orbitMaterial);
+
       const orbit = new LineLoop(cache.getUnitCircle(), orbitMaterial);
-      orbit.name = `decorative-orbit-${i}`;
+      orbit.name = `decorative-orbit-${atomId}`;
       orbit.scale.setScalar(def.radius);
       orbit.quaternion.copy(orbitQuaternion(def, this.scratchQ));
       orbit.raycast = () => {};
@@ -65,19 +93,22 @@ export class DecorativeNodes {
       opacity: NODE_OPACITY,
       depthWrite: false,
     });
+    this.nodeMaterialIndex = materials.length;
     materials.push(nodeMaterial);
     baseOpacities.push(NODE_OPACITY);
 
-    const node = new LineSegments(
-      cache.getUnitIcosahedronEdges(0),
-      nodeMaterial,
-    );
-    node.name = 'decorative-node';
-    node.scale.setScalar(0.05);
-    // Off the main orbits — faint technical fragment, not a half-arc.
-    node.position.set(0.15, 1.72, -0.55);
-    node.raycast = () => {};
-    this.object.add(node);
+    for (let i = 0; i < EXTRA_NODES.length; i += 1) {
+      const spec = EXTRA_NODES[i]!;
+      const node = new LineSegments(
+        cache.getUnitIcosahedronEdges(0),
+        nodeMaterial,
+      );
+      node.name = i === 0 ? 'decorative-node' : `decorative-node-${i}`;
+      node.scale.setScalar(spec.scale);
+      node.position.set(spec.position[0], spec.position[1], spec.position[2]);
+      node.raycast = () => {};
+      this.object.add(node);
+    }
 
     this.materials = materials;
     this.baseOpacities = baseOpacities;
@@ -87,9 +118,16 @@ export class DecorativeNodes {
   setOrbitScale(scale: number): void {
     this.orbitScale = scale;
     for (let i = 0; i < this.orbitLoops.length; i += 1) {
-      const def = MOLECULE_ORBITS[i]!;
+      const def = this.orbitDefs[i]!;
       this.orbitLoops[i]!.scale.setScalar(def.radius * this.orbitScale);
     }
+  }
+
+  /** White orbit for the active peripheral; others stay black. */
+  setActiveOrbitAtom(atomId: string | null): void {
+    if (atomId === this.activeAtomId) return;
+    this.activeAtomId = atomId;
+    this.syncOrbitColors();
   }
 
   setVisible(visible: boolean): void {
@@ -111,11 +149,27 @@ export class DecorativeNodes {
     this.materials.length = 0;
   }
 
-  private syncOpacity(): void {
-    for (let i = 0; i < this.materials.length; i += 1) {
-      const material = this.materials[i] as LineBasicMaterial;
+  private syncOrbitColors(): void {
+    for (let i = 0; i < this.orbitMaterials.length; i += 1) {
+      const material = this.orbitMaterials[i]!;
+      const active = this.orbitAtomIds[i] === this.activeAtomId;
+      material.color.setHex(active ? ORBIT_ACTIVE_COLOR : ORBIT_COLOR);
+      this.baseOpacities[i] = active ? ORBIT_ACTIVE_OPACITY : ORBIT_OPACITY;
       material.opacity = this.baseOpacities[i]! * this.zoomFade;
     }
+  }
+
+  private syncOpacity(): void {
+    for (let i = 0; i < this.orbitMaterials.length; i += 1) {
+      const material = this.orbitMaterials[i]!;
+      const active = this.orbitAtomIds[i] === this.activeAtomId;
+      const base = active ? ORBIT_ACTIVE_OPACITY : ORBIT_OPACITY;
+      this.baseOpacities[i] = base;
+      material.opacity = base * this.zoomFade;
+    }
+    const nodeMat = this.materials[this.nodeMaterialIndex] as LineBasicMaterial;
+    nodeMat.opacity =
+      this.baseOpacities[this.nodeMaterialIndex]! * this.zoomFade;
   }
 
   private syncVisibility(): void {

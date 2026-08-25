@@ -18,7 +18,7 @@ Interactive WebGL hero prototype for a molecule visualization block.
 
 ## Current focus
 
-Matte flat-shaded icosahedron atoms, dashed-line bonds, and orbital placement (`moleculeOrbits`) under lock-once `QualityManager`. Desktop: left nav rail + header + SVG connector via `projectAtom`, composition profile `0.62`. Mobile: composition profile + compact hub/orbits (×0.7), site header + `/ NAV` rail + MENU overlay, touch drag/tap. Idle captions pure black; committed caption bright. Hover = highlight + pulse reticle (no centering). First click = `focusAtom` + typewriter blurb. Second click = `Navigator.navigateTo` (zoom → fill → stub) with Return. HUD stays HTML/CSS/SVG. No client router (`route` is data only).
+Matte flat-shaded icosahedron atoms, dashed-line bonds, and **spherical** orbital placement (`buildSphericalOrbitPlacements`, one orbit per peripheral, varied radii) under lock-once `QualityManager`. Desktop: left nav rail + header + SVG connector via `projectAtom`, composition profile `0.62`. Mobile: composition profile + compact hub/orbits (×0.7), site header + `/ NAV` rail + MENU overlay, touch drag/tap. Idle captions pure black; committed caption bright. Hover = highlight + pulse reticle (no centering). First click = `focusAtom` + typewriter blurb. Second click = `Navigator.navigateTo` (zoom → fill → stub) with Return. Mouse tilt attenuates under focus. HUD stays HTML/CSS/SVG. No client router (`route` is data only).
 
 ## Docs hub
 

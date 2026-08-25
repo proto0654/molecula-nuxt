@@ -3,9 +3,9 @@ import {
   LineBasicMaterial,
   LineLoop,
   LineSegments,
+  Quaternion,
   type BufferGeometry,
   type Camera,
-  Vector3,
 } from 'three';
 
 export type HaloMode = 'idle' | 'hover' | 'committed';
@@ -23,7 +23,8 @@ const HOVER_OPACITY = 0.4;
 const COMMITTED_OPACITY = 0.32;
 
 /**
- * Billboarded measurement reticle around an atom.
+ * Screen-flat measurement reticle around an atom (camera billboard).
+ * Parent may rotate with the molecule — local quaternion undoes that.
  * Not a raycast target — keep out of `atomMeshes`.
  * Uses shared geometries from `GeometryCache` (do not dispose them).
  */
@@ -46,7 +47,8 @@ export class AtomSelectionIndicator {
   private ticksEnabled = true;
   private centerEnabled = true;
 
-  private readonly scratchCamera = new Vector3();
+  private readonly scratchParentQ = new Quaternion();
+  private readonly scratchBillboard = new Quaternion();
 
   constructor(radius: number, geometries: SelectionGeometries) {
     this.radius = radius;
@@ -155,8 +157,8 @@ export class AtomSelectionIndicator {
   }
 
   /**
-   * Billboards the reticle and damps pulse / opacity.
-   * Skips lookAt when fully idle.
+   * Screen-flat billboard (camera quaternion in local space) + pulse / opacity.
+   * Skips orientation work when fully idle.
    */
   update(camera: Camera, delta: number, elapsed: number): void {
     const t = 1 - Math.exp(-FOLLOW * delta);
@@ -169,8 +171,18 @@ export class AtomSelectionIndicator {
     }
 
     this.object.visible = true;
-    camera.getWorldPosition(this.scratchCamera);
-    this.object.lookAt(this.scratchCamera);
+
+    const parent = this.object.parent;
+    if (parent) {
+      parent.getWorldQuaternion(this.scratchParentQ);
+      this.scratchBillboard
+        .copy(this.scratchParentQ)
+        .invert()
+        .multiply(camera.quaternion);
+      this.object.quaternion.copy(this.scratchBillboard);
+    } else {
+      this.object.quaternion.copy(camera.quaternion);
+    }
 
     const showTicks = this.ticksEnabled && !this.simple;
     const showCenter = this.centerEnabled && !this.simple;
