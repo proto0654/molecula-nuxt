@@ -14,7 +14,7 @@ const REF_DISTANCE = 4.5;
 /** Extra lift toward the camera, in letter-font units, so title + blurb clear the sphere. */
 const SURFACE_PAD = 0.55;
 /** Self-hosted JetBrains Mono (Cyrillic); troika needs ttf/woff, not woff2. */
-const LABEL_FONT = '/fonts/JetBrainsMono-Regular.ttf';
+const LABEL_FONT = `${import.meta.env.BASE_URL}fonts/JetBrainsMono-Regular.ttf`;
 
 function splitCaption(caption: string): { letter: string; rest: string } {
   const trimmed = caption.trim();
