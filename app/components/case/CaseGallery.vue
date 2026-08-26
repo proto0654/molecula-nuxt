@@ -1,29 +1,34 @@
 <script setup lang="ts">
 import type { Case } from '~/types/wp';
+import { caseImageUrl, stripTags } from '~/domain/portfolio/presentation';
 
 defineProps<{
   caseData: Case;
+  sectionIndex: number;
 }>();
+
+function itemClass(index: number, total: number): string {
+  if (total === 1) return 'case-gallery__item case-gallery__item--wide';
+  return index % 2 === 0
+    ? 'case-gallery__item case-gallery__item--a'
+    : 'case-gallery__item case-gallery__item--b';
+}
 </script>
 
 <template>
-  <section v-if="caseData.gallery.length" class="mb-12">
-    <h2 class="mb-4 text-[var(--text-meta)] uppercase tracking-[var(--track-meta)] text-[var(--wl-muted)]">
-      Gallery
-    </h2>
-    <ul class="grid gap-4 sm:grid-cols-2">
+  <CaseSection v-if="caseData.gallery.length" :index="sectionIndex" label="Screens">
+    <ul class="case-gallery">
       <li
         v-for="(item, index) in caseData.gallery"
         :key="item.image.id + '-' + index"
-        class="border border-[var(--wl-line)]"
+        :class="itemClass(index, caseData.gallery.length)"
       >
         <img
-          :src="item.image.sizes['weblaba-screen'] ?? item.image.url"
-          :alt="item.image.alt || `${caseData.title} ${index + 1}`"
-          class="w-full"
+          :src="caseImageUrl(item.image)"
+          :alt="item.image.alt || `${stripTags(caseData.title)} ${index + 1}`"
           loading="lazy"
         />
       </li>
     </ul>
-  </section>
+  </CaseSection>
 </template>

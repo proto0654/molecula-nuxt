@@ -2,7 +2,7 @@
 
 ТЗ [`HEADLESS_NUXT_TZ.md`](HEADLESS_NUXT_TZ.md) §§1–29 — разделы требований, не 29 задач. Закрытая итерация = **STEPs 1–19 из §27** + acceptance §28. Не дублировать сюда 29 чекбоксов один-к-одному.
 
-- **§25** — запрет этой итерации (в Next), не «невыполненная работа foundation».
+- **§25** — case visual redesign: Done (editorial case pages; no WebGL on case).
 - **§29** — инструкция для первого ответа прошлого чата, не deliverable.
 
 ## Done
@@ -40,21 +40,22 @@
 - [x] Wire hero `Navigator` to real Nuxt routes (`/portfolio`) (STEP 17–18 foundation)
 - [x] STEP 9–19 + acceptance §28 (без case redesign)
 - [x] Document scroll unlock on portfolio/case (`html.hero-lock` only on home)
+- [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, hero video→landing→featured, no WebGL on case
 
 ## Foundation gaps
 
-STEPs 1–19 остаются Done. Мелкий долг foundation — подчистить до visual redesign, не отдельная итерация:
+STEPs 1–19 остаются Done. Мелкий долг foundation:
 
-- [ ] §15 Prev/next titles: в [`app/pages/portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue) в `prevTitle`/`nextTitle` передаётся slug; slim index без `title`
+- [x] §15 Prev/next titles: slim index includes `title`; footer uses real titles
 - [ ] §16 Menu: API `menus/v1` + `useWpMenu` есть, ни одна страница composable не вызывает
 - [ ] §23 SEO: `useSeoMeta` title + excerpt есть, canonical нет
 
-Смежные (не отдельные STEPs): нет `srcset` (§22); stale-комментарий «STEP 10 will implement» в [`app/types/wp/domain.ts`](../app/types/wp/domain.ts). Error states (§21) на foundation-уровне уже есть — отдельный чекбокс не нужен.
+Смежные (не отдельные STEPs): нет `srcset` (§22). Error states (§21) на foundation-уровне уже есть — отдельный чекбокс не нужен.
 
 ## Next
 
-**Выбранный scope:** case visual redesign (§25). Не ломать content pipeline и `absence = null`. Мелкий долг из Foundation gaps — подчистить по пути, если дёшево. Полный transition и `/about` `/services` `/contact` — не в этой итерации, пока не попросят отдельно.
+Case visual redesign (§25) закрыт. Не ломать content pipeline и `absence = null`. Полный transition и `/about` `/services` `/contact` — не в этой итерации, пока не попросят отдельно.
 
-- [ ] Case visual redesign (§25 ТЗ) — текущая итерация
+- [x] Case visual redesign (§25 ТЗ)
 - [ ] Полный molecular → route transition (сейчас foundation `transitionTo`)
 - [ ] Остальные hero routes (`/about`, `/services`, `/contact`) с реальным контентом

@@ -19,9 +19,31 @@ export type PortfolioSlimItem = {
   slug: string;
   menu_order: number;
   date: string;
+  /** Plain title for prev/next labels. */
+  title: string;
 };
 
-const SLIM_FIELDS = ['id', 'slug', 'menu_order', 'date'].join(',');
+type SlimIndexRaw = {
+  id: number;
+  slug: string;
+  menu_order: number;
+  date: string;
+  title?: { rendered?: string };
+};
+
+const SLIM_FIELDS = ['id', 'slug', 'menu_order', 'date', 'title'].join(',');
+
+function mapSlimItem(raw: SlimIndexRaw): PortfolioSlimItem {
+  const rendered = raw.title?.rendered ?? '';
+  const title = rendered.replace(/<[^>]*>/g, '').trim() || raw.slug;
+  return {
+    id: raw.id,
+    slug: raw.slug,
+    menu_order: raw.menu_order,
+    date: raw.date,
+    title,
+  };
+}
 
 export async function getPortfolioPage(
   params: PortfolioListParams = {},
@@ -72,7 +94,7 @@ export async function getPortfolioSlimIndex(
   const base = baseOverride ?? getWpApiBaseFromEnv();
 
   while (page <= totalPages) {
-    const result = await wpFetchPaginated<PortfolioSlimItem[]>(
+    const result = await wpFetchPaginated<SlimIndexRaw[]>(
       '/wp/v2/portfolio',
       {
         query: {
@@ -84,7 +106,9 @@ export async function getPortfolioSlimIndex(
       },
       base,
     );
-    items.push(...result.data);
+    for (const raw of result.data) {
+      items.push(mapSlimItem(raw));
+    }
     totalPages = Math.max(1, result.pagination.totalPages);
     page += 1;
   }

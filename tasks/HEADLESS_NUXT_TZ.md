@@ -7,7 +7,7 @@
 
 - [`api-real-response.md`](../docs/api-real-response.md) — фактическая структура WP API
 - [`../CONTEXT.md`](../CONTEXT.md) — короткий стек / entry points
-- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; Foundation gaps; next = case visual redesign (§25)
+- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; case visual redesign done; next = full route transition
 
 ---
 
@@ -41,7 +41,7 @@
 | 18 | Test local dev | **DONE** (build/prerender smoke) |
 | 19 | Test production build | **DONE** (`npm run build`: prerendered 122 routes) |
 
-Foundation-итерация закрыта. **Next = case visual redesign** (§25). Не ломать conditional rendering.
+Foundation-итерация закрыта. **Case visual redesign (§25) done.** Не ломать conditional rendering.
 
 ## Что уже в репозитории (факт)
 
@@ -50,20 +50,20 @@ Foundation-итерация закрыта. **Next = case visual redesign** (§2
 - **Home `/`:** `ClientOnly` → `MolecularHero.vue` → `mountHeroApp.ts` + `TransitionController.transitionTo` → Nuxt routes (Работы → `/portfolio`)
 - **API:** `app/api/client.ts` + portfolio/menus/pages/media; components не знают REST URL
 - **Normalize:** `normalizePortfolioPost` → `Case`; absence = `null` / `[]`
-- **Portfolio:** listing + WP header pagination; case page + conditional blocks; prev/next via slim index
+- **Portfolio:** listing + WP header pagination; case page = editorial inspection (12-col grid, CaseShell chrome); prev/next via slim index + titles
 - **Prerender:** all portfolio slugs queued at generate/build via live WP API
 - **Deploy:** `.github/workflows/deploy.yml` → `nuxt generate` + `NUXT_APP_BASE_URL`
 
 ## Следующая итерация
 
-**Выбранный scope:** case visual redesign (§25).
+**Выбранный scope:** полный molecular → route transition (сейчас foundation `transitionTo`).
 
-Позже (не в этой итерации, пока не попросят): полный molecular → route reveal; `/about`, `/services`, `/contact`.
+Позже (пока не попросят): `/about`, `/services`, `/contact`.
 
-Мелкий долг foundation (titles / unused menu / canonical): [`ROADMAP.md`](ROADMAP.md) → Foundation gaps — подчистить по пути, если дёшево.  
-Не ломать content pipeline и conditional rendering.
+Мелкий долг: unused menu composable, SEO canonical — [`ROADMAP.md`](ROADMAP.md) → Foundation gaps.  
+Не ломать content pipeline, conditional rendering, case visual system.
 
-Acceptance предыдущей итерации — §28 (foundation met).
+Acceptance предыдущих итераций — §28 (foundation) + case redesign (static composition, no WebGL on case).
 
 ---
 
@@ -1111,14 +1111,14 @@ Do NOT continue automatically into visual case redesign.
 # D. ПРОМПТ ДЛЯ СЛЕДУЮЩЕГО ЧАТА (короткий)
 
 ```
-Продолжаем headless WebLaba: STEP 9–19 + §28 foundation done.
+Продолжаем headless WebLaba: STEP 9–19 + §28 foundation done; case visual redesign (§25) done.
 
 Источник правды: tasks/HEADLESS_NUXT_TZ.md
-Сверка §§1–29: tasks/ROADMAP.md (не 29 чекбоксов; STEPs 1–19 Done; Foundation gaps).
+Сверка: tasks/ROADMAP.md
+Case visual: app/assets/css/case.css + docs/CASES.md
 API: app/api/ + docs/api-real-response.md
-Portfolio/case уже на реальных WP данных.
 
-Scope: case visual redesign (§25). HUD tokens: docs/DESIGN.md.
-Не ломать conditional rendering и absence-as-null.
-Не делать полный molecular→route transition и /about /services /contact, пока не попросят.
+Scope: полный molecular → route transition (сейчас foundation transitionTo).
+Не ломать conditional rendering, absence-as-null, case visual system.
+Не делать /about /services /contact, пока не попросят.
 ```

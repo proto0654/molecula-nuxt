@@ -5,7 +5,7 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 ## Stack
 
 - Nuxt 4 + Vue 3 + TypeScript
-- Tailwind CSS 4 (`@tailwindcss/vite`) + CSS variables (`--wl-*`)
+- Tailwind CSS 4 (`@tailwindcss/vite`) + CSS variables (`--wl-*`, `--case-*`)
 - Three.js (separate 3D layer — not R3F / React)
 - GSAP (page-transition timeline in `Navigator`)
 - troika-three-text (screen-flat atom captions via `AtomLabel`)
@@ -28,11 +28,12 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 - Navigation / transition: [`navigationConfig`](app/lib/navigation/navigationConfig.ts) → [`NavigationState`](app/lib/navigation/NavigationState.ts) → [`Navigator`](app/lib/navigation/Navigator.ts) + [`TransitionController`](app/lib/navigation/TransitionController.ts) + [`app/lib/hero-ui/`](app/lib/hero-ui/)
 - WP API: [`app/api/`](app/api/) → normalize [`app/domain/`](app/domain/) → types [`app/types/wp/`](app/types/wp/)
 - Portfolio: [`app/pages/portfolio/`](app/pages/portfolio/) + [`app/components/case/`](app/components/case/) + [`usePortfolio`](app/composables/usePortfolio.ts)
+- Case visual: [`app/assets/css/case.css`](app/assets/css/case.css) + [`CaseShell`](app/components/case/CaseShell.vue) — [`docs/CASES.md`](docs/CASES.md)
 
 ## Current focus
 
-**STEP 9–19 done** (API → portfolio/case → prerender → TransitionController). Acceptance §28 met. TZ §§1–29 are requirement sections, not 29 tasks — see [`tasks/ROADMAP.md`](tasks/ROADMAP.md) (Foundation gaps). **Next:** case visual redesign (TZ §25). Keep conditional rendering and absence-as-null. Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+**Case visual redesign done** (TZ §25): editorial case pages on a 12-col grid, no WebGL. Conditional rendering and absence-as-null unchanged. **Next:** full molecular → route transition (foundation `transitionTo` already exists). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
 
 ## Docs hub
 
-See [`docs/README.md`](docs/README.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+See [`docs/README.md`](docs/README.md). Case visual: [`docs/CASES.md`](docs/CASES.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).

@@ -164,3 +164,5 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 | Dark matte faceted atoms, light type | Glossy / smooth spheres; light atoms that match caption color |
 | Overlay `pointer-events: none` except nav / return | Capture pointer on the grid, corners, or connector |
 | Desktop rail as light overlay | Application dashboard chrome |
+
+Case page visual system (12-col editorial, no WebGL): [`CASES.md`](CASES.md).

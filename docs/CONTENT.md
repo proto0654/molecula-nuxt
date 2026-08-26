@@ -35,7 +35,7 @@ Rules:
 - ACF media/repeater `false` → `null` / `[]`
 - Empty text `""` → `null`
 - Image `sizes`: string URL keys only (no invented WebP)
-- Prev/next: slim index sorted `menu_order ASC`, then `date DESC` ([`getAdjacentCases`](../app/domain/portfolio/adjacent.ts)) — not archive-page array index
+- Prev/next: slim index sorted `menu_order ASC`, then `date DESC` ([`getCasePosition`](../app/domain/portfolio/adjacent.ts)) — not archive-page array index. Slim `_fields` include `title` for footer labels.
 
 ## Routes
 
@@ -43,9 +43,13 @@ Rules:
 |-------|--------|
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
 | `/portfolio` | `usePortfolio(page)` — server pagination via WP headers |
-| `/portfolio/[slug]` | Case + conditional `CaseHeader` / `Content` / `Video` / `Gallery` / `Mobile` / `Slices` / `Navigation` |
+| `/portfolio/[slug]` | `CaseShell` + hero (`video` → `landingScreen` → `featuredImage`) + conditional Content / Gallery / Mobile / Slices / Navigation |
 
-SEO foundation: `useSeoMeta` title + plain excerpt on case pages.
+Hero layout: `split` (video or landing) or `stack` (featured only). Video is not repeated below the hero. Section numbers are sequential among visible blocks only.
+
+SEO: `useSeoMeta` title + plain excerpt on case pages.
+
+Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, image URL, section numbers). Does not change the `Case` model.
 
 ## Prerender / Pages
 
@@ -57,4 +61,4 @@ Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `
 
 - Components must not call WordPress URLs directly.
 - Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally ([`main.css`](../app/assets/css/main.css)).
-- Case visual redesign is the **next iteration** (TZ §25). Keep conditional rendering; absence stays `null` / `[]`.
+- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on case pages.

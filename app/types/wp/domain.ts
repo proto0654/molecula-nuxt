@@ -1,5 +1,5 @@
 /**
- * Proposed normalized domain models (STEP 10 will implement mappers).
+ * Proposed normalized domain models.
  * Absence stays null / empty — never fake placeholders for conditional UI.
  */
 

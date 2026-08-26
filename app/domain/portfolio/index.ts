@@ -4,4 +4,19 @@ export {
   caseExcerptPlain,
 } from './normalizePortfolio';
 
-export { getAdjacentCases, sortPortfolioSlimIndex, type AdjacentCases } from './adjacent';
+export {
+  getAdjacentCases,
+  getCasePosition,
+  sortPortfolioSlimIndex,
+  type AdjacentCases,
+  type CasePosition,
+} from './adjacent';
+
+export {
+  getCaseHeroKind,
+  getCaseHeroLayout,
+  getCaseSectionNumbers,
+  padCaseIndex,
+  type CaseHeroKind,
+  type CaseHeroLayout,
+} from './presentation';

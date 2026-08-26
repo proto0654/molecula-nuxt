@@ -1,22 +1,23 @@
 <script setup lang="ts">
 import type { Case } from '~/types/wp';
+import { caseImageUrl } from '~/domain/portfolio/presentation';
 
 defineProps<{
   caseData: Case;
+  sectionIndex: number;
 }>();
 </script>
 
 <template>
-  <section v-if="caseData.mobileSlices" class="mb-12">
-    <h2 class="mb-4 text-[var(--text-meta)] uppercase tracking-[var(--track-meta)] text-[var(--wl-muted)]">
-      Slices
-      <span class="ml-2 text-[var(--wl-muted)]">({{ caseData.mobileSlices.ratio }})</span>
-    </h2>
-    <img
-      :src="caseData.mobileSlices.image.sizes['weblaba-screen'] ?? caseData.mobileSlices.image.url"
-      :alt="caseData.mobileSlices.image.alt || caseData.title"
-      class="max-w-md border border-[var(--wl-line)]"
-      loading="lazy"
-    />
-  </section>
+  <CaseSection v-if="caseData.mobileSlices" :index="sectionIndex" label="Slices">
+    <div class="case-slices__visual">
+      <img
+        class="case-slices__img"
+        :src="caseImageUrl(caseData.mobileSlices.image)"
+        :alt="caseData.mobileSlices.image.alt || caseData.title"
+        loading="lazy"
+      />
+      <p class="case-slices__ratio">{{ caseData.mobileSlices.ratio }}</p>
+    </div>
+  </CaseSection>
 </template>
