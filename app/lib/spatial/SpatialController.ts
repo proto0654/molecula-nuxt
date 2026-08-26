@@ -16,6 +16,8 @@ export type SpatialApplyOptions = {
 export type SpatialControllerOptions = {
   completeHandoff?: () => void;
   onModeChange?: (state: SpatialState) => void;
+  /** After home commit/restore — arm hub blurb + USP in the hero layer. */
+  onHomeActivated?: () => void;
 };
 
 /**
@@ -29,6 +31,7 @@ export class SpatialController {
   private readonly navigationState: NavigationState;
   private readonly completeHandoff: (() => void) | undefined;
   private readonly onModeChange: ((state: SpatialState) => void) | undefined;
+  private readonly onHomeActivated: (() => void) | undefined;
 
   constructor(
     controller: MoleculeController,
@@ -39,6 +42,7 @@ export class SpatialController {
     this.navigationState = navigationState;
     this.completeHandoff = options.completeHandoff;
     this.onModeChange = options.onModeChange;
+    this.onHomeActivated = options.onHomeActivated;
   }
 
   get snapshot(): SpatialState {
@@ -66,6 +70,7 @@ export class SpatialController {
       this.controller.restoreOverview({ immediate: options.immediate });
       this.unwindApproach(options.immediate);
       this.controller.unfreeze();
+      this.onHomeActivated?.();
       return;
     }
 

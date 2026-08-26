@@ -117,6 +117,14 @@ export function mountHeroApp(
     });
   }
 
+  function activateCommittedItem(itemId: string): void {
+    const item = getItemById(itemId);
+    if (!item) return;
+    controller.focusAtom(item.atomId);
+    controller.setAtomBlurb(item.atomId, item.blurb);
+    uspHeadline.arm(item.usp);
+  }
+
   function applyVisuals(): void {
     const committedId = navigationState.committedItemId;
     const previewId = navigationState.previewItemId;
@@ -179,9 +187,7 @@ export function mountHeroApp(
     }
 
     navigationState.setCommitted(itemId);
-    controller.focusAtom(item.atomId);
-    controller.setAtomBlurb(item.atomId, item.blurb);
-    uspHeadline.arm(item.usp);
+    activateCommittedItem(itemId);
   }
 
   function restoreHomeSelection(): void {
@@ -193,8 +199,7 @@ export function mountHeroApp(
     navigationState.setCommitted(HOME_ITEM_ID);
     controller.restoreOverview();
     controller.clearZoom();
-    controller.setAtomBlurb(null, null);
-    uspHeadline.hide();
+    activateCommittedItem(HOME_ITEM_ID);
   }
 
   const navigation = new Navigation(chromeRoot, navigationState, selectItem);
@@ -270,6 +275,9 @@ export function mountHeroApp(
       applyHudMode(state.mode === 'home');
       syncSpatialDebug(state);
     },
+    onHomeActivated: () => {
+      activateCommittedItem(HOME_ITEM_ID);
+    },
   });
 
   function applyViewportMode(): void {
@@ -337,6 +345,7 @@ export function mountHeroApp(
 
   applyViewportMode();
   applyVisuals();
+  activateCommittedItem(HOME_ITEM_ID);
   mobileMq.addEventListener('change', onViewportChange);
   tabletMq.addEventListener('change', onViewportChange);
   desktopMq.addEventListener('change', onViewportChange);

@@ -20,11 +20,12 @@ layouts/default.vue (persists)
           ├─ UspHeadline / NavigationConnector   home-only
           ├─ PerfOverlay + SpatialOverlay        (dev-only)
           ├─ NavigationState
-          │     home starts committed to hub (C / Главная); no unselected rest
+          │     home starts committed to hub (C / Главная) with full readout
+          │     (typewriter blurb + armed USP); no unselected / empty rest
           │     hover → highlight / pulse only (no focus)
-          │     first click → setCommitted + focusAtom + typewriter blurb + arm USP
+          │     first click → setCommitted + activateCommittedItem (focus + blurb + USP)
           │     second click same item (not Home) → Navigator.navigateTo
-          │     empty canvas click → restoreOverview (hub), not clearFocus
+          │     empty canvas / logo → restoreOverview + re-activate hub readout
           ├─ viewport MQ → setCompositionProfile + connector.enable (desktop ∩ home)
           └─ Navigator.onNavigate
                 ├─ item.route (≠ `/`) → TransitionController.transitionTo → Nuxt navigateTo
@@ -77,15 +78,15 @@ focusItemId   = committed               ← click only; hover never centers
 |--------|--------|------|
 | `atomHoverItemId` | `setAtomHover` (raycast) | Hover preview |
 | `navHoverItemId` | `setNavHover` (nav `pointerenter`) | Same preview from the overlay |
-| `committedItemId` | first click (`selectItem`); starts as `home` | Sticky focus + frozen selection reticle + typewriter readout |
+| `committedItemId` | commit (`selectItem` / spatial home / restore); starts as `home` | Sticky focus + frozen selection reticle + typewriter readout + USP |
 
 Two-step gesture on **home** (app layer in `mountHeroApp.ts`, not inside Three.js):
 
 1. **Hover** (atom raycast or nav): highlight + pulsing selection reticle. **No** `focusAtom`.
-2. **First click** (atom or nav): `setCommitted` + `focusAtom` + freeze reticle + typewriter blurb on the atom + arm USP (scramble after `isFocusSettled`). Home loads already committed to hub `C`.
+2. **First click** (atom or nav): `setCommitted` + `activateCommittedItem` (`focusAtom` + typewriter blurb + arm USP; scramble after `isFocusSettled`). Cold load, spatial return to `/`, empty-canvas restore, and header logo on home all commit hub `C` with the **same full readout** — there is no intermediate “deselected” home state.
 3. **Second click on the same item**: `navigator.navigateTo(atomId)` (single approach: zoom+fill together). Second click on Home is a no-op.
 4. **Click another item**: retarget commit + focus (not a page transition).
-5. **Empty canvas click**: `restoreOverview()` (hub `C`), not an unselected rest; `cancel()` if a transition is busy.
+5. **Empty canvas click / logo on home**: `restoreOverview()` (hub `C`) + re-activate hub blurb/USP; `cancel()` if a transition is busy.
 
 Off-home the molecule is frozen; nav clicks call `transitionTo` immediately. Spatial mapping: [`SPATIAL.md`](SPATIAL.md).
 
@@ -177,7 +178,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 
 ### USP headline
 
-[`UspHeadline`](../app/lib/hero-ui/UspHeadline.ts) + [`textScramble`](../app/lib/hero-ui/textScramble.ts): short RU USP from `navigationConfig.items[].usp`. Armed on first-click commit; scramble starts only after `controller.isFocusSettled()`. Uppercase tracked type; ~1s scramble + fade-in. Mobile type is larger than atom captions (`--text-usp` ~1.45–2rem). A hidden measure span (CSS grid stack) locks final line breaks; scramble picks glyphs only from the target string so width stays stable. Fades with the same zoom/fill softness as the connector. Cleared on empty-canvas deselect. Hover never arms USP. `prefers-reduced-motion` snaps to the final string.
+[`UspHeadline`](../app/lib/hero-ui/UspHeadline.ts) + [`textScramble`](../app/lib/hero-ui/textScramble.ts): short RU USP from `navigationConfig.items[].usp`. Armed whenever a nav item is activated via `activateCommittedItem` (first-click commit, cold home load, spatial return to `/`, empty-canvas / logo restore to hub). Scramble starts only after `controller.isFocusSettled()`. Uppercase tracked type; ~1s scramble + fade-in. Mobile type is larger than atom captions (`--text-usp` ~1.45–2rem). A hidden measure span (CSS grid stack) locks final line breaks; scramble picks glyphs only from the target string so width stays stable. Fades with the same zoom/fill softness as the connector. Hover never arms USP. `prefers-reduced-motion` snaps to the final string.
 
 ## Page transition (`Navigator` + `TransitionController`)
 
@@ -192,7 +193,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 
 Phases: `idle` → `focus` → `approach` → `complete` (stays busy at destination so hover focus cannot fight the pose). Legacy `zoom` / `fill` / `overlay` remain in the type for unwind / older snapshots.
 
-**Current wiring:** first click focuses (`focusAtom`), types the blurb, and arms the USP; USP scrambles after `isFocusSettled()`. Second click on the same atom/nav item calls `navigateTo` (approach starts here; focus wait is skipped if already settled). At the navigate label: if `NavigationItem.route` is set and not `/` (e.g. `/portfolio`), `transitionTo`; otherwise show [`DestinationView`](../app/lib/hero-ui/DestinationView.ts) stub (**Return** → `cancel()`). Empty canvas click clears commit (and `cancel()` if a transition is busy).
+**Current wiring:** `activateCommittedItem` focuses (`focusAtom`), types the blurb, and arms the USP; USP scrambles after `isFocusSettled()`. Used on first-click commit, mount, spatial home apply (`onHomeActivated`), and empty-canvas / logo restore. Second click on the same atom/nav item calls `navigateTo` (approach starts here; focus wait is skipped if already settled). At the navigate label: if `NavigationItem.route` is set and not `/` (e.g. `/portfolio`), `transitionTo`; otherwise show [`DestinationView`](../app/lib/hero-ui/DestinationView.ts) stub (**Return** → `cancel()`). Empty canvas click restores hub with full readout (and `cancel()` if a transition is busy).
 
 `prefers-reduced-motion`: skip approach/connector; hop immediately. Pointer tilt on the molecule is also off. Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts). Full Home/Archive/Case table: [`CASES.md`](CASES.md) § Page transitions.
 
@@ -322,7 +323,7 @@ Live site: [proto0654.github.io/molecule](https://proto0654.github.io/molecule/)
 - Keep `navigationConfig.items[].atomId` aligned with molecule atom ids. Captions/blurbs/USPs/labels are authored once in `navigationConfig` (Russian); `moleculeConfig` reads captions via `getItemByAtomId`.
 - Troika captions load JetBrains Mono ttf via `import.meta.env.BASE_URL` + `fonts/JetBrainsMono-Regular.ttf` (Cyrillic). HUD CSS uses the matching `.woff2` from `public/fonts/`. Do not point troika at woff2.
 - Hover may **not** call `focusAtom` — only highlight / selection reticle. Focus comes from `committed` (first click). Zoom starts on the second click via `navigateTo`.
-- USP reveal shares `isFocusSettled()` with zoom-in. Arm on commit; do not scramble on hover or before the gate. Fade USP with zoom/fill; dispose with other HUD on HMR. Scramble must use a hidden measure layer + target-only charset — a wide random charset or live `textContent` reflow will jump lines (especially on mobile where the block is vertically centered).
+- USP reveal shares `isFocusSettled()` with zoom-in. Arm via `activateCommittedItem` on commit / home restore; do not scramble on hover or before the gate. Fade USP with zoom/fill; dispose with other HUD on HMR. Scramble must use a hidden measure layer + target-only charset — a wide random charset or live `textContent` reflow will jump lines (especially on mobile where the block is vertically centered).
 - Do not put route / history / `navigateTo` inside `MoleculeController` click handling — pick notifies; app layer decides.
 - Mid-flight `navigateTo` retargets without hard-resetting zoom/fill/overlay; `cancel` builds an unwind timeline from live values (do not `timeline.reverse()` after a retarget that started mid-progress).
 - While `Navigator.busy` (including `complete`), `mountHeroApp.ts` skips hover-driven focus updates.

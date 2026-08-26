@@ -78,14 +78,14 @@ Stub pages: [`/about`](../app/pages/about.vue), [`/services`](../app/pages/servi
 
 | Mode | Molecule | Pointer |
 |---|---|---|
-| `home` | Hub atom `C` focused (`restoreOverview`). Always committed — no unselected rest. Zoom/fill at rest. | Unfrozen: mouse/touch tilt. |
+| `home` | Hub atom `C` focused (`restoreOverview`) with full readout (blurb + USP via `onHomeActivated`). Always committed — no unselected / empty rest. Zoom/fill at rest. | Unfrozen: mouse/touch tilt. |
 | `section` | `focusSection(sectionId)` → matching nav atom, **held at approach** (zoom+fill = 1) | Frozen |
 | `portfolio-archive` / `case` | `focusContext('portfolio')` → work atom `H3`, held at approach (atom fills the viewport) | Frozen |
 | `service-archive` / `service` | `focusContext('services')` → `H2`, held at approach | Frozen |
 
 `focusEntity` is reserved: entity id is stored on spatial state / debug; 3D framing stays on the context atom.
 
-Home empty-canvas click restores overview (`C`), it does not `clearFocus`. Hub π-flip runs only when retargeting onto `C` from another atom, not on initial home.
+Home empty-canvas click / logo restore overview (`C`) and re-activate hub blurb + USP; it does not `clearFocus` into an empty rest. Hub π-flip runs only when retargeting onto `C` from another atom, not on initial home.
 
 Off-home, nav rail navigates immediately (`transitionTo` without the zoom veil). On home the two-step gesture is unchanged (hover preview, first click commit+focus, second click `Navigator.navigateTo`). Second click on already-committed Home is a no-op.
 
