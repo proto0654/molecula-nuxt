@@ -3,6 +3,7 @@ import type { Case } from '~/types/wp';
 import {
   CASE_LANDING_SIZES,
   CASE_SCREEN_SIZES,
+  balanceCaseScreenColumns,
   caseImageUrl,
   getCaseScreenItems,
   isCaseScreensLandingOnly,
@@ -37,13 +38,7 @@ const lightboxItems = computed<CaseLightboxItem[]>(() =>
   })),
 );
 
-const columns = computed(() => {
-  const cols: Array<typeof items.value> = [[], [], []];
-  items.value.forEach((item, index) => {
-    cols[index % 3]!.push(item);
-  });
-  return cols;
-});
+const columns = computed(() => balanceCaseScreenColumns(items.value));
 
 function openAt(index: number) {
   lightbox.open(lightboxItems.value, index);
@@ -67,17 +62,6 @@ function aspectStyle(item: (typeof items.value)[number]) {
     return { aspectRatio: `${w} / ${h}` };
   }
   return undefined;
-}
-
-function globalIndex(col: number, row: number): number {
-  let n = 0;
-  for (let i = 0; i < items.value.length; i += 1) {
-    if (i % 3 === col) {
-      if (n === row) return i;
-      n += 1;
-    }
-  }
-  return row * 3 + col;
 }
 
 function labelFor(index: number): string {
@@ -132,8 +116,8 @@ function labelFor(index: number): string {
           class="case-inner-pages__column"
         >
           <div
-            v-for="(item, row) in colItems"
-            :key="'d-' + item.image.id + '-' + col + '-' + row"
+            v-for="(placed, row) in colItems"
+            :key="'d-' + placed.item.image.id + '-' + col + '-' + row"
             class="case-inner-pages__card-wrapper"
             :class="{
               [`case-inner-pages__card-wrapper--stair-${col}`]:
@@ -144,24 +128,24 @@ function labelFor(index: number): string {
               <button
                 type="button"
                 class="case-inner-pages__card-button"
-                :aria-label="`Open ${labelFor(globalIndex(col, row))}`"
-                @click="openAt(globalIndex(col, row))"
+                :aria-label="`Open ${labelFor(placed.index)}`"
+                @click="openAt(placed.index)"
               >
                 <span class="case-inner-pages__meta">{{
-                  labelFor(globalIndex(col, row))
+                  labelFor(placed.index)
                 }}</span>
                 <figure
                   class="case-inner-pages__card"
-                  :style="aspectStyle(item)"
+                  :style="aspectStyle(placed.item)"
                 >
                   <img
-                    :src="itemSrc(item)"
-                    :alt="itemAlt(item, globalIndex(col, row))"
+                    :src="itemSrc(placed.item)"
+                    :alt="itemAlt(placed.item, placed.index)"
                     :loading="
-                      landingOnly || globalIndex(col, row) === 0 ? 'eager' : 'lazy'
+                      landingOnly || placed.index === 0 ? 'eager' : 'lazy'
                     "
                     :fetchpriority="
-                      landingOnly || globalIndex(col, row) === 0 ? 'high' : undefined
+                      landingOnly || placed.index === 0 ? 'high' : undefined
                     "
                   />
                 </figure>

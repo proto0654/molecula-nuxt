@@ -78,7 +78,7 @@ Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in cente
 
 | Mode | When | Layout | GSAP |
 |------|------|--------|------|
-| **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: 3 PHP columns (`index % 3`) + stair on col0/col1 | rotateY 72→0, origin center, scrub `bottom+=12%`→`top 30%` |
+| **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | rotateY 72→0, origin center, scrub `bottom+=12%`→`top 30%` |
 | **Landing-only** | only `landing_screen` | one full-width card, no stair | rotateX 82→0 + translateZ −125, ease power2.out |
 
 Stair (desktop, first card in col): `--stair-0` `clamp(7rem, 28vw, 18rem)`, `--stair-1` `clamp(3.5rem, 14vw, 9rem)`. Reset under `prefers-reduced-motion`.

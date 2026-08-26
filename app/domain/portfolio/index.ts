@@ -18,9 +18,11 @@ export {
   getCaseSectionNumbers,
   getCaseScreenItems,
   isCaseScreensLandingOnly,
+  balanceCaseScreenColumns,
   caseFeaturedBackdropUrl,
   padCaseIndex,
   type CaseHeroKind,
   type CaseHeroLayout,
   type CaseScreenItem,
+  type CaseScreenColumnItem,
 } from './presentation';
