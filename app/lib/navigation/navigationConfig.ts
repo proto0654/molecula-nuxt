@@ -43,7 +43,7 @@ export const navigationConfig: NavigationConfig = {
       id: 'work',
       label: 'Работы',
       atomId: 'H3',
-      route: '/work',
+      route: '/portfolio',
       blurb: 'выбранные сигналы / архив',
       usp: 'Сигналы, которые сработали',
     },

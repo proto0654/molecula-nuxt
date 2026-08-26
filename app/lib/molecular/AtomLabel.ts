@@ -14,7 +14,12 @@ const REF_DISTANCE = 4.5;
 /** Extra lift toward the camera, in letter-font units, so title + blurb clear the sphere. */
 const SURFACE_PAD = 0.55;
 /** Self-hosted JetBrains Mono (Cyrillic); troika needs ttf/woff, not woff2. */
-const LABEL_FONT = `${import.meta.env.BASE_URL}fonts/JetBrainsMono-Regular.ttf`;
+let labelFontUrl = '/fonts/JetBrainsMono-Regular.ttf';
+
+/** Call before creating the scene (e.g. from MolecularHero with app baseURL). */
+export function setLabelFontUrl(url: string): void {
+  labelFontUrl = url;
+}
 
 function splitCaption(caption: string): { letter: string; rest: string } {
   const trimmed = caption.trim();
@@ -93,7 +98,7 @@ export class AtomLabel {
 
     this.letter = new Text();
     this.letter.text = letter;
-    this.letter.font = LABEL_FONT;
+    this.letter.font = labelFontUrl;
     this.letter.color = LETTER_COLOR_IDLE;
     this.letter.anchorX = 'center';
     this.letter.anchorY = 'middle';
@@ -103,7 +108,7 @@ export class AtomLabel {
 
     this.remainder = new Text();
     this.remainder.text = rest;
-    this.remainder.font = LABEL_FONT;
+    this.remainder.font = labelFontUrl;
     this.remainder.color = REMAINDER_COLOR_IDLE;
     this.remainder.anchorX = 'left';
     this.remainder.anchorY = 'middle';
@@ -114,7 +119,7 @@ export class AtomLabel {
 
     this.blurb = new Text();
     this.blurb.text = '';
-    this.blurb.font = LABEL_FONT;
+    this.blurb.font = labelFontUrl;
     this.blurb.color = BLURB_COLOR;
     this.blurb.anchorX = 'left';
     this.blurb.anchorY = 'top';

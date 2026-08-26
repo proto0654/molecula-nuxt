@@ -3,19 +3,27 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": "^22.19.0 || ^24.11.0 || >=26.0.0"
+  },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "gsap": "^3.13.0",
+    "nuxt": "^4.5.2",
     "three": "^0.178.0",
-    "troika-three-text": "^0.52.4"
+    "troika-three-text": "^0.52.4",
+    "vue": "^3.5.41"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/three": "^0.178.0",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "tailwindcss": "^4.3.3",
+    "typescript": "~5.8.3"
   }
 }

@@ -1,31 +1,38 @@
 # Context
 
-Interactive WebGL hero prototype for a molecule visualization block.
+Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST as CMS source of truth.
 
 ## Stack
 
-- Vite + TypeScript (no React / Vue / R3F)
-- Three.js
+- Nuxt 4 + Vue 3 + TypeScript
+- Tailwind CSS 4 (`@tailwindcss/vite`) + CSS variables (`--wl-*`)
+- Three.js (separate 3D layer — not R3F / React)
 - GSAP (page-transition timeline in `Navigator`)
 - troika-three-text (screen-flat atom captions via `AtomLabel`)
+- WordPress REST: `NUXT_PUBLIC_WP_API_BASE` → `runtimeConfig.public.wpApiBase`
 
 ## Live preview
 
 - Repository: [github.com/proto0654/molecule](https://github.com/proto0654/molecule)
 - GitHub Pages (push to `main`): [proto0654.github.io/molecule](https://proto0654.github.io/molecule/)
-- Local: `npm run dev` / `npm run build` / `npm run preview`
+- Local: `npm run dev` / `npm run build` / `npm run generate` / `npm run preview`
+- Node: `^22.19.0` (see `package.json` engines)
 
 ## Entry points
 
-- App bootstrap / wiring: [`src/main.ts`](src/main.ts)
-- Scene / render loop: [`src/3d/MoleculeController.ts`](src/3d/MoleculeController.ts), [`src/3d/MoleculeScene.ts`](src/3d/MoleculeScene.ts)
-- Molecule data: [`src/3d/moleculeConfig.ts`](src/3d/moleculeConfig.ts) (`MoleculeConfig`, `caption` on atoms)
-- Navigation / transition: [`navigationConfig`](src/navigation/navigationConfig.ts) → [`NavigationState`](src/navigation/NavigationState.ts) → [`Navigator`](src/navigation/Navigator.ts) + [`src/ui/`](src/ui/) overlay
+- Nuxt app: [`app/app.vue`](app/app.vue), home [`app/pages/index.vue`](app/pages/index.vue)
+- Hero Vue wrapper: [`app/components/molecular/MolecularHero.vue`](app/components/molecular/MolecularHero.vue)
+- Hero bootstrap: [`app/lib/hero/mountHeroApp.ts`](app/lib/hero/mountHeroApp.ts)
+- Scene / render loop: [`app/lib/molecular/MoleculeController.ts`](app/lib/molecular/MoleculeController.ts), [`MoleculeScene.ts`](app/lib/molecular/MoleculeScene.ts)
+- Molecule data: [`app/lib/molecular/moleculeConfig.ts`](app/lib/molecular/moleculeConfig.ts)
+- Navigation / transition: [`navigationConfig`](app/lib/navigation/navigationConfig.ts) → [`NavigationState`](app/lib/navigation/NavigationState.ts) → [`Navigator`](app/lib/navigation/Navigator.ts) + [`TransitionController`](app/lib/navigation/TransitionController.ts) + [`app/lib/hero-ui/`](app/lib/hero-ui/)
+- WP API: [`app/api/`](app/api/) → normalize [`app/domain/`](app/domain/) → types [`app/types/wp/`](app/types/wp/)
+- Portfolio: [`app/pages/portfolio/`](app/pages/portfolio/) + [`app/components/case/`](app/components/case/) + [`usePortfolio`](app/composables/usePortfolio.ts)
 
 ## Current focus
 
-Matte flat-shaded icosahedron atoms, dashed-line bonds, and **spherical** orbital placement (`buildSphericalOrbitPlacements`, one orbit per peripheral, varied radii) under lock-once `QualityManager`. UI copy is **Russian** with self-hosted JetBrains Mono (CSS woff2 + troika ttf). Desktop: left nav rail + header (`⟨ SYS · МОЛЕКУЛА ⟩` centered) + SVG connector via `projectAtom`, composition profile `0.62` / `screenY 0.45`. Mobile: composition profile + compact layout (orbit ×0.58, hub ×0.58, peripherals ×0.78; hub caption font matches peripherals), site header + `/ NAV` rail + MENU overlay, touch drag/tap. HUD USP headline (scramble after focus settle; larger than atom captions on mobile). Canvas cursor `pointer` over atoms. Idle captions pure black; committed caption bright. Hover = highlight + pulse reticle (no centering). First click = `focusAtom` + typewriter blurb. Second click = `Navigator.navigateTo` (zoom → fill → stub) with Return. Mouse tilt attenuates under focus. HUD stays HTML/CSS/SVG. No client router (`route` is data only).
+**STEP 9–19 done** (API → portfolio/case → prerender → TransitionController). Acceptance §28 met at foundation level. **Next:** case visual redesign (§25) — separate iteration. Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
 
 ## Docs hub
 
-See [`docs/README.md`](docs/README.md). HUD tokens and decorative patterns: [`docs/DESIGN.md`](docs/DESIGN.md).
+See [`docs/README.md`](docs/README.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).

@@ -28,8 +28,16 @@
 - [x] Russian UI copy + JetBrains Mono (CSS + troika); captions from `navigationConfig`
 - [x] HUD USP headline (`UspHeadline` + scramble after `isFocusSettled`); desktop/mobile layout polish; atom hover cursor
 - [x] GitHub Pages deploy (Actions workflow; Vite `base` + troika font via `import.meta.env.BASE_URL`)
+- [x] Nuxt 4 + Vue 3 migration; Tailwind 4; `--wl-*` tokens; WP runtime config; API inspection + raw types (STEP 1–8)
+- [x] API client + normalize Case; `/portfolio` archive + pagination headers (STEP 9–11)
+- [x] `/portfolio/[slug]` + conditional case components; prev/next helper (STEP 12–14)
+- [x] Menu via `menus/v1`; prerender portfolio slugs; TransitionController foundation (STEP 15–16)
+- [x] Wire hero `Navigator` to real Nuxt routes (`/portfolio`) (STEP 17–18 foundation)
+- [x] STEP 9–19 + acceptance §28 (без case redesign)
+- [x] Document scroll unlock on portfolio/case (`html.hero-lock` only on home)
 
 ## Next
 
-- [ ] Replace destination stub `onNavigate` with a real router (e.g. Nuxt) using `NavigationItem.route`
-- [ ] Richer molecule data
+- [ ] Case visual redesign (§25 ТЗ) — отдельная итерация
+- [ ] Полный molecular → route transition (сейчас foundation `transitionTo`)
+- [ ] Остальные hero routes (`/about`, `/services`, `/contact`) с реальным контентом

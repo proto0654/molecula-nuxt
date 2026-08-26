@@ -27,13 +27,16 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build
+      # Static generate for GitHub Pages (no Nitro runtime on Pages).
+      # NUXT_APP_BASE_URL must match the repo Pages path (e.g. /molecule/).
+      - run: npm run generate
         env:
-          GITHUB_PAGES: true
+          NUXT_APP_BASE_URL: /molecule/
+          NUXT_PUBLIC_WP_API_BASE: https://weblaba.ru/wp-json
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: .output/public
 
   deploy:
     needs: build

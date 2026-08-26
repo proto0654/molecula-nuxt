@@ -1,4 +1,4 @@
-import type { QualityManager } from '../3d/quality/QualityManager';
+import type { QualityManager } from '../molecular/quality/QualityManager';
 
 /** Flip to `false` to hide the overlay in dev without a query param. */
 export const DEBUG_PERF = true;
@@ -8,7 +8,7 @@ const UPDATE_MS = 250;
 const MOBILE_MQ = '(max-width: 767px)';
 
 function isOverlayEnabled(): boolean {
-  if (!import.meta.env.DEV) return false;
+  if (!import.meta.dev) return false;
   if (!DEBUG_PERF) return false;
   const debug = new URLSearchParams(window.location.search).get('debug');
   if (debug === '0' || debug === 'false') return false;

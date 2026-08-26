@@ -1,6 +1,6 @@
 import gsap from 'gsap';
-import type { MoleculeController } from '../3d/MoleculeController';
-import { TransitionOverlay } from '../ui/TransitionOverlay';
+import type { MoleculeController } from '../molecular/MoleculeController';
+import { TransitionOverlay } from '../hero-ui/TransitionOverlay';
 import { getItemByAtomId } from './navigationConfig';
 import type { NavigationState } from './NavigationState';
 import { TransitionState } from './TransitionState';

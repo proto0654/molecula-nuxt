@@ -1,8 +1,16 @@
 # HUD design tokens and decorative patterns
 
-Source of truth for the overlay look. **CSS custom properties** live in [`src/styles.css`](../src/styles.css) (`:root`). Scene hex values are duplicated in Three.js modules — keep both tables in sync when changing the palette.
+Source of truth for the overlay look. **CSS custom properties** live in [`app/assets/css/main.css`](../app/assets/css/main.css) (`:root`). Scene hex values are duplicated in Three.js modules — keep both tables in sync when changing the palette.
 
 Principles: the molecule is primary; HUD is secondary. No cards, no filled buttons, no dashboard chrome. On desktop the hero reads as a **spatial navigation system** (rail + stage), not an app chrome panel. Negative space follows the molecule; thin type, wide tracking, monospace.
+
+## Document scroll
+
+- Default: `html` / `body` / `#__nuxt` scroll (`overflow-y: auto`).
+- Home only: `html.hero-lock` (set from [`app/pages/index.vue`](../app/pages/index.vue)) restores fullscreen `overflow: hidden` for the molecular hero.
+- Portfolio / case pages must **not** set `hero-lock`.
+
+Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-accent` (map onto the HUD palette).
 
 ## CSS tokens (`:root`)
 
@@ -32,7 +40,7 @@ Principles: the molecule is primary; HUD is secondary. No cards, no filled butto
 | `--hud-header-inset` | frame inset + corner size + `--hud-chrome-pad` | Desktop header / rail align inside ticks |
 | `--z-hud` / `--z-nav` / `--z-connector` / `--z-header` / `--z-overlay` / `--z-debug` | `1` / `2` / `2` / `2` / `3` / `10` | Canvas → HUD → chrome → veil |
 | `--glyph-angle-open` / `--glyph-angle-close` | `⟨ ` / ` ⟩` | Committed nav wrap (tablet/mobile) |
-| `--bp-mobile-max` | `767px` | Match `main.ts` `MOBILE_MQ` |
+| `--bp-mobile-max` | `767px` | Match `mountHeroApp` `MOBILE_MQ` |
 | `--bp-tablet-min` / `--bp-tablet-max` | `768px` / `1023px` | Match `TABLET_MQ` |
 | `--bp-desktop-min` | `1024px` | Desktop composition + full captions |
 

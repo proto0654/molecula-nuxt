@@ -1,5 +1,3 @@
-/// <reference types="vite/client" />
-
 declare module 'troika-three-text' {
   import type { Color, Material, Mesh } from 'three';
 
@@ -20,3 +18,5 @@ declare module 'troika-three-text' {
     dispose: () => void;
   }
 }
+
+export {};
