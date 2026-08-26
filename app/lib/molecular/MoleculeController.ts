@@ -16,6 +16,10 @@ import { MoleculeScene } from './MoleculeScene';
 import { PerformanceSampler } from './quality/PerformanceSampler';
 import type { QualityManager } from './quality/QualityManager';
 import { readQualitySearchParam } from './quality/QualityManager';
+import {
+  prefersReducedMotion,
+  subscribeReducedMotion,
+} from '../a11y/reducedMotion';
 
 /** Limited yaw / pitch from pointer (radians) — not a full turn. */
 const MAX_YAW = Math.PI / 5;
@@ -216,6 +220,8 @@ export class MoleculeController {
   private readonly canvas: HTMLCanvasElement;
   private readonly sampler: PerformanceSampler;
   private readonly unsubscribeQuality: () => void;
+  private readonly unsubscribeReducedMotion: () => void;
+  private reducedMotion = false;
   private readonly onResizeBound: () => void;
   private readonly onPointerMoveBound: (event: PointerEvent) => void;
   private readonly onPointerLeaveBound: () => void;
@@ -239,7 +245,15 @@ export class MoleculeController {
 
     this.unsubscribeQuality = quality.subscribe((settings) => {
       this.scene.applyQuality(settings);
+      this.syncReducedMotionVisuals();
     });
+
+    this.reducedMotion = prefersReducedMotion();
+    this.unsubscribeReducedMotion = subscribeReducedMotion((next) => {
+      this.reducedMotion = next;
+      this.syncReducedMotionVisuals();
+    });
+    this.syncReducedMotionVisuals();
 
     this.onResizeBound = () => {
       const { width, height } = getViewportSize();
@@ -270,8 +284,10 @@ export class MoleculeController {
       this.pointerNorm.x = (fracX - this.compositionProfile.screenX) * 2;
       this.pointerNorm.y =
         (this.compositionProfile.screenY - fracY) * 2;
-      this.updateMouseInfluence(this.pointerNorm);
-      this.syncDragAnglesFromPointer(this.pointerNorm);
+      if (!this.reducedMotion) {
+        this.updateMouseInfluence(this.pointerNorm);
+        this.syncDragAnglesFromPointer(this.pointerNorm);
+      }
       this.atomHover.setPointerNdc(ndcX, ndcY);
     };
 
@@ -326,6 +342,7 @@ export class MoleculeController {
 
   private handleTouchMove(event: PointerEvent): void {
     if (event.pointerId !== this.touchPointerId) return;
+    if (this.reducedMotion) return;
     const dx = event.clientX - this.touchStartX;
     const dy = event.clientY - this.touchStartY;
     if (!this.touchDragging) {
@@ -779,9 +796,21 @@ export class MoleculeController {
   dispose(): void {
     this.stop();
     this.unsubscribeQuality();
+    this.unsubscribeReducedMotion();
     this.atomClickListeners.clear();
     this.afterUpdateListeners.clear();
     this.scene.dispose();
+  }
+
+  private syncReducedMotionVisuals(): void {
+    if (!this.reducedMotion) return;
+    this.targetMouseOrientation.copy(this.baseOrientation);
+    this.mouseOrientation.copy(this.baseOrientation);
+    this.dragYaw = 0;
+    this.dragPitch = 0;
+    for (const atom of this.scene.getAtoms()) {
+      atom.selection.setSimple(true);
+    }
   }
 
   /**

@@ -9,7 +9,8 @@ pages / composables
   → app/api/*          (ofetch; no REST URLs in components)
   → app/domain/*       (normalize raw → Case / NavigationMenu)
   → app/types/wp/*     (raw + domain types)
-  → components/case/*  (conditional blocks)
+  → components/archive/*  (editorial listing)
+  → components/case/*     (conditional blocks)
 ```
 
 Live response notes: [`api-real-response.md`](api-real-response.md).
@@ -19,7 +20,7 @@ Live response notes: [`api-real-response.md`](api-real-response.md).
 | Module | Role |
 |--------|------|
 | `client.ts` | `wpFetch` / `wpFetchPaginated` + `X-WP-Total` / `X-WP-TotalPages` |
-| `portfolio.ts` | list page, case by slug, categories, slim index, slugs |
+| `portfolio.ts` | list page, posts by ids, case by slug, categories, slim index, slugs |
 | `menus.ts` | `menus/v1` only (core `/wp/v2/menus` is 401) |
 | `pages.ts` / `media.ts` | thin wrappers |
 
@@ -36,13 +37,14 @@ Rules:
 - Empty text `""` → `null`
 - Image `sizes`: string URL keys only (no invented WebP)
 - Prev/next: slim index sorted `menu_order ASC`, then `date DESC` ([`getCasePosition`](../app/domain/portfolio/adjacent.ts)) — not archive-page array index. Slim `_fields` include `title` for footer labels.
+- Archive listing uses the same slim sort, then `include` + `orderby=include` for the current page. Row numbers are 1-based positions in that index.
 
 ## Routes
 
 | Route | Source |
 |-------|--------|
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
-| `/portfolio` | `usePortfolio(page)` — server pagination via WP headers |
+| `/portfolio` | `usePortfolio(page)` — slim-index pagination (`include` ids), editorial rows |
 | `/portfolio/[slug]` | `CaseShell` + video hero + featured backdrop + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT |
 
 Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
@@ -51,7 +53,7 @@ Mobile field mapping: slices from `screen-mobile` (`block_ratio` defaults to `1/
 
 SEO: `useSeoMeta` title + plain excerpt on case pages.
 
-Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, `getCaseComposition`, image URL, slice layout, `balanceCaseScreenColumns`). Does not change the `Case` model shape beyond normalize mapping.
+Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, `getCaseComposition`, image URL, slice layout, `balanceCaseScreenColumns`). Archive row helpers: [`archive.ts`](../app/domain/portfolio/archive.ts) (`NN`, specimen, meta fallback). Does not change the `Case` model shape beyond normalize mapping.
 
 ## Prerender / Pages
 
@@ -63,4 +65,4 @@ Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `
 
 - Components must not call WordPress URLs directly.
 - Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally ([`main.css`](../app/assets/css/main.css)).
-- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on case pages.
+- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing: [`archive.css`](../app/assets/css/archive.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive or case pages.

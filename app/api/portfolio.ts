@@ -62,6 +62,37 @@ export async function getPortfolioPage(
   });
 }
 
+/**
+ * Fetch specific posts in `ids` order (slim-index pagination).
+ * Client-side reorder is the source of truth if WP ignores `orderby=include`.
+ */
+export async function getPortfolioPostsByIds(
+  ids: number[],
+): Promise<WpPortfolioPost[]> {
+  if (!ids.length) return [];
+  const query = {
+    include: ids.join(','),
+    per_page: ids.length,
+    status: 'publish',
+    _embed: 'wp:featuredmedia',
+  };
+  let posts: WpPortfolioPost[];
+  try {
+    posts = await wpFetch<WpPortfolioPost[]>('/wp/v2/portfolio', {
+      query: { ...query, orderby: 'include' },
+    });
+  } catch {
+    posts = await wpFetch<WpPortfolioPost[]>('/wp/v2/portfolio', { query });
+  }
+  const byId = new Map(posts.map((post) => [post.id, post]));
+  const ordered: WpPortfolioPost[] = [];
+  for (const id of ids) {
+    const post = byId.get(id);
+    if (post) ordered.push(post);
+  }
+  return ordered;
+}
+
 export async function getPortfolioCase(slug: string): Promise<WpPortfolioPost | null> {
   const posts = await wpFetch<WpPortfolioPost[]>('/wp/v2/portfolio', {
     query: {

@@ -1,8 +1,9 @@
 import gsap from 'gsap';
+import { prefersReducedMotion } from '../a11y/reducedMotion';
 import type { MoleculeController } from '../molecular/MoleculeController';
-import { TransitionOverlay } from '../hero-ui/TransitionOverlay';
 import { getItemByAtomId } from './navigationConfig';
 import type { NavigationState } from './NavigationState';
+import { acquireRouteVeil, releaseRouteVeil } from './routeVeil';
 import { TransitionState } from './TransitionState';
 
 export type NavigateListener = (atomId: string) => void;
@@ -10,8 +11,11 @@ export type NavigateListener = (atomId: string) => void;
 export type NavigatorOptions = {
   controller: MoleculeController;
   navigationState: NavigationState;
-  /** Host for the transition overlay (usually `#app`). */
-  overlayParent: HTMLElement;
+  /**
+   * Host for DestinationView (legacy). The veil itself is parented to
+   * `document.body` via `acquireRouteVeil` so it can survive hero unmount.
+   */
+  overlayParent?: HTMLElement;
   /**
    * Called at the timeline "navigate" label (forward only).
    * Replace later with Nuxt `navigateTo(item.route)` or any router.
@@ -44,7 +48,7 @@ export class Navigator {
 
   private readonly controller: MoleculeController;
   private readonly navigationState: NavigationState;
-  private readonly overlay: TransitionOverlay;
+  private readonly overlay: ReturnType<typeof acquireRouteVeil>;
   private readonly navigateListeners = new Set<NavigateListener>();
 
   private timeline: gsap.core.Timeline | null = null;
@@ -55,7 +59,7 @@ export class Navigator {
   constructor(options: NavigatorOptions) {
     this.controller = options.controller;
     this.navigationState = options.navigationState;
-    this.overlay = new TransitionOverlay(options.overlayParent);
+    this.overlay = acquireRouteVeil();
     if (options.onNavigate) {
       this.navigateListeners.add(options.onNavigate);
     }
@@ -78,6 +82,22 @@ export class Navigator {
 
     const item = getItemByAtomId(atomId);
     this.navigationState.setCommitted(item?.id ?? null);
+
+    if (prefersReducedMotion()) {
+      this.killTimeline();
+      this.overlay.setOpacity(1);
+      this.transitionState.patch({
+        atomId,
+        busy: true,
+        phase: 'complete',
+        zoom: 0,
+        fill: 0,
+        overlay: 1,
+        progress: 1,
+      });
+      this.emitNavigate(atomId);
+      return;
+    }
 
     // Already heading to this atom on a forward timeline — keep it.
     if (
@@ -219,7 +239,7 @@ export class Navigator {
   dispose(): void {
     this.killTimeline();
     this.navigateListeners.clear();
-    this.overlay.dispose();
+    releaseRouteVeil();
     this.controller.setTransitionDriven(false);
   }
 

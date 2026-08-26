@@ -1,4 +1,5 @@
 import type { MaybeRefOrGetter } from 'vue';
+import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
 
 export type CaseBodyPhase = 'idle' | 'exiting' | 'hidden' | 'entering';
 
@@ -9,11 +10,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
-}
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return true;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 /**

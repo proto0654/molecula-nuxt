@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './case.css';
+@import './archive.css';
 
 @font-face {
   font-family: 'JetBrains Mono';
@@ -607,11 +608,15 @@ html.nav-overlay-open body {
 /* --- Transition + destination --- */
 
 .transition-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
   background: var(--color-bg);
   pointer-events: none;
+}
+
+.transition-overlay.is-route-veil {
+  z-index: 50;
 }
 
 .destination {
@@ -1017,4 +1022,18 @@ html.nav-overlay-open body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   background: rgb(15 17 21 / 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usp-headline,
+  .mobile-nav-overlay,
+  .nav {
+    transition: none;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }

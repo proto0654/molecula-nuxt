@@ -8,7 +8,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 
 | File | Role |
 |------|------|
-| [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page chrome: edge grid, L-ticks, logo, `CASE / NN`, Index; optional featured backdrop; density + body-phase classes |
+| [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page chrome via [`SiteChrome`](../app/components/site/SiteChrome.vue); optional featured backdrop; density + body-phase classes |
 | [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title (USP-style scramble reveal), `titleEn`, excerpt; facts only when there is no CMS body |
 | [`CaseHeroMedia.vue`](../app/components/case/CaseHeroMedia.vue) | Hero video only (flat, no 3D) |
 | [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Presentational `<video>` used **inside** the hero only |
@@ -83,7 +83,15 @@ Display type is `--font-ui` (JetBrains Mono). There is no second display face.
 
 ## Chrome
 
-Fixed overlay, same visual language as HUD (edge grid + four L-ticks), quieter, no `⟨ SYS · МОЛЕКУЛА ⟩`. Top-left: `[ МАРК ] ЛОГО` → `/`. Top-right: `CASE / NN` (1-based index from slim sort) + Index → `/portfolio`. No giant decorative “CASE”. In-content index is `text-meta` once above the title.
+Fixed overlay, same visual language as HUD (edge grid + four L-ticks), quieter, no `⟨ SYS · МОЛЕКУЛА ⟩`. Shared markup: [`SiteChrome.vue`](../app/components/site/SiteChrome.vue).
+
+| Route | Header | Active |
+|-------|--------|--------|
+| Home | Imperative HUD [`SiteHeader`](../app/lib/hero-ui/SiteHeader.ts) | hover / commit (not URL) |
+| Archive `/portfolio` | SiteChrome | `ARCHIVE` (`aria-current="page"`) |
+| Case `/portfolio/[slug]` | SiteChrome | `CASE / NN` + Index → archive (restored page) |
+
+Top-left: `[ МАРК ] ЛОГО` → `/`. Do not put the 5-item molecular rail on archive or case.
 
 ## Grid
 
@@ -139,7 +147,7 @@ Bottom spacing: `--slice-bottom-space` from `useCaseSliceBottomSpace` — `stagg
 
 Do not use Level 3 on Mobile. Header title scramble is intro, not scroll entry. Page reveal (case→case) is a separate L1 on `.case-page__body`.
 
-Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `overflow: hidden` on the visual field (clips 3D). Without `.js-enabled`, CSS `animation-timeline: view()` fallbacks run (`inner-page-enter-*`, `portfolio-parallax-odd/even`).
+Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `overflow: hidden` on the visual field (clips 3D). Without `.js-enabled`, CSS `animation-timeline: view()` fallbacks run (`inner-page-enter-*`, `portfolio-parallax-odd/even`). Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts) / [`useReducedMotion`](../app/composables/useReducedMotion.ts). Home Navigator zoom/fill, pointer tilt, and connector are skipped under reduced motion.
 
 ### Mobile modes (filled fields must render)
 
@@ -157,15 +165,25 @@ Do not drop filled `screen-mobile` / `screenshot_image`. Both sections may appea
 
 Minimal dark overlay, technical index, close; gallery prev/next. Full source image (slices open full `screen-mobile`).
 
+## Archive
+
+[`/portfolio`](../app/pages/portfolio/index.vue) is an editorial index, not a molecular scene and not agency cards. CSS: [`archive.css`](../app/assets/css/archive.css).
+
+Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, category/meta, compact specimen (`featuredImage ?? landingScreen`). Pagination `01 02 03 →` as crawlable `NuxtLink`s. Desktop 12-col; tablet compressed row; mobile stacks specimen above text. Hover is a small specimen shift + title + accent line + arrow (off under reduced motion).
+
 ## Footer / NEXT
 
-Numbered editorial section. Labels: **Previous** + case title, **Index / Back to portfolio** → `/portfolio`, **Next** + case title. Muted `—` when there is no neighbour. Not a blog footer.
+Numbered editorial section. Labels: **Previous** + case title, **Index / Back to portfolio** → restored archive page, **Next** + case title. Muted `—` when there is no neighbour. Not a blog footer.
 
 ## Page transitions
 
-Molecular → case: existing [`Navigator`](../app/lib/navigation/Navigator.ts) overlay — do not add a second veil or a WebGL scene on the case.
+Molecular → archive: [`Navigator`](../app/lib/navigation/Navigator.ts) zoom/fill/veil, then [`routeVeil`](../app/lib/navigation/routeVeil.ts) handoff so the overlay survives hero unmount. Archive dismisses the veil (opacity). Reduced motion skips zoom/fill (`immediate` overlay + navigate). Do not add a second veil or a WebGL scene on archive/case.
 
-Case → case: same `[slug].vue` watches the param, so Nuxt page transitions do not run. [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) delays the route until body L1 exit, then reveals the new case (chrome stays). New `--case-accent` is applied after reveal and interpolates. Leaving to `/portfolio` uses the same exit, without accent reveal on the archive.
+Archive → case: specimen (featured image) shares `view-transition-name` with the case backdrop. Landing-only fallback is shown on the row but does not morph. Without View Transitions / reduced motion: case L1 enter only. Do not morph into the video hero.
+
+Case → archive: existing body L1 exit, then archive reveal. [`sessionStorage`](../app/lib/navigation/archiveReturn.ts) `wl:archive-return` restores `?page=` and scroll to the row. Index / Back to portfolio use that href. No accent reveal on the archive.
+
+Case → case: same `[slug].vue` watches the param, so Nuxt page transitions do not run. [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) delays the route until body L1 exit, then reveals the new case (chrome stays). Previous payload is held so the generic `Loading…` string does not flash. New `--case-accent` is applied after reveal and interpolates.
 
 ## Gotchas
 

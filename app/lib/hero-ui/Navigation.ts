@@ -1,6 +1,7 @@
 import { navigationConfig } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
 import { attachTapGuard } from './tapGuard';
+import { prefersReducedMotion } from '../a11y/reducedMotion';
 
 export type NavSelectListener = (itemId: string) => void;
 
@@ -141,7 +142,7 @@ export class Navigation {
     el.scrollIntoView({
       inline: 'center',
       block: 'nearest',
-      behavior: 'smooth',
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     });
   }
 

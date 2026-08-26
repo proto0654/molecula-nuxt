@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
+
 defineProps<{
   sectionIndex: number;
   prevSlug: string | null;
@@ -6,6 +8,12 @@ defineProps<{
   prevTitle?: string | null;
   nextTitle?: string | null;
 }>();
+
+const archiveHref = ref('/portfolio');
+
+onMounted(() => {
+  archiveHref.value = archiveIndexHref();
+});
 
 const root = ref<HTMLElement | null>(null);
 
@@ -46,7 +54,7 @@ useCaseScrollEntry({
         </div>
 
         <div class="case-nav__item case-nav__index">
-          <NuxtLink to="/portfolio" class="case-nav__link">
+          <NuxtLink :to="archiveHref" class="case-nav__link">
             <span class="case-nav__dir">Index</span>
             Back to portfolio
           </NuxtLink>

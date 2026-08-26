@@ -1,4 +1,5 @@
 import type { Ref } from 'vue';
+import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
 
 type Options = {
   onUpdate?: () => void;
@@ -55,7 +56,7 @@ export function useCaseSliceBottomSpace(
     const el = root.value;
     if (!el || !import.meta.client) return;
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = prefersReducedMotion();
     if (reduced) {
       el.style.setProperty('--slice-bottom-space', '0px');
       options.onUpdate?.();

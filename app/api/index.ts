@@ -8,6 +8,7 @@ export {
 
 export {
   getPortfolioPage,
+  getPortfolioPostsByIds,
   getPortfolioCase,
   getPortfolioCategories,
   getPortfolioSlimIndex,

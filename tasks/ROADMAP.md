@@ -42,6 +42,7 @@
 - [x] Document scroll unlock on portfolio/case (`html.hero-lock` only on home)
 - [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, video hero + featured backdrop, Screens = landing+repeater (inner-pages), lightbox, ScrollTrigger entry, no WebGL on case
 - [x] Case composition pass: sequential markers (including NEXT), density recipes A–G, motion L1/L2/L3, in-page case→case reveal + delayed accent
+- [x] Portfolio archive + Home/Case integration: editorial numbered rows, SiteChrome, veil handoff, session restore, case→case without generic loader
 
 ## Foundation gaps
 
@@ -55,9 +56,10 @@ STEPs 1–19 остаются Done. Мелкий долг foundation:
 
 ## Next
 
-Case visual redesign (§25) и composition pass закрыты. Не ломать content pipeline и `absence = null`. Полный molecular → route transition и `/about` `/services` `/contact` — не в этой итерации, пока не попросят отдельно.
+Archive integration закрыт (listing + veil handoff + restore). Не ломать content pipeline и `absence = null`. Полный molecular → route (атом → страница как один жест) и `/about` `/services` `/contact` — не в этой итерации, пока не попросят отдельно.
 
 - [x] Case visual redesign (§25 ТЗ)
 - [x] Case composition pass (markers, sparse recipes, case→case reveal)
-- [ ] Полный molecular → route transition (сейчас foundation `transitionTo`; case→case уже in-page)
+- [x] Portfolio archive editorial listing + Home/Archive/Case handoffs
+- [ ] Полный molecular → route transition (сейчас zoom/fill/veil + overlay handoff; не полный жест)
 - [ ] Остальные hero routes (`/about`, `/services`, `/contact`) с реальным контентом

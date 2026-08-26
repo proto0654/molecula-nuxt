@@ -120,7 +120,8 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 ### 8. Destination stub
 
 - Same kicker + tracked title + `// /route` + `[ ← НАЗАД ]` as a text control (no fill).
-- Veil is solid `--color-bg`, not a card.
+- Veil is solid `--color-bg`, not a card. `.transition-overlay` is `position: fixed` on `document.body` ([`routeVeil`](../app/lib/navigation/routeVeil.ts)); `.is-route-veil` sits above inner chrome (`z-index: 50`) during a real route hop.
+- `prefers-reduced-motion: reduce` disables HUD/USP/nav CSS transitions and View Transition animations (`main.css`).
 
 ### 9. Atom caption block (troika, not DOM)
 

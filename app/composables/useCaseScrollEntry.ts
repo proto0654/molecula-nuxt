@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { MaybeRefOrGetter } from 'vue';
+import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
 
 /**
  * Scroll entry presets.
@@ -42,11 +43,6 @@ const SLICE_STOPS = [
   { t: 0.92, opacity: 1, rotateX: 2, yMul: 0.015, z: -1 },
   { t: 1, opacity: 1, rotateX: 0, yMul: 0, z: 0 },
 ] as const;
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return true;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 function collectPairs(
   scope: HTMLElement,

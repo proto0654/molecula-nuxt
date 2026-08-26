@@ -35,8 +35,17 @@ const { data, pending, error } = useAsyncData(
   { watch: [slug] },
 );
 
-const caseData = computed(() => data.value?.caseData ?? null);
-const position = computed(() => data.value?.position);
+const held = shallowRef(data.value ?? null);
+watch(
+  data,
+  (value) => {
+    if (value) held.value = value;
+  },
+  { immediate: true },
+);
+
+const caseData = computed(() => held.value?.caseData ?? null);
+const position = computed(() => held.value?.position);
 const heroKind = computed(() => (caseData.value ? getCaseHeroKind(caseData.value) : null));
 const heroLayout = computed(() => getCaseHeroLayout(heroKind.value));
 const backdropUrl = computed(() =>
@@ -57,7 +66,7 @@ const sections = computed(
 );
 
 const ready = computed(
-  () => Boolean(caseData.value) && caseData.value?.slug === slug.value,
+  () => Boolean(data.value?.caseData) && data.value?.caseData?.slug === slug.value,
 );
 
 const { appliedAccent, bodyClass } = useCasePageTransition({
@@ -88,6 +97,7 @@ useSeoMeta({
     :accent-color="appliedAccent"
     :case-index="position?.index"
     :backdrop-url="backdropUrl"
+    :visual-slug="caseData?.featuredImage ? slug : null"
     :sparse="composition?.sparse"
     :text-hero="composition?.textHero"
     :has-slices="composition?.hasSlices"

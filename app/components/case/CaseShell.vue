@@ -1,15 +1,31 @@
 <script setup lang="ts">
-defineProps<{
+import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
+
+const props = defineProps<{
   accentColor?: string | null;
   caseIndex?: number | null;
   /** Featured image — fixed backdrop under the decorative chrome grid. */
   backdropUrl?: string | null;
+  /** Slug for archive → case shared visual (featured only). */
+  visualSlug?: string | null;
   sparse?: boolean;
   textHero?: boolean;
   hasSlices?: boolean;
   landingOnly?: boolean;
   bodyClass?: string;
 }>();
+
+const archiveHref = ref('/portfolio');
+
+onMounted(() => {
+  archiveHref.value = archiveIndexHref();
+});
+
+const visualName = computed(() =>
+  props.visualSlug && props.backdropUrl
+    ? `case-visual-${props.visualSlug}`
+    : undefined,
+);
 </script>
 
 <template>
@@ -27,29 +43,19 @@ defineProps<{
     <div
       v-if="backdropUrl"
       class="case-page__backdrop"
+      :class="{ 'is-shared-visual': visualName }"
       aria-hidden="true"
-      :style="{ backgroundImage: `url(${backdropUrl})` }"
+      :style="{
+        backgroundImage: `url(${backdropUrl})`,
+        viewTransitionName: visualName,
+      }"
     />
 
-    <div class="case-chrome" aria-hidden="true">
-      <div class="case-chrome__grid" />
-      <div class="case-chrome__frame">
-        <span class="case-chrome__corner case-chrome__corner--tl" />
-        <span class="case-chrome__corner case-chrome__corner--tr" />
-        <span class="case-chrome__corner case-chrome__corner--bl" />
-        <span class="case-chrome__corner case-chrome__corner--br" />
-      </div>
-    </div>
-
-    <header class="case-chrome__header">
-      <NuxtLink to="/" class="case-chrome__logo">[ МАРК ] ЛОГО</NuxtLink>
-      <div class="case-chrome__meta">
-        <p v-if="caseIndex" class="case-chrome__index">
-          CASE / {{ String(caseIndex).padStart(2, '0') }}
-        </p>
-        <NuxtLink to="/portfolio" class="case-chrome__archive">Index</NuxtLink>
-      </div>
-    </header>
+    <SiteChrome
+      variant="case"
+      :case-index="caseIndex"
+      :archive-href="archiveHref"
+    />
 
     <div class="case-page__body" :class="bodyClass">
       <slot />

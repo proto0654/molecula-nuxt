@@ -1,6 +1,7 @@
 import { getItemById } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
 import type { Navigation } from './Navigation';
+import { prefersReducedMotion } from '../a11y/reducedMotion';
 
 type AtomScreenPoint = {
   x: number;
@@ -81,7 +82,7 @@ export class NavigationConnector {
     this.unsubscribe = state.subscribe(() => {
       const id = state.committedItemId ?? state.previewItemId;
       if (id && id !== this.lastItemId) {
-        this.pulse = 1;
+        this.pulse = prefersReducedMotion() ? 0 : 1;
         this.lastItemId = id;
       }
       if (!id) {
@@ -121,6 +122,12 @@ export class NavigationConnector {
     const itemId = this.state.committedItemId ?? this.state.previewItemId;
     const committed = this.state.committedItemId !== null;
     const preview = this.state.previewItemId !== null;
+
+    if (prefersReducedMotion()) {
+      this.root.style.opacity = '0';
+      this.root.classList.add('is-idle');
+      return;
+    }
 
     if (!itemId || (!committed && !preview)) {
       this.targetOpacity = 0;

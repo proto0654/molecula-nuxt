@@ -6,6 +6,7 @@ import {
   charsetFromTarget,
   type ScrambleHandle,
 } from '~/lib/hero-ui/textScramble';
+import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
 
 const props = withDefaults(
   defineProps<{
@@ -38,9 +39,7 @@ function revealTitle() {
     return;
   }
 
-  const reducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  ).matches;
+  const reducedMotion = prefersReducedMotion();
 
   if (reducedMotion) {
     displayTitle.value = target;

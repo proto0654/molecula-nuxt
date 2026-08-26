@@ -27,13 +27,15 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 - Molecule data: [`app/lib/molecular/moleculeConfig.ts`](app/lib/molecular/moleculeConfig.ts)
 - Navigation / transition: [`navigationConfig`](app/lib/navigation/navigationConfig.ts) → [`NavigationState`](app/lib/navigation/NavigationState.ts) → [`Navigator`](app/lib/navigation/Navigator.ts) + [`TransitionController`](app/lib/navigation/TransitionController.ts) + [`app/lib/hero-ui/`](app/lib/hero-ui/)
 - WP API: [`app/api/`](app/api/) → normalize [`app/domain/`](app/domain/) → types [`app/types/wp/`](app/types/wp/)
-- Portfolio: [`app/pages/portfolio/`](app/pages/portfolio/) + [`app/components/case/`](app/components/case/) + [`usePortfolio`](app/composables/usePortfolio.ts)
+- Portfolio: [`app/pages/portfolio/`](app/pages/portfolio/) + [`app/components/archive/`](app/components/archive/) + [`app/components/case/`](app/components/case/) + [`usePortfolio`](app/composables/usePortfolio.ts)
+- Shared inner chrome: [`SiteChrome`](app/components/site/SiteChrome.vue) (archive `ARCHIVE` / case `CASE / NN`)
 - Case visual: [`app/assets/css/case.css`](app/assets/css/case.css) + [`CaseShell`](app/components/case/CaseShell.vue) — [`docs/CASES.md`](docs/CASES.md)
+- Archive visual: [`app/assets/css/archive.css`](app/assets/css/archive.css)
 
 ## Current focus
 
-**Case visual redesign + composition pass done** (TZ §25): sequential `NN / LABEL` markers, density recipes for missing blocks, motion levels, numbered NEXT footer, in-page case→case reveal. Editorial case pages on a 12-col grid, **no WebGL**. Conditional rendering and absence-as-null unchanged. **Next:** full molecular → route transition (foundation `transitionTo` already exists). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+**Archive + route integration pass done:** editorial numbered listing (`NN` from slim index), SiteChrome on archive/case, veil handoff Home→Archive, session restore Archive↔Case, case→case without generic loader. Home stays spatial HUD. **Next:** full molecular → route choreography beyond the overlay handoff. Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
 
 ## Docs hub
 
-See [`docs/README.md`](docs/README.md). Case visual / composition: [`docs/CASES.md`](docs/CASES.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+See [`docs/README.md`](docs/README.md). Case / archive visual: [`docs/CASES.md`](docs/CASES.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). Hero: [`docs/WEBGL_HERO.md`](docs/WEBGL_HERO.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).

@@ -1,0 +1,64 @@
+<script setup lang="ts">
+import { padCaseIndex } from '~/domain/portfolio/presentation';
+
+const props = defineProps<{
+  page: number;
+  totalPages: number;
+}>();
+
+function pageHref(n: number): string {
+  if (n <= 1) return '/portfolio';
+  return `/portfolio?page=${n}`;
+}
+
+const pages = computed(() =>
+  Array.from({ length: props.totalPages }, (_, i) => i + 1),
+);
+</script>
+
+<template>
+  <nav
+    v-if="totalPages > 1"
+    class="archive-pagination"
+    aria-label="Pagination"
+  >
+    <NuxtLink
+      v-if="page > 1"
+      v-slot="{ href, navigate }"
+      :to="pageHref(page - 1)"
+      custom
+    >
+      <a
+        :href="href"
+        class="archive-pagination__arrow"
+        @click="navigate"
+      >←</a>
+    </NuxtLink>
+    <NuxtLink
+      v-for="n in pages"
+      :key="n"
+      v-slot="{ href, navigate }"
+      :to="pageHref(n)"
+      custom
+    >
+      <a
+        :href="href"
+        class="archive-pagination__page"
+        :aria-current="n === page ? 'page' : undefined"
+        @click="navigate"
+      >{{ padCaseIndex(n) }}</a>
+    </NuxtLink>
+    <NuxtLink
+      v-if="page < totalPages"
+      v-slot="{ href, navigate }"
+      :to="pageHref(page + 1)"
+      custom
+    >
+      <a
+        :href="href"
+        class="archive-pagination__arrow"
+        @click="navigate"
+      >→</a>
+    </NuxtLink>
+  </nav>
+</template>

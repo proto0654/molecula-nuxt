@@ -13,6 +13,17 @@ export {
 } from './adjacent';
 
 export {
+  archiveTitlePlain,
+  archiveSpecimenImage,
+  archiveSpecimenUrl,
+  archiveHasSharedVisual,
+  archiveYear,
+  archiveMetaLabel,
+  categoryNameMap,
+  type ArchiveEntry,
+} from './archive';
+
+export {
   getCaseHeroKind,
   getCaseHeroLayout,
   getCaseComposition,

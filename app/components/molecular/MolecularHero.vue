@@ -6,6 +6,7 @@ import {
   setTransitionHandler,
   transitionTo,
 } from '~/lib/navigation/TransitionController';
+import { handoffRouteVeil } from '~/lib/navigation/routeVeil';
 
 const rootRef = ref<HTMLElement | null>(null);
 let disposeHero: (() => void) | null = null;
@@ -26,7 +27,10 @@ onMounted(() => {
   });
 
   disposeHero = mountHeroApp(root, {
-    onNavigateRoute: (route) => transitionTo(route),
+    onNavigateRoute: (route) => {
+      handoffRouteVeil();
+      return transitionTo(route);
+    },
   });
 });
 

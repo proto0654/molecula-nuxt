@@ -179,18 +179,20 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 
 ## Page transition (`Navigator` + `TransitionController`)
 
-[`Navigator`](../app/lib/navigation/Navigator.ts) owns a GSAP timeline and [`TransitionState`](../app/lib/navigation/TransitionState.ts). Overlay: [`TransitionOverlay`](../app/lib/hero-ui/TransitionOverlay.ts). Route hop: [`TransitionController`](../app/lib/navigation/TransitionController.ts).
+[`Navigator`](../app/lib/navigation/Navigator.ts) owns a GSAP timeline and [`TransitionState`](../app/lib/navigation/TransitionState.ts). Overlay: [`TransitionOverlay`](../app/lib/hero-ui/TransitionOverlay.ts) acquired via [`routeVeil`](../app/lib/navigation/routeVeil.ts) and parented to `document.body` so it can survive hero unmount. Route hop: [`TransitionController`](../app/lib/navigation/TransitionController.ts).
 
 | API | Role |
 |-----|------|
 | `navigateTo(atomId)` | Interruptible retarget: focus → zoom → fill → overlay; durations scale from live progress |
 | `onNavigate(atomId)` | Forward-only cue at the timeline navigate label |
-| `transitionTo(route)` | Nuxt `navigateTo` (handler set in `MolecularHero`); foundation for full molecular→page reveal |
+| `transitionTo(route)` | Nuxt `navigateTo` (handler set in `MolecularHero`); after `handoffRouteVeil()` for real routes |
 | `cancel()` | Unwind overlay → fill → zoom → clear focus (soft reset; no hard state tear-down) |
 
 Phases: `idle` → `focus` → `zoom` → `fill` → `overlay` → `complete` (stays busy at destination so hover focus cannot fight the pose).
 
-**Current wiring:** first click focuses (`focusAtom`), types the blurb, and arms the USP; USP scrambles after `isFocusSettled()`. Second click on the same atom/nav item calls `navigateTo` (zoom starts here). At the navigate label: if `NavigationItem.route` is set and not `/` (e.g. `/portfolio`), call `transitionTo`; otherwise show [`DestinationView`](../app/lib/hero-ui/DestinationView.ts) stub (**Return** → `cancel()`). Empty canvas click clears commit (and `cancel()` if a transition is busy).
+**Current wiring:** first click focuses (`focusAtom`), types the blurb, and arms the USP; USP scrambles after `isFocusSettled()`. Second click on the same atom/nav item calls `navigateTo` (zoom starts here). At the navigate label: if `NavigationItem.route` is set and not `/` (e.g. `/portfolio`), `handoffRouteVeil()` then `transitionTo`; otherwise show [`DestinationView`](../app/lib/hero-ui/DestinationView.ts) stub (**Return** → `cancel()`). Archive dismisses the handed-off veil (opacity). Empty canvas click clears commit (and `cancel()` if a transition is busy).
+
+`prefers-reduced-motion`: skip zoom/fill/connector; set veil opacity 1 and hop immediately. Pointer tilt on the molecule is also off. Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts). Full Home/Archive/Case table: [`CASES.md`](CASES.md) § Page transitions.
 
 ## Hover picking, highlight, and selection
 
@@ -249,6 +251,8 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `navigation/navigationConfig.ts` | RU `NavigationItem[]` + blurbs + USPs + id/atom lookups |
 | `navigation/NavigationState.ts` | atomHover + navHover + committed; `focusItemId`; subscribe |
 | `navigation/Navigator.ts` | GSAP page-transition coordinator; `navigateTo` / `onNavigate` / `cancel` |
+| `navigation/routeVeil.ts` | Body-parented overlay acquire / handoff / dismiss across home unmount |
+| `navigation/archiveReturn.ts` | `sessionStorage` restore of archive `?page=` + scroll |
 | `navigation/TransitionController.ts` | `transitionTo(route)` → Nuxt (handler from MolecularHero) |
 | `navigation/TransitionState.ts` | Centralized transition phase / progress snapshot |
 | `hero-ui/HudFrame.ts` | Grid + corner ticks (pointer-events none) |
@@ -329,5 +333,5 @@ Live site: [proto0654.github.io/molecule](https://proto0654.github.io/molecule/)
 - Do not write `moleculeGroup.rotation.x/y += …`; apply composed absolute layers each frame (no rotation accumulation).
 - Do not `new Vector3` / `new Quaternion` / options literals inside `tick` / `update` — use scratches and persistent options bags.
 - Hover stays dirty every frame while orientation/zoom is still damping (correct under a still pointer); idle settled frames do not raycast.
-- Dispose path: HMR disposes navigator, destination, usp headline, hud, nav, controller; `Navigator.dispose()` kills the timeline and removes the overlay; `MoleculeScene.dispose` clears meshes, `renderer.dispose()`, then `forceContextLoss()`. Production page has no unmount dispose beyond HMR — acceptable for this Vite prototype.
+- Dispose path: HMR / home unmount disposes navigator, destination, USP, hud, nav, controller. `Navigator.dispose()` kills the timeline and calls `releaseRouteVeil()` — the overlay is **not** removed if it was handed off to the destination page. `MoleculeScene.dispose` clears meshes, `renderer.dispose()`, then `forceContextLoss()`.
 - Graphite colors in `COLOR_BY_LABEL` must stay darker than caption ink (see [`DESIGN.md`](DESIGN.md) scene tokens).
