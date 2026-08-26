@@ -74,7 +74,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 - 1px lines at `--grid-opacity` on `--grid-size`.
 - Radial **mask**: center transparent so the molecule sits in empty space; grid reads only at the edges.
-- Desktop: mask centered near ~62% X (main stage). Tablet/mobile: near center, slightly high for bottom chrome.
+- Desktop **home** (`.molecular-chrome.is-home`): mask centered near ~62% X (stage bias beside the rail). Desktop **off-home** / tablet / mobile: near center (matches centered composition profiles).
 - `pointer-events: none`. Markup: `.hud__grid` via [`HudFrame`](../src/ui/HudFrame.ts).
 
 ### 2. Corner ticks

@@ -87,9 +87,11 @@ Stub pages: [`/about`](../app/pages/about.vue), [`/services`](../app/pages/servi
 
 Home empty-canvas click / logo restore overview (`C`) and re-activate hub blurb + USP; it does not `clearFocus` into an empty rest. Hub π-flip runs only when retargeting onto `C` from another atom, not on initial home.
 
-Off-home, header route menu navigates immediately (`transitionTo` without the zoom veil). On home the two-step gesture is unchanged (hover preview, first click commit+focus, second click `Navigator.navigateTo`). Second click on already-committed Home is a no-op.
+Off-home, header route menu navigates immediately (`transitionTo` without the zoom veil). On home the two-step gesture is unchanged (hover preview, first click commit+focus, second click `Navigator.navigateTo`). Second click on already-committed Home is a no-op. Home `navigateTo` **eases** desktop stage bias → screen center in the same GSAP approach pass as zoom+fill (no instant framing snap). Peripherals also get a full **orbit sweep** (2π about the atom's ring) during that approach — ends on the settled facing pose.
 
-Off-home hops that **change the framed atom** (e.g. `/about` → `/contact`) run `Navigator.retargetApproach`: pullback (zoom+fill → 0, rest framing forced to **screen center** via composition override) → focus → re-approach (no end `holdApproach` snap — avoids a late twist jerk). Same-atom hops (Navigator handoff, archive↔case on the work atom) keep the live approach pose. Cold load / `immediate` / reduced motion snap `holdApproach`. Settled approach size follows sphere `atom.radius` (not orbit radius); peripherals share one radius so framed size matches across sections.
+**Composition:** rest profiles are screen-centered. Hero desktop offset (`HOME_DESKTOP_FRAMING`, ~62% X) is a **home-only** framing override. Off-home and leave-home approach tween toward `CENTER_FRAMING`.
+
+Off-home hops that **change the framed atom** (e.g. `/about` → `/contact`) run `Navigator.retargetApproach`: pullback (zoom+fill → 0, rest eases to **screen center**) → focus → re-approach (no end `holdApproach` snap — avoids a late twist jerk). Same-atom hops (Navigator handoff, archive↔case on the work atom) keep the live approach pose. Leaving rest / partial approach (`!isAtApproach`) runs `Navigator.approachTo` (animated focus → zoom+fill + orbit sweep on peripherals). Cold load / `immediate` / reduced motion snap `holdApproach`. Settled approach size follows sphere `atom.radius` (not orbit radius); peripherals share one radius so framed size matches across sections.
 
 ## Three.js lifecycle
 
@@ -105,11 +107,13 @@ route change
   useSpatialState updates
   SpatialController.apply
     Navigator.completeHandoff()   release busy / GSAP, keep canvas
+    onModeChange → HUD + home-only desktop framing
     setMode + commit nav
     off-home:
       same atom at approach → leave live pose
       atom changed at approach → retargetApproach (pullback → focus → approach)
-      else / immediate → holdApproach snap
+      not at approach → approachTo (animated focus → zoom+fill + orbit sweep)
+      immediate / reduced motion → holdApproach snap
     freeze() if not home
   NuxtPage swaps content
 layout unmount (rare: leave app / HMR)

@@ -184,3 +184,20 @@ export const ATOM_ORBIT_PLACEMENT: Readonly<
 export const MOLECULE_ORBITS: readonly OrbitDef[] = PERIPHERAL_ATOM_IDS.map(
   (id) => ATOM_ORBIT_PLACEMENT[id]!.orbit,
 );
+
+/** Hub-centered orbit plane normal for a peripheral atom (rest molecule frame). */
+export function getOrbitNormalForAtom(
+  atomId: string,
+  out: Vector3,
+): boolean {
+  const placement = ATOM_ORBIT_PLACEMENT[atomId];
+  if (!placement) return false;
+  out
+    .set(
+      placement.orbit.normal[0],
+      placement.orbit.normal[1],
+      placement.orbit.normal[2],
+    )
+    .normalize();
+  return true;
+}

@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
+import { CENTER_FRAMING } from '../molecular/composition/profiles';
 import type { MoleculeController } from '../molecular/MoleculeController';
 import { getItemByAtomId } from './navigationConfig';
 import type { NavigationState } from './NavigationState';
@@ -28,6 +29,11 @@ type TransitionProxy = {
   zoom: number;
   fill: number;
   overlay: number;
+  screenX: number;
+  screenY: number;
+  approach: number;
+  /** Hero approach: full orbit revolution (0→1 = 0→2π). */
+  orbitSweep: number;
 };
 
 const FOCUS_DURATION = 0.45;
@@ -54,7 +60,15 @@ export class Navigator {
   private readonly navigateListeners = new Set<NavigateListener>();
 
   private timeline: gsap.core.Timeline | null = null;
-  private proxy: TransitionProxy = { zoom: 0, fill: 0, overlay: 0 };
+  private proxy: TransitionProxy = {
+    zoom: 0,
+    fill: 0,
+    overlay: 0,
+    screenX: 0.5,
+    screenY: 0.5,
+    approach: 0,
+    orbitSweep: 0,
+  };
   /** Atom id for which `onNavigate` already fired on this forward run. */
   private navigatedAtomId: string | null = null;
 
@@ -89,6 +103,7 @@ export class Navigator {
 
     if (prefersReducedMotion()) {
       this.killTimeline();
+      this.controller.setCompositionFramingOverride(CENTER_FRAMING);
       this.controller.holdApproach({ immediate: true });
       this.overlay.setOpacity(0);
       this.transitionState.patch({
@@ -115,12 +130,17 @@ export class Navigator {
     }
 
     const atomChanged = this.transitionState.atomId !== atomId;
+    const framing = this.controller.getActiveCompositionFraming();
 
     // Capture live visuals before killing the previous tween (no hard reset).
     this.proxy = {
       zoom: this.controller.zoomProgress,
       fill: this.controller.fillProgress,
       overlay: this.overlay.getOpacity(),
+      screenX: framing.screenX,
+      screenY: framing.screenY,
+      approach: framing.approach,
+      orbitSweep: 0,
     };
 
     this.killTimeline();
@@ -142,7 +162,74 @@ export class Navigator {
       progress: 0,
     });
 
-    this.timeline = this.buildTimeline(atomId, this.proxy, atomChanged);
+    this.timeline = this.buildTimeline(atomId, this.proxy, atomChanged, {
+      emitNavigate: true,
+      settleOnComplete: false,
+      orbitSweep: true,
+    });
+  }
+
+  /**
+   * Animated focus → approach without navigating.
+   * Used when the route already changed and Spatial needs a pull-in from rest.
+   */
+  approachTo(atomId: string): void {
+    if (!this.controller.scene.getAtom(atomId)) return;
+
+    this.killTimeline();
+    this.navigatedAtomId = null;
+    this.overlay.setOpacity(0);
+    this.controller.freeze();
+
+    if (prefersReducedMotion()) {
+      this.controller.setCompositionFramingOverride(CENTER_FRAMING);
+      this.controller.focusAtom(atomId);
+      this.controller.setHighlightedAtom(atomId);
+      this.controller.holdApproach({ immediate: true });
+      this.controller.setCompositionFramingOverride(null);
+      this.controller.setTransitionDriven(false);
+      this.transitionState.patch({
+        atomId,
+        busy: false,
+        phase: 'idle',
+        zoom: 1,
+        fill: 1,
+        overlay: 0,
+        progress: 1,
+      });
+      return;
+    }
+
+    const framing = this.controller.getActiveCompositionFraming();
+    this.proxy = {
+      zoom: this.controller.zoomProgress,
+      fill: this.controller.fillProgress,
+      overlay: 0,
+      screenX: framing.screenX,
+      screenY: framing.screenY,
+      approach: framing.approach,
+      orbitSweep: 0,
+    };
+
+    const atomChanged = this.controller.getFocusedAtomId() !== atomId;
+    this.controller.setTransitionDriven(true);
+    this.controller.prepareTransitionTarget(atomId);
+
+    this.transitionState.patch({
+      atomId,
+      busy: true,
+      phase: 'focus',
+      zoom: this.proxy.zoom,
+      fill: this.proxy.fill,
+      overlay: 0,
+      progress: 0,
+    });
+
+    this.timeline = this.buildTimeline(atomId, this.proxy, atomChanged, {
+      emitNavigate: false,
+      settleOnComplete: true,
+      orbitSweep: true,
+    });
   }
 
   /**
@@ -191,20 +278,20 @@ export class Navigator {
       return;
     }
 
+    const framing = this.controller.getActiveCompositionFraming();
     const from: TransitionProxy = {
       zoom: this.controller.zoomProgress,
       fill: this.controller.fillProgress,
       overlay: 0,
+      screenX: framing.screenX,
+      screenY: framing.screenY,
+      approach: framing.approach,
+      orbitSweep: 0,
     };
     this.proxy = { ...from };
     const proxy = this.proxy;
 
-    // Pullback rest pose: molecule center on screen (not desktop composition bias).
-    this.controller.setCompositionFramingOverride({
-      screenX: 0.5,
-      screenY: 0.5,
-      approach: 0,
-    });
+    // Pullback: ease rest framing to screen center while zoom/fill unwind.
     this.controller.setTransitionDriven(true);
     this.transitionState.patch({
       atomId,
@@ -223,6 +310,11 @@ export class Navigator {
       onUpdate: () => {
         this.controller.setZoomProgress(proxy.zoom);
         this.controller.setFillProgress(proxy.fill);
+        this.controller.setCompositionFramingOverride({
+          screenX: proxy.screenX,
+          screenY: proxy.screenY,
+          approach: proxy.approach,
+        });
         this.transitionState.patch({
           atomId,
           progress: tl.progress(),
@@ -265,11 +357,19 @@ export class Navigator {
         {
           zoom: 0,
           fill: 0,
+          screenX: CENTER_FRAMING.screenX,
+          screenY: CENTER_FRAMING.screenY,
+          approach: CENTER_FRAMING.approach,
           duration: pullDur,
           ease: 'power2.inOut',
         },
         'pullback',
       );
+    } else {
+      proxy.screenX = CENTER_FRAMING.screenX;
+      proxy.screenY = CENTER_FRAMING.screenY;
+      proxy.approach = CENTER_FRAMING.approach;
+      this.controller.setCompositionFramingOverride(CENTER_FRAMING);
     }
 
     // 2. Face the new atom (wait for focus slerp), then re-approach.
@@ -310,7 +410,6 @@ export class Navigator {
     this.timeline = tl;
   }
 
-
   /**
    * Abort the current transition and ease back to rest.
    * Builds a fresh unwind timeline from live visuals (safe after retargets).
@@ -321,10 +420,15 @@ export class Navigator {
     this.navigatedAtomId = null;
     this.controller.unfreeze();
 
+    const framing = this.controller.getActiveCompositionFraming();
     const from: TransitionProxy = {
       zoom: this.controller.zoomProgress,
       fill: this.controller.fillProgress,
       overlay: this.overlay.getOpacity(),
+      screenX: framing.screenX,
+      screenY: framing.screenY,
+      approach: framing.approach,
+      orbitSweep: 0,
     };
 
     this.killTimeline();
@@ -415,6 +519,11 @@ export class Navigator {
     atomId: string,
     from: TransitionProxy,
     atomChanged: boolean,
+    options: {
+      emitNavigate: boolean;
+      settleOnComplete: boolean;
+      orbitSweep?: boolean;
+    },
   ): gsap.core.Timeline {
     const proxy: TransitionProxy = { ...from };
     this.proxy = proxy;
@@ -430,13 +539,34 @@ export class Navigator {
         ? FOCUS_DURATION
         : FOCUS_DURATION * 0.25;
     const approachGap = Math.max(1 - from.zoom, 1 - from.fill);
-    const approachDur = APPROACH_DURATION * approachGap;
+    const framingGap = Math.max(
+      Math.abs(from.screenX - CENTER_FRAMING.screenX),
+      Math.abs(from.screenY - CENTER_FRAMING.screenY),
+      Math.abs(from.approach - CENTER_FRAMING.approach),
+    );
+    const approachDur = APPROACH_DURATION * Math.max(approachGap, framingGap > 0.001 ? 0.35 : 0);
 
     const tl = gsap.timeline({
       onUpdate: () => {
         this.syncOutputs(atomId, proxy, tl.progress());
       },
       onComplete: () => {
+        if (options.settleOnComplete) {
+          this.controller.settleApproachProgress();
+          this.controller.setCompositionFramingOverride(null);
+          this.controller.setTransitionDriven(false);
+          this.timeline = null;
+          this.transitionState.patch({
+            atomId,
+            phase: 'idle',
+            progress: 1,
+            busy: false,
+            zoom: 1,
+            fill: 1,
+            overlay: 0,
+          });
+          return;
+        }
         // Stay busy so hover focus does not fight the settled destination pose.
         this.transitionState.patch({
           phase: 'complete',
@@ -465,51 +595,69 @@ export class Navigator {
       tl.to({}, { duration: focusDur }, 'focus');
     }
 
-    // 2. Approach — zoom + fill as one continuous pull-in
+    // 2. Approach — zoom + fill + framing → center + orbit sweep (hero leave)
     tl.addLabel('approach');
     tl.call(
       () => {
         if (tl.reversed()) return;
         this.transitionState.patch({ phase: 'approach' });
         this.controller.prepareTransitionTarget(atomId);
+        if (options.orbitSweep !== false) {
+          this.controller.beginOrbitSweep(atomId);
+        }
       },
       [],
       'approach',
     );
     if (approachDur > 0.001) {
-      tl.to(
-        proxy,
-        {
-          zoom: 1,
-          fill: 1,
-          duration: approachDur,
-          ease: 'power2.inOut',
-        },
-        'approach',
-      );
+      const approachProps: gsap.TweenVars = {
+        zoom: 1,
+        fill: 1,
+        screenX: CENTER_FRAMING.screenX,
+        screenY: CENTER_FRAMING.screenY,
+        approach: CENTER_FRAMING.approach,
+        duration: approachDur,
+        ease: 'power2.inOut',
+      };
+      if (options.orbitSweep !== false) {
+        approachProps.orbitSweep = 1;
+      }
+      tl.to(proxy, approachProps, 'approach');
     } else {
       proxy.zoom = 1;
       proxy.fill = 1;
+      proxy.screenX = CENTER_FRAMING.screenX;
+      proxy.screenY = CENTER_FRAMING.screenY;
+      proxy.approach = CENTER_FRAMING.approach;
+      if (options.orbitSweep !== false) {
+        proxy.orbitSweep = 1;
+      }
       tl.call(
         () => {
           this.controller.setZoomProgress(1);
           this.controller.setFillProgress(1);
+          this.controller.setCompositionFramingOverride(CENTER_FRAMING);
+          if (options.orbitSweep !== false) {
+            this.controller.setOrbitSweepProgress(1);
+          }
         },
         [],
         'approach',
       );
     }
 
-    // Navigate once the atom is in the approach pose — no veil / fade.
-    tl.addLabel('navigate');
-    tl.call(
-      () => {
-        if (tl.reversed()) return;
-        this.emitNavigate(atomId);
-      },
-      [],
-      'navigate',
-    );
+    if (options.emitNavigate) {
+      // Navigate once the atom is in the approach pose — no veil / fade.
+      tl.addLabel('navigate');
+      tl.call(
+        () => {
+          if (tl.reversed()) return;
+          this.emitNavigate(atomId);
+        },
+        [],
+        'navigate',
+      );
+    }
 
     return tl;
   }
@@ -521,6 +669,12 @@ export class Navigator {
   ): void {
     this.controller.setZoomProgress(proxy.zoom);
     this.controller.setFillProgress(proxy.fill);
+    this.controller.setCompositionFramingOverride({
+      screenX: proxy.screenX,
+      screenY: proxy.screenY,
+      approach: proxy.approach,
+    });
+    this.controller.setOrbitSweepProgress(proxy.orbitSweep);
     this.overlay.setOpacity(proxy.overlay);
 
     this.transitionState.patch({

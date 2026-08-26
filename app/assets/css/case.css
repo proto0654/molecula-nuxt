@@ -280,7 +280,7 @@
 @media (min-width: 1024px) {
   .case-chrome__grid {
     background-size: var(--grid-size) var(--grid-size);
-    mask-image: radial-gradient(ellipse 50% 54% at 62% 44%, transparent 42%, #000 100%);
+    mask-image: radial-gradient(ellipse 50% 54% at 50% 44%, transparent 42%, #000 100%);
   }
 }
 

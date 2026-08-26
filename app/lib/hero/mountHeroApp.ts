@@ -1,5 +1,6 @@
 import {
   COMPOSITION_PROFILES,
+  HOME_DESKTOP_FRAMING,
   resolveViewportMode,
 } from '../molecular/composition/profiles';
 import { MoleculeController } from '../molecular/MoleculeController';
@@ -264,14 +265,15 @@ export function mountHeroApp(
       destination.hide();
       connector.setEnabled(false);
       if (mobileNav.isOpen) setMenuOpen(false);
-    } else {
-      applyViewportMode();
     }
+    // Re-apply framing: home desktop bias vs centered profile.
+    applyViewportMode();
   }
 
   const spatial = new SpatialController(controller, navigationState, {
     completeHandoff: () => navigator.completeHandoff(),
     retargetApproach: (atomId) => navigator.retargetApproach(atomId),
+    approachTo: (atomId) => navigator.approachTo(atomId),
     onModeChange: (state) => {
       applyHudMode(state.mode === 'home');
       syncSpatialDebug(state);
@@ -290,9 +292,22 @@ export function mountHeroApp(
     controller.setCaptionsCompact(false);
     controller.setCaptionRemainderScale(mode === 'tablet' ? 0.82 : 1);
     controller.setCompositionProfile(profile);
+    // Home desktop only: stage bias. Elsewhere profile is already centered.
+    // Skip while Navigator owns framing (approach / retarget center override).
+    if (!navigator.busy) {
+      if (isHome && mode === 'desktop') {
+        controller.setCompositionFramingOverride(HOME_DESKTOP_FRAMING);
+      } else {
+        controller.setCompositionFramingOverride(null);
+      }
+    }
     document.documentElement.style.setProperty(
       '--composition-screen-y',
-      String(profile.screenY),
+      String(
+        isHome && mode === 'desktop'
+          ? HOME_DESKTOP_FRAMING.screenY
+          : profile.screenY,
+      ),
     );
     connector.setEnabled(isHome && mode === 'desktop');
     if (mode !== 'mobile' && mobileNav.isOpen) {

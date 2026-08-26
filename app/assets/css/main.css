@@ -796,7 +796,13 @@ html.nav-overlay-open body {
 /* --- Desktop (≥1024) --- */
 
 @media (min-width: 1024px) {
+  /* Off-home: molecule is screen-centered — match the default composition profile. */
   .hud__grid {
+    mask-image: radial-gradient(ellipse 48% 52% at 50% 46%, transparent 40%, #000 100%);
+  }
+
+  /* Home desktop: stage bias toward the rail void (~62% X). */
+  .molecular-chrome.is-home .hud__grid {
     mask-image: radial-gradient(ellipse 48% 52% at 62% 46%, transparent 40%, #000 100%);
   }
 

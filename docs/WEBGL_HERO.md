@@ -146,19 +146,22 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../app/lib/molecular/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `freeze` / `unfreeze` / `setMode`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `clearOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
 
 Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation within `0.08` rad of target). The same gate starts the HUD USP scramble after commit.
 
 ### Composition profiles
 
-[`composition/profiles.ts`](../app/lib/molecular/composition/profiles.ts) defines `desktop` / `tablet` / `mobile` rest framing. `setCompositionProfile` writes `baseMoleculePosition` from viewport fractions `screenX` / `screenY` (camera right / up) plus `approach` (pull toward camera along look). Derived from FOV + aspect + look-at distance — **never** from measuring CSS chrome. Atom locals stay unchanged. Recomputed on resize. Zoom still layers on top of this rest translation. `setCompositionFramingOverride` temporarily replaces `screenX` / `screenY` / `approach` (used by off-home `retargetApproach` pullback at screen center) without changing the viewport mode profile.
+[`composition/profiles.ts`](../app/lib/molecular/composition/profiles.ts) defines `desktop` / `tablet` / `mobile` rest framing — **screen-centered by default**. `setCompositionProfile` writes `baseMoleculePosition` from viewport fractions `screenX` / `screenY` (camera right / up) plus `approach` (pull toward camera along look). Derived from FOV + aspect + look-at distance — **never** from measuring CSS chrome. Atom locals stay unchanged. Recomputed on resize. Zoom still layers on top of this rest translation.
+
+`HOME_DESKTOP_FRAMING` (`screenX: 0.62`) is applied only on **home × desktop** via `setCompositionFramingOverride` from `mountHeroApp`. Leave-home `navigateTo` / `approachTo` tween `screenX` / `screenY` / `approach` toward `CENTER_FRAMING` in the approach GSAP pass (same duration as zoom+fill). `retargetApproach` pullback eases framing to center while zoom/fill unwind.
 
 | Mode | screenX | screenY | approach |
 |------|---------|---------|----------|
-| desktop | 0.62 | 0.45 | 0 |
+| desktop | 0.50 | 0.45 | 0 |
 | tablet | 0.50 | 0.47 | 0.12 |
 | mobile | 0.50 | 0.56 | 0.28 |
+| home desktop override | 0.62 | 0.45 | 0 |
 
 **Mobile compact layout** (`MoleculeScene.setCompactLayout`): when mode is `mobile`, orbit span ×0.58; hub radius ×0.58; peripheral radii ×0.78 (peripherals read larger relative to the compact molecule). Hub caption font scales to match peripheral caption size (`peripheral.baseRadius / hub.baseRadius` via `AtomLabel.setFontScale`). Bonds + decorative orbits follow orbit scale. Desktop/tablet keep authored layout.
 
@@ -186,7 +189,8 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 
 | API | Role |
 |-----|------|
-| `navigateTo(atomId)` | Interruptible retarget: focus → approach (zoom+fill together) → navigate; durations scale from live progress |
+| `navigateTo(atomId)` | Interruptible: center framing → focus → approach (zoom+fill + **orbit sweep** on peripherals) → navigate; durations scale from live progress |
+| `approachTo(atomId)` | Route already changed, not yet at approach: center framing → focus → zoom+fill + orbit sweep; no navigate |
 | `retargetApproach(atomId)` | Off-home atom change after the route already swapped: pullback (screen-centered rest) → focus → re-approach; no second navigate |
 | `onNavigate(atomId)` | Forward-only cue at the timeline navigate label |
 | `transitionTo(route)` | Nuxt `navigateTo` (handler set in `MolecularHero`); after `handoffRouteVeil()` for real routes |
@@ -240,7 +244,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 |------|------|
 | `MoleculeScene.ts` | Scene, camera, renderer, lights, fog, `buildMolecule`, `applyQuality`, dirty-gated labels, selection tick |
 | `MoleculeController.ts` | rAF, pointer / touch / viewport resize, orientation layers, zoom/fill, composition profile, pick, `projectAtom`, selection/caption/wireframe APIs, sampler |
-| `composition/profiles.ts` | desktop / tablet / mobile framing (`screenX` / `screenY` / `approach`) |
+| `composition/profiles.ts` | desktop / tablet / mobile framing (`screenX` / `screenY` / `approach`) + home desktop / center overrides |
 | `quality/QualityManager.ts` | Lock-once quality presets; `?quality=` / coarse-pointer start heuristic |
 | `quality/PerformanceSampler.ts` | Startup sample → lock + one emergency downgrade |
 | `resources/GeometryCache.ts` | Shared unit icosahedron / edges / circle / ticks / cross |
@@ -254,7 +258,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `moleculeConfig.ts` / `types.ts` | Declarative molecule data; captions pulled from nav labels |
 | `navigation/navigationConfig.ts` | RU `NavigationItem[]` + blurbs + USPs + id/atom lookups |
 | `navigation/NavigationState.ts` | atomHover + navHover + committed; `focusItemId`; subscribe |
-| `navigation/Navigator.ts` | GSAP page-transition coordinator; `navigateTo` / `onNavigate` / `cancel` |
+| `navigation/Navigator.ts` | GSAP page-transition coordinator; `navigateTo` / `approachTo` / `retargetApproach` / `onNavigate` / `cancel` |
 | `navigation/routeVeil.ts` | Body-parented overlay acquire / handoff / dismiss across home unmount |
 | `navigation/archiveReturn.ts` | `sessionStorage` restore of archive `?page=` + scroll |
 | `navigation/TransitionController.ts` | `transitionTo(route)` → Nuxt (handler from MolecularHero) |
@@ -333,7 +337,7 @@ Live site: [proto0654.github.io/molecule](https://proto0654.github.io/molecule/)
 - `NavigationConnector` consumes screen pixels only (`projectAtom` + DOM anchors). Do not import scene graph objects into UI modules. Tip + tiny marker stop short of the atom.
 - Desktop rail / header / connector are CSS ≥1024; tablet keeps bottom nav; mobile uses header + compact rail + MENU overlay and hides the connector.
 - `clearFocus` only lowers `focusStrength`; do not slerp focus orientation to identity on leave (avoids a long unused arc).
-- Central / Home atom (zero offset): no unique focus forward — on enter, apply a π flip about a random axis from the current focus pose (idempotent while already focused on hub). Peripheral focus still uses `getStableFocusQuaternion`. `focusAtom` also clears residual pointer/touch tilt so the atom faces the camera.
+- Central / Home atom (zero offset): no unique focus forward — on enter, apply a π flip about a random axis from the current focus pose (idempotent while already focused on hub). Peripheral focus uses `getStableFocusQuaternion`. **Hero leave approach** (peripherals only): one full revolution (2π) about the atom's orbit normal while zoom+fill run — ends back on the settled facing pose. `focusAtom` also clears residual pointer/touch tilt so the atom faces the camera.
 - Do not write `moleculeGroup.rotation.x/y += …`; apply composed absolute layers each frame (no rotation accumulation).
 - Do not `new Vector3` / `new Quaternion` / options literals inside `tick` / `update` — use scratches and persistent options bags.
 - Hover stays dirty every frame while orientation/zoom is still damping (correct under a still pointer); idle settled frames do not raycast.

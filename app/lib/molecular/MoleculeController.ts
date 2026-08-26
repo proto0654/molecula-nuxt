@@ -12,6 +12,7 @@ import {
 } from './math/getAtomFocusDistance';
 import { projectToScreenInto } from './math/projection';
 import { moleculeConfig } from './moleculeConfig';
+import { getOrbitNormalForAtom } from './moleculeOrbits';
 import { MoleculeScene } from './MoleculeScene';
 import { PerformanceSampler } from './quality/PerformanceSampler';
 import type { QualityManager } from './quality/QualityManager';
@@ -182,6 +183,17 @@ export class MoleculeController {
   /** Atom id last passed to `focusAtom` while focus is active. */
   private focusedAtomId: string | null = null;
 
+  /**
+   * Hero approach: full orbit sweep around the active atom's ring (0→1 = 0→2π).
+   * Settled focus is captured at sweep start; ends back on the same facing pose.
+   */
+  private orbitSweepProgress = 0;
+  private readonly orbitSweepAxis = new Vector3();
+  private orbitSweepActive = false;
+  private readonly stableFocusForSweep = new Quaternion();
+  private readonly scratchOrbitSpin = new Quaternion();
+  private readonly scratchFocusWithSweep = new Quaternion();
+
   private touchPointerId: number | null = null;
   private touchStartX = 0;
   private touchStartY = 0;
@@ -303,10 +315,11 @@ export class MoleculeController {
       // Pick / hover use true viewport NDC (screen center).
       const ndcX = fracX * 2 - 1;
       const ndcY = -(fracY * 2 - 1);
-      // Mouse tilt origin follows composition bias (visual molecule center).
-      this.pointerNorm.x = (fracX - this.compositionProfile.screenX) * 2;
-      this.pointerNorm.y =
-        (this.compositionProfile.screenY - fracY) * 2;
+      // Mouse tilt origin follows active composition framing (visual molecule center).
+      const framing =
+        this.compositionFramingOverride ?? this.compositionProfile;
+      this.pointerNorm.x = (fracX - framing.screenX) * 2;
+      this.pointerNorm.y = (framing.screenY - fracY) * 2;
       if (!this.reducedMotion) {
         this.updateMouseInfluence(this.pointerNorm);
         this.syncDragAnglesFromPointer(this.pointerNorm);
@@ -533,7 +546,10 @@ export class MoleculeController {
     const atomId = this.focusedAtomId;
     if (atomId && this.scene.getAtom(atomId)) {
       this.zoomAtomId = atomId;
-      this.focusAtom(atomId);
+      // Skip redundant focusAtom when already targeting this atom.
+      if (this.targetFocusStrength < 1) {
+        this.focusAtom(atomId);
+      }
     }
     if (options.immediate) {
       this.snapFocus();
@@ -573,6 +589,20 @@ export class MoleculeController {
       approach: override.approach ?? 0,
     };
     this.applyCompositionBias();
+  }
+
+  /** Active rest framing (override if set, else viewport profile). */
+  getActiveCompositionFraming(): {
+    screenX: number;
+    screenY: number;
+    approach: number;
+  } {
+    const framing = this.compositionFramingOverride ?? this.compositionProfile;
+    return {
+      screenX: framing.screenX,
+      screenY: framing.screenY,
+      approach: framing.approach,
+    };
   }
 
   /** True when zoom+fill are already at the approach destination. */
@@ -709,6 +739,49 @@ export class MoleculeController {
    */
   setTransitionDriven(active: boolean): void {
     this.transitionDriven = active;
+    if (!active) {
+      this.clearOrbitSweep();
+    }
+  }
+
+  /**
+   * Capture settled focus and arm a full orbit revolution during hero approach.
+   * No-op for hub / atoms without an orbit placement.
+   */
+  beginOrbitSweep(atomId: string): boolean {
+    if (!getOrbitNormalForAtom(atomId, this.orbitSweepAxis)) {
+      this.clearOrbitSweep();
+      return false;
+    }
+    this.stableFocusForSweep.copy(this.targetFocusOrientation);
+    this.orbitSweepProgress = 0;
+    this.orbitSweepActive = true;
+    this.applyOrbitSweepTarget();
+    return true;
+  }
+
+  /** 0→1 maps to 0→2π about the active atom's orbit normal. */
+  setOrbitSweepProgress(value: number): void {
+    if (!this.orbitSweepActive) return;
+    this.orbitSweepProgress = Math.max(0, Math.min(1, value));
+    this.applyOrbitSweepTarget();
+  }
+
+  clearOrbitSweep(): void {
+    if (!this.orbitSweepActive) return;
+    this.orbitSweepActive = false;
+    this.orbitSweepProgress = 0;
+    this.targetFocusOrientation.copy(this.stableFocusForSweep);
+  }
+
+  private applyOrbitSweepTarget(): void {
+    const angle = this.orbitSweepProgress * Math.PI * 2;
+    this.scratchOrbitSpin.setFromAxisAngle(this.orbitSweepAxis, angle);
+    // Rest-frame orbit spin, then settled focus — atom travels along its ring.
+    this.scratchFocusWithSweep
+      .copy(this.stableFocusForSweep)
+      .multiply(this.scratchOrbitSpin);
+    this.targetFocusOrientation.copy(this.scratchFocusWithSweep);
   }
 
   /** Zoom out via `targetZoom → 0`; atom id kept until `zoomProgress` settles near 0. */

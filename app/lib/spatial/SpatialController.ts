@@ -19,6 +19,8 @@ export type SpatialControllerOptions = {
   completeHandoff?: () => void;
   /** Off-home atom change while already at approach: pullback → focus → approach. */
   retargetApproach?: (atomId: string) => void;
+  /** Leave rest / partial approach: animated focus → zoom+fill (no route emit). */
+  approachTo?: (atomId: string) => void;
   onModeChange?: (state: SpatialState) => void;
   /** After home commit/restore — arm hub blurb + USP in the hero layer. */
   onHomeActivated?: () => void;
@@ -35,6 +37,7 @@ export class SpatialController {
   private readonly navigationState: NavigationState;
   private readonly completeHandoff: (() => void) | undefined;
   private readonly retargetApproach: ((atomId: string) => void) | undefined;
+  private readonly approachTo: ((atomId: string) => void) | undefined;
   private readonly onModeChange: ((state: SpatialState) => void) | undefined;
   private readonly onHomeActivated: (() => void) | undefined;
 
@@ -47,6 +50,7 @@ export class SpatialController {
     this.navigationState = navigationState;
     this.completeHandoff = options.completeHandoff;
     this.retargetApproach = options.retargetApproach;
+    this.approachTo = options.approachTo;
     this.onModeChange = options.onModeChange;
     this.onHomeActivated = options.onHomeActivated;
   }
@@ -67,10 +71,12 @@ export class SpatialController {
     }
     this.lastKey = key;
     this.state = state;
+
+    // Release any in-flight Navigator timeline before HUD/framing sync.
+    this.completeHandoff?.();
     this.onModeChange?.(state);
 
     if (state.mode === 'home') {
-      this.completeHandoff?.();
       this.navigationState.setCommitted(HOME_ITEM_ID);
       this.controller.setMode('home');
       this.controller.restoreOverview({ immediate: options.immediate });
@@ -80,7 +86,6 @@ export class SpatialController {
       return;
     }
 
-    this.completeHandoff?.();
     this.controller.setMode(state.mode);
 
     const nextAtomId = atomIdForSpatialState(state);
@@ -88,18 +93,21 @@ export class SpatialController {
     const atomChanged = nextAtomId !== null && nextAtomId !== prevAtomId;
     const atApproach = this.controller.isAtApproach();
     const snap =
-      options.immediate || prefersReducedMotion() || !this.retargetApproach;
+      options.immediate || prefersReducedMotion() || !this.approachTo;
 
     this.commitNonHome(state);
 
     if (snap) {
       this.focusNonHome(state);
       this.controller.holdApproach({ immediate: true });
-    } else if (atApproach && atomChanged && nextAtomId) {
+    } else if (atApproach && atomChanged && nextAtomId && this.retargetApproach) {
       // Defer focusAtom until after pullback — retarget owns the choreography.
       this.retargetApproach(nextAtomId);
     } else if (atApproach && !atomChanged) {
       // Live Navigator handoff: same atom already in approach pose.
+    } else if (nextAtomId) {
+      this.focusNonHome(state);
+      this.approachTo(nextAtomId);
     } else {
       this.focusNonHome(state);
       this.controller.holdApproach({ immediate: true });
