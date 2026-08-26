@@ -101,15 +101,29 @@
   box-sizing: border-box;
 }
 
-html,
+html {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow-x: clip;
+  overflow-y: auto;
+  background: var(--wl-bg, var(--color-bg));
+  color: var(--wl-text, var(--color-ink));
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Do not set overflow-x:hidden here — with overflow-y:visible the spec
+   computes overflow-y to auto and creates a second scrollbar when 3D/stagger
+   paints past the layout box. Horizontal clip lives on html only. */
 body,
 #__nuxt {
   margin: 0;
   width: 100%;
   min-height: 100%;
   min-height: 100dvh;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: visible;
   background: var(--wl-bg, var(--color-bg));
   color: var(--wl-text, var(--color-ink));
   font-family: var(--font-ui);

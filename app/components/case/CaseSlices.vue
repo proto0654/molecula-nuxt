@@ -14,16 +14,25 @@ const props = defineProps<{
 const root = ref<HTMLElement | null>(null);
 const lightbox = useCaseLightbox();
 
-useCaseScrollEntry({
-  root,
-  preset: 'slices',
-});
-
 const layout = computed(() =>
   props.caseData.mobileSlices
     ? getCaseSliceLayout(props.caseData.mobileSlices)
     : null,
 );
+
+const { refresh: refreshScroll } = useCaseScrollEntry({
+  root,
+  preset: 'slices',
+});
+
+const { update: updateBottomSpace } = useCaseSliceBottomSpace(root, {
+  onUpdate: () => refreshScroll(),
+});
+
+watch(layout, async () => {
+  await nextTick();
+  updateBottomSpace();
+});
 
 const imageUrl = computed(() => {
   const slices = props.caseData.mobileSlices;
@@ -63,7 +72,7 @@ function openFull() {
     v-if="caseData.mobileSlices && layout"
     :index="sectionIndex"
     label="Slices"
-    visual
+    center
   >
     <div
       ref="root"

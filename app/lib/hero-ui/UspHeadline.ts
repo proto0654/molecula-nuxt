@@ -1,4 +1,4 @@
-import { scrambleText, type ScrambleHandle } from './textScramble';
+import { scrambleText, charsetFromTarget, type ScrambleHandle } from './textScramble';
 
 /**
  * HUD USP headline: armed on commit, revealed after focus settle via scramble.
@@ -74,7 +74,7 @@ export class UspHeadline {
     this.handle = scrambleText(target, {
       duration: 1.05,
       reducedMotion: this.reducedMotion,
-      charset: charsetForTarget(target),
+      charset: charsetFromTarget(target),
       onFrame: (display) => {
         this.displayEl.textContent = display;
       },
@@ -104,10 +104,4 @@ export class UspHeadline {
     this.handle?.cancel();
     this.handle = null;
   }
-}
-
-/** Scramble with glyphs from the target so line breaks stay stable in mono. */
-function charsetForTarget(target: string): string {
-  const chars = [...new Set(target.replace(/\s+/g, ''))];
-  return chars.length > 0 ? chars.join('') : target;
 }

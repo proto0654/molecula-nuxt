@@ -80,3 +80,9 @@ export function scrambleText(target: string, options: ScrambleOptions): Scramble
 function pick(charset: string): string {
   return charset[(Math.random() * charset.length) | 0]!;
 }
+
+/** Scramble with glyphs from the target so line breaks stay stable in mono. */
+export function charsetFromTarget(target: string): string {
+  const chars = [...new Set(target.replace(/\s+/g, ''))];
+  return chars.length > 0 ? chars.join('') : target;
+}

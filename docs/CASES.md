@@ -9,19 +9,19 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 | File | Role |
 |------|------|
 | [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page chrome: edge grid, L-ticks, logo, `CASE / NN`, Index; optional featured backdrop |
-| [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title, `titleEn`, excerpt; facts only when there is no CMS body |
+| [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title (USP-style scramble reveal), `titleEn`, excerpt; facts only when there is no CMS body |
 | [`CaseHeroMedia.vue`](../app/components/case/CaseHeroMedia.vue) | Hero video only (flat, no 3D) |
 | [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Presentational `<video>` used **inside** the hero only |
 | [`CaseSection.vue`](../app/components/case/CaseSection.vue) | Numbered label + body; `visual` full-bleed / `center` cols 4–10 |
 | [`CaseContent.vue`](../app/components/case/CaseContent.vue) | Editorial Overview: 3-col label + 6-col CMS body + optional facts |
 | [`CaseFacts.vue`](../app/components/case/CaseFacts.vue) | Compact CLIENT / STACK / URL — each field only if present |
 | [`CaseGallery.vue`](../app/components/case/CaseGallery.vue) | Inner-pages: `landing_screen` + repeater (3-col / masonry) |
-| [`CaseMobile.vue`](../app/components/case/CaseMobile.vue) | Composite phone mockup (`screenshot_image`) when present |
-| [`CaseSlices.vue`](../app/components/case/CaseSlices.vue) | Decomposed `screen-mobile` grid via `block_ratio` |
+| [`CaseMobile.vue`](../app/components/case/CaseMobile.vue) | Composite phone mockup (`screenshot_image`) — flat image, `--case-mobile-max` width |
+| [`CaseSlices.vue`](../app/components/case/CaseSlices.vue) | Decomposed `screen-mobile` grid via `block_ratio` (center col, like Screens) |
 | [`CaseLightbox.vue`](../app/components/case/CaseLightbox.vue) | Dark overlay, technical index, close / prev-next |
 | [`CaseNavigation.vue`](../app/components/case/CaseNavigation.vue) | Prev / Index / Next |
 
-Route: [`app/pages/portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue). Presentation helpers (hero, image URL, section numbers, **slice math**) live in [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts). Scroll entry: [`useCaseScrollEntry`](../app/composables/useCaseScrollEntry.ts). Lightbox state: [`useCaseLightbox`](../app/composables/useCaseLightbox.ts).
+Route: [`app/pages/portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue). Presentation helpers (hero, image URL, section numbers, **slice math**) live in [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts). Scroll entry: [`useCaseScrollEntry`](../app/composables/useCaseScrollEntry.ts). Slice bottom runway: [`useCaseSliceBottomSpace`](../app/composables/useCaseSliceBottomSpace.ts). Lightbox: [`useCaseLightbox`](../app/composables/useCaseLightbox.ts). Title scramble reuses [`textScramble`](../app/lib/hero-ui/textScramble.ts) (plain text from `stripTags`, not all-caps).
 
 ## Tokens
 
@@ -38,7 +38,8 @@ Set `--case-accent` from `case.accentColor` on the page; otherwise ink. **Never*
 | `--text-case-body` | CMS Overview body (~1–1.0625rem; not the tiny intro size) |
 | `--case-media-max` | Cap tall **CMS prose** media only — **not** gallery / landing screens |
 | `--case-screen-max` | Desktop screens: `min(52rem, 78vw)` absolute + relative |
-| `--case-mobile-max` | Soft cap for mobile specimen width context |
+| `--case-mobile-max` | Composite mockup width: `min(20rem, 34vw)` — no frame/backing on image |
+| `--case-mobile-caption-max` | Caption on mobile: `44rem` (two editorial cols on lg) |
 
 Display type is `--font-ui` (JetBrains Mono). There is no second display face.
 
@@ -48,7 +49,7 @@ Fixed overlay, same visual language as HUD (edge grid + four L-ticks), quieter, 
 
 ## Grid
 
-`.case-grid` is 12 columns. Named zones include `.case-zone-center` (cols 4–10 on lg — Screens). Mobile: one column + pad tokens.
+`.case-grid` is 12 columns. Named zones include `.case-zone-center` (cols 4–10 on lg — Screens and Slices). Mobile: one column + pad tokens.
 
 Hero layouts:
 
@@ -86,7 +87,9 @@ Perspective desktop stage: 1000px / origin 50% 42%. Card shadow `10px 18px 36px 
 
 ### Mobile slices
 
-Breakpoint **768**. Perspective 960px / origin 50% 100%. Brick stagger `--slice-col-stagger: clamp(4rem, 15vw, 10rem)`. Scrub multi-stop rotateX 72→0 + Z + Y-lag (`--slice-scroll-lag-odd/even`).
+Same center column as Screens (`.case-zone-center`, cols 4–9 on lg) — not full-bleed. Breakpoint **768**. Perspective 960px / origin 50% 100%. Brick stagger `--slice-col-stagger: clamp(4rem, 15vw, 10rem)`. Scrub multi-stop rotateX 72→0 + Z + Y-lag (`--slice-scroll-lag-odd/even`).
+
+Bottom spacing: `--slice-bottom-space` from `useCaseSliceBottomSpace` — `stagger + max(0, lastTriggerTop + 0.70·vh − scrollHeight)` (two-pass measure; no fixed `65vh` runway). Fallback CSS = stagger only. Reset under `prefers-reduced-motion`.
 
 ### Motion presets (`useCaseScrollEntry`)
 
@@ -106,6 +109,8 @@ Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `ove
 
 Do not drop filled `screen-mobile` / `screenshot_image`. Both sections may appear on the same case.
 
+**Composite mockup (Mobile):** flat `screenshot_image` (no card frame). lg grid: mockup `--case-mobile-max` + caption spanning two `22rem` tracks (`--case-mobile-caption-max`). Body zone cols 4–12.
+
 ### Lightbox
 
 Minimal dark overlay, technical index, close; gallery prev/next. Full source image (slices open full `screen-mobile`).
@@ -115,5 +120,5 @@ Minimal dark overlay, technical index, close; gallery prev/next. Full source ima
 - Do not put Three.js on case pages.
 - `case_dark_bg_color` is a **subtle accent**, not a full-page wash. Mix with bright ink for text (`--case-accent-ink`) — raw hex is often too dark on `--wl-bg`.
 - Slim index `_fields` include `title` for prev/next labels (`getCasePosition`).
-- Case pages must not set `html.hero-lock`.
+- Case pages must not set `html.hero-lock`. Document scroll is on `html` only (`main.css`) — avoid `overflow-y: auto` on `body` / `#__nuxt` (double scrollbar with 3D overflow).
 - Legacy mapping: `screenshot_image` = composite mockup; `screen-mobile` = slice source — do not swap.
