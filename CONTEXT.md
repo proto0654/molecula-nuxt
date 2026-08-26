@@ -31,7 +31,7 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 
 ## Current focus
 
-**STEP 9–19 done** (API → portfolio/case → prerender → TransitionController). Acceptance §28 met at foundation level. **Next:** case visual redesign (§25) — separate iteration. Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+**STEP 9–19 done** (API → portfolio/case → prerender → TransitionController). Acceptance §28 met. TZ §§1–29 are requirement sections, not 29 tasks — see [`tasks/ROADMAP.md`](tasks/ROADMAP.md) (Foundation gaps). **Next:** case visual redesign (TZ §25). Keep conditional rendering and absence-as-null. Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
 
 ## Docs hub
 

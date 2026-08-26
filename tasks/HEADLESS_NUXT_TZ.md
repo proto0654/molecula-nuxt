@@ -7,8 +7,7 @@
 
 - [`api-real-response.md`](../docs/api-real-response.md) — фактическая структура WP API
 - [`../CONTEXT.md`](../CONTEXT.md) — короткий стек / entry points
-- [`ROADMAP.md`](ROADMAP.md) — краткие чекбоксы прототипа
-- Plan (Cursor): STEP 9–19 WP API (done); next = case redesign
+- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; Foundation gaps; next = case visual redesign (§25)
 
 ---
 
@@ -42,7 +41,7 @@
 | 18 | Test local dev | **DONE** (build/prerender smoke) |
 | 19 | Test production build | **DONE** (`npm run build`: prerendered 122 routes) |
 
-**Visual redesign case pages — НЕ делать** до отдельной итерации (см. §25 ТЗ).
+Foundation-итерация закрыта. **Next = case visual redesign** (§25). Не ломать conditional rendering.
 
 ## Что уже в репозитории (факт)
 
@@ -55,9 +54,13 @@
 - **Prerender:** all portfolio slugs queued at generate/build via live WP API
 - **Deploy:** `.github/workflows/deploy.yml` → `nuxt generate` + `NUXT_APP_BASE_URL`
 
-## Следующая итерация — стартовать с
+## Следующая итерация
 
-**Case visual redesign** (§25) + углубление transitions (полный molecular → route reveal).  
+**Выбранный scope:** case visual redesign (§25).
+
+Позже (не в этой итерации, пока не попросят): полный molecular → route reveal; `/about`, `/services`, `/contact`.
+
+Мелкий долг foundation (titles / unused menu / canonical): [`ROADMAP.md`](ROADMAP.md) → Foundation gaps — подчистить по пути, если дёшево.  
 Не ломать content pipeline и conditional rendering.
 
 Acceptance предыдущей итерации — §28 (foundation met).
@@ -1108,12 +1111,14 @@ Do NOT continue automatically into visual case redesign.
 # D. ПРОМПТ ДЛЯ СЛЕДУЮЩЕГО ЧАТА (короткий)
 
 ```
-Продолжаем headless WebLaba с чекпоинта после STEP 9–19 (§28 foundation done).
+Продолжаем headless WebLaba: STEP 9–19 + §28 foundation done.
 
 Источник правды: tasks/HEADLESS_NUXT_TZ.md
+Сверка §§1–29: tasks/ROADMAP.md (не 29 чекбоксов; STEPs 1–19 Done; Foundation gaps).
 API: app/api/ + docs/api-real-response.md
-Portfolio/case уже работают на реальных WP данных.
+Portfolio/case уже на реальных WP данных.
 
-Следующее: case visual redesign (§25) и/или полный molecular→route transition.
+Scope: case visual redesign (§25). HUD tokens: docs/DESIGN.md.
 Не ломать conditional rendering и absence-as-null.
+Не делать полный molecular→route transition и /about /services /contact, пока не попросят.
 ```

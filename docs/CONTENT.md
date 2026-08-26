@@ -57,4 +57,4 @@ Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `
 
 - Components must not call WordPress URLs directly.
 - Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally ([`main.css`](../app/assets/css/main.css)).
-- Case visual redesign is **out of scope** until a dedicated iteration (TZ §25).
+- Case visual redesign is the **next iteration** (TZ §25). Keep conditional rendering; absence stays `null` / `[]`.

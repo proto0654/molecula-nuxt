@@ -8,4 +8,4 @@
 | [DESIGN.md](DESIGN.md) | HUD tokens, decorative patterns, scene palette |
 | [api-real-response.md](api-real-response.md) | Live WordPress REST structure (ACF, menus, pagination) |
 | [../CONTEXT.md](../CONTEXT.md) | Short permanent project facts |
-| [../tasks/ROADMAP.md](../tasks/ROADMAP.md) | Prototype milestones |
+| [../tasks/ROADMAP.md](../tasks/ROADMAP.md) | STEPs 1–19 Done; Foundation gaps; next = case visual redesign (§25) |
