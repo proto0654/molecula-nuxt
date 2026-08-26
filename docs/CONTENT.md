@@ -43,13 +43,15 @@ Rules:
 |-------|--------|
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
 | `/portfolio` | `usePortfolio(page)` — server pagination via WP headers |
-| `/portfolio/[slug]` | `CaseShell` + hero (`video` → `landingScreen` → `featuredImage`) + conditional Content / Gallery / Mobile / Slices / Navigation |
+| `/portfolio/[slug]` | `CaseShell` + video hero + featured backdrop + Overview / Screens (`landing_screen`+repeater) / Mobile / Slices / lightbox |
 
-Hero layout: `split` (video or landing) or `stack` (featured only). Video is not repeated below the hero. Section numbers are sequential among visible blocks only.
+Hero: video only (flat). Screens = `landing_screen` (index 0) + repeater — 3-col desktop / 2-col masonry &lt;1024. Section numbers sequential among visible blocks.
+
+Mobile field mapping: slices from `screen-mobile` (`block_ratio` defaults to `1/2.3`); composite mockup from `screenshot_image` whenever set (can coexist with slices). Filled media is never discarded.
 
 SEO: `useSeoMeta` title + plain excerpt on case pages.
 
-Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, image URL, section numbers). Does not change the `Case` model.
+Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, image URL, section numbers, slice layout). Does not change the `Case` model shape beyond normalize mapping.
 
 ## Prerender / Pages
 

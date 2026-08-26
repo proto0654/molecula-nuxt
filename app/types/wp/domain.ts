@@ -26,7 +26,7 @@ export type CaseGalleryItem = {
   image: CaseImage;
 };
 
-/** Mobile mockup block — only when screen-mobile image exists. */
+/** Mobile mockup — screenshot_image, or screen-mobile fallback when slices cannot run. */
 export type CaseMobileVisual = {
   image: CaseImage;
   /** HTML caption; null if empty / absent. */
@@ -34,7 +34,7 @@ export type CaseMobileVisual = {
 };
 
 /**
- * Slice grid — only when mobile image + valid block_ratio both exist.
+ * Slice grid — screen-mobile + dimensions; block_ratio defaults to 1/2.3.
  * Keep as dedicated nullable object so `v-if="case.mobileSlices"` works.
  */
 export type CaseMobileSlices = {

@@ -40,7 +40,7 @@
 - [x] Wire hero `Navigator` to real Nuxt routes (`/portfolio`) (STEP 17–18 foundation)
 - [x] STEP 9–19 + acceptance §28 (без case redesign)
 - [x] Document scroll unlock on portfolio/case (`html.hero-lock` only on home)
-- [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, hero video→landing→featured, no WebGL on case
+- [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, video hero + featured backdrop, Screens = landing+repeater (inner-pages), lightbox, ScrollTrigger entry, no WebGL on case
 
 ## Foundation gaps
 

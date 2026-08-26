@@ -1,34 +1,179 @@
 <script setup lang="ts">
 import type { Case } from '~/types/wp';
-import { caseImageUrl, stripTags } from '~/domain/portfolio/presentation';
+import {
+  CASE_LANDING_SIZES,
+  CASE_SCREEN_SIZES,
+  caseImageUrl,
+  getCaseScreenItems,
+  isCaseScreensLandingOnly,
+  padCaseIndex,
+  stripTags,
+} from '~/domain/portfolio/presentation';
+import type { CaseLightboxItem } from '~/composables/useCaseLightbox';
 
-defineProps<{
+const props = defineProps<{
   caseData: Case;
   sectionIndex: number;
 }>();
 
-function itemClass(index: number, total: number): string {
-  if (total === 1) return 'case-gallery__item case-gallery__item--wide';
-  return index % 2 === 0
-    ? 'case-gallery__item case-gallery__item--a'
-    : 'case-gallery__item case-gallery__item--b';
+const root = ref<HTMLElement | null>(null);
+const lightbox = useCaseLightbox();
+
+const items = computed(() => getCaseScreenItems(props.caseData));
+const landingOnly = computed(() => isCaseScreensLandingOnly(props.caseData));
+const scrollPreset = computed(() =>
+  landingOnly.value ? 'landingOnly' : 'screensGrid',
+);
+
+useCaseScrollEntry({ root, preset: scrollPreset });
+
+const lightboxItems = computed<CaseLightboxItem[]>(() =>
+  items.value.map((item, index) => ({
+    image: item.image,
+    label:
+      item.source === 'landing'
+        ? 'LANDING / 01'
+        : `SCREEN / ${padCaseIndex(index + 1)}`,
+  })),
+);
+
+const columns = computed(() => {
+  const cols: Array<typeof items.value> = [[], [], []];
+  items.value.forEach((item, index) => {
+    cols[index % 3]!.push(item);
+  });
+  return cols;
+});
+
+function openAt(index: number) {
+  lightbox.open(lightboxItems.value, index);
+}
+
+function itemSrc(item: (typeof items.value)[number]) {
+  return caseImageUrl(
+    item.image,
+    item.source === 'landing' ? CASE_LANDING_SIZES : CASE_SCREEN_SIZES,
+  );
+}
+
+function itemAlt(item: (typeof items.value)[number], index: number) {
+  return item.image.alt || `${stripTags(props.caseData.title)} ${index + 1}`;
+}
+
+function aspectStyle(item: (typeof items.value)[number]) {
+  const w = item.image.width;
+  const h = item.image.height;
+  if (w && h && w > 0 && h > 0) {
+    return { aspectRatio: `${w} / ${h}` };
+  }
+  return undefined;
+}
+
+function globalIndex(col: number, row: number): number {
+  let n = 0;
+  for (let i = 0; i < items.value.length; i += 1) {
+    if (i % 3 === col) {
+      if (n === row) return i;
+      n += 1;
+    }
+  }
+  return row * 3 + col;
+}
+
+function labelFor(index: number): string {
+  return lightboxItems.value[index]?.label ?? `SCREEN / ${padCaseIndex(index + 1)}`;
 }
 </script>
 
 <template>
-  <CaseSection v-if="caseData.gallery.length" :index="sectionIndex" label="Screens">
-    <ul class="case-gallery">
-      <li
-        v-for="(item, index) in caseData.gallery"
-        :key="item.image.id + '-' + index"
-        :class="itemClass(index, caseData.gallery.length)"
-      >
-        <img
-          :src="caseImageUrl(item.image)"
-          :alt="item.image.alt || `${stripTags(caseData.title)} ${index + 1}`"
-          loading="lazy"
-        />
-      </li>
-    </ul>
+  <CaseSection
+    v-if="items.length"
+    :index="sectionIndex"
+    label="Screens"
+    center
+  >
+    <div
+      ref="root"
+      class="case-inner-pages"
+      :class="{ 'case-inner-pages--landing-only': landingOnly }"
+    >
+      <div class="case-inner-pages__stage case-inner-pages__stage--mobile">
+        <div
+          v-for="(item, index) in items"
+          :key="'m-' + item.image.id + '-' + index"
+          class="case-inner-pages__card-wrapper"
+        >
+          <div class="case-inner-pages__card-motion case-scroll-motion">
+            <button
+              type="button"
+              class="case-inner-pages__card-button"
+              :aria-label="`Open ${labelFor(index)}`"
+              @click="openAt(index)"
+            >
+              <span class="case-inner-pages__meta">{{ labelFor(index) }}</span>
+              <figure class="case-inner-pages__card" :style="aspectStyle(item)">
+                <img
+                  :src="itemSrc(item)"
+                  :alt="itemAlt(item, index)"
+                  :loading="landingOnly || index === 0 ? 'eager' : 'lazy'"
+                  :fetchpriority="landingOnly || index === 0 ? 'high' : undefined"
+                />
+              </figure>
+            </button>
+          </div>
+          <span class="case-inner-pages__trigger case-scroll-trigger" aria-hidden="true" />
+        </div>
+      </div>
+
+      <div class="case-inner-pages__stage case-inner-pages__stage--desktop">
+        <div
+          v-for="(colItems, col) in columns"
+          :key="'col-' + col"
+          class="case-inner-pages__column"
+        >
+          <div
+            v-for="(item, row) in colItems"
+            :key="'d-' + item.image.id + '-' + col + '-' + row"
+            class="case-inner-pages__card-wrapper"
+            :class="{
+              [`case-inner-pages__card-wrapper--stair-${col}`]:
+                !landingOnly && row === 0 && col < 2,
+            }"
+          >
+            <div class="case-inner-pages__card-motion case-scroll-motion">
+              <button
+                type="button"
+                class="case-inner-pages__card-button"
+                :aria-label="`Open ${labelFor(globalIndex(col, row))}`"
+                @click="openAt(globalIndex(col, row))"
+              >
+                <span class="case-inner-pages__meta">{{
+                  labelFor(globalIndex(col, row))
+                }}</span>
+                <figure
+                  class="case-inner-pages__card"
+                  :style="aspectStyle(item)"
+                >
+                  <img
+                    :src="itemSrc(item)"
+                    :alt="itemAlt(item, globalIndex(col, row))"
+                    :loading="
+                      landingOnly || globalIndex(col, row) === 0 ? 'eager' : 'lazy'
+                    "
+                    :fetchpriority="
+                      landingOnly || globalIndex(col, row) === 0 ? 'high' : undefined
+                    "
+                  />
+                </figure>
+              </button>
+            </div>
+            <span
+              class="case-inner-pages__trigger case-scroll-trigger"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   </CaseSection>
 </template>

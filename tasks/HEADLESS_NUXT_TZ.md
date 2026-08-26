@@ -50,9 +50,10 @@ Foundation-итерация закрыта. **Case visual redesign (§25) done.*
 - **Home `/`:** `ClientOnly` → `MolecularHero.vue` → `mountHeroApp.ts` + `TransitionController.transitionTo` → Nuxt routes (Работы → `/portfolio`)
 - **API:** `app/api/client.ts` + portfolio/menus/pages/media; components не знают REST URL
 - **Normalize:** `normalizePortfolioPost` → `Case`; absence = `null` / `[]`
-- **Portfolio:** listing + WP header pagination; case page = editorial inspection (12-col grid, CaseShell chrome); prev/next via slim index + titles
+- **Portfolio:** listing + WP header pagination; case page = editorial inspection (12-col grid, CaseShell chrome); Screens = `landing_screen` + repeater (inner-pages 3-col / masonry); lightbox + `useCaseScrollEntry`; prev/next via slim index + titles
 - **Prerender:** all portfolio slugs queued at generate/build via live WP API
 - **Deploy:** `.github/workflows/deploy.yml` → `nuxt generate` + `NUXT_APP_BASE_URL`
+- **Case docs:** [`docs/CASES.md`](../docs/CASES.md), [`docs/CONTENT.md`](../docs/CONTENT.md)
 
 ## Следующая итерация
 
@@ -63,7 +64,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) done.*
 Мелкий долг: unused menu composable, SEO canonical — [`ROADMAP.md`](ROADMAP.md) → Foundation gaps.  
 Не ломать content pipeline, conditional rendering, case visual system.
 
-Acceptance предыдущих итераций — §28 (foundation) + case redesign (static composition, no WebGL on case).
+Acceptance предыдущих итераций — §28 (foundation) + case redesign (editorial composition, inner-pages Screens, ScrollTrigger entry, no WebGL on case).
 
 ---
 
@@ -1115,7 +1116,7 @@ Do NOT continue automatically into visual case redesign.
 
 Источник правды: tasks/HEADLESS_NUXT_TZ.md
 Сверка: tasks/ROADMAP.md
-Case visual: app/assets/css/case.css + docs/CASES.md
+Case visual: app/assets/css/case.css + docs/CASES.md (Screens = landing+repeater inner-pages; lightbox; useCaseScrollEntry)
 API: app/api/ + docs/api-real-response.md
 
 Scope: полный molecular → route transition (сейчас foundation transitionTo).

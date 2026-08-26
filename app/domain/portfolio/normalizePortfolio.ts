@@ -15,6 +15,7 @@ import type {
   PortfolioCategory,
 } from '~/types/wp';
 import type { WpPortfolioCategory } from '~/types/wp';
+import { parseBlockRatio } from '~/domain/portfolio/presentation';
 
 function emptyToNull(value: string | false | null | undefined): string | null {
   if (value === false || value == null) return null;
@@ -97,26 +98,51 @@ function normalizeGallery(acf: WpPortfolioPost['acf']): CaseGalleryItem[] {
   return items;
 }
 
-function normalizeMobile(acf: WpPortfolioPost['acf']): CaseMobileVisual | null {
+const DEFAULT_BLOCK_RATIO = '1/2.3';
+
+/**
+ * Tall mobile screenshot → slice grid.
+ * `block_ratio` defaults to 1/2.3 when screen-mobile is set (legacy default)
+ * so filled screen-mobile is never dropped for a missing ratio field.
+ */
+function normalizeMobileSlices(
+  acf: WpPortfolioPost['acf'],
+): CaseMobileSlices | null {
   const image = normalizeAcfImage(acf?.['screen-mobile']);
   if (!image) return null;
+  if (image.width == null || image.height == null) return null;
+  if (image.width <= 0 || image.height <= 0) return null;
+
+  const ratioRaw = emptyToNull(acf?.block_ratio === false ? null : acf?.block_ratio);
+  const ratio =
+    ratioRaw && parseBlockRatio(ratioRaw) ? ratioRaw : DEFAULT_BLOCK_RATIO;
+  return { image, ratio };
+}
+
+/**
+ * Phone composite / mobile specimen.
+ * Prefer screenshot_image (ready mockup). If absent and slices cannot run,
+ * fall back to screen-mobile so filled ACF media is never discarded.
+ * screenshot_image can coexist with slices — both sections render.
+ */
+function normalizeMobile(
+  acf: WpPortfolioPost['acf'],
+  hasSlices: boolean,
+): CaseMobileVisual | null {
   const captionHtml = emptyToNull(
     acf?.podpis_vozle_mokapa_mobily_pravo === false
       ? null
       : acf?.podpis_vozle_mokapa_mobily_pravo,
   );
-  return { image, captionHtml };
-}
 
-function normalizeMobileSlices(
-  acf: WpPortfolioPost['acf'],
-  mobile: CaseMobileVisual | null,
-): CaseMobileSlices | null {
-  if (!mobile) return null;
-  const ratioRaw = acf?.block_ratio;
-  const ratio = emptyToNull(ratioRaw === false ? null : ratioRaw);
-  if (!ratio) return null;
-  return { image: mobile.image, ratio };
+  const composite = normalizeAcfImage(acf?.screenshot_image);
+  if (composite) return { image: composite, captionHtml };
+
+  if (hasSlices) return null;
+
+  const fallback = normalizeAcfImage(acf?.['screen-mobile']);
+  if (!fallback) return null;
+  return { image: fallback, captionHtml };
 }
 
 /**
@@ -127,7 +153,8 @@ export function normalizePortfolioPost(post: WpPortfolioPost): Case {
   const acf = post.acf ?? ({} as WpPortfolioPost['acf']);
   const contentHtml = emptyToNull(post.content?.rendered);
   const excerptHtml = emptyToNull(post.excerpt?.rendered);
-  const mobile = normalizeMobile(acf);
+  const mobileSlices = normalizeMobileSlices(acf);
+  const mobile = normalizeMobile(acf, mobileSlices != null);
 
   return {
     id: post.id,
@@ -149,7 +176,7 @@ export function normalizePortfolioPost(post: WpPortfolioPost): Case {
     gallery: normalizeGallery(acf),
     video: normalizeAcfVideo(acf.video),
     mobile,
-    mobileSlices: normalizeMobileSlices(acf, mobile),
+    mobileSlices,
     client: emptyToNull(acf.client === false ? null : acf.client),
     projectUrl: emptyToNull(acf.project_url === false ? null : acf.project_url),
     technologies: emptyToNull(acf.technologies === false ? null : acf.technologies),

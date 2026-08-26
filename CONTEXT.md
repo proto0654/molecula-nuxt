@@ -32,8 +32,8 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 
 ## Current focus
 
-**Case visual redesign done** (TZ §25): editorial case pages on a 12-col grid, no WebGL. Conditional rendering and absence-as-null unchanged. **Next:** full molecular → route transition (foundation `transitionTo` already exists). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+**Case visual redesign done** (TZ §25), including PHP-parity Screens (inner-pages), lightbox, and ScrollTrigger entry. Editorial case pages on a 12-col grid, **no WebGL**. Conditional rendering and absence-as-null unchanged. **Next:** full molecular → route transition (foundation `transitionTo` already exists). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
 
 ## Docs hub
 
-See [`docs/README.md`](docs/README.md). Case visual: [`docs/CASES.md`](docs/CASES.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+See [`docs/README.md`](docs/README.md). Case visual (inner-pages / slices / motion): [`docs/CASES.md`](docs/CASES.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).

@@ -6,6 +6,7 @@ import {
   normalizePortfolioPost,
 } from '~/domain/portfolio/normalizePortfolio';
 import {
+  caseFeaturedBackdropUrl,
   getCaseHeroKind,
   getCaseHeroLayout,
   getCaseSectionNumbers,
@@ -13,6 +14,8 @@ import {
 
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
+
+provideCaseLightbox();
 
 const { data, pending, error } = useAsyncData(
   () => `portfolio-case-${slug.value}`,
@@ -36,6 +39,9 @@ const caseData = computed(() => data.value?.caseData ?? null);
 const position = computed(() => data.value?.position);
 const heroKind = computed(() => (caseData.value ? getCaseHeroKind(caseData.value) : null));
 const heroLayout = computed(() => getCaseHeroLayout(heroKind.value));
+const backdropUrl = computed(() =>
+  caseData.value ? caseFeaturedBackdropUrl(caseData.value) : null,
+);
 const sections = computed(() =>
   caseData.value
     ? getCaseSectionNumbers(caseData.value)
@@ -64,6 +70,7 @@ useSeoMeta({
   <CaseShell
     :accent-color="caseData?.accentColor"
     :case-index="position?.index"
+    :backdrop-url="backdropUrl"
   >
     <p v-if="pending" class="case-page__status">Loading…</p>
 
@@ -81,6 +88,7 @@ useSeoMeta({
           class="case-hero__text"
           :case-data="caseData"
           :case-index="position?.index"
+          :show-meta="!sections.content"
         />
         <CaseHeroMedia
           v-if="heroKind"
@@ -116,6 +124,7 @@ useSeoMeta({
         :prev-title="position?.prev?.title ?? null"
         :next-title="position?.next?.title ?? null"
       />
+      <CaseLightbox />
     </template>
   </CaseShell>
 </template>
