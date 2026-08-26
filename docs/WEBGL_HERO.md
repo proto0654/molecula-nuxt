@@ -146,13 +146,13 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../app/lib/molecular/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `freeze` / `unfreeze` / `setMode`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `freeze` / `unfreeze` / `setMode`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
 
 Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation within `0.08` rad of target). The same gate starts the HUD USP scramble after commit.
 
 ### Composition profiles
 
-[`composition/profiles.ts`](../app/lib/molecular/composition/profiles.ts) defines `desktop` / `tablet` / `mobile` rest framing. `setCompositionProfile` writes `baseMoleculePosition` from viewport fractions `screenX` / `screenY` (camera right / up) plus `approach` (pull toward camera along look). Derived from FOV + aspect + look-at distance — **never** from measuring CSS chrome. Atom locals stay unchanged. Recomputed on resize. Zoom still layers on top of this rest translation.
+[`composition/profiles.ts`](../app/lib/molecular/composition/profiles.ts) defines `desktop` / `tablet` / `mobile` rest framing. `setCompositionProfile` writes `baseMoleculePosition` from viewport fractions `screenX` / `screenY` (camera right / up) plus `approach` (pull toward camera along look). Derived from FOV + aspect + look-at distance — **never** from measuring CSS chrome. Atom locals stay unchanged. Recomputed on resize. Zoom still layers on top of this rest translation. `setCompositionFramingOverride` temporarily replaces `screenX` / `screenY` / `approach` (used by off-home `retargetApproach` pullback at screen center) without changing the viewport mode profile.
 
 | Mode | screenX | screenY | approach |
 |------|---------|---------|----------|
@@ -187,6 +187,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 | API | Role |
 |-----|------|
 | `navigateTo(atomId)` | Interruptible retarget: focus → approach (zoom+fill together) → navigate; durations scale from live progress |
+| `retargetApproach(atomId)` | Off-home atom change after the route already swapped: pullback (screen-centered rest) → focus → re-approach; no second navigate |
 | `onNavigate(atomId)` | Forward-only cue at the timeline navigate label |
 | `transitionTo(route)` | Nuxt `navigateTo` (handler set in `MolecularHero`); after `handoffRouteVeil()` for real routes |
 | `cancel()` | Unwind overlay → approach rewind → clear focus (soft reset; no hard state tear-down) |

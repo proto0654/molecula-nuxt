@@ -271,6 +271,7 @@ export function mountHeroApp(
 
   const spatial = new SpatialController(controller, navigationState, {
     completeHandoff: () => navigator.completeHandoff(),
+    retargetApproach: (atomId) => navigator.retargetApproach(atomId),
     onModeChange: (state) => {
       applyHudMode(state.mode === 'home');
       syncSpatialDebug(state);

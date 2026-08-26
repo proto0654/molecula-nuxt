@@ -1,7 +1,9 @@
+import { prefersReducedMotion } from '../a11y/reducedMotion';
 import type { MoleculeController } from '../molecular/MoleculeController';
 import type { NavigationState } from '../navigation/NavigationState';
 import {
   atomIdForSection,
+  atomIdForSpatialState,
   HOME_ITEM_ID,
   itemIdForContext,
 } from './spatialAtoms';
@@ -15,6 +17,8 @@ export type SpatialApplyOptions = {
 
 export type SpatialControllerOptions = {
   completeHandoff?: () => void;
+  /** Off-home atom change while already at approach: pullback → focus → approach. */
+  retargetApproach?: (atomId: string) => void;
   onModeChange?: (state: SpatialState) => void;
   /** After home commit/restore — arm hub blurb + USP in the hero layer. */
   onHomeActivated?: () => void;
@@ -30,6 +34,7 @@ export class SpatialController {
   private readonly controller: MoleculeController;
   private readonly navigationState: NavigationState;
   private readonly completeHandoff: (() => void) | undefined;
+  private readonly retargetApproach: ((atomId: string) => void) | undefined;
   private readonly onModeChange: ((state: SpatialState) => void) | undefined;
   private readonly onHomeActivated: (() => void) | undefined;
 
@@ -41,6 +46,7 @@ export class SpatialController {
     this.controller = controller;
     this.navigationState = navigationState;
     this.completeHandoff = options.completeHandoff;
+    this.retargetApproach = options.retargetApproach;
     this.onModeChange = options.onModeChange;
     this.onHomeActivated = options.onHomeActivated;
   }
@@ -76,11 +82,29 @@ export class SpatialController {
 
     this.completeHandoff?.();
     this.controller.setMode(state.mode);
-    this.applyNonHomeFocus(state);
-    // Live Navigator hops already sit on the approach pose — do not snap/refocus.
-    if (options.immediate || !this.controller.isAtApproach()) {
+
+    const nextAtomId = atomIdForSpatialState(state);
+    const prevAtomId = this.controller.getFocusedAtomId();
+    const atomChanged = nextAtomId !== null && nextAtomId !== prevAtomId;
+    const atApproach = this.controller.isAtApproach();
+    const snap =
+      options.immediate || prefersReducedMotion() || !this.retargetApproach;
+
+    this.commitNonHome(state);
+
+    if (snap) {
+      this.focusNonHome(state);
+      this.controller.holdApproach({ immediate: true });
+    } else if (atApproach && atomChanged && nextAtomId) {
+      // Defer focusAtom until after pullback — retarget owns the choreography.
+      this.retargetApproach(nextAtomId);
+    } else if (atApproach && !atomChanged) {
+      // Live Navigator handoff: same atom already in approach pose.
+    } else {
+      this.focusNonHome(state);
       this.controller.holdApproach({ immediate: true });
     }
+
     this.controller.freeze();
 
     if (modeChanged) {
@@ -88,7 +112,8 @@ export class SpatialController {
     }
   }
 
-  private applyNonHomeFocus(state: SpatialState): void {
+  /** Nav commit only — no molecule focus. */
+  private commitNonHome(state: SpatialState): void {
     switch (state.mode) {
       case 'section': {
         const sectionId = state.sectionId;
@@ -96,13 +121,34 @@ export class SpatialController {
           this.navigationState.setCommitted(
             atomIdForSection(sectionId) ? sectionId : null,
           );
-          this.controller.focusSection(sectionId);
         }
         break;
       }
       case 'portfolio-archive':
       case 'case': {
         this.navigationState.setCommitted(itemIdForContext('portfolio'));
+        break;
+      }
+      case 'service-archive':
+      case 'service': {
+        this.navigationState.setCommitted(itemIdForContext('services'));
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  /** Molecule focus verbs for the committed non-home state. */
+  private focusNonHome(state: SpatialState): void {
+    switch (state.mode) {
+      case 'section': {
+        const sectionId = state.sectionId;
+        if (sectionId) this.controller.focusSection(sectionId);
+        break;
+      }
+      case 'portfolio-archive':
+      case 'case': {
         this.controller.focusContext('portfolio');
         if (state.mode === 'case' && state.entityId) {
           this.controller.focusEntity(state.entityId);
@@ -111,7 +157,6 @@ export class SpatialController {
       }
       case 'service-archive':
       case 'service': {
-        this.navigationState.setCommitted(itemIdForContext('services'));
         this.controller.focusContext('services');
         if (state.mode === 'service' && state.entityId) {
           this.controller.focusEntity(state.entityId);

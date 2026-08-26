@@ -34,6 +34,12 @@ const FOCUS_DURATION = 0.45;
 /** Single pull-in: zoom + fill run together (was sequential ≈1.4s). */
 const APPROACH_DURATION = 1.05;
 const OVERLAY_DURATION = 0.45;
+/** Off-home atom change: leave the old approach pose. */
+const RETARGET_PULLBACK_DURATION = 0.45;
+/** Off-home atom change: focus settle before re-approach. */
+const RETARGET_FOCUS_DURATION = 0.6;
+/** Off-home atom change: re-approach the new atom. */
+const RETARGET_APPROACH_DURATION = 0.7;
 
 /**
  * Page-transition coordinator: owns the GSAP timeline and `TransitionState`.
@@ -147,6 +153,7 @@ export class Navigator {
     this.killTimeline();
     this.navigatedAtomId = null;
     this.overlay.setOpacity(0);
+    this.controller.setCompositionFramingOverride(null);
     this.controller.setTransitionDriven(false);
     this.transitionState.patch({
       busy: false,
@@ -155,10 +162,161 @@ export class Navigator {
   }
 
   /**
+   * Off-home hop between different framed atoms: pullback → focus → approach.
+   * Does not navigate — the route already changed before SpatialController.apply.
+   */
+  retargetApproach(atomId: string): void {
+    if (!this.controller.scene.getAtom(atomId)) return;
+
+    this.killTimeline();
+    this.navigatedAtomId = null;
+    this.overlay.setOpacity(0);
+    this.controller.freeze();
+
+    if (prefersReducedMotion()) {
+      this.controller.setCompositionFramingOverride(null);
+      this.controller.focusAtom(atomId);
+      this.controller.setHighlightedAtom(atomId);
+      this.controller.holdApproach({ immediate: true });
+      this.controller.setTransitionDriven(false);
+      this.transitionState.patch({
+        atomId,
+        busy: false,
+        phase: 'idle',
+        zoom: 1,
+        fill: 1,
+        overlay: 0,
+        progress: 1,
+      });
+      return;
+    }
+
+    const from: TransitionProxy = {
+      zoom: this.controller.zoomProgress,
+      fill: this.controller.fillProgress,
+      overlay: 0,
+    };
+    this.proxy = { ...from };
+    const proxy = this.proxy;
+
+    // Pullback rest pose: molecule center on screen (not desktop composition bias).
+    this.controller.setCompositionFramingOverride({
+      screenX: 0.5,
+      screenY: 0.5,
+      approach: 0,
+    });
+    this.controller.setTransitionDriven(true);
+    this.transitionState.patch({
+      atomId,
+      busy: true,
+      phase: 'overlay',
+      zoom: from.zoom,
+      fill: from.fill,
+      overlay: 0,
+      progress: 0,
+    });
+
+    const pullGap = Math.max(from.zoom, from.fill);
+    const pullDur = RETARGET_PULLBACK_DURATION * Math.max(pullGap, 0.001);
+
+    const tl = gsap.timeline({
+      onUpdate: () => {
+        this.controller.setZoomProgress(proxy.zoom);
+        this.controller.setFillProgress(proxy.fill);
+        this.transitionState.patch({
+          atomId,
+          progress: tl.progress(),
+          zoom: proxy.zoom,
+          fill: proxy.fill,
+          overlay: 0,
+          busy: true,
+        });
+      },
+      onComplete: () => {
+        // No holdApproach({ immediate }) — that refocus+snap causes a late twist jerk.
+        this.controller.settleApproachProgress();
+        this.controller.setCompositionFramingOverride(null);
+        this.controller.setTransitionDriven(false);
+        this.timeline = null;
+        this.transitionState.patch({
+          atomId,
+          busy: false,
+          phase: 'idle',
+          zoom: 1,
+          fill: 1,
+          overlay: 0,
+          progress: 1,
+        });
+      },
+    });
+
+    // 1. Pull back from the old atom toward screen-centered rest.
+    tl.addLabel('pullback', 0);
+    tl.call(
+      () => {
+        this.transitionState.patch({ phase: 'overlay', atomId });
+      },
+      [],
+      'pullback',
+    );
+    if (pullGap > 0.001) {
+      tl.to(
+        proxy,
+        {
+          zoom: 0,
+          fill: 0,
+          duration: pullDur,
+          ease: 'power2.inOut',
+        },
+        'pullback',
+      );
+    }
+
+    // 2. Face the new atom (wait for focus slerp), then re-approach.
+    tl.addLabel('focus');
+    tl.call(
+      () => {
+        this.transitionState.patch({ phase: 'focus', atomId });
+        this.controller.focusAtom(atomId);
+        this.controller.setHighlightedAtom(atomId);
+        this.controller.prepareTransitionTarget(atomId);
+      },
+      [],
+      'focus',
+    );
+    tl.to({}, { duration: RETARGET_FOCUS_DURATION }, 'focus');
+
+    tl.addLabel('approach');
+    tl.call(
+      () => {
+        this.transitionState.patch({ phase: 'approach', atomId });
+        // Keep zoom atom id; prepareTransitionTarget no-ops focus when already set.
+        this.controller.prepareTransitionTarget(atomId);
+      },
+      [],
+      'approach',
+    );
+    tl.to(
+      proxy,
+      {
+        zoom: 1,
+        fill: 1,
+        duration: RETARGET_APPROACH_DURATION,
+        ease: 'power2.inOut',
+      },
+      'approach',
+    );
+
+    this.timeline = tl;
+  }
+
+
+  /**
    * Abort the current transition and ease back to rest.
    * Builds a fresh unwind timeline from live visuals (safe after retargets).
    */
   cancel(): void {
+    this.controller.setCompositionFramingOverride(null);
     this.navigationState.setCommitted('home');
     this.navigatedAtomId = null;
     this.controller.unfreeze();

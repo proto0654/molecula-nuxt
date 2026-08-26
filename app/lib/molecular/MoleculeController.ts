@@ -162,6 +162,16 @@ export class MoleculeController {
    */
   private compositionProfile: CompositionProfile = COMPOSITION_PROFILES.mobile;
 
+  /**
+   * Temporary framing override (e.g. screen-center during peripheral retarget).
+   * Merged over `compositionProfile` in `applyCompositionBias`; does not change mode/layout.
+   */
+  private compositionFramingOverride: {
+    screenX: number;
+    screenY: number;
+    approach: number;
+  } | null = null;
+
   /** Look-at used for composition distance (matches MoleculeScene camera). */
   private readonly compositionLookAt = new Vector3(0, 0.2, 0);
 
@@ -532,6 +542,39 @@ export class MoleculeController {
     this.setFillProgress(1);
   }
 
+  /**
+   * Settle zoom/fill at approach without recomputing focus (avoids end-of-tween snap).
+   */
+  settleApproachProgress(): void {
+    const atomId = this.focusedAtomId;
+    if (atomId && this.scene.getAtom(atomId)) {
+      this.zoomAtomId = atomId;
+    }
+    this.setZoomProgress(1);
+    this.setFillProgress(1);
+  }
+
+  /**
+   * Temporary rest framing (viewport fractions). Pass `null` to restore the profile.
+   * Used by peripheral retarget so pullback lands on screen center.
+   */
+  setCompositionFramingOverride(
+    override: { screenX: number; screenY: number; approach?: number } | null,
+  ): void {
+    if (!override) {
+      if (!this.compositionFramingOverride) return;
+      this.compositionFramingOverride = null;
+      this.applyCompositionBias();
+      return;
+    }
+    this.compositionFramingOverride = {
+      screenX: override.screenX,
+      screenY: override.screenY,
+      approach: override.approach ?? 0,
+    };
+    this.applyCompositionBias();
+  }
+
   /** True when zoom+fill are already at the approach destination. */
   isAtApproach(): boolean {
     return this.zoomProgress >= 0.92 && this.fillProgress >= 0.92;
@@ -559,6 +602,12 @@ export class MoleculeController {
 
     const alreadyFocused =
       this.focusedAtomId === atomId && this.targetFocusStrength > 0.5;
+
+    // Same atom: keep the existing target — recomputing stable focus walks twist.
+    if (alreadyFocused) {
+      this.targetFocusStrength = 1;
+      return;
+    }
 
     // Rest-frame molecule origin (ignore live zoom translation).
     this.scratchMoleculePos.copy(this.baseMoleculePosition);
@@ -600,9 +649,7 @@ export class MoleculeController {
 
     // Drop leftover touch drag / mouse tilt so focus lands on the look axis.
     // Fine pointers rewrite tilt on the next `pointermove`.
-    if (!alreadyFocused) {
-      this.resetPointerTilt();
-    }
+    this.resetPointerTilt();
   }
 
   /** Fade focus influence out via `focusStrength` → 0; keep last focus pose. */
@@ -999,15 +1046,16 @@ export class MoleculeController {
     const vFov = (camera.fov * Math.PI) / 180;
     const halfH = Math.tan(vFov / 2) * dist;
     const halfW = halfH * camera.aspect;
-    const ndcX = (this.compositionProfile.screenX - 0.5) * 2;
-    const ndcY = (0.5 - this.compositionProfile.screenY) * 2;
+    const framing = this.compositionFramingOverride ?? this.compositionProfile;
+    const ndcX = (framing.screenX - 0.5) * 2;
+    const ndcY = (0.5 - framing.screenY) * 2;
 
     // Positive approach pulls toward the camera (larger on-screen presence).
     this.baseMoleculePosition
       .set(0, 0, 0)
       .addScaledVector(this.scratchCameraRight, ndcX * halfW)
       .addScaledVector(this.scratchCameraUp, ndcY * halfH)
-      .addScaledVector(this.scratchLookDir, -this.compositionProfile.approach);
+      .addScaledVector(this.scratchLookDir, -framing.approach);
 
     // Apply immediately when not mid-zoom; zoom path recomposes each frame.
     if (!this.zoomAtomId || this.zoomProgress <= 0) {
