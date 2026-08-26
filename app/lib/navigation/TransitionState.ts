@@ -6,6 +6,7 @@
 export type TransitionPhase =
   | 'idle'
   | 'focus'
+  | 'approach'
   | 'zoom'
   | 'fill'
   | 'overlay'

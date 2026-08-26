@@ -1,6 +1,6 @@
 # Case pages (editorial inspection)
 
-Home is 3D spatial navigation. Case pages are HTML/CSS documents — **no Three.js / WebGL**. GSAP is allowed **only** for restrained ScrollTrigger entry, in-page case→case reveal, and `Navigator` route transitions. Tokens and layout: [`app/assets/css/case.css`](../app/assets/css/case.css). Content pipeline (normalize, `v-if`, absence = `null`): [`CONTENT.md`](CONTENT.md).
+Home is 3D spatial navigation. Archive and case pages are HTML/CSS documents **over** the persistent frozen molecule (transparent page background — no scrim wash). Do not remount Three.js on these routes — see [`SPATIAL.md`](SPATIAL.md). GSAP is allowed **only** for restrained ScrollTrigger entry, in-page case→case reveal, and `Navigator` route transitions. Tokens and layout: [`app/assets/css/case.css`](../app/assets/css/case.css). Content pipeline (normalize, `v-if`, absence = `null`): [`CONTENT.md`](CONTENT.md).
 
 Principles: scientific / technical / editorial / minimal. Large type, hairlines, numbered sections, 12-col compositional grid, generous negative space, restrained accent. Not cyberpunk, not dashboard, not agency cards. Do not add decorative HUD chrome for atmosphere.
 
@@ -8,7 +8,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 
 | File | Role |
 |------|------|
-| [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page chrome via [`SiteChrome`](../app/components/site/SiteChrome.vue); optional featured backdrop; density + body-phase classes |
+| [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page shell; optional featured backdrop wash; density + body-phase classes. Decorative grid/frame/logo come from the persistent HUD. |
 | [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title (USP-style scramble reveal), `titleEn`, excerpt; facts only when there is no CMS body |
 | [`CaseHeroMedia.vue`](../app/components/case/CaseHeroMedia.vue) | Hero video only (flat, no 3D) |
 | [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Presentational `<video>` used **inside** the hero only |

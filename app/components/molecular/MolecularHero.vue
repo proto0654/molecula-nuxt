@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { setLabelFontUrl } from '~/lib/molecular/AtomLabel';
-import { mountHeroApp } from '~/lib/hero/mountHeroApp';
+import { mountHeroApp, type MountedHeroApp } from '~/lib/hero/mountHeroApp';
 import {
   setTransitionHandler,
   transitionTo,
 } from '~/lib/navigation/TransitionController';
-import { handoffRouteVeil } from '~/lib/navigation/routeVeil';
 
-const rootRef = ref<HTMLElement | null>(null);
-let disposeHero: (() => void) | null = null;
+const spatial = useSpatialState();
+
+const stageRef = ref<HTMLElement | null>(null);
+const chromeRef = ref<HTMLElement | null>(null);
+let hero: MountedHeroApp | null = null;
 
 onMounted(() => {
-  const root = rootRef.value;
-  if (!root) return;
+  const stage = stageRef.value;
+  const chrome = chromeRef.value;
+  if (!stage || !chrome) return;
 
   const config = useRuntimeConfig();
   const baseURL = config.app.baseURL || '/';
@@ -26,26 +29,28 @@ onMounted(() => {
     });
   });
 
-  disposeHero = mountHeroApp(root, {
-    onNavigateRoute: (route) => {
-      handoffRouteVeil();
-      return transitionTo(route);
-    },
+  hero = mountHeroApp(stage, {
+    chromeRoot: chrome,
+    onNavigateRoute: (route) => transitionTo(route),
   });
+
+  hero.applySpatial(spatial.value, { immediate: true });
+});
+
+watch(spatial, (state) => {
+  hero?.applySpatial(state);
 });
 
 onBeforeUnmount(() => {
   setTransitionHandler(null);
-  disposeHero?.();
-  disposeHero = null;
+  hero?.dispose();
+  hero = null;
 });
 </script>
 
 <template>
-  <div
-    id="app"
-    ref="rootRef"
-    class="molecular-hero"
-    aria-label="Molecular hero"
-  />
+  <div class="molecular-shell" aria-label="Molecular shell">
+    <div id="hero-stage" ref="stageRef" class="molecular-hero" />
+    <div ref="chromeRef" class="molecular-chrome" />
+  </div>
 </template>

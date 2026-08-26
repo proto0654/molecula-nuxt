@@ -20,6 +20,14 @@ import {
   prefersReducedMotion,
   subscribeReducedMotion,
 } from '../a11y/reducedMotion';
+import {
+  atomIdForContext,
+  atomIdForSection,
+  hubAtomId,
+} from '../spatial/spatialAtoms';
+import type { SpatialContext, SpatialMode } from '../spatial/types';
+
+let nextControllerInstanceId = 0;
 
 /** Limited yaw / pitch from pointer (radians) — not a full turn. */
 const MAX_YAW = Math.PI / 5;
@@ -96,6 +104,7 @@ export type AtomScreenPoint = {
 export class MoleculeController {
   readonly scene: MoleculeScene;
   readonly quality: QualityManager;
+  readonly instanceId: number;
 
   /** Rest pose (identity for now). Absolute — never accumulated. */
   private readonly baseOrientation = new Quaternion();
@@ -217,6 +226,8 @@ export class MoleculeController {
   private rafId = 0;
   private lastTime = 0;
   private running = false;
+  private frozen = false;
+  private spatialMode: SpatialMode = 'home';
   private readonly canvas: HTMLCanvasElement;
   private readonly sampler: PerformanceSampler;
   private readonly unsubscribeQuality: () => void;
@@ -231,6 +242,7 @@ export class MoleculeController {
   private readonly onPointerCancelBound: (event: PointerEvent) => void;
 
   constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
+    this.instanceId = ++nextControllerInstanceId;
     this.canvas = canvas;
     this.quality = quality;
     this.scene = new MoleculeScene(canvas, quality);
@@ -265,6 +277,7 @@ export class MoleculeController {
     };
 
     this.onPointerMoveBound = (event: PointerEvent) => {
+      if (this.frozen) return;
       if (this.touchPointerId !== null) {
         this.handleTouchMove(event);
         return;
@@ -292,11 +305,13 @@ export class MoleculeController {
     };
 
     this.onPointerLeaveBound = () => {
+      if (this.frozen) return;
       if (this.touchPointerId !== null) return;
       this.atomHover.clear();
     };
 
     this.onClickBound = (event: MouseEvent) => {
+      if (this.frozen) return;
       if (this.suppressNextClick) {
         this.suppressNextClick = false;
         event.preventDefault();
@@ -308,6 +323,7 @@ export class MoleculeController {
     };
 
     this.onPointerDownBound = (event: PointerEvent) => {
+      if (this.frozen) return;
       if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
       if (this.touchPointerId !== null) return;
       this.touchPointerId = event.pointerId;
@@ -341,6 +357,7 @@ export class MoleculeController {
   }
 
   private handleTouchMove(event: PointerEvent): void {
+    if (this.frozen) return;
     if (event.pointerId !== this.touchPointerId) return;
     if (this.reducedMotion) return;
     const dx = event.clientX - this.touchStartX;
@@ -427,14 +444,113 @@ export class MoleculeController {
     };
   }
 
+  getFrozen(): boolean {
+    return this.frozen;
+  }
+
+  getSpatialMode(): SpatialMode {
+    return this.spatialMode;
+  }
+
+  getFocusedAtomId(): string | null {
+    return this.focusedAtomId;
+  }
+
+  /**
+   * Stop pointer/touch tilt, drop residual mouse pose, hide atom labels.
+   * Animation loop and renderer keep running.
+   */
+  freeze(): void {
+    this.frozen = true;
+    this.resetPointerTilt();
+    this.atomHover.clear();
+    this.scene.setLabelsVisible(false);
+  }
+
+  unfreeze(): void {
+    this.frozen = false;
+    this.scene.setLabelsVisible(true);
+  }
+
+  /**
+   * Home is the only interactive mode. Other modes freeze pointer tilt.
+   */
+  setMode(mode: SpatialMode): void {
+    this.spatialMode = mode;
+    if (mode === 'home') {
+      this.unfreeze();
+    } else {
+      this.freeze();
+    }
+  }
+
+  /**
+   * Focus the hub atom (Home). No random π-flip on initial / already-hub.
+   */
+  restoreOverview(options: { immediate?: boolean } = {}): void {
+    const hubId = this.getHubAtomId();
+    this.focusAtom(hubId);
+    this.targetZoom = 0;
+    if (options.immediate) {
+      this.snapFocus();
+      this.setZoomProgress(0);
+      this.setFillProgress(0);
+    }
+  }
+
+  focusSection(sectionId: string): void {
+    const atomId = atomIdForSection(sectionId);
+    if (atomId) this.focusAtom(atomId);
+  }
+
+  focusContext(context: SpatialContext): void {
+    const atomId = atomIdForContext(context);
+    if (atomId) this.focusAtom(atomId);
+  }
+
+  /**
+   * Entity id is spatial-state only this iteration — pose stays on the context atom.
+   */
+  focusEntity(_entityId: string): void {
+    // Reserved for a later case/service framing pass.
+  }
+
+  /**
+   * Hold the atom-fills-viewport approach (the old Navigator destination pose).
+   * Pointer freeze is separate — caller still calls `freeze()`.
+   */
+  holdApproach(options: { immediate?: boolean } = {}): void {
+    const atomId = this.focusedAtomId;
+    if (atomId && this.scene.getAtom(atomId)) {
+      this.zoomAtomId = atomId;
+      this.focusAtom(atomId);
+    }
+    if (options.immediate) {
+      this.snapFocus();
+    }
+    this.setZoomProgress(1);
+    this.setFillProgress(1);
+  }
+
+  /** True when zoom+fill are already at the approach destination. */
+  isAtApproach(): boolean {
+    return this.zoomProgress >= 0.92 && this.fillProgress >= 0.92;
+  }
+
+  /** Instantly match smoothed focus to the current target (first paint / direct load). */
+  snapFocus(): void {
+    this.focusStrength = this.targetFocusStrength;
+    this.focusOrientation.copy(this.targetFocusOrientation);
+  }
+
   /**
    * Sets `targetFocusOrientation` so the atom faces the camera and raises focus strength.
    * Uses rest-frame atom position (local + molecule translation) so the result
    * is an absolute focus orientation, independent of the mouse layer.
    * Twist/roll is locked relative to the current `focusOrientation`.
    *
-   * Hub / Home (zero offset): no unique forward — on enter, apply a π flip about
-   * a random axis so the molecule turns and the core is not left “behind” the pose.
+   * Hub / Home (zero offset): no unique forward — π flip only when retargeting
+   * onto the hub from another atom. Initial overview keeps identity.
    * Clears residual pointer/touch tilt so the focused atom actually faces the camera.
    */
   focusAtom(atomId: string): void {
@@ -450,8 +566,9 @@ export class MoleculeController {
     this.scratchAtomPos.copy(atom.object.position).add(this.scratchMoleculePos);
 
     if (atom.object.position.lengthSq() < 1e-12) {
-      // Center atom: keep target if already focused; otherwise half-turn the molecule.
-      if (!alreadyFocused) {
+      const retargetFromOther =
+        this.focusedAtomId !== null && this.focusedAtomId !== atomId;
+      if (retargetFromOther) {
         this.scratchRandomAxis.set(
           Math.random() * 2 - 1,
           Math.random() * 2 - 1,
@@ -692,16 +809,21 @@ export class MoleculeController {
     const strengthT = 1 - Math.exp(-FOCUS_STRENGTH_FOLLOW * delta);
     this.focusStrength += (this.targetFocusStrength - this.focusStrength) * strengthT;
 
-    // Focus dominant: shrink pointer tilt as focusStrength rises (never zero).
-    const mouseScale =
-      1 - this.focusStrength * (1 - MOUSE_UNDER_FOCUS);
-    this.scratchAttenuatedMouse.slerpQuaternions(
-      this.scratchIdentity,
-      this.targetMouseOrientation,
-      mouseScale,
-    );
-    const mouseT = 1 - Math.exp(-MOUSE_FOLLOW * delta);
-    this.mouseOrientation.slerp(this.scratchAttenuatedMouse, mouseT);
+    if (this.frozen) {
+      this.mouseOrientation.identity();
+      this.targetMouseOrientation.identity();
+    } else {
+      // Focus dominant: shrink pointer tilt as focusStrength rises (never zero).
+      const mouseScale =
+        1 - this.focusStrength * (1 - MOUSE_UNDER_FOCUS);
+      this.scratchAttenuatedMouse.slerpQuaternions(
+        this.scratchIdentity,
+        this.targetMouseOrientation,
+        mouseScale,
+      );
+      const mouseT = 1 - Math.exp(-MOUSE_FOLLOW * delta);
+      this.mouseOrientation.slerp(this.scratchAttenuatedMouse, mouseT);
+    }
 
     this.updateZoomProgress(delta);
 
@@ -745,7 +867,9 @@ export class MoleculeController {
 
     this.elapsed += delta;
     this.scene.update(delta, updateLabels, this.elapsed);
-    this.updateHover();
+    if (!this.frozen) {
+      this.updateHover();
+    }
 
     for (const listener of this.afterUpdateListeners) {
       listener(delta);
@@ -800,6 +924,13 @@ export class MoleculeController {
     this.atomClickListeners.clear();
     this.afterUpdateListeners.clear();
     this.scene.dispose();
+  }
+
+  private getHubAtomId(): string {
+    for (const atom of this.scene.getAtoms()) {
+      if (atom.object.position.lengthSq() < 1e-12) return atom.id;
+    }
+    return hubAtomId();
   }
 
   private syncReducedMotionVisuals(): void {

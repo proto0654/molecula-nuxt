@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { dismissRouteVeil, getRouteVeil } from '~/lib/navigation/routeVeil';
 import { consumeArchiveReturn } from '~/lib/navigation/archiveReturn';
 import { categoryNameMap } from '~/domain/portfolio/archive';
 import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
@@ -17,8 +16,6 @@ const { entries, pagination, pending, error } = usePortfolio({ page, perPage: 12
 const { data: categories } = usePortfolioCategories();
 
 const categoryById = computed(() => categoryNameMap(categories.value));
-
-const revealing = ref(false);
 
 function restoreScroll() {
   const restored = consumeArchiveReturn();
@@ -40,11 +37,6 @@ function restoreScroll() {
 }
 
 onMounted(() => {
-  const veil = getRouteVeil();
-  if (veil && veil.getOpacity() > 0.05) {
-    revealing.value = !prefersReducedMotion();
-    dismissRouteVeil();
-  }
   restoreScroll();
 });
 
@@ -60,7 +52,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <ArchiveShell :revealing="revealing">
+  <ArchiveShell>
     <header class="archive-heading">
       <p class="archive-heading__kicker">Index</p>
       <h1 class="archive-heading__title">Portfolio</h1>

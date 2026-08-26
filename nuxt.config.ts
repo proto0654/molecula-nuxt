@@ -72,7 +72,7 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       crawlLinks: false,
-      routes: ['/', '/portfolio'],
+      routes: ['/', '/portfolio', '/about', '/services', '/contact'],
     },
   },
   hooks: {
@@ -84,7 +84,14 @@ export default defineNuxtConfig({
         nitroConfig.prerender ??= {};
         nitroConfig.prerender.routes ??= [];
         const existing = nitroConfig.prerender.routes as string[];
-        for (const route of ['/', '/portfolio', ...routes]) {
+        for (const route of [
+          '/',
+          '/portfolio',
+          '/about',
+          '/services',
+          '/contact',
+          ...routes,
+        ]) {
           if (!existing.includes(route)) existing.push(route);
         }
         console.info(`[prerender] queued ${routes.length} portfolio case routes`);

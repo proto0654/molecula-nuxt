@@ -86,7 +86,10 @@
   --z-nav: 2;
   --z-connector: 2;
   --z-header: 2;
-  --z-overlay: 3;
+  --z-stage: 0;
+  --z-page: 2;
+  --z-chrome: 4;
+  --z-overlay: 5;
   --z-debug: 10;
 
   /* Breakpoints (documentation / matchMedia in main.ts — CSS uses the same px) */
@@ -142,10 +145,88 @@ html.hero-lock #__nuxt {
 
 #app.molecular-hero,
 .molecular-hero {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-stage);
+  width: auto;
+  height: auto;
+  pointer-events: none;
+}
+
+.molecular-hero.is-interactive {
+  pointer-events: auto;
+}
+
+.molecular-shell {
+  pointer-events: none;
+}
+
+.molecular-chrome {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-chrome);
+  pointer-events: none;
+}
+
+.molecular-chrome:not(.is-home) .site-header__node,
+.molecular-chrome:not(.is-home) .usp-headline {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.molecular-chrome:not(.is-home) .site-header__sys {
+  display: none;
+}
+
+.molecular-chrome.is-home .site-header__routes {
+  display: none;
+}
+
+/* Molecule nav (desktop rail + mobile bottom + menu) — home only. */
+.molecular-chrome:not(.is-home) .nav,
+.molecular-chrome:not(.is-home) .mobile-nav-overlay,
+.molecular-chrome:not(.is-home) .site-header__menu,
+.molecular-chrome.is-approaching .nav,
+.molecular-chrome.is-approaching .mobile-nav-overlay,
+.molecular-chrome.is-approaching .site-header__menu,
+.molecular-chrome.is-approaching .nav-connector {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-shell {
   position: relative;
-  width: 100%;
-  height: 100%;
-  height: 100dvh;
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
+.app-shell__page {
+  position: relative;
+  z-index: var(--z-page);
+  min-height: 100%;
+  min-height: 100dvh;
+  pointer-events: none;
+}
+
+.app-shell__page > * {
+  pointer-events: auto;
+}
+
+.app-shell.is-home .app-shell__page,
+.app-shell.is-home .app-shell__page > * {
+  pointer-events: none;
+}
+
+.home-page {
+  min-height: 0;
+}
+
+.molecular-hero-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-stage);
+  background: var(--wl-bg, #14161c);
 }
 
 #hero-canvas {
@@ -229,10 +310,54 @@ html.hero-lock #__nuxt {
   color: var(--ui-muted);
 }
 
-/* --- Site header (desktop + mobile; hidden on tablet) --- */
+/* --- Site header (desktop + mobile; hidden on tablet home) --- */
 
 .site-header {
   display: none;
+}
+
+.site-header__logo,
+.site-header__link {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.site-header__logo:hover,
+.site-header__link:hover,
+.site-header__link.is-active,
+.site-header__link.is-committed {
+  color: var(--ui-primary);
+}
+
+.site-header__link.is-committed {
+  color: var(--accent, var(--ui-primary));
+}
+
+.site-header__routes {
+  display: none;
+  align-items: baseline;
+  gap: 0.85rem;
+  pointer-events: none;
+}
+
+.site-header__link-index {
+  display: none;
+  margin-right: 0.35rem;
+  color: var(--ink-38);
+}
+
+.site-header__link.is-active .site-header__link-index,
+.site-header__link.is-committed .site-header__link-index {
+  color: inherit;
 }
 
 .site-header__menu {
@@ -701,6 +826,8 @@ html.nav-overlay-open body {
   }
 
   .site-header__logo {
+    position: relative;
+    z-index: 1;
     color: var(--ui-primary);
     letter-spacing: 0.2em;
     flex: 0 1 var(--sidebar-width);
@@ -713,6 +840,19 @@ html.nav-overlay-open body {
     color: var(--ink-38);
     letter-spacing: var(--track-mark);
     white-space: nowrap;
+  }
+
+  .molecular-chrome:not(.is-home) .site-header__routes {
+    display: flex;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: min(36rem, 52vw);
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.35rem;
+    color: var(--ink-38);
+    letter-spacing: var(--track-mark);
   }
 
   .site-header__node {
@@ -855,6 +995,47 @@ html.nav-overlay-open body {
     inset: var(--hud-inset-tablet);
   }
 
+  .molecular-hero:not(.is-interactive) .hud__meta {
+    display: none;
+  }
+
+  .molecular-chrome:not(.is-home) .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    position: absolute;
+    top: var(--hud-header-inset);
+    left: var(--hud-header-inset);
+    right: var(--hud-header-inset);
+    z-index: var(--z-header);
+    padding: 0;
+    pointer-events: none;
+    font-size: var(--text-meta);
+    letter-spacing: var(--track-meta);
+    text-transform: uppercase;
+    color: var(--ui-muted);
+  }
+
+  .molecular-chrome:not(.is-home) .site-header__logo {
+    position: relative;
+    z-index: 1;
+    color: var(--ui-primary);
+    letter-spacing: 0.2em;
+  }
+
+  .molecular-chrome:not(.is-home) .site-header__routes {
+    display: flex;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: min(34rem, 70vw);
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.35rem;
+    color: var(--ink-38);
+    letter-spacing: var(--track-mark);
+  }
+
   .nav {
     bottom: 1.1rem;
   }
@@ -912,8 +1093,11 @@ html.nav-overlay-open body {
   }
 
   .site-header__logo {
+    position: relative;
+    z-index: 1;
     color: var(--ui-primary);
     letter-spacing: 0.18em;
+    flex: 0 0 auto;
   }
 
   .site-header__sys,
@@ -923,6 +1107,31 @@ html.nav-overlay-open body {
 
   .site-header__menu {
     display: block;
+  }
+
+  .molecular-chrome:not(.is-home) .site-header__routes {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 0.55rem;
+    max-width: none;
+    margin-left: 0.75rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    color: var(--ink-38);
+    letter-spacing: 0.12em;
+  }
+
+  .molecular-chrome:not(.is-home) .site-header__routes::-webkit-scrollbar {
+    display: none;
+  }
+
+  .molecular-chrome:not(.is-home) .site-header__link {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.5625rem;
   }
 
   .usp-headline {
@@ -1011,6 +1220,23 @@ html.nav-overlay-open body {
   right: 0.7rem;
   left: auto;
   transform: translateY(-50%);
+  z-index: var(--z-debug);
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  pointer-events: none;
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  line-height: 1.45;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgb(15 17 21 / 0.55);
+}
+
+.spatial-overlay {
+  position: fixed;
+  bottom: 0.7rem;
+  left: 0.7rem;
   z-index: var(--z-debug);
   margin: 0;
   padding: 0.45rem 0.55rem;

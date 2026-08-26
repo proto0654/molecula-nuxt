@@ -2,7 +2,7 @@
 
 ТЗ [`HEADLESS_NUXT_TZ.md`](HEADLESS_NUXT_TZ.md) §§1–29 — разделы требований, не 29 задач. Закрытая итерация = **STEPs 1–19 из §27** + acceptance §28. Не дублировать сюда 29 чекбоксов один-к-одному.
 
-- **§25** — case visual redesign: Done (editorial case pages; no WebGL on case).
+- **§25** — case visual redesign: Done (editorial case pages; overlay the persistent frozen molecule).
 - **§29** — инструкция для первого ответа прошлого чата, не deliverable.
 
 ## Done
@@ -40,9 +40,11 @@
 - [x] Wire hero `Navigator` to real Nuxt routes (`/portfolio`) (STEP 17–18 foundation)
 - [x] STEP 9–19 + acceptance §28 (без case redesign)
 - [x] Document scroll unlock on portfolio/case (`html.hero-lock` only on home)
-- [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, video hero + featured backdrop, Screens = landing+repeater (inner-pages), lightbox, ScrollTrigger entry, no WebGL on case
+- [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, video hero + featured backdrop, Screens = landing+repeater (inner-pages), lightbox, ScrollTrigger entry
+- [x] Persistent molecular shell: layout-owned canvas, spatial state machine, home hub always focused, freeze off-home
 - [x] Case composition pass: sequential markers (including NEXT), density recipes A–G, motion L1/L2/L3, in-page case→case reveal + delayed accent
 - [x] Portfolio archive + Home/Case integration: editorial numbered rows, SiteChrome, veil handoff, session restore, case→case without generic loader
+- [x] Section stubs `/about` `/services` `/contact` + approach hold; off-home header route menu; single approach tween; no page scrim
 
 ## Foundation gaps
 
@@ -56,10 +58,12 @@ STEPs 1–19 остаются Done. Мелкий долг foundation:
 
 ## Next
 
-Archive integration закрыт (listing + veil handoff + restore). Не ломать content pipeline и `absence = null`. Полный molecular → route (атом → страница как один жест) и `/about` `/services` `/contact` — не в этой итерации, пока не попросят отдельно.
+Shell + stubs закрыты. Не ломать content pipeline и `absence = null`.
 
 - [x] Case visual redesign (§25 ТЗ)
 - [x] Case composition pass (markers, sparse recipes, case→case reveal)
 - [x] Portfolio archive editorial listing + Home/Archive/Case handoffs
-- [ ] Полный molecular → route transition (сейчас zoom/fill/veil + overlay handoff; не полный жест)
-- [ ] Остальные hero routes (`/about`, `/services`, `/contact`) с реальным контентом
+- [x] Persistent molecular shell (layout canvas + SpatialController)
+- [x] Section route stubs + off-home chrome (header menu, transparent pages)
+- [ ] Реальный контент `/about` `/services` `/contact` (WP pages / ACF)
+- [ ] Полировка molecular → route как один жест (сейчас: focus → single approach → navigate; off-home header hops instantly)

@@ -3,31 +3,22 @@ import { padCaseIndex } from '~/domain/portfolio/presentation';
 
 withDefaults(
   defineProps<{
-    variant?: 'archive' | 'case';
+    variant?: 'archive' | 'case' | 'section';
     caseIndex?: number | null;
     archiveHref?: string;
+    sectionLabel?: string;
   }>(),
   {
     variant: 'archive',
     caseIndex: null,
     archiveHref: '/portfolio',
+    sectionLabel: 'SECTION',
   },
 );
 </script>
 
 <template>
-  <div class="case-chrome" aria-hidden="true">
-    <div class="case-chrome__grid" />
-    <div class="case-chrome__frame">
-      <span class="case-chrome__corner case-chrome__corner--tl" />
-      <span class="case-chrome__corner case-chrome__corner--tr" />
-      <span class="case-chrome__corner case-chrome__corner--bl" />
-      <span class="case-chrome__corner case-chrome__corner--br" />
-    </div>
-  </div>
-
-  <header class="case-chrome__header">
-    <NuxtLink to="/" class="case-chrome__logo">[ МАРК ] ЛОГО</NuxtLink>
+  <header class="case-chrome__header case-chrome__header--meta">
     <div class="case-chrome__meta">
       <slot name="meta">
         <p
@@ -36,6 +27,13 @@ withDefaults(
           aria-current="page"
         >
           ARCHIVE
+        </p>
+        <p
+          v-else-if="variant === 'section'"
+          class="case-chrome__index"
+          aria-current="page"
+        >
+          {{ sectionLabel }}
         </p>
         <template v-else>
           <p v-if="caseIndex" class="case-chrome__index">

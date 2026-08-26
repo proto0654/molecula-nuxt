@@ -7,7 +7,7 @@
 
 - [`api-real-response.md`](../docs/api-real-response.md) — фактическая структура WP API
 - [`../CONTEXT.md`](../CONTEXT.md) — короткий стек / entry points
-- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; case + archive integration done; next = full molecular → route transition
+- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; shell + section stubs done; next = real section content
 
 ---
 
@@ -47,23 +47,27 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 
 - **Стек:** Nuxt 4.5 + Vue 3 + TypeScript + Tailwind 4 + Three.js + GSAP
 - **Node:** `^22.19.0` (`engines` в `package.json`)
-- **Home `/`:** `ClientOnly` → `MolecularHero.vue` → `mountHeroApp.ts` + `routeVeil` handoff + `TransitionController.transitionTo` → Nuxt `/portfolio`
+- **Home `/`:** empty page slot; molecule lives in [`layouts/default.vue`](../app/layouts/default.vue)
+- **Persistent shell:** one canvas / `MoleculeController` / rAF across routes — [`docs/SPATIAL.md`](../docs/SPATIAL.md)
+- **Spatial:** `/` home (hub `C` always focused, pointer live); other routes frozen + page overlay
 - **API:** `app/api/client.ts` + portfolio/menus/pages/media; components не знают REST URL
 - **Normalize:** `normalizePortfolioPost` → `Case`; absence = `null` / `[]`
-- **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); paginate slim then `include` ids; SiteChrome `ARCHIVE`; no WebGL
+- **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); paginate slim then `include` ids; SiteChrome meta `ARCHIVE`; transparent page over frozen molecule (no scrim)
 - **Case page:** editorial inspection (12-col grid, SiteChrome `CASE / NN`); Interface = `landing_screen` + repeater; sequential `getCaseComposition` markers including NEXT; lightbox + `useCaseScrollEntry`; in-page case→case via `useCasePageTransition` (hold previous payload, no generic loader); Index restores `?page=` + scroll (`wl:archive-return`)
-- **Prerender:** all portfolio slugs queued at generate/build via live WP API
+- **Section stubs:** `/about` `/services` `/contact` via [`SectionShell`](../app/components/section/SectionShell.vue); spatial approach on matching atoms; prerender includes these paths
+- **Off-home chrome:** header route menu (direct `transitionTo`); molecule rail / bottom nav / MENU hidden; logo clickable (`pointer-events: auto`)
+- **Approach:** `Navigator` single approach tween (zoom+fill together); `freeze()` + hide labels at start; no forward veil
+- **Prerender:** all portfolio slugs queued at generate/build via live WP API (+ `/about` `/services` `/contact`)
 - **Deploy:** `.github/workflows/deploy.yml` → `nuxt generate` + `NUXT_APP_BASE_URL`
 - **Case / archive docs:** [`docs/CASES.md`](../docs/CASES.md), [`docs/CONTENT.md`](../docs/CONTENT.md)
+- **Spatial docs:** [`docs/SPATIAL.md`](../docs/SPATIAL.md)
 
 ## Следующая итерация
 
-**Выбранный scope:** полный molecular → route transition (сейчас zoom/fill/veil + overlay handoff, не полный жест атом→страница).
-
-Позже (пока не попросят): `/about`, `/services`, `/contact`.
+**Выбранный scope:** реальный контент секций (`/about` `/services` `/contact` из WP) и при необходимости полировка жеста атом→страница.
 
 Мелкий долг: unused menu composable, SEO canonical — [`ROADMAP.md`](ROADMAP.md) → Foundation gaps.  
-Не ломать content pipeline, conditional rendering, case visual system, archive listing.
+Не ломать content pipeline, conditional rendering, case visual system, archive listing, persistent shell.
 
 ---
 

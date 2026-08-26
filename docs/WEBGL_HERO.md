@@ -1,42 +1,42 @@
 # WebGL Hero Architecture
 
-Fullscreen interactive molecule hero built with vanilla TypeScript and Three.js.
+Fullscreen interactive molecule as the **persistent Nuxt visual shell**. Scene math lives here; routing / freeze / layout: [`SPATIAL.md`](SPATIAL.md).
 
 ## Runtime flow
 
 ```
-MolecularHero.vue (ClientOnly on /)
-  └─ mountHeroApp.ts
-        ├─ QualityManager          start HIGH (MEDIUM on coarse/narrow); ?quality= override
-        ├─ canvas (#hero-canvas)
-        ├─ MoleculeController  → mouse pointermove → absolute tilt + AtomHover NDC
-        │                      → touch/pen drag → incremental tilt; tap → pick
-        │                      → click → onAtomClick(atomId | null)  [mouse pick]
-        │                      → rAF → compose + zoom/fill → labels (dirty) → selection → hover → onAfterUpdate
-        │                         → render → PerformanceSampler (lock-once)
-        │                         └─ Atom (Group: icosahedron + AtomSelectionIndicator) + AtomLabel / Bond / DecorativeNodes
-        ├─ HudFrame / SiteHeader / UspHeadline / Navigation / MobileNavOverlay / NavigationConnector
-        ├─ PerfOverlay             (dev-only, throttled DOM)
-        ├─ NavigationState
-        │     atomHover (raycast) · navHover (DOM) · committed (first click)
-        ├─ subscribe(state)
-        │     highlight + selection indicator + committed wireframe
-        │     hover → highlight / pulse only (no focus)
-        │     first click → setCommitted + focusAtom + typewriter blurb (troika) + arm USP
-        │     second click same item → Navigator.navigateTo (zoom → fill → overlay)
-        ├─ viewport MQ → setCompositionProfile(desktop|tablet|mobile) + connector.enable (desktop)
-        │     onAfterUpdate → projectAtom → SVG elbow; USP tryReveal when isFocusSettled
-        └─ Navigator.onNavigate
-              ├─ item.route (≠ `/`) → TransitionController.transitionTo → Nuxt navigateTo
-              └─ else → DestinationView stub (Return → cancel)
+layouts/default.vue (persists)
+  MolecularHero.vue (ClientOnly, once)
+    └─ mountHeroApp.ts
+          ├─ QualityManager          start HIGH (MEDIUM on coarse/narrow); ?quality= override
+          ├─ canvas (#hero-canvas)   one renderer — not remounted on route change
+          ├─ MoleculeController  → home: mouse pointermove → absolute tilt + AtomHover NDC
+          │                      → home: touch/pen drag → incremental tilt; tap → pick
+          │                      → freeze() at approach start and off-home: drop mouse tilt, hide labels
+          │                      → rAF → compose + zoom/fill → labels (dirty) → selection → hover → onAfterUpdate
+          │                         → render → PerformanceSampler (lock-once)
+          ├─ SpatialController       spatialFromRoute → setMode / restoreOverview / focus* / freeze
+          ├─ HudFrame (stage) / SiteHeader+Navigation (chrome root)
+          ├─ UspHeadline / NavigationConnector   home-only
+          ├─ PerfOverlay + SpatialOverlay        (dev-only)
+          ├─ NavigationState
+          │     home starts committed to hub (C / Главная); no unselected rest
+          │     hover → highlight / pulse only (no focus)
+          │     first click → setCommitted + focusAtom + typewriter blurb + arm USP
+          │     second click same item (not Home) → Navigator.navigateTo
+          │     empty canvas click → restoreOverview (hub), not clearFocus
+          ├─ viewport MQ → setCompositionProfile + connector.enable (desktop ∩ home)
+          └─ Navigator.onNavigate
+                ├─ item.route (≠ `/`) → TransitionController.transitionTo → Nuxt navigateTo
+                └─ else → DestinationView stub (Return → cancel → restoreOverview)
 ```
 
 - **3D logic** lives under `app/lib/molecular/` and does not import DOM navigation or routes.
 - **Pure math** (`app/lib/molecular/math/`) is side-effect free: `getStableFocusQuaternion` (writes into an `out` quaternion), `getFocusQuaternion`, `getAtomFocusDistance`, orientation, `projectToScreenInto`.
 - **UI** (`app/lib/hero-ui/*`) never touches Three.js objects. HUD look: [`DESIGN.md`](DESIGN.md) (CSS `:root` tokens + decorative patterns). Title + typewriter blurb are a scene-parented screen-flat troika block (`AtomLabel`). USP headline is DOM (`UspHeadline` + `textScramble`) in the rail↔molecule / header↔molecule void.
 - **3D vs screen-space:** Three.js owns the molecule world (atoms, bonds, captions, billboarded selection indicator, wireframe, decorative orbits/nodes) and viewport composition profiles. HTML/CSS/SVG owns grid, corners, header, USP headline, nav rail, mobile overlay, screen-space SVG connectors, transition veil. Bridge: world position → `projectToScreenInto` / `projectAtom` → CSS pixels. Do not drive atom locals from CSS sidebar width.
-- **Page transition:** GSAP zoom stays in [`Navigator`](../app/lib/navigation/Navigator.ts); route hop is [`TransitionController.transitionTo`](../app/lib/navigation/TransitionController.ts) (handler registered in `MolecularHero.vue`). `work` → `/portfolio`. Other routes still use DestinationView stub until pages exist.
-- **Wiring** lives in [`mountHeroApp.ts`](../app/lib/hero/mountHeroApp.ts) + [`MolecularHero.vue`](../app/components/molecular/MolecularHero.vue). Content pipeline: [`CONTENT.md`](CONTENT.md).
+- **Page transition:** GSAP approach (zoom+fill as one tween) stays in [`Navigator`](../app/lib/navigation/Navigator.ts); navigate fires at the end **without a veil**. [`completeHandoff`](../app/lib/navigation/Navigator.ts) freezes the live pose. Home unwinds to rest. Route hop is [`TransitionController.transitionTo`](../app/lib/navigation/TransitionController.ts). Persistent shell: [`SPATIAL.md`](SPATIAL.md).
+- **Wiring** lives in [`mountHeroApp.ts`](../app/lib/hero/mountHeroApp.ts) + [`MolecularHero.vue`](../app/components/molecular/MolecularHero.vue) inside [`layouts/default.vue`](../app/layouts/default.vue). Content pipeline: [`CONTENT.md`](CONTENT.md).
 
 ## Declarative config
 
@@ -77,15 +77,17 @@ focusItemId   = committed               ← click only; hover never centers
 |--------|--------|------|
 | `atomHoverItemId` | `setAtomHover` (raycast) | Hover preview |
 | `navHoverItemId` | `setNavHover` (nav `pointerenter`) | Same preview from the overlay |
-| `committedItemId` | first click (`selectItem`) | Sticky zoom + frozen selection reticle + typewriter readout |
+| `committedItemId` | first click (`selectItem`); starts as `home` | Sticky focus + frozen selection reticle + typewriter readout |
 
-Two-step gesture (app layer in `mountHeroApp.ts`, not inside Three.js):
+Two-step gesture on **home** (app layer in `mountHeroApp.ts`, not inside Three.js):
 
 1. **Hover** (atom raycast or nav): highlight + pulsing selection reticle. **No** `focusAtom`.
-2. **First click** (atom or nav): `setCommitted` + `focusAtom` + freeze reticle + typewriter blurb on the atom + arm USP (scramble after `isFocusSettled`).
-3. **Second click on the same item**: `navigator.navigateTo(atomId)` (zoom → fill → overlay).
+2. **First click** (atom or nav): `setCommitted` + `focusAtom` + freeze reticle + typewriter blurb on the atom + arm USP (scramble after `isFocusSettled`). Home loads already committed to hub `C`.
+3. **Second click on the same item**: `navigator.navigateTo(atomId)` (single approach: zoom+fill together). Second click on Home is a no-op.
 4. **Click another item**: retarget commit + focus (not a page transition).
-5. **Empty canvas click**: `clearFocus` / clear commit; `cancel()` if a transition is busy.
+5. **Empty canvas click**: `restoreOverview()` (hub `C`), not an unselected rest; `cancel()` if a transition is busy.
+
+Off-home the molecule is frozen; nav clicks call `transitionTo` immediately. Spatial mapping: [`SPATIAL.md`](SPATIAL.md).
 
 While committed, hover of another item only updates nav highlight — it does not steal focus or zoom.
 
@@ -143,7 +145,7 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../app/lib/molecular/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `freeze` / `unfreeze` / `setMode`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
 
 Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation within `0.08` rad of target). The same gate starts the HUD USP scramble after commit.
 
@@ -183,16 +185,16 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 
 | API | Role |
 |-----|------|
-| `navigateTo(atomId)` | Interruptible retarget: focus → zoom → fill → overlay; durations scale from live progress |
+| `navigateTo(atomId)` | Interruptible retarget: focus → approach (zoom+fill together) → navigate; durations scale from live progress |
 | `onNavigate(atomId)` | Forward-only cue at the timeline navigate label |
 | `transitionTo(route)` | Nuxt `navigateTo` (handler set in `MolecularHero`); after `handoffRouteVeil()` for real routes |
-| `cancel()` | Unwind overlay → fill → zoom → clear focus (soft reset; no hard state tear-down) |
+| `cancel()` | Unwind overlay → approach rewind → clear focus (soft reset; no hard state tear-down) |
 
-Phases: `idle` → `focus` → `zoom` → `fill` → `overlay` → `complete` (stays busy at destination so hover focus cannot fight the pose).
+Phases: `idle` → `focus` → `approach` → `complete` (stays busy at destination so hover focus cannot fight the pose). Legacy `zoom` / `fill` / `overlay` remain in the type for unwind / older snapshots.
 
-**Current wiring:** first click focuses (`focusAtom`), types the blurb, and arms the USP; USP scrambles after `isFocusSettled()`. Second click on the same atom/nav item calls `navigateTo` (zoom starts here). At the navigate label: if `NavigationItem.route` is set and not `/` (e.g. `/portfolio`), `handoffRouteVeil()` then `transitionTo`; otherwise show [`DestinationView`](../app/lib/hero-ui/DestinationView.ts) stub (**Return** → `cancel()`). Archive dismisses the handed-off veil (opacity). Empty canvas click clears commit (and `cancel()` if a transition is busy).
+**Current wiring:** first click focuses (`focusAtom`), types the blurb, and arms the USP; USP scrambles after `isFocusSettled()`. Second click on the same atom/nav item calls `navigateTo` (approach starts here; focus wait is skipped if already settled). At the navigate label: if `NavigationItem.route` is set and not `/` (e.g. `/portfolio`), `transitionTo`; otherwise show [`DestinationView`](../app/lib/hero-ui/DestinationView.ts) stub (**Return** → `cancel()`). Empty canvas click clears commit (and `cancel()` if a transition is busy).
 
-`prefers-reduced-motion`: skip zoom/fill/connector; set veil opacity 1 and hop immediately. Pointer tilt on the molecule is also off. Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts). Full Home/Archive/Case table: [`CASES.md`](CASES.md) § Page transitions.
+`prefers-reduced-motion`: skip approach/connector; hop immediately. Pointer tilt on the molecule is also off. Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts). Full Home/Archive/Case table: [`CASES.md`](CASES.md) § Page transitions.
 
 ## Hover picking, highlight, and selection
 
@@ -256,7 +258,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `navigation/TransitionController.ts` | `transitionTo(route)` → Nuxt (handler from MolecularHero) |
 | `navigation/TransitionState.ts` | Centralized transition phase / progress snapshot |
 | `hero-ui/HudFrame.ts` | Grid + corner ticks (pointer-events none) |
-| `hero-ui/SiteHeader.ts` | Desktop logo / `⟨ SYS · МОЛЕКУЛА ⟩` (viewport center) / NODE; mobile LOGO + MENU / NAV |
+| `hero-ui/SiteHeader.ts` | LOGO (always); home: `⟨ SYS · МОЛЕКУЛА ⟩` + NODE; off-home: centered route menu (direct `transitionTo`); mobile MENU on home |
 | `hero-ui/UspHeadline.ts` / `hero-ui/textScramble.ts` | HUD USP scramble after focus settle |
 | `hero-ui/MobileNavOverlay.ts` | Editorial full-screen mobile nav index |
 | `hero-ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); `getItemAnchor`; zoom softness |

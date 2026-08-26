@@ -1,31 +1,74 @@
-import { getItemById, navigationConfig } from '../navigation/navigationConfig';
+import {
+  getItemById,
+  navigationConfig,
+} from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
+import { attachTapGuard } from './tapGuard';
 
 export type MenuToggleListener = () => void;
+export type HeaderSelectListener = (itemId: string) => void;
 
 /**
- * Site header: desktop LOGO / SYS / NODE; mobile LOGO + MENU / NAV.
- * Tablet keeps `.hud__meta` instead (header hidden via CSS).
+ * Site header: LOGO + SYS (home) or route links (off-home) + NODE; mobile MENU.
+ * Off-home routes navigate immediately — no atom commit step.
  */
 export class SiteHeader {
   readonly root: HTMLElement;
+  private readonly logoBtn: HTMLButtonElement;
+  private readonly sysEl: HTMLElement;
+  private readonly routesEl: HTMLElement;
+  private readonly linkElements = new Map<string, HTMLElement>();
   private readonly nodeEl: HTMLElement;
   private readonly menuBtn: HTMLButtonElement;
   private readonly unsubscribe: () => void;
   private menuOpen = false;
   private onMenuToggle: MenuToggleListener | undefined;
+  private onSelect: HeaderSelectListener | undefined;
 
   constructor(parent: HTMLElement, state: NavigationState) {
     this.root = document.createElement('header');
     this.root.className = 'site-header';
 
-    const logo = document.createElement('span');
-    logo.className = 'site-header__logo';
-    logo.textContent = '[ МАРК ] ЛОГО';
+    this.logoBtn = document.createElement('button');
+    this.logoBtn.type = 'button';
+    this.logoBtn.className = 'site-header__logo';
+    this.logoBtn.textContent = '[ МАРК ] ЛОГО';
+    this.logoBtn.setAttribute('aria-label', 'Главная');
+    attachTapGuard(this.logoBtn, () => {
+      this.onSelect?.('home');
+    });
 
-    const sys = document.createElement('span');
-    sys.className = 'site-header__sys';
-    sys.textContent = '⟨ SYS · МОЛЕКУЛА ⟩';
+    this.sysEl = document.createElement('span');
+    this.sysEl.className = 'site-header__sys';
+    this.sysEl.textContent = '⟨ SYS · МОЛЕКУЛА ⟩';
+    this.sysEl.setAttribute('aria-hidden', 'true');
+
+    this.routesEl = document.createElement('nav');
+    this.routesEl.className = 'site-header__routes';
+    this.routesEl.setAttribute('aria-label', 'Разделы сайта');
+
+    navigationConfig.items.forEach((item, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'site-header__link';
+      button.dataset.navId = item.id;
+      if (item.route) button.dataset.route = item.route;
+
+      const idx = document.createElement('span');
+      idx.className = 'site-header__link-index';
+      idx.textContent = String(index + 1).padStart(2, '0');
+
+      const label = document.createElement('span');
+      label.className = 'site-header__link-label';
+      label.textContent = item.label;
+
+      button.append(idx, label);
+      attachTapGuard(button, () => {
+        this.onSelect?.(item.id);
+      });
+      this.routesEl.append(button);
+      this.linkElements.set(item.id, button);
+    });
 
     this.nodeEl = document.createElement('span');
     this.nodeEl.className = 'site-header__node';
@@ -40,13 +83,25 @@ export class SiteHeader {
       this.onMenuToggle?.();
     });
 
-    this.root.append(logo, sys, this.nodeEl, this.menuBtn);
+    this.root.append(
+      this.logoBtn,
+      this.sysEl,
+      this.routesEl,
+      this.nodeEl,
+      this.menuBtn,
+    );
     parent.append(this.root);
 
     this.unsubscribe = state.subscribe(() => {
       this.syncNode(state);
+      this.syncLinks(state);
     });
     this.syncNode(state);
+    this.syncLinks(state);
+  }
+
+  onSelectItem(listener: HeaderSelectListener): void {
+    this.onSelect = listener;
   }
 
   onToggleMenu(listener: MenuToggleListener): void {
@@ -62,6 +117,20 @@ export class SiteHeader {
 
   get isMenuOpen(): boolean {
     return this.menuOpen;
+  }
+
+  private syncLinks(state: NavigationState): void {
+    const active = state.activeItemId;
+    const committed = state.committedItemId;
+    for (const [id, el] of this.linkElements) {
+      el.classList.toggle('is-active', id === active);
+      el.classList.toggle('is-committed', id === committed);
+      if (id === committed) {
+        el.setAttribute('aria-current', 'page');
+      } else {
+        el.removeAttribute('aria-current');
+      }
+    }
   }
 
   private syncNode(state: NavigationState): void {

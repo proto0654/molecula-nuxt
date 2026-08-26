@@ -31,13 +31,9 @@ type TransitionProxy = {
 };
 
 const FOCUS_DURATION = 0.45;
-const ZOOM_DURATION = 0.85;
-const FILL_DURATION = 0.55;
+/** Single pull-in: zoom + fill run together (was sequential ≈1.4s). */
+const APPROACH_DURATION = 1.05;
 const OVERLAY_DURATION = 0.45;
-/** Overlay starts slightly before fill ends (fraction of fill duration). */
-const OVERLAY_OVERLAP_RATIO = 0.35;
-/** When the navigate callback fires, as a fraction of the overlay tween. */
-const NAVIGATE_AT_OVERLAY_RATIO = 0.4;
 
 /**
  * Page-transition coordinator: owns the GSAP timeline and `TransitionState`.
@@ -74,25 +70,28 @@ export class Navigator {
   }
 
   /**
-   * Start or retarget the focus → zoom → fill → overlay timeline.
-   * Safe to call again with another atom mid-flight (interruptible).
+   * Start or retarget the focus → zoom → fill timeline, then navigate.
+   * No veil: the canvas persists, so the approach pose is the destination.
    */
   navigateTo(atomId: string): void {
     if (!this.controller.scene.getAtom(atomId)) return;
 
     const item = getItemByAtomId(atomId);
     this.navigationState.setCommitted(item?.id ?? null);
+    this.controller.freeze();
+    this.transitionState.patch({ busy: true });
 
     if (prefersReducedMotion()) {
       this.killTimeline();
-      this.overlay.setOpacity(1);
+      this.controller.holdApproach({ immediate: true });
+      this.overlay.setOpacity(0);
       this.transitionState.patch({
         atomId,
         busy: true,
         phase: 'complete',
-        zoom: 0,
-        fill: 0,
-        overlay: 1,
+        zoom: 1,
+        fill: 1,
+        overlay: 0,
         progress: 1,
       });
       this.emitNavigate(atomId);
@@ -141,12 +140,28 @@ export class Navigator {
   }
 
   /**
+   * Release the GSAP timeline after a route hop so SpatialController can settle.
+   * Does not rewind zoom/fill or dispose the veil.
+   */
+  completeHandoff(): void {
+    this.killTimeline();
+    this.navigatedAtomId = null;
+    this.overlay.setOpacity(0);
+    this.controller.setTransitionDriven(false);
+    this.transitionState.patch({
+      busy: false,
+      phase: 'idle',
+    });
+  }
+
+  /**
    * Abort the current transition and ease back to rest.
    * Builds a fresh unwind timeline from live visuals (safe after retargets).
    */
   cancel(): void {
-    this.navigationState.setCommitted(null);
+    this.navigationState.setCommitted('home');
     this.navigatedAtomId = null;
+    this.controller.unfreeze();
 
     const from: TransitionProxy = {
       zoom: this.controller.zoomProgress,
@@ -195,7 +210,7 @@ export class Navigator {
       },
     });
 
-    // Unwind: veil first, then fill, then zoom — opposite of enter order.
+    // Unwind: veil first, then one approach rewind (zoom+fill together).
     if (from.overlay > 0.001) {
       tl.to(proxy, {
         overlay: 0,
@@ -203,26 +218,21 @@ export class Navigator {
         ease: 'power1.out',
       });
     }
-    if (from.fill > 0.001) {
+    const unwindGap = Math.max(from.zoom, from.fill);
+    if (unwindGap > 0.001) {
       tl.to(
         proxy,
         {
+          zoom: 0,
           fill: 0,
-          duration: FILL_DURATION * from.fill,
-          ease: 'power2.out',
+          duration: APPROACH_DURATION * unwindGap,
+          ease: 'power2.inOut',
         },
         from.overlay > 0.001 ? '-=0.1' : 0,
       );
     }
-    if (from.zoom > 0.001) {
-      tl.to(proxy, {
-        zoom: 0,
-        duration: ZOOM_DURATION * from.zoom,
-        ease: 'power2.inOut',
-      });
-    }
     tl.call(() => {
-      this.controller.clearFocus();
+      this.controller.restoreOverview();
     });
 
     this.timeline = tl;
@@ -252,13 +262,17 @@ export class Navigator {
     this.proxy = proxy;
 
     // Scale remaining work from current visuals so retargets do not rewind.
-    const focusDur = atomChanged
-      ? FOCUS_DURATION
-      : FOCUS_DURATION * 0.25;
-    const zoomDur = ZOOM_DURATION * (1 - from.zoom);
-    const fillDur = FILL_DURATION * (1 - from.fill);
-    const overlayDur = OVERLAY_DURATION * (1 - from.overlay);
-    const overlayOverlap = fillDur * OVERLAY_OVERLAP_RATIO;
+    const alreadyOnTarget =
+      !atomChanged &&
+      this.controller.getFocusedAtomId() === atomId &&
+      this.controller.isFocusSettled();
+    const focusDur = alreadyOnTarget
+      ? 0
+      : atomChanged
+        ? FOCUS_DURATION
+        : FOCUS_DURATION * 0.25;
+    const approachGap = Math.max(1 - from.zoom, 1 - from.fill);
+    const approachDur = APPROACH_DURATION * approachGap;
 
     const tl = gsap.timeline({
       onUpdate: () => {
@@ -277,7 +291,7 @@ export class Navigator {
       },
     });
 
-    // 1. Focus
+    // 1. Focus (skipped when the atom is already settled from the first click)
     tl.addLabel('focus', 0);
     tl.call(
       () => {
@@ -289,106 +303,47 @@ export class Navigator {
       [],
       'focus',
     );
-    tl.to({}, { duration: Math.max(focusDur, 0.01) }, 'focus');
+    if (focusDur > 0.001) {
+      tl.to({}, { duration: focusDur }, 'focus');
+    }
 
-    // 2. Zoom — duration shrinks if already partially zoomed
-    tl.addLabel('zoom');
+    // 2. Approach — zoom + fill as one continuous pull-in
+    tl.addLabel('approach');
     tl.call(
       () => {
         if (tl.reversed()) return;
-        this.transitionState.patch({ phase: 'zoom' });
+        this.transitionState.patch({ phase: 'approach' });
         this.controller.prepareTransitionTarget(atomId);
       },
       [],
-      'zoom',
+      'approach',
     );
-    if (zoomDur > 0.001) {
+    if (approachDur > 0.001) {
       tl.to(
         proxy,
         {
           zoom: 1,
-          duration: zoomDur,
+          fill: 1,
+          duration: approachDur,
           ease: 'power2.inOut',
         },
-        'zoom',
+        'approach',
       );
     } else {
       proxy.zoom = 1;
-      tl.call(
-        () => {
-          this.controller.setZoomProgress(1);
-        },
-        [],
-        'zoom',
-      );
-    }
-
-    // 3. Fill viewport (extra proximity beyond base framing)
-    tl.addLabel('fill');
-    tl.call(
-      () => {
-        if (tl.reversed()) return;
-        this.transitionState.patch({ phase: 'fill' });
-      },
-      [],
-      'fill',
-    );
-    if (fillDur > 0.001) {
-      tl.to(
-        proxy,
-        {
-          fill: 1,
-          duration: fillDur,
-          ease: 'power2.in',
-        },
-        'fill',
-      );
-    } else {
       proxy.fill = 1;
       tl.call(
         () => {
+          this.controller.setZoomProgress(1);
           this.controller.setFillProgress(1);
         },
         [],
-        'fill',
+        'approach',
       );
     }
 
-    // 4. Overlay veil (overlaps end of fill when fill still has room)
-    const overlayOffset = fillDur > 0.001 ? Math.max(fillDur - overlayOverlap, 0) : 0;
-    tl.addLabel('overlay', `fill+=${overlayOffset}`);
-    tl.call(
-      () => {
-        if (tl.reversed()) return;
-        this.transitionState.patch({ phase: 'overlay' });
-      },
-      [],
-      'overlay',
-    );
-    if (overlayDur > 0.001) {
-      tl.to(
-        proxy,
-        {
-          overlay: 1,
-          duration: overlayDur,
-          ease: 'power1.in',
-        },
-        'overlay',
-      );
-    } else {
-      proxy.overlay = 1;
-      tl.call(
-        () => {
-          this.overlay.setOpacity(1);
-        },
-        [],
-        'overlay',
-      );
-    }
-
-    // 5. Navigate cue — forward only; swap this listener for a real router later
-    const navigateOffset = overlayDur * NAVIGATE_AT_OVERLAY_RATIO;
-    tl.addLabel('navigate', `overlay+=${navigateOffset}`);
+    // Navigate once the atom is in the approach pose — no veil / fade.
+    tl.addLabel('navigate');
     tl.call(
       () => {
         if (tl.reversed()) return;
@@ -397,17 +352,6 @@ export class Navigator {
       [],
       'navigate',
     );
-
-    // Already past the navigate point (e.g. retarget with full overlay) → fire now.
-    if (from.overlay >= NAVIGATE_AT_OVERLAY_RATIO) {
-      tl.call(
-        () => {
-          this.emitNavigate(atomId);
-        },
-        [],
-        0,
-      );
-    }
 
     return tl;
   }
@@ -443,7 +387,8 @@ export class Navigator {
     this.controller.setZoomProgress(0);
     this.controller.setFillProgress(0);
     this.controller.clearZoom();
-    this.controller.clearFocus();
+    this.controller.restoreOverview();
+    this.controller.unfreeze();
     this.overlay.setOpacity(0);
     this.navigatedAtomId = null;
   }

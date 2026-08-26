@@ -241,13 +241,17 @@ export class MoleculeScene {
     this.syncWireframe();
   }
 
-  setDecorativeZoomFade(zoomProgress: number, fillProgress: number): void {
-    this.decorativeNodes.setZoomFade(zoomProgress, fillProgress);
-  }
-
   /** White orbit for the active peripheral atom (hover or committed). */
   setActiveOrbitAtom(atomId: string | null): void {
     this.decorativeNodes.setActiveOrbitAtom(atomId);
+  }
+
+  setLabelsVisible(visible: boolean): void {
+    this.labelsGroup.visible = visible;
+  }
+
+  setDecorativeZoomFade(zoomProgress: number, fillProgress: number): void {
+    this.decorativeNodes.setZoomFade(zoomProgress, fillProgress);
   }
 
   /** Atom meshes for picking; never includes bonds. */

@@ -100,7 +100,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 - `01` muted index + uppercase label.
 - **Desktop (≥1024):** left vertical rail (`--sidebar-width`), column stack. Footer `УЗЕЛ nn` + `АКТИВЕН|ГОТОВ|ПРОСТОЙ` is centered under the **full** HUD frame (not the rail alone). Active via brighter text + wider tracking + thin left marker — no pills / filled rects.
 - **Tablet (768–1023):** bottom bar; separators `·`. Commit wraps label with `⟨ … ⟩`.
-- **Mobile (≤767):** compact bottom rail `/ NAV` + `01 HOME · 02 ABOUT · …` (horizontal scroll; active item scrolled into view). Safe-area bottom. Tap vs scroll-drag via `attachTapGuard`. Full index opens in [`MobileNavOverlay`](../src/ui/MobileNavOverlay.ts).
+- **Mobile (≤767):** compact bottom rail `/ NAV` + `01 HOME · 02 ABOUT · …` (horizontal scroll; active item scrolled into view). Safe-area bottom. Tap vs scroll-drag via `attachTapGuard`. Full index opens in [`MobileNavOverlay`](../app/lib/hero-ui/MobileNavOverlay.ts). Home only — hidden off-home.
 - No background, no border.
 
 ### 6. Mobile nav overlay
@@ -166,4 +166,4 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 | Overlay `pointer-events: none` except nav / return | Capture pointer on the grid, corners, or connector |
 | Desktop rail as light overlay | Application dashboard chrome |
 
-Case page visual system (12-col editorial, no WebGL): [`CASES.md`](CASES.md).
+Case page visual system (12-col editorial, overlay on frozen molecule): [`CASES.md`](CASES.md).
