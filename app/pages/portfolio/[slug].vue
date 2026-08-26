@@ -7,9 +7,9 @@ import {
 } from '~/domain/portfolio/normalizePortfolio';
 import {
   caseFeaturedBackdropUrl,
+  getCaseComposition,
   getCaseHeroKind,
   getCaseHeroLayout,
-  getCaseSectionNumbers,
 } from '~/domain/portfolio/presentation';
 
 const route = useRoute();
@@ -42,11 +42,28 @@ const heroLayout = computed(() => getCaseHeroLayout(heroKind.value));
 const backdropUrl = computed(() =>
   caseData.value ? caseFeaturedBackdropUrl(caseData.value) : null,
 );
-const sections = computed(() =>
-  caseData.value
-    ? getCaseSectionNumbers(caseData.value)
-    : { content: 0, gallery: 0, mobile: 0, slices: 0 },
+const composition = computed(() =>
+  caseData.value ? getCaseComposition(caseData.value) : null,
 );
+const sections = computed(
+  () =>
+    composition.value?.numbers ?? {
+      content: 0,
+      gallery: 0,
+      mobile: 0,
+      slices: 0,
+      next: 0,
+    },
+);
+
+const ready = computed(
+  () => Boolean(caseData.value) && caseData.value?.slug === slug.value,
+);
+
+const { appliedAccent, bodyClass } = useCasePageTransition({
+  accentColor: () => caseData.value?.accentColor,
+  ready,
+});
 
 const pageTitle = computed(() => {
   const c = caseData.value;
@@ -68,14 +85,19 @@ useSeoMeta({
 
 <template>
   <CaseShell
-    :accent-color="caseData?.accentColor"
+    :accent-color="appliedAccent"
     :case-index="position?.index"
     :backdrop-url="backdropUrl"
+    :sparse="composition?.sparse"
+    :text-hero="composition?.textHero"
+    :has-slices="composition?.hasSlices"
+    :landing-only="composition?.landingOnly"
+    :body-class="bodyClass"
   >
-    <p v-if="pending" class="case-page__status">Loading…</p>
+    <p v-if="!caseData && pending" class="case-page__status">Loading…</p>
 
     <p
-      v-else-if="error && (!('statusCode' in error) || error.statusCode !== 404)"
+      v-else-if="error && !caseData && (!('statusCode' in error) || error.statusCode !== 404)"
       class="case-page__status"
     >
       Case unavailable.<br />
@@ -119,6 +141,7 @@ useSeoMeta({
         :section-index="sections.slices"
       />
       <CaseNavigation
+        :section-index="sections.next"
         :prev-slug="position?.prev?.slug ?? null"
         :next-slug="position?.next?.slug ?? null"
         :prev-title="position?.prev?.title ?? null"

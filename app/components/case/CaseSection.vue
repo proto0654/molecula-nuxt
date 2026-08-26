@@ -1,14 +1,17 @@
 <script setup lang="ts">
+import type { CaseSectionTone } from '~/domain/portfolio/presentation';
+
 withDefaults(
   defineProps<{
     index: number;
     label: string;
-    /** Full-bleed visual field (slices) — body spans all 12 cols. */
+    /** Full-bleed visual field — body spans all 12 cols. */
     visual?: boolean;
     /** Center column cols 4–10 on lg (inner-pages screens). */
     center?: boolean;
+    tone?: CaseSectionTone;
   }>(),
-  { visual: false, center: false },
+  { visual: false, center: false, tone: 'editorial' },
 );
 </script>
 
@@ -18,12 +21,15 @@ withDefaults(
     :class="{
       'case-section--visual': visual,
       'case-section--center': center,
+      [`case-section--tone-${tone}`]: true,
     }"
   >
-    <header class="case-section__index case-zone-label">
-      <span class="case-section__num">{{ String(index).padStart(2, '0') }}</span>
-      <span class="case-section__label">{{ label }}</span>
-    </header>
+    <CaseSectionMarker
+      class="case-zone-label"
+      :index="index"
+      :label="label"
+      :tone="tone"
+    />
     <div
       class="case-section__body"
       :class="

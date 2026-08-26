@@ -15,7 +15,9 @@ export {
 export {
   getCaseHeroKind,
   getCaseHeroLayout,
+  getCaseComposition,
   getCaseSectionNumbers,
+  caseHasSlices,
   getCaseScreenItems,
   isCaseScreensLandingOnly,
   balanceCaseScreenColumns,
@@ -23,6 +25,11 @@ export {
   padCaseIndex,
   type CaseHeroKind,
   type CaseHeroLayout,
+  type CaseSectionKey,
+  type CaseSectionTone,
+  type CaseSectionSpec,
+  type CaseSectionNumbers,
+  type CaseComposition,
   type CaseScreenItem,
   type CaseScreenColumnItem,
 } from './presentation';

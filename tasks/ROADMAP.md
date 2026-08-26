@@ -41,6 +41,7 @@
 - [x] STEP 9–19 + acceptance §28 (без case redesign)
 - [x] Document scroll unlock on portfolio/case (`html.hero-lock` only on home)
 - [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, video hero + featured backdrop, Screens = landing+repeater (inner-pages), lightbox, ScrollTrigger entry, no WebGL on case
+- [x] Case composition pass: sequential markers (including NEXT), density recipes A–G, motion L1/L2/L3, in-page case→case reveal + delayed accent
 
 ## Foundation gaps
 
@@ -54,8 +55,9 @@ STEPs 1–19 остаются Done. Мелкий долг foundation:
 
 ## Next
 
-Case visual redesign (§25) закрыт. Не ломать content pipeline и `absence = null`. Полный transition и `/about` `/services` `/contact` — не в этой итерации, пока не попросят отдельно.
+Case visual redesign (§25) и composition pass закрыты. Не ломать content pipeline и `absence = null`. Полный molecular → route transition и `/about` `/services` `/contact` — не в этой итерации, пока не попросят отдельно.
 
 - [x] Case visual redesign (§25 ТЗ)
-- [ ] Полный molecular → route transition (сейчас foundation `transitionTo`)
+- [x] Case composition pass (markers, sparse recipes, case→case reveal)
+- [ ] Полный molecular → route transition (сейчас foundation `transitionTo`; case→case уже in-page)
 - [ ] Остальные hero routes (`/about`, `/services`, `/contact`) с реальным контентом

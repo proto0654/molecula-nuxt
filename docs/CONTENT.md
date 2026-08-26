@@ -43,15 +43,15 @@ Rules:
 |-------|--------|
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
 | `/portfolio` | `usePortfolio(page)` — server pagination via WP headers |
-| `/portfolio/[slug]` | `CaseShell` + video hero + featured backdrop + Overview / Screens (`landing_screen`+repeater) / Mobile / Slices / lightbox |
+| `/portfolio/[slug]` | `CaseShell` + video hero + featured backdrop + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT |
 
-Hero: video only (flat). Screens = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks.
+Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
 
 Mobile field mapping: slices from `screen-mobile` (`block_ratio` defaults to `1/2.3`); composite mockup from `screenshot_image` whenever set (can coexist with slices). Filled media is never discarded.
 
 SEO: `useSeoMeta` title + plain excerpt on case pages.
 
-Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, image URL, section numbers, slice layout, `balanceCaseScreenColumns`). Does not change the `Case` model shape beyond normalize mapping.
+Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, `getCaseComposition`, image URL, slice layout, `balanceCaseScreenColumns`). Does not change the `Case` model shape beyond normalize mapping.
 
 ## Prerender / Pages
 

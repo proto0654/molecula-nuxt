@@ -326,22 +326,128 @@ export function stripTags(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
 }
 
-/**
- * Sequential numbers for visible blocks only (absent blocks do not leave gaps).
- * 0 means the block is not present.
- */
-export function getCaseSectionNumbers(c: Case): {
+export type CaseSectionKey =
+  | 'content'
+  | 'gallery'
+  | 'mobile'
+  | 'slices'
+  | 'next';
+
+export type CaseSectionTone = 'editorial' | 'visual' | 'quiet';
+
+export type CaseSectionSpec = {
+  key: CaseSectionKey;
+  index: number;
+  label: string;
+  tone: CaseSectionTone;
+};
+
+export type CaseSectionNumbers = {
   content: number;
   gallery: number;
   mobile: number;
   slices: number;
-} {
+  next: number;
+};
+
+export type CaseComposition = {
+  sections: CaseSectionSpec[];
+  numbers: CaseSectionNumbers;
+  /** Header + NEXT only — no body sections. */
+  sparse: boolean;
+  textHero: boolean;
+  firstBody: Exclude<CaseSectionKey, 'next'> | null;
+  landingOnly: boolean;
+  hasSlices: boolean;
+};
+
+const BODY_SECTION_DEFS: Array<{
+  key: Exclude<CaseSectionKey, 'next'>;
+  label: string;
+  tone: CaseSectionTone;
+  present: (c: Case) => boolean;
+}> = [
+  {
+    key: 'content',
+    label: 'Overview',
+    tone: 'editorial',
+    present: (c) => Boolean(c.contentHtml),
+  },
+  {
+    key: 'gallery',
+    label: 'Interface',
+    tone: 'visual',
+    present: (c) => getCaseScreenItems(c).length > 0,
+  },
+  {
+    key: 'mobile',
+    label: 'Mobile',
+    tone: 'quiet',
+    present: (c) => Boolean(c.mobile),
+  },
+  {
+    key: 'slices',
+    label: 'Slices',
+    tone: 'visual',
+    present: (c) => caseHasSlices(c),
+  },
+];
+
+/** True only when slices can actually render (valid ratio + dimensions). */
+export function caseHasSlices(c: Case): boolean {
+  return Boolean(c.mobileSlices && getCaseSliceLayout(c.mobileSlices));
+}
+
+/**
+ * Visible blocks only — absent sections do not leave number gaps.
+ * NEXT is always last. 0 means the body block is not present.
+ */
+export function getCaseComposition(c: Case): CaseComposition {
+  const sections: CaseSectionSpec[] = [];
+  const numbers: CaseSectionNumbers = {
+    content: 0,
+    gallery: 0,
+    mobile: 0,
+    slices: 0,
+    next: 0,
+  };
+
   let n = 1;
-  const content = c.contentHtml ? n++ : 0;
-  const gallery = getCaseScreenItems(c).length ? n++ : 0;
-  const mobile = c.mobile ? n++ : 0;
-  const slices = c.mobileSlices ? n++ : 0;
-  return { content, gallery, mobile, slices };
+  for (const def of BODY_SECTION_DEFS) {
+    if (!def.present(c)) continue;
+    numbers[def.key] = n;
+    sections.push({
+      key: def.key,
+      index: n,
+      label: def.label,
+      tone: def.tone,
+    });
+    n += 1;
+  }
+
+  numbers.next = n;
+  sections.push({
+    key: 'next',
+    index: n,
+    label: 'Next',
+    tone: 'editorial',
+  });
+
+  const firstBody = sections.find((s) => s.key !== 'next')?.key ?? null;
+
+  return {
+    sections,
+    numbers,
+    sparse: firstBody == null,
+    textHero: getCaseHeroKind(c) == null,
+    firstBody,
+    landingOnly: isCaseScreensLandingOnly(c),
+    hasSlices: numbers.slices > 0,
+  };
+}
+
+export function getCaseSectionNumbers(c: Case): CaseSectionNumbers {
+  return getCaseComposition(c).numbers;
 }
 
 export function padCaseIndex(index: number): string {

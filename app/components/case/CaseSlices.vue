@@ -72,6 +72,7 @@ function openFull() {
     v-if="caseData.mobileSlices && layout"
     :index="sectionIndex"
     label="Slices"
+    tone="visual"
     center
   >
     <div

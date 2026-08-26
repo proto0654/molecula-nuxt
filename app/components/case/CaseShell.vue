@@ -4,13 +4,24 @@ defineProps<{
   caseIndex?: number | null;
   /** Featured image — fixed backdrop under the decorative chrome grid. */
   backdropUrl?: string | null;
+  sparse?: boolean;
+  textHero?: boolean;
+  hasSlices?: boolean;
+  landingOnly?: boolean;
+  bodyClass?: string;
 }>();
 </script>
 
 <template>
   <div
     class="case-page"
-    :class="{ 'case-page--backdrop': backdropUrl }"
+    :class="{
+      'case-page--backdrop': backdropUrl,
+      'case-page--sparse': sparse,
+      'case-page--text-hero': textHero,
+      'case-page--has-slices': hasSlices,
+      'case-page--landing-only': landingOnly,
+    }"
     :style="accentColor ? { '--case-accent': accentColor } : undefined"
   >
     <div
@@ -40,7 +51,7 @@ defineProps<{
       </div>
     </header>
 
-    <div class="case-page__body">
+    <div class="case-page__body" :class="bodyClass">
       <slot />
     </div>
   </div>

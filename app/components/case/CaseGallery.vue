@@ -73,7 +73,8 @@ function labelFor(index: number): string {
   <CaseSection
     v-if="items.length"
     :index="sectionIndex"
-    label="Screens"
+    label="Interface"
+    tone="visual"
     center
   >
     <div

@@ -12,7 +12,7 @@ const lightbox = useCaseLightbox();
 
 useCaseScrollEntry({
   root,
-  preset: 'slices',
+  preset: 'lift',
 });
 
 function openMockup() {
@@ -30,13 +30,16 @@ function openMockup() {
 </script>
 
 <template>
-  <CaseSection v-if="caseData.mobile" :index="sectionIndex" label="Mobile">
+  <CaseSection
+    v-if="caseData.mobile"
+    :index="sectionIndex"
+    label="Mobile"
+    tone="quiet"
+  >
     <div ref="root" class="case-mobile case-scroll-field">
       <div class="case-mobile__mockup">
         <span class="case-scroll-trigger" aria-hidden="true" />
-        <div
-          class="case-scroll-motion case-scroll-motion--lag-even-mobile case-scroll-motion--lag-even-desktop"
-        >
+        <div class="case-scroll-motion">
           <button
             type="button"
             class="case-mobile__button"

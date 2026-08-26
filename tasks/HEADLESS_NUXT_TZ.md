@@ -7,7 +7,7 @@
 
 - [`api-real-response.md`](../docs/api-real-response.md) — фактическая структура WP API
 - [`../CONTEXT.md`](../CONTEXT.md) — короткий стек / entry points
-- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; case visual redesign done; next = full route transition
+- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; case visual redesign + composition done; next = full molecular → route transition
 
 ---
 
@@ -41,7 +41,7 @@
 | 18 | Test local dev | **DONE** (build/prerender smoke) |
 | 19 | Test production build | **DONE** (`npm run build`: prerendered 122 routes) |
 
-Foundation-итерация закрыта. **Case visual redesign (§25) done.** Не ломать conditional rendering.
+Foundation-итерация закрыта. **Case visual redesign (§25) + composition pass done.** Не ломать conditional rendering.
 
 ## Что уже в репозитории (факт)
 
@@ -50,7 +50,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) done.*
 - **Home `/`:** `ClientOnly` → `MolecularHero.vue` → `mountHeroApp.ts` + `TransitionController.transitionTo` → Nuxt routes (Работы → `/portfolio`)
 - **API:** `app/api/client.ts` + portfolio/menus/pages/media; components не знают REST URL
 - **Normalize:** `normalizePortfolioPost` → `Case`; absence = `null` / `[]`
-- **Portfolio:** listing + WP header pagination; case page = editorial inspection (12-col grid, CaseShell chrome); Screens = `landing_screen` + repeater (inner-pages 3-col / masonry); lightbox + `useCaseScrollEntry`; prev/next via slim index + titles
+- **Portfolio:** listing + WP header pagination; case page = editorial inspection (12-col grid, CaseShell chrome); Interface = `landing_screen` + repeater (inner-pages 3-col / masonry); sequential `getCaseComposition` markers including NEXT; lightbox + `useCaseScrollEntry` (L1 fade / L2 lift / L3 gallery+slices); in-page case→case via `useCasePageTransition`; prev/next via slim index + titles
 - **Prerender:** all portfolio slugs queued at generate/build via live WP API
 - **Deploy:** `.github/workflows/deploy.yml` → `nuxt generate` + `NUXT_APP_BASE_URL`
 - **Case docs:** [`docs/CASES.md`](../docs/CASES.md), [`docs/CONTENT.md`](../docs/CONTENT.md)
@@ -64,7 +64,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) done.*
 Мелкий долг: unused menu composable, SEO canonical — [`ROADMAP.md`](ROADMAP.md) → Foundation gaps.  
 Не ломать content pipeline, conditional rendering, case visual system.
 
-Acceptance предыдущих итераций — §28 (foundation) + case redesign (editorial composition, inner-pages Screens, ScrollTrigger entry, no WebGL on case).
+Acceptance предыдущих итераций — §28 (foundation) + case redesign + composition pass (sequential markers, sparse recipes, motion levels, case→case reveal, no WebGL on case).
 
 ---
 
@@ -1112,14 +1112,14 @@ Do NOT continue automatically into visual case redesign.
 # D. ПРОМПТ ДЛЯ СЛЕДУЮЩЕГО ЧАТА (короткий)
 
 ```
-Продолжаем headless WebLaba: STEP 9–19 + §28 foundation done; case visual redesign (§25) done.
+Продолжаем headless WebLaba: STEP 9–19 + §28 foundation done; case visual redesign (§25) + composition pass done.
 
 Источник правды: tasks/HEADLESS_NUXT_TZ.md
 Сверка: tasks/ROADMAP.md
-Case visual: app/assets/css/case.css + docs/CASES.md (Screens = landing+repeater inner-pages; lightbox; useCaseScrollEntry)
+Case visual: app/assets/css/case.css + docs/CASES.md (composition, markers, Interface inner-pages, lightbox, useCaseScrollEntry, case→case)
 API: app/api/ + docs/api-real-response.md
 
-Scope: полный molecular → route transition (сейчас foundation transitionTo).
-Не ломать conditional rendering, absence-as-null, case visual system.
+Scope: полный molecular → route transition (сейчас foundation transitionTo; case→case уже in-page).
+Не ломать conditional rendering, absence-as-null, case visual / composition system.
 Не делать /about /services /contact, пока не попросят.
 ```

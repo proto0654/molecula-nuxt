@@ -3,12 +3,17 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { MaybeRefOrGetter } from 'vue';
 
 /**
- * Scroll entry presets matching PHP weblaba-case-scroll-effects.
- * - screensGrid: rotateY 72→0 (inner-pages pack)
- * - landingOnly: rotateX 82→0 + translateZ −125 (solo landing)
- * - slices: multi-stop rotateX + Z + Y lag
+ * Scroll entry presets.
+ * L1 fade: opacity + translateY (editorial)
+ * L2 lift: small perspective / scale (mobile mockup)
+ * L3: gallery / slices 3D only
  */
-export type CaseScrollPreset = 'screensGrid' | 'landingOnly' | 'slices';
+export type CaseScrollPreset =
+  | 'fade'
+  | 'lift'
+  | 'screensGrid'
+  | 'landingOnly'
+  | 'slices';
 
 export type CaseScrollEntryOptions = {
   root: Ref<HTMLElement | null>;
@@ -171,6 +176,59 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
     const preset = presetRef.value;
 
     for (const { trigger, motion } of pairs) {
+      if (preset === 'fade') {
+        gsap.set(motion, {
+          opacity: 0,
+          y: 18,
+          rotateX: 0,
+          rotateY: 0,
+          z: 0,
+          scale: 1,
+        });
+        const tween = gsap.to(motion, {
+          opacity: 1,
+          y: 0,
+          duration: 0.65,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger,
+            start: 'top 92%',
+            toggleActions: 'play none none none',
+          },
+        });
+        if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+        continue;
+      }
+
+      if (preset === 'lift') {
+        gsap.set(motion, {
+          opacity: 0,
+          y: 28,
+          scale: 0.97,
+          rotateX: 10,
+          rotateY: 0,
+          z: 0,
+          transformOrigin: 'center bottom',
+          transformPerspective: 900,
+          force3D: true,
+        });
+        const tween = gsap.to(motion, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          rotateX: 0,
+          duration: 0.85,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger,
+            start: 'top 90%',
+            toggleActions: 'play none none none',
+          },
+        });
+        if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+        continue;
+      }
+
       if (preset === 'slices') {
         const lagPx = parseLagPx(motion);
         const tl = buildSliceTimeline(motion, lagPx);
