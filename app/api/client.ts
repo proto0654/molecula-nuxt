@@ -22,13 +22,12 @@ export function getWpApiBaseFromEnv(): string {
 
 function resolveWpApiBase(override?: string): string {
   if (override) return override.replace(/\/$/, '');
-  try {
-    const config = useRuntimeConfig();
-    const base = (config.public.wpApiBase as string | undefined) || getWpApiBaseFromEnv();
-    return base.replace(/\/$/, '');
-  } catch {
-    return getWpApiBaseFromEnv();
-  }
+  // `wpFetch` often runs inside `useAsyncData` after `await` — Nuxt context
+  // is gone there. `tryUseNuxtApp` avoids NUXT_E1001; env covers build/prerender.
+  const nuxtApp = tryUseNuxtApp();
+  const fromConfig = nuxtApp?.$config?.public?.wpApiBase as string | undefined;
+  const base = fromConfig || getWpApiBaseFromEnv();
+  return base.replace(/\/$/, '');
 }
 
 function joinUrl(base: string, path: string): string {

@@ -66,3 +66,4 @@ Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `
 - Components must not call WordPress URLs directly.
 - Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally ([`main.css`](../app/assets/css/main.css)).
 - Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing: [`archive.css`](../app/assets/css/archive.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive or case pages.
+- `wpFetch` must not call `useRuntimeConfig()` after `await` inside `useAsyncData` (NUXT_E1001). Resolve base via `tryUseNuxtApp()?.$config` with env fallback ([`client.ts`](../app/api/client.ts)).

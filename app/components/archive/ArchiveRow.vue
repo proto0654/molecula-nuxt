@@ -29,6 +29,9 @@ const visualName = computed(() =>
   sharedVisual.value ? `case-visual-${item.value.slug}` : undefined,
 );
 
+// Capture Nuxt context in setup — View Transition callback runs after await.
+const nuxtApp = useNuxtApp();
+
 function onNavigate(event: MouseEvent) {
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   if (event.button !== 0) return;
@@ -46,7 +49,7 @@ function onNavigate(event: MouseEvent) {
 
   event.preventDefault();
   document.startViewTransition(async () => {
-    await navigateTo(href.value);
+    await nuxtApp.runWithContext(() => navigateTo(href.value));
   });
 }
 </script>
