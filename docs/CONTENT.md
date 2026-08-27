@@ -45,7 +45,7 @@ Rules:
 |-------|--------|
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
 | `/portfolio` | `usePortfolio(page)` — slim-index pagination (`include` ids), editorial rows |
-| `/portfolio/[slug]` | `CaseShell` + video hero + featured backdrop + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT |
+| `/portfolio/[slug]` | `CaseShell` + video hero + layout featured wash / accent overlay + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT |
 
 Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
 

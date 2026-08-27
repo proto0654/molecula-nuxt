@@ -8,7 +8,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 
 | File | Role |
 |------|------|
-| [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page shell; optional featured backdrop wash; density + body-phase classes. Decorative grid/frame/logo come from the persistent HUD. |
+| [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page shell; density + body-phase classes. Featured wash lives in layout [`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue). Decorative grid/frame/logo come from the persistent HUD. |
 | [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title (USP-style scramble reveal), `titleEn`, excerpt; facts only when there is no CMS body |
 | [`CaseHeroMedia.vue`](../app/components/case/CaseHeroMedia.vue) | Hero video only (flat, no 3D) |
 | [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Presentational `<video>` used **inside** the hero only |
@@ -32,7 +32,7 @@ Narrative (not printed on the page): INTRO → INSPECT → EXPLORE → MOBILE �
 
 | Narrative | Block | Marker | When |
 |-----------|--------|--------|------|
-| INTRO | Header ± video; featured = backdrop | none | always header |
+| INTRO | Header ± video; featured = persistent backdrop | none | always header |
 | INSPECT | Overview | `NN / OVERVIEW` | `contentHtml` |
 | EXPLORE | Interface (`landing_screen` + repeater) | `NN / INTERFACE` | any screen item |
 | MOBILE | Composite mockup | `NN / MOBILE` | `c.mobile` |
@@ -61,7 +61,7 @@ Marker tones: **editorial** (Overview, Next) = horizontal rail + occasional vert
 
 ## Tokens
 
-Set `--case-accent` from `case.accentColor` **after reveal** (`@property` interpolates). Until then the page uses the ink default. **Never** use accent as the page background (`--wl-bg` stays).
+Set `--case-accent` from `case.accentColor` **after reveal** (`@property` interpolates). Until then the page uses the ink default. **Never** use accent as the page background (`--wl-bg` stays). Atmosphere tint on `/portfolio*` goes through the layout wash’s solid overlay (`--backdrop-accent`), not a page fill.
 
 Accent belongs on: section marker number, metadata labels, hover/active nav, selected lines. Not on section fills or gallery cards.
 
@@ -69,6 +69,7 @@ Accent belongs on: section marker number, metadata labels, hover/active nav, sel
 |-------|------|
 | `--case-accent` | Lines, ticks, hover borders |
 | `--case-accent-ink` | `color-mix` of accent + bright ink — readable labels on dark bg |
+| `--backdrop-accent` | Layout wash solid overlay color (PortfolioBackdrop; not page bg) |
 | `--case-space-hero` / `--case-space-first` / `--case-space-section` / `--case-space-visual` / `--case-space-footer` | Vertical rhythm |
 | `--case-pad-x` / `--case-pad-y` | Body inset inside corner ticks |
 | `--text-case-title` / `--text-case-title-split` | Large all-caps titles (USP-style tracking) |
@@ -102,7 +103,7 @@ Hero layouts:
 - **split** — video: text cols 1–5, visual 6–12
 - **text** — no hero media (featured is backdrop only)
 
-Hero media is **video only** (flat, no 3D). **`landing_screen`** is Interface index 0 (with repeater). **Featured image** is a fixed backdrop under the chrome grid. `screenshot_image` is not a hero.
+Hero media is **video only** (flat, no 3D). **`landing_screen`** is Interface index 0 (with repeater). **Featured image** drives the persistent layout wash ([`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue) / [`usePortfolioBackdrop`](../app/composables/usePortfolioBackdrop.ts)) under the chrome grid — not a per-page remount. Case **accent** is a separate solid color overlay on that layer (`opacity ~0.18`, same vertical mask) — not `color-mix` into the image and never `--wl-bg`. `screenshot_image` is not a hero.
 
 **Overview (CMS content)** is its own 12-col composition, not `CaseSection` body (cols 4–12):
 
@@ -169,7 +170,7 @@ Minimal dark overlay, technical index, close; gallery prev/next. Full source ima
 
 [`/portfolio`](../app/pages/portfolio/index.vue) is an editorial index, not a molecular scene and not agency cards. CSS: [`archive.css`](../app/assets/css/archive.css).
 
-Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, category/meta, compact specimen (`featuredImage ?? landingScreen`). Pagination `01 02 03 →` as crawlable `NuxtLink`s. Desktop 12-col; tablet compressed row; mobile stacks specimen above text. Hover is a small specimen shift + title + accent line + arrow (off under reduced motion).
+Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, category/meta, compact specimen (`featuredImage ?? landingScreen`). Pagination `01 02 03 →` as crawlable `NuxtLink`s. Desktop 12-col; tablet compressed row; mobile stacks specimen above text. Hover: small specimen shift + title + accent line + arrow (off under reduced motion). Featured wash + accent overlay are **CSS-only** per row (`:hover` / `:focus-within` on `.archive-row__backdrop`) — no JS preview store. Landing-only rows have no wash layer.
 
 ## Footer / NEXT
 
@@ -179,16 +180,18 @@ Numbered editorial section. Labels: **Previous** + case title, **Index / Back to
 
 Molecular → archive: [`Navigator`](../app/lib/navigation/Navigator.ts) zoom/fill/veil, then [`routeVeil`](../app/lib/navigation/routeVeil.ts) handoff so the overlay survives hero unmount. Archive dismisses the veil (opacity). Reduced motion skips zoom/fill (`immediate` overlay + navigate). Do not add a second veil or a WebGL scene on archive/case.
 
-Archive → case: specimen (featured image) shares `view-transition-name` with the case backdrop. Landing-only fallback is shown on the row but does not morph. Without View Transitions / reduced motion: case L1 enter only. Do not morph into the video hero.
+Archive → case: persistent wash stays mounted; click commits the row’s featured URL + accent then case page re-commits when ready (same URL = no flash). No View Transition specimen morph. Landing-only cases fade wash out if they have no featured. Case L1 body enter only. Do not morph into the video hero.
 
-Case → archive: existing body L1 exit, then archive reveal. [`sessionStorage`](../app/lib/navigation/archiveReturn.ts) `wl:archive-return` restores `?page=` and scroll to the row. Index / Back to portfolio use that href. No accent reveal on the archive.
+Case → archive: existing body L1 exit, then archive reveal; wash **stays** (sticky). [`sessionStorage`](../app/lib/navigation/archiveReturn.ts) `wl:archive-return` restores `?page=` and scroll to the row. Index / Back to portfolio use that href. No accent reveal on the archive.
 
-Case → case: same `[slug].vue` watches the param, so Nuxt page transitions do not run. [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) delays the route until body L1 exit, then reveals the new case (chrome stays). Previous payload is held so the generic `Loading…` string does not flash. New `--case-accent` is applied after reveal and interpolates.
+Case → case: same `[slug].vue` watches the param, so Nuxt page transitions do not run. [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) delays the route until body L1 exit, then reveals the new case (chrome stays). Previous payload is held so the generic `Loading…` string does not flash. New `--case-accent` is applied after reveal and interpolates. Featured wash + accent overlay crossfade via the same layout layer when the new case’s featured URL / accent differ.
+
+Leaving `/portfolio*`: wash clears with a short opacity fade.
 
 ## Gotchas
 
 - Do not put Three.js on case pages.
-- `case_dark_bg_color` is a **subtle accent**, not a full-page wash. Mix with bright ink for text (`--case-accent-ink`) — raw hex is often too dark on `--wl-bg`.
+- `case_dark_bg_color` is a **subtle accent**, not a full-page wash. Use for UI chrome (`--case-accent-ink`) and a solid low-opacity overlay on the persistent featured wash (`--backdrop-accent`) — never as `--wl-bg`. Do not nest the overlay under the wash’s `0.22` opacity.
 - Slim index `_fields` include `title` for prev/next labels (`getCasePosition`).
 - Case pages must not set `html.hero-lock`. Document scroll is on `html` only (`main.css`) — avoid `overflow-y: auto` on `body` / `#__nuxt` (double scrollbar with 3D overflow).
 - Legacy mapping: `screenshot_image` = composite mockup; `screen-mobile` = slice source — do not swap.

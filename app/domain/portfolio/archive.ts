@@ -21,7 +21,7 @@ export function archiveSpecimenUrl(item: Case): string | null {
   return caseImageUrl(image, CASE_SCREEN_SIZES);
 }
 
-/** True when the row still can morph into the case featured backdrop. */
+/** True when the row can drive the persistent featured wash (hover + morph-free nav). */
 export function archiveHasSharedVisual(item: Case): boolean {
   return Boolean(item.featuredImage);
 }

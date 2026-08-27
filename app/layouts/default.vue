@@ -21,6 +21,9 @@ useHead({
         <div class="molecular-hero-fallback" aria-hidden="true" />
       </template>
     </ClientOnly>
+    <ClientOnly>
+      <PortfolioBackdrop />
+    </ClientOnly>
     <div class="app-shell__page">
       <slot />
     </div>

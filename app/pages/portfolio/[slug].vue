@@ -69,6 +69,22 @@ const ready = computed(
   () => Boolean(data.value?.caseData) && data.value?.caseData?.slug === slug.value,
 );
 
+const { commit: commitBackdrop } = usePortfolioBackdrop();
+watch(
+  () =>
+    ({
+      ready: ready.value,
+      url: backdropUrl.value,
+      slug: slug.value,
+      accent: caseData.value?.accentColor ?? null,
+    }) as const,
+  ({ ready: isReady, url, slug: caseSlug, accent }) => {
+    if (!isReady) return;
+    commitBackdrop(url, caseSlug, accent);
+  },
+  { immediate: true },
+);
+
 const { appliedAccent, bodyClass, phase } = useCasePageTransition({
   accentColor: () => caseData.value?.accentColor,
   ready,
@@ -101,8 +117,6 @@ useSeoMeta({
   <CaseShell
     :accent-color="appliedAccent"
     :case-index="position?.index"
-    :backdrop-url="backdropUrl"
-    :visual-slug="caseData?.featuredImage ? slug : null"
     :sparse="composition?.sparse"
     :text-hero="composition?.textHero"
     :has-slices="composition?.hasSlices"

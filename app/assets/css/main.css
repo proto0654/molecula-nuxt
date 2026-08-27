@@ -167,8 +167,15 @@
   --z-connector: 2;
   --z-header: 2;
   --z-stage: 0;
+  --z-backdrop: 1;
   --z-page: 2;
   --z-chrome: 4;
+  --portfolio-backdrop-mask: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 0.55) 0%,
+    rgb(0 0 0 / 0.28) 42%,
+    transparent 88%
+  );
   --z-overlay: 5;
   --z-debug: 10;
 
@@ -324,6 +331,61 @@ html.hero-lock #__nuxt {
   inset: 0;
   z-index: var(--z-stage);
   background: var(--wl-bg, #14161c);
+}
+
+/* Persistent featured wash under archive / case (outside NuxtPage). */
+@property --backdrop-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+.portfolio-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-backdrop);
+  pointer-events: none;
+  --backdrop-accent: transparent;
+  transition: --backdrop-accent 0.85s ease;
+}
+
+.portfolio-backdrop__wash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: opacity 0.45s ease;
+  mask-image: var(--portfolio-backdrop-mask);
+}
+
+.portfolio-backdrop.is-on .portfolio-backdrop__wash {
+  opacity: 0.22;
+}
+
+/* Solid accent overlay — own opacity, not nested under wash. */
+.portfolio-backdrop__tint {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-color: var(--backdrop-accent);
+  opacity: 0;
+  mask-image: var(--portfolio-backdrop-mask);
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+
+.portfolio-backdrop.has-tint.is-on .portfolio-backdrop__tint {
+  opacity: 0.18;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-backdrop,
+  .portfolio-backdrop__wash,
+  .portfolio-backdrop__tint {
+    transition: none;
+  }
 }
 
 #hero-canvas {

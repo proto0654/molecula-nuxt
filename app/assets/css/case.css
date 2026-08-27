@@ -79,28 +79,6 @@
   transition: --case-accent 0.85s ease;
 }
 
-.case-page__backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background-position: center top;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  opacity: 0.22;
-  pointer-events: none;
-}
-
-.case-page--backdrop .case-page__backdrop {
-  /* Soft wash so chrome grid + type stay readable */
-  mask-image: linear-gradient(
-    180deg,
-    rgb(0 0 0 / 0.55) 0%,
-    rgb(0 0 0 / 0.28) 42%,
-    transparent 88%
-  );
-}
-
 .case-page__body {
   position: relative;
   z-index: 1;

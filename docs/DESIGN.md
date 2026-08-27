@@ -39,7 +39,8 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--sidebar-width` | `clamp(220px, 20vw, 280px)` | Desktop rail width |
 | `--hud-inset-desktop` | `1.5rem` all sides — corner ticks on this frame | Frame inset ≥1024 |
 | `--hud-header-inset` | frame inset + corner size + `--hud-chrome-pad` | Desktop header / rail align inside ticks |
-| `--z-hud` / `--z-nav` / `--z-connector` / `--z-header` / `--z-overlay` / `--z-debug` | `1` / `2` / `2` / `2` / `3` / `10` | Canvas → HUD → chrome → veil |
+| `--z-hud` / `--z-nav` / `--z-connector` / `--z-header` / `--z-overlay` / `--z-debug` | `1` / `2` / `2` / `2` / `3` / `10` | Inside stage/chrome: HUD → nav → veil |
+| `--z-stage` / `--z-backdrop` / `--z-page` / `--z-chrome` | `0` / `1` / `2` / `4` | Canvas → persistent featured wash (+ accent overlay) → NuxtPage → molecular chrome |
 | `--glyph-angle-open` / `--glyph-angle-close` | `⟨ ` / ` ⟩` | Committed nav wrap (tablet/mobile) |
 | `--bp-mobile-max` | `767px` | Match `mountHeroApp` `MOBILE_MQ` |
 | `--bp-tablet-min` / `--bp-tablet-max` | `768px` / `1023px` | Match `TABLET_MQ` |
