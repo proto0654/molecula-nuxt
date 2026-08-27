@@ -72,7 +72,7 @@ MoleculeController         setMode / restoreOverview / focus* / freeze
 | `/services/:slug` | `{ mode: 'service', context: 'services', entityId }` |
 | `/about`, `/contact`, other pages | `{ mode: 'section', sectionId }` (`sectionId` = first path segment) |
 
-Stub pages: [`/contact`](../app/pages/contact.vue) — light overlay shell (`SectionShell`). [`/about`](../app/pages/about.vue) and [`/services`](../app/pages/services/index.vue) are live WP content (`/services/:slug` for a service).
+[`/about`](../app/pages/about.vue), [`/contact`](../app/pages/contact.vue), and [`/services`](../app/pages/services/index.vue) are live WP content (`/services/:slug` for a service). Contact data comes from ACF options (`weblaba_contacts`), not a WP page.
 
 ### Pose per mode
 

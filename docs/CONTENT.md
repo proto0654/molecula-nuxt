@@ -7,11 +7,12 @@ Headless consumption of production WordPress REST. WP remains source of truth; t
 ```
 pages / composables
   → app/api/*          (ofetch; no REST URLs in components)
-  → app/domain/*       (normalize raw → Case / Service / AboutPage / NavigationMenu)
+  → app/domain/*       (normalize raw → Case / Service / AboutPage / ContactPage / NavigationMenu)
   → app/types/wp/*     (raw + domain types)
   → components/archive/* + components/service/*  (editorial listing + service detail)
   → components/case/*     (conditional case blocks)
   → components/about/*    (about photo / skills / CTA)
+  → components/contact/*  (contact links from theme options)
 ```
 
 Live response notes: [`api-real-response.md`](api-real-response.md).
@@ -23,7 +24,7 @@ Live response notes: [`api-real-response.md`](api-real-response.md).
 | `client.ts` | `wpFetch` / `wpFetchPaginated` + `X-WP-Total` / `X-WP-TotalPages` |
 | `portfolio.ts` | list page, posts by ids, case by slug, categories, slim index, slugs |
 | `services.ts` | posts by ids, service by slug, slim index, slugs |
-| `options.ts` | ACF theme options (`/acf/v3/options/options`) — RU chrome for services |
+| `options.ts` | ACF theme options (`/acf/v3/options/options`) — RU chrome for services + contacts |
 | `menus.ts` | `menus/v1` only (core `/wp/v2/menus` is 401) |
 | `pages.ts` / `media.ts` | page by slug (`_embed=wp:term` for about tags) / media |
 
@@ -38,6 +39,8 @@ Shared media/text helpers live in [`app/domain/wp/`](../app/domain/wp/normalizeM
 [`normalizeServicePost`](../app/domain/services/normalizeService.ts) maps `WpServicePost` → `Service` (RU only). Empty `service-repeater` → `[]` (hide offers). Offer anchors: slug from `cf_title`, else `usluga-{n}`, collisions `-2`, `-3`. `cf_features` and `service-thumb` are ignored. Featured image is stored for the archive specimen; service detail does not render it.
 
 [`normalizeAboutPage`](../app/domain/about/normalizeAbout.ts) maps page `about` → `AboutPage`. Empty `about-repeater` → `[]` (hide skills) — **no PHP demo-skill fallback**. Empty photo → no placeholder image.
+
+[`normalizeContactPage`](../app/domain/contacts/normalizeContacts.ts) maps ACF options → `ContactPage`. Empty / false `weblaba_contacts` → `[]` (no PHP Telegram+phone fallback). Rows without `label` or `url` are dropped; unknown `icon` → `link`. RU only.
 
 **EN fields are typed on raw ACF and documented below; normalizers and UI do not read them yet.**
 
@@ -60,7 +63,7 @@ Rules:
 | `/services` | `useServices(page)` — slim-index pagination, editorial rows **without** featured wash |
 | `/services/[slug]` | `ServiceShell` + title/tags hero + intro (`contentHtml`) + offer repeater (price + «от» + order CTA) + prev/next |
 | `/about` | `SectionShell` + photo/tags + H1 + intro + skills repeater + CTA → `/contact` |
-| `/contact` | stub |
+| `/contact` | `SectionShell` + H1 «Контакты» + popup title/text + `weblaba_contacts` links |
 
 Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
 
@@ -68,7 +71,9 @@ Service detail composition: hero (title + tags, no featured) → intro if conten
 
 About order: photo + tags → H1 → intro → skills (H2 `about_section_title` only if title and rows) → CTA if `about_cta_label`.
 
-SEO: `useSeoMeta` title + plain excerpt on case / service / about pages.
+Contact order: H1 «Контакты» → kicker `contact_popup_title` → intro `contact_popup_text` → all normalized contacts (not filtered by `show_in_socialbar`). `_blank` gets `rel="noopener noreferrer"`. About / service CTAs stay `NuxtLink` to `/contact` (no popup overlay).
+
+SEO: `useSeoMeta` title + plain excerpt on case / service / about / contact pages.
 
 Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, `getCaseComposition`, image URL, slice layout, `balanceCaseScreenColumns`). Archive row helpers: [`archive.ts`](../app/domain/portfolio/archive.ts) (`NN`, specimen, meta fallback). Service archive: [`app/domain/services/archive.ts`](../app/domain/services/archive.ts) (featured specimen, tags meta or chrome «Услуга»). Does not change the `Case` model shape beyond normalize mapping.
 
@@ -84,6 +89,7 @@ When `/en/` is wired, resolve as follows. Until then the app reads RU only.
 | Service chrome | `services_section_heading`, `services_price_from`, `hero_order_label` | `*_en` on the same options keys | localized option |
 | About title / intro | page title / content | `post_title_en`, `post_content_en` | same as service |
 | About skills / CTA / H2 | `about-repeater`, `about_cta_label`, `about_section_title` | `about-repeater_en`, `*_en` | localized; photo has no EN pair |
+| Contacts | `weblaba_contacts.label`, `contact_popup_title`, `contact_popup_text` | `label_en`, `contact_popup_*_en` | localized option / row |
 | Trap | — | EN repeater without `post_title_en` / `post_content_en` | hero stays RU |
 
 Mobile field mapping (cases): slices from `screen-mobile` (`block_ratio` defaults to `1/2.3`); composite mockup from `screenshot_image` whenever set (can coexist with slices). Filled media is never discarded.
@@ -98,6 +104,6 @@ Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `
 
 - Components must not call WordPress URLs directly.
 - Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally ([`main.css`](../app/assets/css/main.css)).
-- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing: [`archive.css`](../app/assets/css/archive.css). Services: [`services.css`](../app/assets/css/services.css) (no wash). About: [`about.css`](../app/assets/css/about.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive, case, service, or about pages.
+- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing: [`archive.css`](../app/assets/css/archive.css). Services: [`services.css`](../app/assets/css/services.css) (no wash). About: [`about.css`](../app/assets/css/about.css). Contact: [`contact.css`](../app/assets/css/contact.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive, case, service, about, or contact pages.
 - Service archive return uses session key `wl:archive-return:services` (portfolio keeps `wl:archive-return`).
 - `wpFetch` must not call `useRuntimeConfig()` after `await` inside `useAsyncData` (NUXT_E1001). Resolve base via `tryUseNuxtApp()?.$config` with env fallback ([`client.ts`](../app/api/client.ts)).

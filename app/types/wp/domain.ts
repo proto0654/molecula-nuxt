@@ -29,8 +29,6 @@ export type CaseGalleryItem = {
 /** Mobile mockup — screenshot_image, or screen-mobile fallback when slices cannot run. */
 export type CaseMobileVisual = {
   image: CaseImage;
-  /** HTML caption; null if empty / absent. */
-  captionHtml: string | null;
 };
 
 /**
@@ -63,6 +61,11 @@ export type Case = {
   video: CaseVideo | null;
   mobile: CaseMobileVisual | null;
   mobileSlices: CaseMobileSlices | null;
+  /**
+   * ACF `podpis_vozle_mokapa_mobily_pravo` — caption beside composite mockup,
+   * or a standalone section before slices when there is no mockup.
+   */
+  mobileSignatureHtml: string | null;
   client: string | null;
   projectUrl: string | null;
   technologies: string | null;
@@ -122,6 +125,32 @@ export type AboutPage = {
   sectionTitle: string | null;
   skills: AboutSkill[];
   ctaLabel: string | null;
+};
+
+export type ContactIcon =
+  | 'telegram'
+  | 'phone'
+  | 'vk'
+  | 'whatsapp'
+  | 'email'
+  | 'instagram'
+  | 'github'
+  | 'facebook'
+  | 'link';
+
+export type Contact = {
+  label: string;
+  url: string;
+  icon: ContactIcon;
+  target: '_self' | '_blank';
+  showInSocial: boolean;
+};
+
+/** Theme-options contact page (RU only). Empty repeater → []. */
+export type ContactPage = {
+  title: string | null;
+  text: string | null;
+  contacts: Contact[];
 };
 
 export type NavigationMenuItem = {

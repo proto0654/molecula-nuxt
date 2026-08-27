@@ -147,6 +147,13 @@ Theme options chrome (same options payload):
 | `services_section_heading` | `Предлагаемые услуги и сервисы:` | `Offered services and amenities:` |
 | `services_price_from` | `от` | `from` |
 | `hero_order_label` | `Заказать` | `Order` |
+| `contact_popup_title` | `Свяжитесь со мной` | `Contact me` |
+| `contact_popup_text` | messenger CTA copy | EN pair |
+| `weblaba_contacts` | repeater (see below) | `label_en` per row |
+
+Contacts repeater (`weblaba_contacts`, 2026-08-27): Telegram, `tel:`, VK, mailto. Fields: `label`, `label_en`, `url`, `icon` (Iconify id, e.g. `bx:bxltelegram`, `mdi:vk`), `target` (`_self` / `_blank`), `show_in_header` (legacy), `show_in_socialbar`. No WP page with slug `contact` — options only. Empty repeater is `false` / `[]`; Nuxt does not inject PHP Telegram+phone defaults.
+
+Other options present but unused in Nuxt: footer legal, schema.org (`schema_org_description` empty, `schema_org_telephone` empty, `schema_org_same_as` = `false`), header/drawer strings, scroll-to-top. `gtm_container_id` is **not** in the live payload.
 
 Nuxt archive is compact rows (like portfolio), **not** the WP `all_services` dump of full repeaters on one page. Detail is `/services/:slug`.
 

@@ -7,7 +7,7 @@
 
 - [`api-real-response.md`](../docs/api-real-response.md) — фактическая структура WP API
 - [`../CONTEXT.md`](../CONTEXT.md) — короткий стек / entry points
-- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; `/about` `/services` live; `/contact` stub; EN i18n later
+- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; `/about` `/services` `/contact` live; EN i18n later
 
 ---
 
@@ -51,13 +51,13 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Persistent shell:** one canvas / `MoleculeController` / rAF across routes — [`docs/SPATIAL.md`](../docs/SPATIAL.md)
 - **Spatial:** `/` home (hub `C` always focused, pointer live); other routes frozen + page overlay
 - **API:** `app/api/client.ts` + portfolio/services/options/menus/pages/media; components не знают REST URL
-- **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw, unused in UI.
+- **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw, unused in UI.
 - **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); paginate slim then `include` ids; SiteChrome meta `ARCHIVE`; transparent page over frozen molecule; featured wash on hover is CSS-only (`.archive-row__backdrop`), gated by `is-washes-ready` / [`usePortfolioWashGate`](../app/composables/usePortfolioWashGate.ts)
 - **Case page:** editorial inspection (12-col grid, SiteChrome `CASE / NN`); Interface = `landing_screen` + repeater; sequential `getCaseComposition` markers including NEXT; lightbox + `useCaseScrollEntry`; in-page case→case via `useCasePageTransition` (hold previous payload, no generic loader); Index restores `?page=` + scroll (`wl:archive-return`); featured wash is layout-owned (not remounted in CaseShell); same wash entrance gate from outside portfolio
 - **Typography:** `--font-ui` JetBrains Mono (HUD / all-caps titles / troika); `--font-body` Exo 2 300 (case prose / intro / captions). Titles via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue) — absolute paint layer, pose-gated (+ case `revealReady`); archive/section body fade via [`usePageContentReveal`](../app/composables/usePageContentReveal.ts)
 - **Services:** `/services` editorial archive (no featured wash); `/services/[slug]` title+tags → intro → offer repeater (price + options chrome) + prev/next; [`useServices`](../app/composables/useServices.ts); return key `wl:archive-return:services`
 - **About:** `/about` photo + tags + intro + skills repeater + CTA → `/contact`; [`useAbout`](../app/composables/useAbout.ts); empty repeater hides skills (no PHP demo fallback)
-- **Contact stub:** `/contact` still [`SectionShell`](../app/components/section/SectionShell.vue)
+- **Contact:** `/contact` from ACF options (`weblaba_contacts` + popup title/text); [`useContacts`](../app/composables/useContacts.ts) + [`ContactList`](../app/components/contact/ContactList.vue); empty repeater → `[]` (no PHP defaults); no popup overlay
 - **Off-home chrome:** header route menu (direct `transitionTo`); molecule rail / bottom nav / MENU hidden; logo clickable (`pointer-events: auto`)
 - **Approach:** `Navigator` single approach tween (zoom+fill together); `freeze()` + hide labels at start; no forward veil
 - **Prerender:** portfolio **and** service slugs queued at generate/build via live WP (+ `/about` `/services` `/contact`)
@@ -67,10 +67,10 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 
 ## Следующая итерация
 
-**Выбранный scope:** реальный `/contact` (WP / ACF contacts) и при необходимости EN i18n (`*_en` / `service-repeater_en` уже типизированы, UI RU-only).
+**Выбранный scope:** EN i18n (`*_en` / `service-repeater_en` / contact `label_en` уже типизированы, UI RU-only). Опционально: footer-legal + `/privacy-policy`, schema.org / GTM, socialbar из `show_in_socialbar`.
 
 Мелкий долг: unused menu composable, SEO canonical — [`ROADMAP.md`](ROADMAP.md) → Foundation gaps.  
-Не ломать content pipeline, conditional rendering, case visual / wash, services archive (no wash), persistent shell.
+Не ломать content pipeline, conditional rendering, case visual / wash, services archive (no wash), persistent shell, `/contact` options normalize.
 
 ---
 
@@ -1118,13 +1118,13 @@ Do NOT continue automatically into visual case redesign.
 # D. ПРОМПТ ДЛЯ СЛЕДУЮЩЕГО ЧАТА (короткий)
 
 ```
-Продолжаем headless WebLaba: foundation + case visual + archive + spatial shell done; /about and /services are live WP (services archive without wash; detail = offer repeater). /contact still stub. EN fields typed, unused in UI.
+Продолжаем headless WebLaba: foundation + case visual + archive + spatial shell done; /about, /services, /contact are live WP (services archive without wash; contact = ACF weblaba_contacts + popup chrome, no form/popup overlay). EN fields typed, unused in UI.
 
 Источник правды: tasks/HEADLESS_NUXT_TZ.md
 Сверка: tasks/ROADMAP.md
 Content: docs/CONTENT.md + docs/api-real-response.md
 Case / archive visual: docs/CASES.md
 
-Scope: реальный /contact и/или EN i18n, если попросят.
-Не ломать absence-as-null, case wash, services-without-wash, persistent shell.
+Scope: EN i18n, если попросят; иначе foundation gaps / footer-legal+privacy / schema+GTM.
+Не ломать absence-as-null, case wash, services-without-wash, persistent shell, contact options normalize.
 ```

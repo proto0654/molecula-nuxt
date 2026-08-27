@@ -192,6 +192,16 @@ export type AboutAcf = {
  * ACF options used as UI chrome (not post fields).
  * EN keys are typed for i18n later; current UI reads RU only.
  */
+export type ContactAcfRow = {
+  label?: string | false;
+  label_en?: string | false;
+  url?: string | false;
+  icon?: string | false;
+  target?: string | false;
+  show_in_header?: boolean;
+  show_in_socialbar?: boolean;
+};
+
 export type ThemeOptionsAcf = {
   services_section_heading?: string | false;
   services_section_heading_en?: string | false;
@@ -199,6 +209,11 @@ export type ThemeOptionsAcf = {
   services_price_from_en?: string | false;
   hero_order_label?: string | false;
   hero_order_label_en?: string | false;
+  weblaba_contacts?: ContactAcfRow[] | false;
+  contact_popup_title?: string | false;
+  contact_popup_title_en?: string | false;
+  contact_popup_text?: string | false;
+  contact_popup_text_en?: string | false;
 };
 
 export type WpAcfOptionsResponse = {

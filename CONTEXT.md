@@ -35,13 +35,13 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 - Type: `--font-ui` JetBrains Mono (HUD / titles / troika); `--font-body` Exo 2 300 (case prose / intro / captions) — [`docs/DESIGN.md`](docs/DESIGN.md)
 - Services: [`app/pages/services/`](app/pages/services/) + [`app/components/service/`](app/components/service/) + [`useServices`](app/composables/useServices.ts) — archive like portfolio **without** featured wash; detail = title/tags + intro + offer repeater
 - About: [`app/pages/about.vue`](app/pages/about.vue) + [`app/components/about/`](app/components/about/) + [`useAbout`](app/composables/useAbout.ts)
-- Section stub: [`/contact`](app/pages/contact.vue) + [`SectionShell`](app/components/section/SectionShell.vue)
+- Contact: [`app/pages/contact.vue`](app/pages/contact.vue) + [`app/components/contact/`](app/components/contact/) + [`useContacts`](app/composables/useContacts.ts) — ACF `weblaba_contacts` + popup title/text
 - Case visual: [`app/assets/css/case.css`](app/assets/css/case.css) + [`CaseShell`](app/components/case/CaseShell.vue) — [`docs/CASES.md`](docs/CASES.md) (featured wash is layout-owned, not inside CaseShell)
 - Archive visual: [`app/assets/css/archive.css`](app/assets/css/archive.css)
 
 ## Current focus
 
-**Persistent molecular shell is in:** canvas / controller live in the default layout across routes. Home is the only interactive spatial mode: hub `C` is always committed with full readout (typewriter blurb + USP), never an empty deselect. Other routes freeze the molecule and overlay page content after pose settle (`is-awaiting-pose`); settled freeze also lerps selection chrome (rings / cross / wireframe) to black. Leave-home approach: parallel zoom/fill + orbit (not one packed tween). `/about` and `/services` (plus `/services/:slug`) are live WP; `/contact` is still a stub. Spatial architecture: [`docs/SPATIAL.md`](docs/SPATIAL.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+**Persistent molecular shell is in:** canvas / controller live in the default layout across routes. Home is the only interactive spatial mode: hub `C` is always committed with full readout (typewriter blurb + USP), never an empty deselect. Other routes freeze the molecule and overlay page content after pose settle (`is-awaiting-pose`); settled freeze also lerps selection chrome (rings / cross / wireframe) to black. Leave-home approach: parallel zoom/fill + orbit (not one packed tween). `/about`, `/services` (plus `/services/:slug`), and `/contact` are live WP. Spatial architecture: [`docs/SPATIAL.md`](docs/SPATIAL.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
 
 ## Docs hub
 
