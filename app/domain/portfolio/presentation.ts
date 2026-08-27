@@ -330,6 +330,7 @@ export type CaseSectionKey =
   | 'content'
   | 'gallery'
   | 'mobile'
+  | 'signature'
   | 'slices'
   | 'next';
 
@@ -346,6 +347,7 @@ export type CaseSectionNumbers = {
   content: number;
   gallery: number;
   mobile: number;
+  signature: number;
   slices: number;
   next: number;
 };
@@ -386,6 +388,15 @@ const BODY_SECTION_DEFS: Array<{
     present: (c) => Boolean(c.mobile),
   },
   {
+    // Slices-only cases: caption as its own block before the grid (usually adaptive copy).
+    // When a composite mockup exists, the same field sits beside the phone in CaseMobile.
+    key: 'signature',
+    label: 'Mobile',
+    tone: 'editorial',
+    present: (c) =>
+      Boolean(c.mobileSignatureHtml) && caseHasSlices(c) && !c.mobile,
+  },
+  {
     key: 'slices',
     label: 'Slices',
     tone: 'visual',
@@ -408,6 +419,7 @@ export function getCaseComposition(c: Case): CaseComposition {
     content: 0,
     gallery: 0,
     mobile: 0,
+    signature: 0,
     slices: 0,
     next: 0,
   };

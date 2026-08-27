@@ -92,7 +92,7 @@ When `/en/` is wired, resolve as follows. Until then the app reads RU only.
 | Contacts | `weblaba_contacts.label`, `contact_popup_title`, `contact_popup_text` | `label_en`, `contact_popup_*_en` | localized option / row |
 | Trap | — | EN repeater without `post_title_en` / `post_content_en` | hero stays RU |
 
-Mobile field mapping (cases): slices from `screen-mobile` (`block_ratio` defaults to `1/2.3`); composite mockup from `screenshot_image` whenever set (can coexist with slices). Filled media is never discarded.
+Mobile field mapping (cases): slices from `screen-mobile` (`block_ratio` defaults to `1/2.3`); composite mockup from `screenshot_image` whenever set (can coexist with slices); signature `podpis_vozle_mokapa_mobily_pravo` beside mockup, or its own section before slices when slices-only. Filled media/signature is never discarded.
 
 ## Prerender / Pages
 

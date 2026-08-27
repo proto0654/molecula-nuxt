@@ -1292,6 +1292,26 @@
   }
 }
 
+/* --- Mobile signature (slices-only, before CaseSlices) --- */
+
+.case-mobile-signature__prose {
+  margin: 0;
+  width: min(100%, var(--case-mobile-caption-max));
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: var(--text-case-intro);
+  line-height: 1.55;
+  color: var(--ink-62);
+}
+
+.case-mobile-signature__prose p {
+  margin: 0 0 0.75em;
+}
+
+.case-mobile-signature__prose p:last-child {
+  margin-bottom: 0;
+}
+
 /* --- Mobile slice grid --- */
 
 .case-slices {

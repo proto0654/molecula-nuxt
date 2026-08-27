@@ -17,7 +17,8 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 | [`CaseContent.vue`](../app/components/case/CaseContent.vue) | Editorial Overview: 3-col label + 6-col CMS body + optional facts |
 | [`CaseFacts.vue`](../app/components/case/CaseFacts.vue) | Compact CLIENT / STACK / URL — each field only if present |
 | [`CaseGallery.vue`](../app/components/case/CaseGallery.vue) | Interface: `landing_screen` + repeater (3-col / masonry) |
-| [`CaseMobile.vue`](../app/components/case/CaseMobile.vue) | Composite phone mockup (`screenshot_image`) — flat image, `--case-mobile-max` width |
+| [`CaseMobile.vue`](../app/components/case/CaseMobile.vue) | Composite phone mockup (`screenshot_image`) — flat image, `--case-mobile-max` width; signature beside when filled |
+| [`CaseMobileSignature.vue`](../app/components/case/CaseMobileSignature.vue) | `podpis_vozle_mokapa_mobily_pravo` as its own section when slices-only (no composite mockup) |
 | [`CaseSlices.vue`](../app/components/case/CaseSlices.vue) | Decomposed `screen-mobile` grid via `block_ratio` (center col, like Interface) |
 | [`CaseLightbox.vue`](../app/components/case/CaseLightbox.vue) | Dark overlay, technical index, close / prev-next |
 | [`CaseNavigation.vue`](../app/components/case/CaseNavigation.vue) | Numbered NEXT: Previous / Back to portfolio / Next |
@@ -36,6 +37,7 @@ Narrative (not printed on the page): INTRO → INSPECT → EXPLORE → MOBILE �
 | INSPECT | Overview | `NN / OVERVIEW` | `contentHtml` |
 | EXPLORE | Interface (`landing_screen` + repeater) | `NN / INTERFACE` | any screen item |
 | MOBILE | Composite mockup | `NN / MOBILE` | `c.mobile` |
+| MOBILE | Signature (slices-only) | `NN / MOBILE` | signature filled + slices + no mockup |
 | CONCLUDE | Slices | `NN / SLICES` | valid slice layout |
 | NEXT | Footer | `NN / NEXT` | always (last number) |
 
@@ -115,7 +117,7 @@ CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, lin
 
 ## Visual media blocks
 
-Page order: Header + Hero → Overview → Interface → Mobile → Slices → NEXT.
+Page order: Header + Hero → Overview → Interface → Mobile → Signature (slices-only) → Slices → NEXT.
 
 Optional; missing blocks leave no reserved gap. Numbered sections count **visible** blocks only.
 
@@ -157,8 +159,9 @@ Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `ove
 | **Slices** | `screen-mobile` + image dimensions | CSS `background-position-y` cards; `block_ratio` defaults to `1/2.3` if empty |
 | **Composite mockup** | `screenshot_image` present | Level 2 lift; shown even when slices exist |
 | **Fallback mockup** | `screen-mobile` but no usable dimensions, and no `screenshot_image` | Full tall screen as specimen |
+| **Signature** | `podpis_vozle_mokapa_mobily_pravo` filled | Beside composite/fallback mockup; if slices-only (no mockup), own editorial section immediately before Slices |
 
-Do not drop filled `screen-mobile` / `screenshot_image`. Both sections may appear on the same case.
+Do not drop filled `screen-mobile` / `screenshot_image` / mobile signature. Both mockup and slices may appear on the same case.
 
 **Composite mockup (Mobile):** flat `screenshot_image` (no card frame). lg grid: mockup `--case-mobile-max` + caption spanning two `22rem` tracks (`--case-mobile-caption-max`). Body zone cols 4–12.
 

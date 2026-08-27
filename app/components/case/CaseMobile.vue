@@ -57,9 +57,9 @@ function openMockup() {
         </div>
       </div>
       <div
-        v-if="caseData.mobile.captionHtml"
+        v-if="caseData.mobileSignatureHtml"
         class="case-mobile__caption"
-        v-html="caseData.mobile.captionHtml"
+        v-html="caseData.mobileSignatureHtml"
       />
     </div>
   </CaseSection>

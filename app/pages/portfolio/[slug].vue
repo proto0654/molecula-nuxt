@@ -60,6 +60,7 @@ const sections = computed(
       content: 0,
       gallery: 0,
       mobile: 0,
+      signature: 0,
       slices: 0,
       next: 0,
     },
@@ -164,6 +165,11 @@ useSeoMeta({
         v-if="sections.mobile"
         :case-data="caseData"
         :section-index="sections.mobile"
+      />
+      <CaseMobileSignature
+        v-if="sections.signature"
+        :case-data="caseData"
+        :section-index="sections.signature"
       />
       <CaseSlices
         v-if="sections.slices"

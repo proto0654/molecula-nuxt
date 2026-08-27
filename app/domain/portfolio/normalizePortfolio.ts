@@ -48,6 +48,15 @@ function normalizeMobileSlices(
   return { image, ratio };
 }
 
+/** Caption beside mockup / before slices — never drop when media is slices-only. */
+function normalizeMobileSignature(acf: WpPortfolioPost['acf']): string | null {
+  return emptyToNull(
+    acf?.podpis_vozle_mokapa_mobily_pravo === false
+      ? null
+      : acf?.podpis_vozle_mokapa_mobily_pravo,
+  );
+}
+
 /**
  * Phone composite / mobile specimen.
  * Prefer screenshot_image (ready mockup). If absent and slices cannot run,
@@ -58,20 +67,14 @@ function normalizeMobile(
   acf: WpPortfolioPost['acf'],
   hasSlices: boolean,
 ): CaseMobileVisual | null {
-  const captionHtml = emptyToNull(
-    acf?.podpis_vozle_mokapa_mobily_pravo === false
-      ? null
-      : acf?.podpis_vozle_mokapa_mobily_pravo,
-  );
-
   const composite = normalizeAcfImage(acf?.screenshot_image);
-  if (composite) return { image: composite, captionHtml };
+  if (composite) return { image: composite };
 
   if (hasSlices) return null;
 
   const fallback = normalizeAcfImage(acf?.['screen-mobile']);
   if (!fallback) return null;
-  return { image: fallback, captionHtml };
+  return { image: fallback };
 }
 
 /**
@@ -84,6 +87,7 @@ export function normalizePortfolioPost(post: WpPortfolioPost): Case {
   const excerptHtml = emptyToNull(post.excerpt?.rendered);
   const mobileSlices = normalizeMobileSlices(acf);
   const mobile = normalizeMobile(acf, mobileSlices != null);
+  const mobileSignatureHtml = normalizeMobileSignature(acf);
 
   return {
     id: post.id,
@@ -106,6 +110,7 @@ export function normalizePortfolioPost(post: WpPortfolioPost): Case {
     video: normalizeAcfVideo(acf.video),
     mobile,
     mobileSlices,
+    mobileSignatureHtml,
     client: emptyToNull(acf.client === false ? null : acf.client),
     projectUrl: emptyToNull(acf.project_url === false ? null : acf.project_url),
     technologies: emptyToNull(acf.technologies === false ? null : acf.technologies),
