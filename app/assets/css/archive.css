@@ -84,7 +84,7 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
   border-bottom: 1px solid var(--wl-line);
 }
 
-/* CSS-only featured wash — hover/focus, no JS store. */
+/* CSS-only featured wash — hover/focus, gated by .is-washes-ready. */
 .archive-row__backdrop {
   position: fixed;
   inset: 0;
@@ -93,8 +93,8 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
   opacity: 0;
   visibility: hidden;
   transition:
-    opacity 0.4s ease,
-    visibility 0.4s ease;
+    opacity 1.15s cubic-bezier(0.33, 0.1, 0.25, 1),
+    visibility 1.15s cubic-bezier(0.33, 0.1, 0.25, 1);
 }
 
 .archive-row__backdrop-wash,
@@ -118,8 +118,8 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
 }
 
 @media (hover: hover) {
-  .archive-row:hover .archive-row__backdrop,
-  .archive-row:focus-within .archive-row__backdrop {
+  .archive-page.is-washes-ready .archive-row:hover .archive-row__backdrop,
+  .archive-page.is-washes-ready .archive-row:focus-within .archive-row__backdrop {
     opacity: 1;
     visibility: visible;
   }

@@ -46,6 +46,7 @@ watch(page, (_next, prev) => {
 });
 
 const { revealing } = usePageContentReveal();
+const { washesReady } = usePortfolioWashGate();
 
 useSeoMeta({
   title: 'Портфолио — WebLaba',
@@ -54,7 +55,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <ArchiveShell :revealing="revealing">
+  <ArchiveShell :revealing="revealing" :washes-ready="washesReady">
     <header class="archive-heading">
       <p class="archive-heading__kicker">Index</p>
       <SiteScrambleTitle class="archive-heading__title" text="Portfolio" />

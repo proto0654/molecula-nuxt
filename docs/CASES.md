@@ -180,7 +180,9 @@ Numbered editorial section. Labels: **Previous** + case title, **Index / Back to
 
 Molecular → archive: [`Navigator`](../app/lib/navigation/Navigator.ts) zoom/fill/veil, then [`routeVeil`](../app/lib/navigation/routeVeil.ts) handoff so the overlay survives hero unmount. Archive dismisses the veil (opacity). Reduced motion skips zoom/fill (`immediate` overlay + navigate). Do not add a second veil or a WebGL scene on archive/case.
 
-Archive → case: persistent wash stays mounted; click commits the row’s featured URL + accent then case page re-commits when ready (same URL = no flash). No View Transition specimen morph. Landing-only cases fade wash out if they have no featured. Case L1 body enter only. Do not morph into the video hero.
+Archive → case: click commits featured URL + accent; case layout wash shows when washes-ready (immediate within portfolio). No View Transition specimen morph. Landing-only cases fade wash out if they have no featured. Case L1 body enter only. Do not morph into the video hero.
+
+Entering `/portfolio*` from home/sections: pose settle, then ~700ms hold, then washes fade in (~1.15s). Archive↔case does not re-gate.
 
 Case → archive: existing body L1 exit, then archive reveal; wash **stays** (sticky). [`sessionStorage`](../app/lib/navigation/archiveReturn.ts) `wl:archive-return` restores `?page=` and scroll to the row. Index / Back to portfolio use that href. No accent reveal on the archive.
 

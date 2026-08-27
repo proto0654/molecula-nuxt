@@ -41,7 +41,7 @@
 - [x] STEP 9–19 + acceptance §28 (без case redesign)
 - [x] Document scroll unlock on portfolio/case (`html.hero-lock` only on home)
 - [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, video hero + featured backdrop, Screens = landing+repeater (inner-pages), lightbox, ScrollTrigger entry
-- [x] Persistent portfolio backdrop: CSS hover wash on archive rows; layout `PortfolioBackdrop` on case routes (accent overlay; no JS hover / specimen VT morph)
+- [x] Persistent portfolio backdrop: CSS hover wash on archive rows; layout `PortfolioBackdrop` on case routes; `usePortfolioWashGate` soft entrance from outside portfolio; accent overlay; no JS hover / specimen VT morph
 - [x] Persistent molecular shell: layout-owned canvas, spatial state machine, home hub always focused, freeze off-home
 - [x] Case composition pass: sequential markers (including NEXT), density recipes A–G, motion L1/L2/L3, in-page case→case reveal + delayed accent
 - [x] Portfolio archive + Home/Case integration: editorial numbered rows, SiteChrome, veil handoff, session restore, case→case without generic loader

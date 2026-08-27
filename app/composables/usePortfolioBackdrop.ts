@@ -5,11 +5,11 @@ export type PortfolioBackdropState = {
   accent: string | null;
 };
 
-function isPortfolioPath(path: string): boolean {
+export function isPortfolioPath(path: string): boolean {
   return path === '/portfolio' || path.startsWith('/portfolio/');
 }
 
-function isCasePath(path: string): boolean {
+export function isCasePath(path: string): boolean {
   return /^\/portfolio\/[^/]+\/?$/.test(path);
 }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const route = useRoute();
 const { state, clear, isPortfolioPath, isCasePath } = usePortfolioBackdrop();
+const { washesReady } = usePortfolioWashGate();
 
 watch(
   () => route.path,
@@ -10,7 +11,9 @@ watch(
 );
 
 const onCase = computed(() => isCasePath(route.path));
-const layerOn = computed(() => onCase.value && Boolean(state.value.url));
+const layerOn = computed(
+  () => onCase.value && washesReady.value && Boolean(state.value.url),
+);
 const washStyle = computed(() =>
   state.value.url
     ? { backgroundImage: `url(${state.value.url})` }

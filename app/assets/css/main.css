@@ -356,7 +356,7 @@ html.hero-lock #__nuxt {
   background-position: center top;
   background-size: cover;
   background-repeat: no-repeat;
-  transition: opacity 0.45s ease;
+  transition: opacity 1.15s cubic-bezier(0.33, 0.1, 0.25, 1);
   mask-image: var(--portfolio-backdrop-mask);
 }
 
@@ -372,7 +372,7 @@ html.hero-lock #__nuxt {
   background-color: var(--backdrop-accent);
   opacity: 0;
   mask-image: var(--portfolio-backdrop-mask);
-  transition: opacity 0.45s ease;
+  transition: opacity 1.15s cubic-bezier(0.33, 0.1, 0.25, 1);
   pointer-events: none;
 }
 
