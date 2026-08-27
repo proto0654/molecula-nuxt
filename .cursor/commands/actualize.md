@@ -22,7 +22,7 @@ Before editing docs, ensure the codebase matches what we document:
 3. If not on **`main`** and the **branch work is done** — remind: merge to `main` when ready (Pages deploys on push to `main`).
 4. Note in output: **«Snapshot: `<git log -1 --oneline>` on `<branch>`»**.
 
-Deploy already exists: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) runs `npm run generate` with `NUXT_APP_BASE_URL=/molecule/` and `NUXT_PUBLIC_WP_API_BASE`. Do **not** invent a second pipeline. Only document workflow / env / `baseURL` changes if they actually changed.
+Deploy already exists: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) runs `npm run generate` with `NUXT_APP_BASE_URL=/molecula-nuxt/` and `NUXT_PUBLIC_WP_API_BASE`. Primary remote: `origin` → [proto0654/molecula-nuxt](https://github.com/proto0654/molecula-nuxt). Do **not** invent a second pipeline. Only document workflow / env / `baseURL` changes if they actually changed.
 
 Node: `^22.19.0` (see `package.json` engines). Scripts: `npm run dev` / `build` / `generate` / `preview`.
 
@@ -79,7 +79,7 @@ Session readiness
 - Git clean: yes/no
 - Suggested commit: … (if needed)
 - Verify: npm run build (if TS/scene/Nuxt changed); npm run generate (if prerender/Pages/API routes changed) → npm run preview
-- Pages: push to main → Actions `nuxt generate` (base `/molecule/`)
+- Pages: push to main → Actions `nuxt generate` (base `/molecula-nuxt/`)
 ```
 
 Please suggest the specific edits for the documentation files now.

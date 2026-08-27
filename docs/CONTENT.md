@@ -59,7 +59,7 @@ Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/por
 
 [`nuxt.config.ts`](../nuxt.config.ts) `nitro:config` hook fetches all publish slugs and queues `/portfolio/{slug}`. GitHub Pages uses `npm run generate` (static); no Nitro runtime.
 
-Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `NUXT_APP_BASE_URL=/molecule/` and `NUXT_PUBLIC_WP_API_BASE`.
+Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `NUXT_APP_BASE_URL=/molecula-nuxt/` and `NUXT_PUBLIC_WP_API_BASE`. Preview: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/).
 
 ## Gotchas
 

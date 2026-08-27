@@ -13,8 +13,8 @@
 
 # A. ГДЕ МЫ СЕЙЧАС ОСТАНОВИЛИСЬ
 
-**Дата чекпоинта:** 2026-08-26  
-**Ветка:** `feat/nuxt-headless-foundation` (от `main`)  
+**Дата чекпоинта:** 2026-08-27  
+**Ветка:** `main` (`origin` = `molecula-nuxt`)  
 **Удалено намеренно:** ветка `feat/headless-api-foundation` (неудачная Vite-API итерация; не переносить)
 
 ## Статус шагов из §27 IMPLEMENTATION ORDER
@@ -58,7 +58,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Off-home chrome:** header route menu (direct `transitionTo`); molecule rail / bottom nav / MENU hidden; logo clickable (`pointer-events: auto`)
 - **Approach:** `Navigator` single approach tween (zoom+fill together); `freeze()` + hide labels at start; no forward veil
 - **Prerender:** all portfolio slugs queued at generate/build via live WP API (+ `/about` `/services` `/contact`)
-- **Deploy:** `.github/workflows/deploy.yml` → `nuxt generate` + `NUXT_APP_BASE_URL`
+- **Deploy:** `origin` = [proto0654/molecula-nuxt](https://github.com/proto0654/molecula-nuxt); legacy remote `molecule` = [proto0654/molecule](https://github.com/proto0654/molecule) (не трогать). `.github/workflows/deploy.yml` → `nuxt generate` + `NUXT_APP_BASE_URL=/molecula-nuxt/` → [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/)
 - **Case / archive docs:** [`docs/CASES.md`](../docs/CASES.md), [`docs/CONTENT.md`](../docs/CONTENT.md)
 - **Spatial docs:** [`docs/SPATIAL.md`](../docs/SPATIAL.md)
 

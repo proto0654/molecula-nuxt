@@ -48,7 +48,7 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
   },
   app: {
-    // Set via NUXT_APP_BASE_URL for GitHub Pages (e.g. /molecule/). Do not hardcode.
+    // Set via NUXT_APP_BASE_URL for GitHub Pages (e.g. /molecula-nuxt/). Do not hardcode.
     baseURL: process.env.NUXT_APP_BASE_URL || '/',
     head: {
       title: 'Молекула',

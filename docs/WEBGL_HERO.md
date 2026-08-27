@@ -308,9 +308,9 @@ Resize sizing prefers `window.visualViewport` when present, else `innerWidth` / 
 | Target | Command | `base` |
 |--------|---------|--------|
 | Local dev / preview | `npm run dev`, `npm run build`, `npm run preview` | `/` |
-| GitHub Pages | push to `main` → [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) (`GITHUB_PAGES=true`) | `/molecule/` |
+| GitHub Pages | push to `main` → [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) | `/molecula-nuxt/` |
 
-Live site: [proto0654.github.io/molecule](https://proto0654.github.io/molecule/). Fonts live in `public/fonts/` (copied to dist root).
+Live site: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/). Fonts live in `public/fonts/` (copied to dist root).
 
 **Subpath gotcha:** Vite rewrites CSS `url('/fonts/…')` at build time, but **JS string literals are not**. Troika and any runtime fetch must prefix with `import.meta.env.BASE_URL` (trailing slash included). Hard-coded `/fonts/JetBrainsMono-Regular.ttf` works locally and 404s on GitHub Pages.
 
