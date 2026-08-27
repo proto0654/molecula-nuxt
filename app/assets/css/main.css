@@ -147,6 +147,7 @@
   --hud-inset: 1.15rem 1.35rem 4.75rem;
   --hud-inset-tablet: 1rem 1.1rem 4.5rem;
   --hud-inset-mobile: 2.75rem 0.75rem 5.5rem;
+  --hud-inset-mobile-off-home: 2.75rem 0.75rem 0.75rem;
   --hud-inset-mobile-bottom: 5.5rem;
   --nav-mobile-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
   /* Equal edges — corner ticks sit on this frame; header/nav pad inward from ticks */
@@ -1347,6 +1348,10 @@ html.nav-overlay-open body {
   }
 
   .hud__frame {
+    inset: var(--hud-inset-mobile-off-home);
+  }
+
+  .app-shell.is-home .hud__frame {
     inset: var(--hud-inset-mobile);
   }
 
