@@ -30,7 +30,7 @@ useCaseScrollEntry({
     <div class="case-section__body case-zone-body">
       <span class="case-scroll-trigger" aria-hidden="true" />
       <div class="case-scroll-motion">
-        <h2 v-if="chrome.sectionHeading" class="service-offers__heading">
+        <h2 v-if="chrome.sectionHeading" class="editorial-repeater__heading">
           {{ chrome.sectionHeading }}
         </h2>
         <ServiceOfferRow

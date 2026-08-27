@@ -1,11 +1,14 @@
 <script setup lang="ts">
 defineProps<{
   label: string;
+  sectionIndex: number;
 }>();
 </script>
 
 <template>
-  <p class="about-cta">
-    <NuxtLink to="/contact" class="about-cta__link">{{ label }}</NuxtLink>
-  </p>
+  <CaseSection :index="sectionIndex" label="Contact" tone="editorial">
+    <p class="about-cta">
+      <NuxtLink to="/contact" class="editorial-cta-link">{{ label }}</NuxtLink>
+    </p>
+  </CaseSection>
 </template>

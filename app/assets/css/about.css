@@ -1,107 +1,65 @@
-/* About section — editorial over the frozen molecule. */
+/* About detail — editorial case-grid (shared tokens with services). */
 
-.about-page {
-  max-width: 46rem;
+html.js-enabled .about-page .about-page__body {
+  opacity: 0;
 }
 
-.about-hero {
-  margin: 0 0 var(--case-space-first);
+html.js-enabled .about-page.is-revealing .about-page__body {
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .about-page .about-page__body,
+  html.js-enabled .about-page.is-revealing .about-page__body {
+    opacity: 1;
+    transition: none;
+  }
 }
 
 .about-photo {
   margin: 0;
+  width: 100%;
 }
 
-.about-photo img {
+.about-photo__img {
   display: block;
   width: 100%;
-  max-width: 22rem;
-  height: auto;
-  aspect-ratio: auto;
+  aspect-ratio: 3 / 4;
   object-fit: cover;
-}
-
-.about-hero__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.85rem;
-  margin: 1rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.about-hero__tag {
-  font-size: var(--text-meta);
-  letter-spacing: var(--track-meta);
-  text-transform: uppercase;
-  color: var(--wl-muted);
-}
-
-.about-heading {
-  margin-bottom: 1.75rem;
-}
-
-.about-intro {
-  margin: 0 0 var(--case-space-section);
-}
-
-.about-skills {
-  margin: 0 0 var(--case-space-section);
-}
-
-.about-skills__heading {
-  margin: 0 0 1.5rem;
-  font-family: var(--font-ui);
-  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-  font-weight: 400;
-  letter-spacing: var(--track-case-title);
-  line-height: 1.25;
-  color: var(--color-ink-title);
-}
-
-.about-skills__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.about-skill + .about-skill {
-  margin-top: 1.75rem;
-  padding-top: 1.75rem;
-  border-top: 1px solid var(--wl-line);
-}
-
-.about-skill__title {
-  margin: 0 0 0.65rem;
-  font-family: var(--font-ui);
-  font-size: 1.05rem;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  line-height: 1.3;
-  color: var(--color-ink-title);
+  object-position: center top;
 }
 
 .about-cta {
   margin: 0;
 }
 
-.about-cta__link {
-  display: inline-block;
-  font-size: var(--text-meta);
-  letter-spacing: var(--track-meta);
-  text-transform: uppercase;
-  color: var(--wl-accent);
-  text-decoration: none;
-  border-bottom: 1px solid var(--wl-accent);
+/* Hero — photo in label column (1–3), title in body column (4–end) like CaseSection */
+
+.about-hero {
+  align-items: start;
 }
 
-.about-cta__link:hover {
-  color: var(--color-ink-bright);
-  border-bottom-color: var(--color-ink-bright);
+.about-hero .case-header__title {
+  font-size: var(--text-case-title);
+  letter-spacing: 0.04em;
+  line-height: 1.05;
 }
 
-@media (min-width: 768px) {
-  .about-photo img {
-    max-width: 16rem;
+@media (min-width: 1024px) {
+  .about-page :is(.about-hero__text, .case-section .case-zone-body) {
+    grid-column: 4 / -1;
+  }
+
+  .about-page .about-hero__photo .about-photo__img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  .case-page--sparse .about-hero {
+    min-height: min(58vh, 28rem);
+    align-content: end;
   }
 }

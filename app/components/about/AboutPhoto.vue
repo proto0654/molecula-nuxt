@@ -13,6 +13,7 @@ const src = computed(() => caseImageUrl(props.photo, CASE_LANDING_SIZES));
 <template>
   <figure class="about-photo">
     <img
+      class="about-photo__img"
       :src="src"
       :alt="photo.alt || alt"
       :width="photo.width ?? undefined"

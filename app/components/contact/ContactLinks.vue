@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { AboutPage } from '~/types/wp';
+import type { ContactPage } from '~/types/wp';
 
 defineProps<{
-  page: AboutPage;
+  page: ContactPage;
   sectionIndex: number;
 }>();
 
@@ -16,27 +16,20 @@ useCaseScrollEntry({
 
 <template>
   <section
-    v-if="page.skills.length"
+    v-if="page.contacts.length"
     ref="root"
-    class="case-section case-grid case-section--tone-editorial about-skills"
+    class="case-section case-grid case-section--tone-editorial contact-links"
   >
     <CaseSectionMarker
       class="case-zone-label"
       :index="sectionIndex"
-      label="Skills"
+      label="Links"
       tone="editorial"
     />
     <div class="case-section__body case-zone-body">
       <span class="case-scroll-trigger" aria-hidden="true" />
       <div class="case-scroll-motion">
-        <h2 v-if="page.sectionTitle" class="editorial-repeater__heading">
-          {{ page.sectionTitle }}
-        </h2>
-        <AboutSkillRow
-          v-for="(skill, i) in page.skills"
-          :key="skill.title || i"
-          :skill="skill"
-        />
+        <ContactList :contacts="page.contacts" />
       </div>
     </div>
   </section>

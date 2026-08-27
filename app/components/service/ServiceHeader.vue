@@ -24,8 +24,8 @@ const titlePlain = computed(() => stripTags(props.service.title));
       :text="titlePlain"
       :ready="revealReady"
     />
-    <ul v-if="service.tags.length" class="service-header__tags">
-      <li v-for="tag in service.tags" :key="tag" class="service-header__tag">
+    <ul v-if="service.tags.length" class="editorial-header__tags">
+      <li v-for="tag in service.tags" :key="tag" class="editorial-header__tag">
         {{ tag }}
       </li>
     </ul>

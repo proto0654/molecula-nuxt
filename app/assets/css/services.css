@@ -17,7 +17,9 @@ html.js-enabled .service-page.is-revealing .service-page__body {
   }
 }
 
-.service-header__tags {
+/* Shared editorial blocks (services + about) */
+
+.editorial-header__tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.85rem;
@@ -26,14 +28,14 @@ html.js-enabled .service-page.is-revealing .service-page__body {
   list-style: none;
 }
 
-.service-header__tag {
+.editorial-header__tag {
   font-size: var(--text-meta);
   letter-spacing: var(--track-meta);
   text-transform: uppercase;
   color: var(--wl-muted);
 }
 
-.service-offers__heading {
+.editorial-repeater__heading {
   margin: 0 0 1.75rem;
   font-family: var(--font-ui);
   font-size: clamp(1.05rem, 2.2vw, 1.35rem);
@@ -43,13 +45,13 @@ html.js-enabled .service-page.is-revealing .service-page__body {
   color: var(--color-ink-title);
 }
 
-.service-offer + .service-offer {
+.editorial-repeater-row + .editorial-repeater-row {
   margin-top: 2.25rem;
   padding-top: 2.25rem;
   border-top: 1px solid var(--wl-line);
 }
 
-.service-offer__title {
+.editorial-repeater-row__title {
   margin: 0 0 0.85rem;
   font-family: var(--font-ui);
   font-size: clamp(1.05rem, 2vw, 1.35rem);
@@ -59,6 +61,26 @@ html.js-enabled .service-page.is-revealing .service-page__body {
   color: var(--color-ink-title);
 }
 
+.editorial-repeater-row__text {
+  margin: 0;
+}
+
+.editorial-cta-link {
+  font-size: var(--text-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--wl-accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--wl-accent);
+}
+
+.editorial-cta-link:hover {
+  color: var(--color-ink-bright);
+  border-bottom-color: var(--color-ink-bright);
+}
+
+/* Service-specific */
+
 .service-offer__anchor {
   color: inherit;
   text-decoration: none;
@@ -66,10 +88,6 @@ html.js-enabled .service-page.is-revealing .service-page__body {
 
 .service-offer__anchor:hover {
   color: var(--wl-accent);
-}
-
-.service-offer__text {
-  margin: 0;
 }
 
 .service-offer__price {
@@ -96,17 +114,6 @@ html.js-enabled .service-page.is-revealing .service-page__body {
 
 .service-offer__cta {
   margin-left: auto;
-  font-size: var(--text-meta);
-  letter-spacing: var(--track-meta);
-  text-transform: uppercase;
-  color: var(--wl-accent);
-  text-decoration: none;
-  border-bottom: 1px solid var(--wl-accent);
-}
-
-.service-offer__cta:hover {
-  color: var(--color-ink-bright);
-  border-bottom-color: var(--color-ink-bright);
 }
 
 @media (min-width: 1024px) {

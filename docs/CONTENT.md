@@ -11,8 +11,8 @@ pages / composables
   → app/types/wp/*     (raw + domain types)
   → components/archive/* + components/service/*  (editorial listing + service detail)
   → components/case/*     (conditional case blocks)
-  → components/about/*    (about photo / skills / CTA)
-  → components/contact/*  (contact links from theme options)
+  → components/about/*    (about shell / header / skills / CTA — case-grid like services)
+  → components/contact/*  (contact shell / header / links — case-grid like about)
 ```
 
 Live response notes: [`api-real-response.md`](api-real-response.md).
@@ -62,16 +62,16 @@ Rules:
 | `/portfolio/[slug]` | `CaseShell` + video hero + layout featured wash / accent overlay + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT |
 | `/services` | `useServices(page)` — slim-index pagination, editorial rows **without** featured wash |
 | `/services/[slug]` | `ServiceShell` + title/tags hero + intro (`contentHtml`) + offer repeater (price + «от» + order CTA) + prev/next |
-| `/about` | `SectionShell` + photo/tags + H1 + intro + skills repeater + CTA → `/contact` |
-| `/contact` | `SectionShell` + H1 «Контакты» + popup title/text + `weblaba_contacts` links |
+| `/about` | `AboutShell` + hero (photo in label col + title/tags) + intro + skills + CTA → `/contact` |
+| `/contact` | `ContactShell` + hero (kicker in label col + H1) + intro (`contact_popup_text`) + links repeater (`weblaba_contacts`) |
 
 Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
 
 Service detail composition: hero (title + tags, no featured) → intro if content → offers if rows (`services_section_heading` H2 only when both heading and rows exist) → NEXT. Price CTA only when `cf_price` is set. Chrome strings from theme options: `services_section_heading`, `services_price_from` (fallback «от»), `hero_order_label` (fallback «Заказать»).
 
-About order: photo + tags → H1 → intro → skills (H2 `about_section_title` only if title and rows) → CTA if `about_cta_label`.
+About order: hero (H1 + tags; photo in split column when set) → intro if content → skills if rows (H2 `about_section_title` only if title and rows) → CTA if `about_cta_label`. Section numbers via `getAboutComposition` (Intro / Skills / Contact).
 
-Contact order: H1 «Контакты» → kicker `contact_popup_title` → intro `contact_popup_text` → all normalized contacts (not filtered by `show_in_socialbar`). `_blank` gets `rel="noopener noreferrer"`. About / service CTAs stay `NuxtLink` to `/contact` (no popup overlay).
+Contact order: hero (H1 «Контакты» + kicker `contact_popup_title` in label col) → intro if text → links if rows (`01 / Intro`, `0N / Links`). Section numbers via `getContactComposition`. All normalized contacts render (not filtered by `show_in_socialbar`). `_blank` gets `rel="noopener noreferrer"`.
 
 SEO: `useSeoMeta` title + plain excerpt on case / service / about / contact pages.
 
@@ -104,6 +104,6 @@ Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `
 
 - Components must not call WordPress URLs directly.
 - Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally ([`main.css`](../app/assets/css/main.css)).
-- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing: [`archive.css`](../app/assets/css/archive.css). Services: [`services.css`](../app/assets/css/services.css) (no wash). About: [`about.css`](../app/assets/css/about.css). Contact: [`contact.css`](../app/assets/css/contact.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive, case, service, about, or contact pages.
+- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing: [`archive.css`](../app/assets/css/archive.css). Services + about editorial: [`services.css`](../app/assets/css/services.css) (shared repeater/header/CTA tokens). About photo: [`about.css`](../app/assets/css/about.css). Contact: [`contact.css`](../app/assets/css/contact.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive, case, service, about, or contact pages.
 - Service archive return uses session key `wl:archive-return:services` (portfolio keeps `wl:archive-return`).
 - `wpFetch` must not call `useRuntimeConfig()` after `await` inside `useAsyncData` (NUXT_E1001). Resolve base via `tryUseNuxtApp()?.$config` with env fallback ([`client.ts`](../app/api/client.ts)).
