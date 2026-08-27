@@ -88,8 +88,8 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 ### 3. Site header
 
-- [`SiteHeader`](../src/ui/SiteHeader.ts):
-  - **Desktop (≥1024):** `[ МАРК ] ЛОГО` · `⟨ SYS · МОЛЕКУЛА ⟩` (viewport center) · `УЗЕЛ 04 / РАБОТЫ`. Inset from corner ticks via `--hud-header-inset`. Pointer-events none; no background blocks.
+- [`SiteHeader`](../app/lib/hero-ui/SiteHeader.ts):
+  - **Desktop (≥1024):** `[ МАРК ] ЛОГО` · slide progress track (viewport center, replaces former `⟨ SYS · МОЛЕКУЛА ⟩`) · `УЗЕЛ 04 / РАБОТЫ`. Inset from corner ticks via `--hud-header-inset`. Pointer-events none; no background blocks.
   - **Mobile (≤767):** ЛОГО left + text control `МЕНЮ / NAV` (toggles to `ЗАКРЫТЬ / NAV`). Safe-area top padding. No hamburger glyph, no card.
   - **Tablet:** header hidden; `.hud__meta` keeps `⟨ SYS · МОЛЕКУЛА ⟩`.
 
@@ -103,7 +103,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 - `01` muted index + uppercase label.
 - **Desktop (≥1024):** left vertical rail (`--sidebar-width`), column stack. Footer `УЗЕЛ nn` + `АКТИВЕН|ГОТОВ|ПРОСТОЙ` is centered under the **full** HUD frame (not the rail alone). Active via brighter text + wider tracking + thin left marker — no pills / filled rects.
 - **Tablet (768–1023):** bottom bar; separators `·`. Commit wraps label with `⟨ … ⟩`.
-- **Mobile (≤767):** compact bottom rail `/ NAV` + `01 HOME · 02 ABOUT · …` (horizontal scroll; active item scrolled into view). Safe-area bottom. Tap vs scroll-drag via `attachTapGuard`. Full index opens in [`MobileNavOverlay`](../app/lib/hero-ui/MobileNavOverlay.ts). Home only — hidden off-home.
+- **Mobile (≤767):** bottom stack: slide progress (`nav__stack`, relative) + `/ NAV` + indexed labels (horizontal scroll; enlarged type ~0.94rem label / 0.81rem index; active item scrolled into view). Inset via `--nav-mobile-bottom` inside `--hud-inset-mobile-bottom`. Safe-area bottom. Tap vs scroll-drag via `attachTapGuard`. Full index opens in [`MobileNavOverlay`](../app/lib/hero-ui/MobileNavOverlay.ts). Home only — hidden off-home.
 - No background, no border.
 
 ### 6. Mobile nav overlay

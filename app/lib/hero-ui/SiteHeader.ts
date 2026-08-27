@@ -3,19 +3,20 @@ import {
   navigationConfig,
 } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
+import { HeroSlideProgress } from './HeroSlideProgress';
 import { attachTapGuard } from './tapGuard';
 
 export type MenuToggleListener = () => void;
 export type HeaderSelectListener = (itemId: string) => void;
 
 /**
- * Site header: LOGO + SYS (home) or route links (off-home) + NODE; mobile MENU.
+ * Site header: LOGO + slide progress (home) or route links (off-home) + NODE; mobile MENU.
  * Off-home routes navigate immediately — no atom commit step.
  */
 export class SiteHeader {
   readonly root: HTMLElement;
   private readonly logoBtn: HTMLButtonElement;
-  private readonly sysEl: HTMLElement;
+  private readonly slideProgress: HeroSlideProgress;
   private readonly routesEl: HTMLElement;
   private readonly linkElements = new Map<string, HTMLElement>();
   private readonly nodeEl: HTMLElement;
@@ -38,10 +39,7 @@ export class SiteHeader {
       this.onSelect?.('home');
     });
 
-    this.sysEl = document.createElement('span');
-    this.sysEl.className = 'site-header__sys';
-    this.sysEl.textContent = '⟨ SYS · МОЛЕКУЛА ⟩';
-    this.sysEl.setAttribute('aria-hidden', 'true');
+    this.slideProgress = new HeroSlideProgress(this.root, 'desktop');
 
     this.routesEl = document.createElement('nav');
     this.routesEl.className = 'site-header__routes';
@@ -85,7 +83,6 @@ export class SiteHeader {
 
     this.root.append(
       this.logoBtn,
-      this.sysEl,
       this.routesEl,
       this.nodeEl,
       this.menuBtn,
@@ -119,6 +116,10 @@ export class SiteHeader {
     return this.menuOpen;
   }
 
+  setSlideProgress(ratio: number): void {
+    this.slideProgress.setProgress(ratio);
+  }
+
   private syncLinks(state: NavigationState): void {
     const active = state.activeItemId;
     const committed = state.committedItemId;
@@ -148,6 +149,7 @@ export class SiteHeader {
 
   dispose(): void {
     this.unsubscribe();
+    this.slideProgress.dispose();
     this.root.remove();
   }
 }

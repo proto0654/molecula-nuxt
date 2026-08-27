@@ -7,7 +7,11 @@ import { MoleculeController } from '../molecular/MoleculeController';
 import { QualityManager } from '../molecular/quality/QualityManager';
 import { PerfOverlay } from '../debug/PerfOverlay';
 import { SpatialOverlay } from '../debug/SpatialOverlay';
-import { getItemByAtomId, getItemById } from '../navigation/navigationConfig';
+import {
+  getItemByAtomId,
+  getItemById,
+  navigationConfig,
+} from '../navigation/navigationConfig';
 import { Navigator } from '../navigation/Navigator';
 import { NavigationState } from '../navigation/NavigationState';
 import { DestinationView } from '../hero-ui/DestinationView';
@@ -17,6 +21,7 @@ import { Navigation } from '../hero-ui/Navigation';
 import { NavigationConnector } from '../hero-ui/NavigationConnector';
 import { SiteHeader } from '../hero-ui/SiteHeader';
 import { UspHeadline } from '../hero-ui/UspHeadline';
+import { HeroAutoplay } from './HeroAutoplay';
 import { HOME_ITEM_ID } from '../spatial/spatialAtoms';
 import { SpatialController, type SpatialApplyOptions } from '../spatial/SpatialController';
 import type { SpatialState } from '../spatial/types';
@@ -25,6 +30,9 @@ import type { TransitionListener } from '../navigation/TransitionState';
 const MOBILE_MQ = '(max-width: 767px)';
 const TABLET_MQ = '(min-width: 768px) and (max-width: 1023px)';
 const DESKTOP_MQ = '(min-width: 1024px)';
+
+const SLIDE_DURATION_MS = 5500;
+const IDLE_RESUME_MS = 2000;
 
 /**
  * Imperative hero bootstrap (former Vite `main.ts`).
@@ -188,6 +196,7 @@ export function mountHeroApp(
     if (navigationState.committedItemId === itemId) {
       if (itemId === HOME_ITEM_ID || item.route === '/') return;
       uspHeadline.hide();
+      autoplay.pause();
       navigator.navigateTo(item.atomId);
       return;
     }
@@ -195,6 +204,7 @@ export function mountHeroApp(
     if (item.route && item.route !== '/') {
       options.prefetchRoute?.(item.route);
     }
+    autoplay.pause();
     navigationState.setCommitted(itemId);
     activateCommittedItem(itemId);
   }
@@ -209,9 +219,26 @@ export function mountHeroApp(
     controller.restoreOverview();
     controller.clearZoom();
     activateCommittedItem(HOME_ITEM_ID);
+    autoplay.resetTo(HOME_ITEM_ID);
   }
 
   const navigation = new Navigation(chromeRoot, navigationState, selectItem);
+
+  function setSlideProgress(ratio: number): void {
+    siteHeader.setSlideProgress(ratio);
+    navigation.setSlideProgress(ratio);
+  }
+
+  const autoplay = new HeroAutoplay({
+    items: navigationConfig.items.map((item) => item.id),
+    slideDurationMs: SLIDE_DURATION_MS,
+    idleResumeMs: IDLE_RESUME_MS,
+    onAdvance: (itemId) => {
+      navigationState.setCommitted(itemId);
+      activateCommittedItem(itemId);
+    },
+    onProgress: setSlideProgress,
+  });
 
   const mobileNav = new MobileNavOverlay(chromeRoot, navigationState, {
     onSelect: (itemId) => {
@@ -224,6 +251,7 @@ export function mountHeroApp(
   function setMenuOpen(open: boolean): void {
     mobileNav.setOpen(open);
     siteHeader.setMenuOpen(open);
+    if (open) autoplay.pause();
   }
 
   siteHeader.onToggleMenu(() => {
@@ -270,10 +298,13 @@ export function mountHeroApp(
     chromeRoot.classList.toggle('is-home', home);
     canvas.classList.toggle('is-atom-hover', false);
     if (!home) {
+      autoplay.stop();
       uspHeadline.hide();
       destination.hide();
       connector.setEnabled(false);
       if (mobileNav.isOpen) setMenuOpen(false);
+    } else {
+      autoplay.start(navigationState.committedItemId ?? HOME_ITEM_ID);
     }
     // Re-apply framing: home desktop bias vs centered profile.
     applyViewportMode();
@@ -290,6 +321,7 @@ export function mountHeroApp(
     },
     onHomeActivated: () => {
       activateCommittedItem(HOME_ITEM_ID);
+      autoplay.start(HOME_ITEM_ID);
     },
   });
 
@@ -335,6 +367,15 @@ export function mountHeroApp(
     uspHeadline.setZoomFade(zoomFade);
     connector.update(delta);
 
+    autoplay.tick(delta * 1000, {
+      isHome,
+      busy: navigator.busy,
+      isFocusSettled: controller.isFocusSettled(),
+      hasUserPreview: navigationState.previewItemId !== null,
+      menuOpen: mobileNav.isOpen,
+      committedItemId: navigationState.committedItemId,
+    });
+
     if (
       isHome &&
       !navigator.busy &&
@@ -372,6 +413,7 @@ export function mountHeroApp(
   applyViewportMode();
   applyVisuals();
   activateCommittedItem(HOME_ITEM_ID);
+  autoplay.start(HOME_ITEM_ID);
   mobileMq.addEventListener('change', onViewportChange);
   tabletMq.addEventListener('change', onViewportChange);
   desktopMq.addEventListener('change', onViewportChange);
@@ -384,6 +426,7 @@ export function mountHeroApp(
     isBusy: () => navigator.busy,
     onTransition: (listener) => navigator.transitionState.subscribe(listener),
     dispose() {
+      autoplay.stop();
       mobileMq.removeEventListener('change', onViewportChange);
       tabletMq.removeEventListener('change', onViewportChange);
       desktopMq.removeEventListener('change', onViewportChange);

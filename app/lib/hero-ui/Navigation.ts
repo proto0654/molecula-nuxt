@@ -1,5 +1,6 @@
 import { navigationConfig } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
+import { HeroSlideProgress } from './HeroSlideProgress';
 import { attachTapGuard } from './tapGuard';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
 
@@ -14,8 +15,10 @@ export class Navigation {
   private readonly state: NavigationState;
   private readonly itemElements = new Map<string, HTMLElement>();
   private readonly listEl: HTMLElement;
+  private readonly rowEl: HTMLElement;
   private readonly statusNode: HTMLElement;
   private readonly statusSignal: HTMLElement;
+  private readonly slideProgress: HeroSlideProgress;
   private readonly unsubscribe: () => void;
   private readonly onSelect: NavSelectListener | undefined;
 
@@ -31,11 +34,19 @@ export class Navigation {
     this.root.className = 'nav';
     this.root.setAttribute('aria-label', 'Навигация сайта');
 
+    const stackEl = document.createElement('div');
+    stackEl.className = 'nav__stack';
+
+    this.slideProgress = new HeroSlideProgress(stackEl, 'mobile');
+
+    this.rowEl = document.createElement('div');
+    this.rowEl.className = 'nav__row';
+
     const mark = document.createElement('span');
     mark.className = 'nav__mark';
     mark.setAttribute('aria-hidden', 'true');
     mark.textContent = '/ NAV';
-    this.root.append(mark);
+    this.rowEl.append(mark);
 
     this.listEl = document.createElement('div');
     this.listEl.className = 'nav__list';
@@ -76,7 +87,7 @@ export class Navigation {
       this.itemElements.set(item.id, button);
     });
 
-    this.root.append(this.listEl);
+    this.rowEl.append(this.listEl);
 
     const status = document.createElement('div');
     status.className = 'nav__status';
@@ -86,7 +97,10 @@ export class Navigation {
     this.statusSignal = document.createElement('span');
     this.statusSignal.className = 'nav__status-signal';
     status.append(this.statusNode, this.statusSignal);
-    this.root.append(status);
+    this.rowEl.append(status);
+
+    stackEl.append(this.rowEl);
+    this.root.append(stackEl);
 
     this.root.addEventListener('pointerleave', () => {
       this.state.setNavHover(null);
@@ -109,6 +123,10 @@ export class Navigation {
 
   get navigationState(): NavigationState {
     return this.state;
+  }
+
+  setSlideProgress(ratio: number): void {
+    this.slideProgress.setProgress(ratio);
   }
 
   /**
@@ -163,6 +181,7 @@ export class Navigation {
 
   dispose(): void {
     this.unsubscribe();
+    this.slideProgress.dispose();
     this.root.remove();
   }
 }

@@ -41,7 +41,7 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 
 ## Current focus
 
-**Persistent molecular shell is in:** canvas / controller live in the default layout across routes. Home is the only interactive spatial mode: hub `C` is always committed with full readout (typewriter blurb + USP), never an empty deselect. Other routes freeze the molecule and overlay page content after pose settle (`is-awaiting-pose`); settled freeze also lerps selection chrome (rings / cross / wireframe) to black. Leave-home approach: parallel zoom/fill + orbit (not one packed tween). `/about`, `/services` (plus `/services/:slug`), and `/contact` are live WP. Spatial architecture: [`docs/SPATIAL.md`](docs/SPATIAL.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+**Persistent molecular shell is in:** canvas / controller live in the default layout across routes. Home is the only interactive spatial mode: hub `C` is always committed with full readout (typewriter blurb + USP), never an empty deselect. **Home idle autoplay** cycles committed nav items with a slide progress bar (desktop header / mobile above bottom nav); pauses on interaction. Other routes freeze the molecule and overlay page content after pose settle (`is-awaiting-pose`); settled freeze also lerps selection chrome (rings / cross / wireframe) to black. Leave-home approach: parallel zoom/fill + orbit (not one packed tween). `/about`, `/services` (plus `/services/:slug`), and `/contact` are live WP. Spatial architecture: [`docs/SPATIAL.md`](docs/SPATIAL.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
 
 ## Docs hub
 

@@ -18,6 +18,7 @@ layouts/default.vue (persists)
           │                         → render → PerformanceSampler (lock-once)
           ├─ SpatialController       spatialFromRoute → setMode / restoreOverview / focus* / freeze
           ├─ HudFrame (stage) / SiteHeader+Navigation (chrome root)
+          ├─ HeroAutoplay + HeroSlideProgress (home idle cycle)
           ├─ UspHeadline / NavigationConnector   home-only
           ├─ PerfOverlay + SpatialOverlay        (dev-only)
           ├─ NavigationState
@@ -27,6 +28,10 @@ layouts/default.vue (persists)
           │     first click → setCommitted + activateCommittedItem (focus + blurb + USP)
           │     second click same item (not Home) → Navigator.navigateTo
           │     empty canvas / logo → restoreOverview + re-activate hub readout
+          ├─ HeroAutoplay (home only)
+          │     after focus settle → progress 0→100% (~5.5s) → next committed item
+          │     pause on hover / click / mobile menu; resume after ~2s idle
+          │     does not call navigateTo — same commit path as first click
           ├─ viewport MQ → setCompositionProfile + connector.enable (desktop ∩ home)
           └─ Navigator.onNavigate
                 ├─ item.route (≠ `/`) → TransitionController.transitionTo → Nuxt navigateTo
@@ -182,7 +187,21 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 
 ### USP headline
 
-[`UspHeadline`](../app/lib/hero-ui/UspHeadline.ts) + [`textScramble`](../app/lib/hero-ui/textScramble.ts): short RU USP from `navigationConfig.items[].usp`. Armed whenever a nav item is activated via `activateCommittedItem` (first-click commit, cold home load, spatial return to `/`, empty-canvas / logo restore to hub). Scramble starts only after `controller.isFocusSettled()`. Uppercase tracked type; ~1s scramble + fade-in. Mobile type is larger than atom captions (`--text-usp` ~1.45–2rem). A hidden measure span locks final line breaks; the display layer is absolutely positioned so scramble never changes layout height; non-letters stay fixed and scramble picks letter glyphs only from the target. Fades with the same zoom/fill softness as the connector. Hover never arms USP. `prefers-reduced-motion` snaps to the final string.
+[`UspHeadline`](../app/lib/hero-ui/UspHeadline.ts) + [`textScramble`](../app/lib/hero-ui/textScramble.ts): short RU USP from `navigationConfig.items[].usp`. Armed whenever a nav item is activated via `activateCommittedItem` (first-click commit, cold home load, spatial return to `/`, empty-canvas / logo restore to hub, **HeroAutoplay advance**). Scramble starts only after `controller.isFocusSettled()`. Uppercase tracked type; ~1s scramble + fade-in. Mobile type is larger than atom captions (`--text-usp` ~1.45–2rem). A hidden measure span locks final line breaks; the display layer is absolutely positioned so scramble never changes layout height; non-letters stay fixed and scramble picks letter glyphs only from the target. Fades with the same zoom/fill softness as the connector. Hover never arms USP. `prefers-reduced-motion` snaps to the final string.
+
+### Hero slide autoplay
+
+[`HeroAutoplay`](../app/lib/hero/HeroAutoplay.ts) cycles committed nav items on **home** when idle. Wired in `mountHeroApp.ts` `onAfterUpdate`; does not import Three.js or touch `NavigationState` directly — advances via the same `setCommitted` + `activateCommittedItem` path as a first click (focus + blurb + arm USP; no `navigateTo`).
+
+| Phase | Behaviour |
+|-------|-----------|
+| Wait settle | Progress held at 0 until `isFocusSettled()` |
+| Fill | Progress 0→1 over `SLIDE_DURATION_MS` (~5500) |
+| Advance | Next item in `navigationConfig.items` order (wraps) |
+| Pause | Hover (atom or nav), manual select, mobile menu open, `navigator.busy`, off-home |
+| Resume | ~2s idle after interactions clear (`IDLE_RESUME_MS`) |
+
+[`HeroSlideProgress`](../app/lib/hero-ui/HeroSlideProgress.ts): 1px track + `scaleX` fill. **Desktop (≥1024):** centered in [`SiteHeader`](../app/lib/hero-ui/SiteHeader.ts) (replaces `⟨ SYS · МОЛЕКУЛА ⟩`). **Mobile (≤767):** above bottom nav inside [`Navigation`](../app/lib/hero-ui/Navigation.ts) `nav__stack` (relative flow; `--nav-mobile-bottom` inset from frame). Both instances sync from one `onProgress` callback. Hidden off-home and during approach.
 
 ## Page transition (`Navigator` + `TransitionController`)
 
@@ -268,11 +287,13 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `navigation/archiveReturn.ts` | `sessionStorage` restore of archive `?page=` + scroll |
 | `navigation/TransitionController.ts` | `transitionTo(route)` → Nuxt (handler from MolecularHero) |
 | `navigation/TransitionState.ts` | Centralized transition phase / progress snapshot |
+| `hero/HeroAutoplay.ts` | Home idle cycle: settle-gated progress, pause/resume, advance callback |
+| `hero-ui/HeroSlideProgress.ts` | Desktop header + mobile nav progress track |
 | `hero-ui/HudFrame.ts` | Grid + corner ticks (pointer-events none) |
-| `hero-ui/SiteHeader.ts` | LOGO (always); home: `⟨ SYS · МОЛЕКУЛА ⟩` + NODE; off-home: centered route menu (direct `transitionTo`); mobile MENU on home |
+| `hero-ui/SiteHeader.ts` | LOGO (always); home desktop: slide progress + NODE; off-home: centered route menu (direct `transitionTo`); mobile MENU on home |
 | `hero-ui/UspHeadline.ts` / `hero-ui/textScramble.ts` | HUD USP scramble after focus settle |
 | `hero-ui/MobileNavOverlay.ts` | Editorial full-screen mobile nav index |
-| `hero-ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); `getItemAnchor`; zoom softness |
+| `hero-ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); mobile `nav__stack` (progress + row); `getItemAnchor`; zoom softness |
 | `hero-ui/tapGuard.ts` | Tap vs scroll-drag for nav controls |
 | `hero-ui/NavigationConnector.ts` | SVG elbow; sync `projectAtom` follow; idle/hover/active/zoom |
 | `hero-ui/DestinationView.ts` | Stub section + Return (routes without pages yet) |
@@ -282,7 +303,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 
 - Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`. Home locks document scroll via `html.hero-lock`.
 - Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) — see [`DESIGN.md`](DESIGN.md). `NavigationItem.route` drives Nuxt when wired (`/portfolio`); other items still use DestinationView stub.
-- Responsive: desktop ≥1024 (rail + header + composition profile + connector; full captions), tablet 768–1023 (bottom nav, tablet framing, smaller remainder), mobile ≤767 (header + compact rail + MENU overlay, mobile framing, full captions, touch drag/tap).
+- Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav, tablet framing, smaller remainder), mobile ≤767 (header + enlarged bottom rail + slide progress above nav + MENU overlay, mobile framing, full captions, touch drag/tap).
 - No postprocessing, bloom, particle systems, physics, realtime shadows, or environment maps. Scene uses a matching `Fog` for slight depth only.
 - Pixel ratio capped by the locked quality preset (`maxPixelRatio` 1.75 / 1.5 / 1), refreshed on every resize (monitor / OS DPR changes). Mobile starts MEDIUM (DPR ≤1.5, no ghosts/ticks); sampler may lock LOW (DPR 1, no wireframe). Never disable rotation, touch, raycast, focus, labels, zoom, or navigation.
 - GSAP drives the page-transition timeline; idle spin is unused.
