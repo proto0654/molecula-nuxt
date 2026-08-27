@@ -452,14 +452,6 @@
   }
 }
 
-.case-header__descriptor {
-  margin: 0.85rem 0 0;
-  font-size: var(--text-meta);
-  letter-spacing: var(--track-nav);
-  text-transform: uppercase;
-  color: var(--ink-62);
-}
-
 .case-header__intro {
   margin: 1.35rem 0 0;
   font-family: var(--font-body);

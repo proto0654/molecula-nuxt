@@ -114,7 +114,6 @@ export function normalizePortfolioPost(post: WpPortfolioPost): Case {
     client: emptyToNull(acf.client === false ? null : acf.client),
     projectUrl: emptyToNull(acf.project_url === false ? null : acf.project_url),
     technologies: emptyToNull(acf.technologies === false ? null : acf.technologies),
-    titleEn: emptyToNull(acf.post_title_en),
   };
 }
 

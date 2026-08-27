@@ -9,7 +9,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 | File | Role |
 |------|------|
 | [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page shell; density + body-phase classes. Featured wash lives in layout [`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue). Decorative grid/frame/logo come from the persistent HUD. |
-| [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title (USP-style scramble reveal), `titleEn`, excerpt; facts only when there is no CMS body |
+| [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title (USP-style scramble reveal), excerpt; facts only when there is no CMS body |
 | [`CaseHeroMedia.vue`](../app/components/case/CaseHeroMedia.vue) | Hero video only (flat, no 3D) |
 | [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Presentational `<video>` used **inside** the hero only |
 | [`CaseSectionMarker.vue`](../app/components/case/CaseSectionMarker.vue) | Shared `NN / LABEL` marker (`editorial` rail + vertical guide, `visual` hairline, `quiet` almost clean) |

@@ -69,7 +69,6 @@ export type Case = {
   client: string | null;
   projectUrl: string | null;
   technologies: string | null;
-  titleEn: string | null;
 };
 
 export type PortfolioCategory = {
