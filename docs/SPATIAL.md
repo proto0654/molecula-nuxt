@@ -72,7 +72,7 @@ MoleculeController         setMode / restoreOverview / focus* / freeze
 | `/services/:slug` | `{ mode: 'service', context: 'services', entityId }` |
 | `/about`, `/contact`, other pages | `{ mode: 'section', sectionId }` (`sectionId` = first path segment) |
 
-Stub pages: [`/about`](../app/pages/about.vue), [`/services`](../app/pages/services/index.vue), [`/contact`](../app/pages/contact.vue) — light overlay shells (`SectionShell`) so the molecule approach stays visible.
+Stub pages: [`/contact`](../app/pages/contact.vue) — light overlay shell (`SectionShell`). [`/about`](../app/pages/about.vue) and [`/services`](../app/pages/services/index.vue) are live WP content (`/services/:slug` for a service).
 
 ### Pose per mode
 

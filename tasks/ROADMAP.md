@@ -59,7 +59,7 @@ STEPs 1–19 остаются Done. Мелкий долг foundation:
 
 ## Next
 
-Shell + stubs закрыты. Не ломать content pipeline и `absence = null`.
+`/about` и `/services` с живым WP. Не ломать content pipeline и `absence = null`. `/contact` ещё stub; EN i18n позже.
 
 - [x] Case visual redesign (§25 ТЗ)
 - [x] Case composition pass (markers, sparse recipes, case→case reveal)
@@ -68,4 +68,6 @@ Shell + stubs закрыты. Не ломать content pipeline и `absence = n
 - [x] Section route stubs + off-home chrome (header menu, transparent pages)
 - [x] Полировка molecular → route: pose reveal gate, live same-atom handoff, parallel zoom/orbit tweens (не packed ease)
 - [x] Case / section typography: Exo 2 body + Mono titles; `SiteScrambleTitle` chained to pose settle / case body idle
-- [ ] Реальный контент `/about` `/services` `/contact` (WP pages / ACF)
+- [x] Реальный контент `/about` `/services` (WP CPT + ACF); `/contact` ещё stub
+- [ ] Реальный `/contact` (WP / ACF)
+- [ ] EN i18n (`*_en` typed, UI still RU)

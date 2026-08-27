@@ -118,7 +118,91 @@ export type WpPortfolioPost = {
   acf: PortfolioAcf;
   _embedded?: {
     'wp:featuredmedia'?: WpEmbeddedFeaturedMedia[];
+    'wp:term'?: WpEmbeddedTerms;
   };
+};
+
+/** RU offer row. `cf_features` exists in CMS but is not rendered. */
+export type ServiceRepeaterRow = {
+  cf_title?: string;
+  cf_text?: string;
+  cf_price?: string;
+  cf_features?: string;
+};
+
+/** EN clone — typed for i18n later; UI ignores these keys. */
+export type ServiceRepeaterRowEn = {
+  cf_title_en?: string;
+  cf_text_en?: string;
+  cf_price_en?: string;
+  cf_features_en?: string;
+};
+
+export type ServiceAcf = {
+  'service-thumb'?: AcfImage | false;
+  'service-repeater'?: ServiceRepeaterRow[] | false;
+  'service-repeater_en'?: ServiceRepeaterRowEn[] | false;
+  post_title_en?: string | null;
+  post_content_en?: string | null;
+};
+
+export type WpServicePost = {
+  id: number;
+  slug: string;
+  status: string;
+  type: string;
+  link: string;
+  date: string;
+  title: WpRendered;
+  content: WpRendered;
+  excerpt: WpRendered;
+  featured_media: number;
+  menu_order: number;
+  tags: number[];
+  acf: ServiceAcf;
+  _embedded?: {
+    'wp:featuredmedia'?: WpEmbeddedFeaturedMedia[];
+    'wp:term'?: WpEmbeddedTerms;
+  };
+};
+
+export type AboutRepeaterRow = {
+  cf_title?: string;
+  cf_text?: string;
+};
+
+export type AboutRepeaterRowEn = {
+  cf_title_en?: string;
+  cf_text_en?: string;
+};
+
+export type AboutAcf = {
+  about_photo?: AcfImage | false;
+  about_section_title?: string | false;
+  about_section_title_en?: string | false;
+  'about-repeater'?: AboutRepeaterRow[] | false;
+  'about-repeater_en'?: AboutRepeaterRowEn[] | false;
+  about_cta_label?: string | false;
+  about_cta_label_en?: string | false;
+  post_title_en?: string | null;
+  post_content_en?: string | null;
+};
+
+/**
+ * ACF options used as UI chrome (not post fields).
+ * EN keys are typed for i18n later; current UI reads RU only.
+ */
+export type ThemeOptionsAcf = {
+  services_section_heading?: string | false;
+  services_section_heading_en?: string | false;
+  services_price_from?: string | false;
+  services_price_from_en?: string | false;
+  hero_order_label?: string | false;
+  hero_order_label_en?: string | false;
+};
+
+export type WpAcfOptionsResponse = {
+  acf?: ThemeOptionsAcf;
 };
 
 export type WpPortfolioCategory = {
@@ -142,6 +226,8 @@ export type WpTag = {
   taxonomy: string;
 };
 
+export type WpEmbeddedTerms = WpTag[][];
+
 export type WpPage = {
   id: number;
   slug: string;
@@ -155,7 +241,12 @@ export type WpPage = {
   menu_order: number;
   parent: number;
   template: string;
-  acf?: Record<string, unknown>;
+  tags?: number[];
+  acf?: AboutAcf | Record<string, unknown>;
+  _embedded?: {
+    'wp:featuredmedia'?: WpEmbeddedFeaturedMedia[];
+    'wp:term'?: WpEmbeddedTerms;
+  };
 };
 
 export type WpMedia = {

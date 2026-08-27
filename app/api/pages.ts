@@ -7,6 +7,7 @@ export async function getPage(slug: string): Promise<WpPage | null> {
       slug,
       per_page: 1,
       status: 'publish',
+      _embed: 'wp:term',
     },
   });
   return pages[0] ?? null;

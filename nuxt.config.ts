@@ -10,7 +10,7 @@ function wpApiBase(): string {
 
 type SlimPost = { slug: string };
 
-async function fetchAllPortfolioSlugs(): Promise<string[]> {
+async function fetchAllCptSlugs(cpt: string): Promise<string[]> {
   const base = wpApiBase();
   const perPage = 100;
   let page = 1;
@@ -18,7 +18,7 @@ async function fetchAllPortfolioSlugs(): Promise<string[]> {
   const slugs: string[] = [];
 
   while (page <= totalPages) {
-    const response = await $fetch.raw<SlimPost[]>(`${base}/wp/v2/portfolio`, {
+    const response = await $fetch.raw<SlimPost[]>(`${base}/wp/v2/${cpt}`, {
       query: {
         page,
         per_page: perPage,
@@ -78,25 +78,34 @@ export default defineNuxtConfig({
   hooks: {
     async 'nitro:config'(nitroConfig) {
       if (nitroConfig.dev) return;
-      try {
-        const slugs = await fetchAllPortfolioSlugs();
-        const routes = slugs.map((slug) => `/portfolio/${slug}`);
-        nitroConfig.prerender ??= {};
-        nitroConfig.prerender.routes ??= [];
-        const existing = nitroConfig.prerender.routes as string[];
-        for (const route of [
-          '/',
-          '/portfolio',
-          '/about',
-          '/services',
-          '/contact',
-          ...routes,
-        ]) {
+      nitroConfig.prerender ??= {};
+      nitroConfig.prerender.routes ??= [];
+      const existing = nitroConfig.prerender.routes as string[];
+
+      const pushRoutes = (routes: string[]) => {
+        for (const route of routes) {
           if (!existing.includes(route)) existing.push(route);
         }
+      };
+
+      pushRoutes(['/', '/portfolio', '/about', '/services', '/contact']);
+
+      try {
+        const slugs = await fetchAllCptSlugs('portfolio');
+        const routes = slugs.map((slug) => `/portfolio/${slug}`);
+        pushRoutes(routes);
         console.info(`[prerender] queued ${routes.length} portfolio case routes`);
       } catch (err) {
         console.warn('[prerender] failed to fetch portfolio slugs:', err);
+      }
+
+      try {
+        const slugs = await fetchAllCptSlugs('services');
+        const routes = slugs.map((slug) => `/services/${slug}`);
+        pushRoutes(routes);
+        console.info(`[prerender] queued ${routes.length} service routes`);
+      } catch (err) {
+        console.warn('[prerender] failed to fetch service slugs:', err);
       }
     },
   },

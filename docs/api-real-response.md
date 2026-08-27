@@ -12,8 +12,11 @@ Source of truth remains WordPress. Local/Nuxt app only consumes.
 | Portfolio by id | `/wp/v2/portfolio/{id}` | OK |
 | Portfolio by slug | `/wp/v2/portfolio?slug=` | OK |
 | Categories | `/wp/v2/portfolio_category` | OK (1 term: `legacy`) |
-| Tags | `/wp/v2/tags` | OK (`post_tag` on portfolio) |
-| Pages | `/wp/v2/pages` | OK |
+| Services list | `/wp/v2/services` | OK (CPT; `_embed=wp:featuredmedia,wp:term`) |
+| Services by slug | `/wp/v2/services?slug=` | OK |
+| Tags | `/wp/v2/tags` | OK (`post_tag` on portfolio **and** services / about) |
+| Pages | `/wp/v2/pages` | OK (`about` uses `template: page-about`) |
+| ACF options | `/acf/v3/options/options` | OK (public theme chrome) |
 | Media | `/wp/v2/media/{id}` | OK |
 | Menus (plugin) | `/menus/v1/menus`, `/menus/v1/menus/{slug}`, `/menus/v1/locations` | OK |
 | Core menus | `/wp/v2/menus` | **401** `rest_cannot_view` — do not use |
@@ -109,7 +112,43 @@ Only one term returned:
 
 ## Pages (sample)
 
-`about`, `home-2`, `portfolio`, `privacy-policy` (plus templates like `page-about`).
+`about` (`template: page-about`, id `12896`), `home-2`, `portfolio`, `privacy-policy`.
+
+About ACF (RU rendered; EN typed, unused in UI):
+
+| Key | Role |
+|-----|------|
+| `about_photo` | hero image; `false` → no photo (no placeholder) |
+| `about_section_title` / `_en` | H2 over skills |
+| `about-repeater` | `[{ cf_title, cf_text }]` |
+| `about-repeater_en` | `[{ cf_title_en, cf_text_en }]` |
+| `about_cta_label` / `_en` | CTA → `/contact` |
+| `post_title_en` / `post_content_en` | i18n later |
+
+Embed `_embed=wp:term` for hero tags.
+
+## Services CPT
+
+`GET /wp/v2/services` — 6 published posts (2026-08-27). Taxonomies: `post_tag`. Order: `menu_order ASC`, then `date DESC`. Featured image is listing-only (some posts `featured_media: 0`).
+
+ACF on a service post:
+
+| Key | Role |
+|-----|------|
+| `service-repeater` | `[{ cf_title, cf_text, cf_price, cf_features }]` — features not rendered |
+| `service-repeater_en` | `[{ cf_title_en, cf_text_en, cf_price_en, cf_features_en }]` — unused in UI |
+| `post_title_en` / `post_content_en` | also on `meta` (`weblaba_title_en`) — unused in UI |
+| `service-thumb` | legacy; often `false` — ignore |
+
+Theme options chrome (same options payload):
+
+| Key | Live RU | EN |
+|-----|---------|-----|
+| `services_section_heading` | `Предлагаемые услуги и сервисы:` | `Offered services and amenities:` |
+| `services_price_from` | `от` | `from` |
+| `hero_order_label` | `Заказать` | `Order` |
+
+Nuxt archive is compact rows (like portfolio), **not** the WP `all_services` dump of full repeaters on one page. Detail is `/services/:slug`.
 
 ## Gaps / non-issues
 

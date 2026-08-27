@@ -77,6 +77,53 @@ export type PortfolioCategory = {
   description: string;
 };
 
+export type ServiceOffer = {
+  title: string | null;
+  textHtml: string | null;
+  price: string | null;
+  /** Unique slug from cf_title, else usluga-n; collisions get -2, -3. */
+  anchor: string;
+};
+
+export type Service = {
+  id: number;
+  slug: string;
+  title: string;
+  contentHtml: string | null;
+  excerptHtml: string | null;
+  menuOrder: number;
+  date: string;
+  featuredImage: CaseImage | null;
+  tagIds: number[];
+  /** Resolved post_tag names from embed. */
+  tags: string[];
+  offers: ServiceOffer[];
+};
+
+/** Theme-options chrome for service detail (RU only). */
+export type ServiceChrome = {
+  sectionHeading: string | null;
+  priceFrom: string | null;
+  orderLabel: string | null;
+};
+
+export type AboutSkill = {
+  title: string | null;
+  textHtml: string | null;
+};
+
+export type AboutPage = {
+  id: number;
+  slug: string;
+  title: string;
+  contentHtml: string | null;
+  photo: CaseImage | null;
+  tags: string[];
+  sectionTitle: string | null;
+  skills: AboutSkill[];
+  ctaLabel: string | null;
+};
+
 export type NavigationMenuItem = {
   id: number;
   title: string;

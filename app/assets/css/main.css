@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import './case.css';
 @import './archive.css';
+@import './services.css';
+@import './about.css';
 
 @font-face {
   font-family: 'JetBrains Mono';

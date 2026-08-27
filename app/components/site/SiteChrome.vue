@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { padCaseIndex } from '~/domain/portfolio/presentation';
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
-    variant?: 'archive' | 'case' | 'section';
+    variant?: 'archive' | 'case' | 'section' | 'service';
     caseIndex?: number | null;
     archiveHref?: string;
     sectionLabel?: string;
@@ -15,6 +15,8 @@ withDefaults(
     sectionLabel: 'SECTION',
   },
 );
+
+const entityLabel = computed(() => (props.variant === 'service' ? 'SERVICE' : 'CASE'));
 </script>
 
 <template>
@@ -37,7 +39,7 @@ withDefaults(
         </p>
         <template v-else>
           <p v-if="caseIndex" class="case-chrome__index">
-            CASE / {{ padCaseIndex(caseIndex) }}
+            {{ entityLabel }} / {{ padCaseIndex(caseIndex) }}
           </p>
           <NuxtLink :to="archiveHref" class="case-chrome__archive">Index</NuxtLink>
         </template>

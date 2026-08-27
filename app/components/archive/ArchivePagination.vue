@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { padCaseIndex } from '~/domain/portfolio/presentation';
 
-const props = defineProps<{
-  page: number;
-  totalPages: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    page: number;
+    totalPages: number;
+    basePath?: string;
+  }>(),
+  { basePath: '/portfolio' },
+);
 
 function pageHref(n: number): string {
-  if (n <= 1) return '/portfolio';
-  return `/portfolio?page=${n}`;
+  if (n <= 1) return props.basePath;
+  return `${props.basePath}?page=${n}`;
 }
 
 const pages = computed(() =>
