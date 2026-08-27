@@ -38,6 +38,21 @@ useCaseScrollEntry({
     <div class="case-nav__links">
       <span class="case-scroll-trigger" aria-hidden="true" />
       <div class="case-nav__motion case-scroll-motion">
+        <div class="case-nav__item case-nav__next">
+          <NuxtLink
+            v-if="nextSlug"
+            :to="`/services/${nextSlug}`"
+            class="case-nav__link"
+          >
+            <span class="case-nav__dir">Next</span>
+            <span>{{ nextTitle || nextSlug }}</span>
+          </NuxtLink>
+          <span v-else class="case-nav__muted">
+            <span class="case-nav__dir">Next</span>
+            —
+          </span>
+        </div>
+
         <div class="case-nav__item case-nav__prev">
           <NuxtLink
             v-if="prevSlug"
@@ -58,21 +73,6 @@ useCaseScrollEntry({
             <span class="case-nav__dir">Index</span>
             Back to services
           </NuxtLink>
-        </div>
-
-        <div class="case-nav__item case-nav__next">
-          <NuxtLink
-            v-if="nextSlug"
-            :to="`/services/${nextSlug}`"
-            class="case-nav__link"
-          >
-            <span class="case-nav__dir">Next</span>
-            <span>{{ nextTitle || nextSlug }}</span>
-          </NuxtLink>
-          <span v-else class="case-nav__muted">
-            <span class="case-nav__dir">Next</span>
-            —
-          </span>
         </div>
       </div>
     </div>

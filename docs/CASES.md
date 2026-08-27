@@ -21,7 +21,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 | [`CaseMobileSignature.vue`](../app/components/case/CaseMobileSignature.vue) | `podpis_vozle_mokapa_mobily_pravo` as its own section when slices-only (no composite mockup) |
 | [`CaseSlices.vue`](../app/components/case/CaseSlices.vue) | Decomposed `screen-mobile` grid via `block_ratio` (center col, like Interface) |
 | [`CaseLightbox.vue`](../app/components/case/CaseLightbox.vue) | Dark overlay, technical index, close / prev-next |
-| [`CaseNavigation.vue`](../app/components/case/CaseNavigation.vue) | Numbered NEXT: Previous / Back to portfolio / Next |
+| [`CaseNavigation.vue`](../app/components/case/CaseNavigation.vue) | Numbered NEXT: Next + Previous stacked left; Index / back link right (desktop); Index last on mobile |
 
 Route: [`app/pages/portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue). Composition + presentation helpers live in [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (`getCaseComposition`). Scroll entry: [`useCaseScrollEntry`](../app/composables/useCaseScrollEntry.ts). Case→case reveal: [`useCasePageTransition`](../app/composables/useCasePageTransition.ts). Slice bottom runway: [`useCaseSliceBottomSpace`](../app/composables/useCaseSliceBottomSpace.ts). Lightbox: [`useCaseLightbox`](../app/composables/useCaseLightbox.ts). Title scramble reuses [`textScramble`](../app/lib/hero-ui/textScramble.ts) via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue). Reveal is **chained** after the molecule pose veil (`is-awaiting-pose` / [`useAwaitingPose`](../app/composables/useAwaitingPose.ts)) and, on case→case, after body phase `idle` (`revealReady`). Paint layer is absolute; non-letters stay locked so soft-wrap does not drift. Archive/section pages use [`usePageContentReveal`](../app/composables/usePageContentReveal.ts) so body fade-in starts on the same settle signal.
 
@@ -77,12 +77,13 @@ Accent belongs on: section marker number, metadata labels, hover/active nav, sel
 | `--text-case-title` / `--text-case-title-split` | Large all-caps titles (USP-style tracking) |
 | `--text-case-intro` | Header excerpt / mobile caption (Exo 2 300) |
 | `--text-case-body` | CMS Overview body (~1–1.0625rem; Exo 2 300) |
+| `--text-case-nav-title` | Footer case titles on lg (`clamp(0.9375rem, 1.35vw, 1.1875rem)`) |
 | `--case-media-max` | Cap tall **CMS prose** media only — **not** gallery / landing screens |
 | `--case-screen-max` | Desktop screens: `min(52rem, 78vw)` absolute + relative |
 | `--case-mobile-max` | Composite mockup width: `min(20rem, 34vw)` — no frame/backing on image |
 | `--case-mobile-caption-max` | Caption on mobile: `44rem` (two editorial cols on lg) |
 
-Display titles / markers use `--font-ui` (JetBrains Mono). Reading text (Overview prose, intro, captions) uses `--font-body` (Exo 2, weight 300; `strong` at 400). Prose headings (`h1`–`h4` inside `.case-content__prose`) stay Mono.
+Display titles / markers use `--font-ui` (JetBrains Mono). Reading text (Overview prose, intro, captions) uses `--font-body` (Exo 2, weight 300; `strong` keeps the same weight, brighter ink). Prose headings (`h1`–`h4` inside `.case-content__prose`) stay Mono. Tailwind preflight strips list markers — `.case-content__prose` restores square bullets (`::before` on `ul` / `.wp-block-list` items) and decimal `ol`.
 
 ## Chrome
 
@@ -115,7 +116,7 @@ Hero media is **video only** (flat, no 3D). **`landing_screen`** is Interface in
 - `.case-content__body` — cols 4–10 (6 columns; no `max-width: 65ch`, not centered)
 - `.case-content__facts` — cols 10–13 when any fact exists; otherwise that span stays empty (negative space)
 
-CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong, figcaption) — not a single typography utility. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph.
+CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong, figcaption) — not a single typography utility. `p` / `li` / `.wp-block-paragraph` share one inherited `--text-case-body` size (WP `has-*-font-size` classes are neutralized). Paragraph gap ~`1.15em`; list items ~`0.7em`. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph.
 
 ## Visual media blocks
 
@@ -125,7 +126,7 @@ Optional; missing blocks leave no reserved gap. Numbered sections count **visibl
 
 ### Desktop screens (Interface)
 
-Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in center column (cols 4–9 / `.case-zone-center`).
+Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in center column (cols 4–9 / `.case-zone-center`). Mobile masonry respects the same `--case-pad-x` page inset as other blocks — no extra breakout beyond the layout frame.
 
 | Mode | When | Layout | GSAP |
 |------|------|--------|------|
@@ -179,7 +180,7 @@ Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, 
 
 ## Footer / NEXT
 
-Numbered editorial section. Labels: **Previous** + case title, **Index / Back to portfolio** → restored archive page, **Next** + case title. Muted `—` when there is no neighbour. Not a blog footer.
+Numbered editorial section. Order: **Next** + case title, **Previous** + case title (stacked, left-aligned on all breakpoints), **Index / Back to portfolio** (right column on lg; last in the stack on mobile). Desktop case titles use `--text-case-nav-title`. Muted `—` when there is no neighbour. Not a blog footer.
 
 ## Page transitions
 

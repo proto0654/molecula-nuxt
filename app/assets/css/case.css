@@ -65,6 +65,7 @@
     --case-frame-inset: var(--hud-inset-desktop);
     --text-case-intro: 0.9375rem;
     --text-case-body: 1.0625rem;
+    --text-case-nav-title: clamp(0.9375rem, 1.35vw, 1.1875rem);
   }
 }
 
@@ -744,6 +745,20 @@
   color: var(--wl-text);
 }
 
+.case-content__prose :is(p, li, .wp-block-paragraph) {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.case-content__prose :where(
+  .has-small-font-size,
+  .has-medium-font-size,
+  .has-large-font-size,
+  .has-x-large-font-size
+) {
+  font-size: inherit;
+}
+
 .case-content__prose > *:first-child {
   margin-top: 0;
 }
@@ -753,7 +768,11 @@
 }
 
 .case-content__prose p {
-  margin: 0 0 0.85em;
+  margin: 0 0 1.15em;
+}
+
+.case-content__prose p:has(+ :is(ul, ol)) {
+  margin-bottom: 0.75em;
 }
 
 .case-content__prose h1,
@@ -828,18 +847,57 @@
 }
 
 .case-content__prose strong {
-  font-weight: 400;
+  font-weight: inherit;
   color: var(--color-ink-bright);
 }
 
-.case-content__prose ul,
+.case-content__prose :is(ul, ol, .wp-block-list) {
+  margin: 0 0 1.15em;
+  padding-left: 0;
+  list-style: none;
+}
+
+.case-content__prose :is(ul, .wp-block-list) > li {
+  position: relative;
+  padding-left: 1.35rem;
+}
+
+.case-content__prose :is(ul, .wp-block-list) > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.68em;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  background: var(--case-accent-ink);
+  transform: translateY(-50%);
+}
+
 .case-content__prose ol {
-  margin: 0 0 0.85em;
-  padding-left: 1.15rem;
+  padding-left: 1.35rem;
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+
+.case-content__prose ol > li {
+  padding-left: 0.2rem;
+}
+
+.case-content__prose ol > li::marker {
+  color: var(--case-accent-ink);
+  font-size: 1.05em;
 }
 
 .case-content__prose li + li {
-  margin-top: 0.35em;
+  margin-top: 0.7em;
+}
+
+.case-content__prose li > p {
+  margin: 0;
+}
+
+.case-content__prose li > p + p {
+  margin-top: 0.7em;
 }
 
 .case-content__prose img,
@@ -1641,17 +1699,31 @@ html.case-lightbox-open {
   }
 
   .case-nav__motion {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    gap: 1.5rem;
+    gap: 1.5rem 3rem;
   }
 
   .case-nav__next {
-    text-align: right;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .case-nav__prev {
+    grid-column: 1;
+    grid-row: 2;
   }
 
   .case-nav__index {
-    text-align: center;
+    grid-column: 2;
+    grid-row: 1 / -1;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .case-nav__link,
+  .case-nav__muted {
+    font-size: var(--text-case-nav-title);
   }
 }
 
