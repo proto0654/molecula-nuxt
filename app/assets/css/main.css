@@ -428,6 +428,10 @@ html.hero-lock #__nuxt {
   pointer-events: auto;
 }
 
+.site-header__logo {
+  text-align: left;
+}
+
 .site-header__logo:hover,
 .site-header__link:hover,
 .site-header__link.is-active,
@@ -534,8 +538,6 @@ html.hero-lock #__nuxt {
   position: relative;
   display: block;
   margin: 0;
-  /* JetBrains Mono: first-glyph sidebearing reads as indent at display size */
-  margin-inline-start: -0.09em;
   opacity: 0;
   transition: opacity 0.4s ease;
 }

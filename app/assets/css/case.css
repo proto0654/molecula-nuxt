@@ -57,7 +57,7 @@
 
 @media (min-width: 1024px) {
   :root {
-    --case-pad-x: calc(1.5rem + var(--corner-size) + 1.35rem);
+    --case-pad-x: var(--hud-header-inset);
     --case-pad-y: calc(1.5rem + var(--corner-size) + 3.25rem);
     --case-col-gap: 1.5rem;
     --case-chrome-top: var(--hud-header-inset);
