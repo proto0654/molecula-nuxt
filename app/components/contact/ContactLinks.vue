@@ -29,6 +29,9 @@ useCaseScrollEntry({
     <div class="case-section__body case-zone-body">
       <span class="case-scroll-trigger" aria-hidden="true" />
       <div class="case-scroll-motion">
+        <h2 v-if="page.title" class="editorial-repeater__heading">
+          {{ page.title }}
+        </h2>
         <ContactList :contacts="page.contacts" />
       </div>
     </div>

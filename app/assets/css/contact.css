@@ -1,4 +1,4 @@
-/* Contact detail — editorial case-grid (shared tokens with about/services). */
+/* Contact detail — editorial case-grid (layout like service detail). */
 
 html.js-enabled .contact-page .contact-page__body {
   opacity: 0;
@@ -17,33 +17,6 @@ html.js-enabled .contact-page.is-revealing .contact-page__body {
   }
 }
 
-.contact-hero {
-  align-items: start;
-}
-
-.contact-hero .case-header__title {
-  font-size: var(--text-case-title);
-  letter-spacing: 0.04em;
-  line-height: 1.05;
-}
-
-.contact-hero__kicker {
-  margin: 0;
-  font-size: var(--text-meta);
-  letter-spacing: var(--track-meta);
-  text-transform: uppercase;
-  color: var(--wl-muted);
-}
-
-.contact-intro {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--text-case-intro);
-  font-weight: 300;
-  line-height: 1.65;
-  color: var(--ink-70);
-}
-
 .contact-list {
   list-style: none;
   margin: 0;
@@ -51,29 +24,16 @@ html.js-enabled .contact-page.is-revealing .contact-page__body {
 }
 
 .contact-list__link {
-  display: inline-block;
-  font-family: var(--font-ui);
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  line-height: 1.3;
-  color: var(--wl-accent);
+  color: inherit;
   text-decoration: none;
-  border-bottom: 1px solid var(--wl-accent);
 }
 
 .contact-list__link:hover {
-  color: var(--color-ink-bright);
-  border-bottom-color: var(--color-ink-bright);
+  color: var(--wl-accent);
 }
 
 @media (min-width: 1024px) {
-  .contact-page :is(.contact-hero__text, .case-section .case-zone-body) {
-    grid-column: 4 / -1;
-  }
-
-  .case-page--sparse .contact-hero {
-    min-height: min(58vh, 28rem);
-    align-content: end;
+  .contact-page .case-hero--text .case-hero__text {
+    grid-column: 1 / 10;
   }
 }

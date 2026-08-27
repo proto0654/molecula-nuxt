@@ -63,7 +63,7 @@ Rules:
 | `/services` | `useServices(page)` — slim-index pagination, editorial rows **without** featured wash |
 | `/services/[slug]` | `ServiceShell` + title/tags hero + intro (`contentHtml`) + offer repeater (price + «от» + order CTA) + prev/next |
 | `/about` | `AboutShell` + hero (photo in label col + title/tags) + intro + skills + CTA → `/contact` |
-| `/contact` | `ContactShell` + hero (kicker in label col + H1) + intro (`contact_popup_text`) + links repeater (`weblaba_contacts`) |
+| `/contact` | `ContactShell` + text hero (H1) + intro (`contact_popup_text`) + links repeater (`contact_popup_title` H2 + `weblaba_contacts`) |
 
 Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
 
@@ -71,7 +71,7 @@ Service detail composition: hero (title + tags, no featured) → intro if conten
 
 About order: hero (H1 + tags; photo in split column when set) → intro if content → skills if rows (H2 `about_section_title` only if title and rows) → CTA if `about_cta_label`. Section numbers via `getAboutComposition` (Intro / Skills / Contact).
 
-Contact order: hero (H1 «Контакты» + kicker `contact_popup_title` in label col) → intro if text → links if rows (`01 / Intro`, `0N / Links`). Section numbers via `getContactComposition`. All normalized contacts render (not filtered by `show_in_socialbar`). `_blank` gets `rel="noopener noreferrer"`.
+Contact order: text hero (H1 «Контакты») → intro if text → links if rows (`contact_popup_title` H2 only when title and rows exist). Section numbers via `getContactComposition`. All normalized contacts render (not filtered by `show_in_socialbar`). `_blank` gets `rel="noopener noreferrer"`.
 
 SEO: `useSeoMeta` title + plain excerpt on case / service / about / contact pages.
 

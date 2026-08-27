@@ -38,12 +38,9 @@ useSeoMeta({
     </p>
 
     <template v-else-if="page">
-      <div class="case-grid case-hero contact-hero">
-        <p v-if="page.title" class="contact-hero__kicker case-zone-label">
-          {{ page.title }}
-        </p>
+      <div class="case-grid case-hero case-hero--text">
         <ContactHeader
-          class="contact-hero__text case-zone-body"
+          class="case-hero__text"
           :reveal-ready="titleReady"
         />
       </div>
@@ -54,7 +51,7 @@ useSeoMeta({
         label="Intro"
         tone="editorial"
       >
-        <p class="contact-intro">{{ page.text }}</p>
+        <p class="case-content__prose">{{ page.text }}</p>
       </CaseSection>
 
       <ContactLinks
