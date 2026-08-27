@@ -1,5 +1,5 @@
 const DEFAULT_CHARSET =
-  'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/·⟨⟩';
+  'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 export type ScrambleHandle = {
   cancel: () => void;
@@ -14,9 +14,14 @@ export type ScrambleOptions = {
   onComplete?: () => void;
 };
 
+/** Spaces / punctuation stay put so soft-wrap points do not drift mid-scramble. */
+function isStableSlot(ch: string): boolean {
+  return !/\p{L}/u.test(ch);
+}
+
 /**
  * Left-to-right character resolve with random glyphs until each slot locks.
- * Spaces stay spaces. Cancel stops rAF and skips onComplete.
+ * Non-letters stay fixed. Cancel stops rAF and skips onComplete.
  */
 export function scrambleText(target: string, options: ScrambleOptions): ScrambleHandle {
   const {
@@ -34,8 +39,8 @@ export function scrambleText(target: string, options: ScrambleOptions): Scramble
   }
 
   const chars = [...target];
-  const locked = chars.map((ch) => ch === ' ');
-  const display = chars.map((ch) => (ch === ' ' ? ' ' : pick(charset)));
+  const locked = chars.map((ch) => isStableSlot(ch));
+  const display = chars.map((ch) => (isStableSlot(ch) ? ch : pick(charset)));
   const charsetLen = charset.length;
   let cancelled = false;
   let start: number | null = null;
@@ -81,8 +86,8 @@ function pick(charset: string): string {
   return charset[(Math.random() * charset.length) | 0]!;
 }
 
-/** Scramble with glyphs from the target so line breaks stay stable in mono. */
+/** Letter glyphs from the target so mono wrap stays stable during scramble. */
 export function charsetFromTarget(target: string): string {
-  const chars = [...new Set(target.replace(/\s+/g, ''))];
-  return chars.length > 0 ? chars.join('') : target;
+  const chars = [...new Set([...target].filter((ch) => /\p{L}/u.test(ch)))];
+  return chars.length > 0 ? chars.join('') : DEFAULT_CHARSET;
 }

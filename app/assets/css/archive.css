@@ -14,16 +14,21 @@
   padding: var(--case-pad-y) var(--case-pad-x) var(--case-space-footer);
 }
 
-.archive-page.is-revealing .archive-page__body {
-  animation: archive-reveal 0.55s ease both;
+/* Hold body until pose settle + usePageContentReveal (avoids scramble under veil). */
+html.js-enabled .archive-page__body {
+  opacity: 0;
 }
 
-@keyframes archive-reveal {
-  from {
-    opacity: 0;
-  }
-  to {
+html.js-enabled .archive-page.is-revealing .archive-page__body {
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .archive-page__body,
+  html.js-enabled .archive-page.is-revealing .archive-page__body {
     opacity: 1;
+    transition: none;
   }
 }
 
@@ -40,14 +45,21 @@
 }
 
 .archive-heading__title {
-  margin: 0;
   font-family: var(--font-ui);
   font-size: var(--text-case-title);
   font-weight: 400;
   letter-spacing: var(--track-case-title);
   line-height: 0.95;
   color: var(--color-ink-title);
-  text-transform: none;
+  text-transform: uppercase;
+}
+
+.archive-heading__title .scramble-title__display {
+  color: var(--color-ink-title);
+}
+
+.archive-heading__title.is-scrambling .scramble-title__display {
+  color: var(--ink-62);
 }
 
 .archive-status {

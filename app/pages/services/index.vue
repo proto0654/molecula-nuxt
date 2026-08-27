@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { revealing } = usePageContentReveal();
+
 useSeoMeta({
   title: 'Услуги — WebLaba',
   description: 'Услуги WebLaba',
@@ -6,10 +8,10 @@ useSeoMeta({
 </script>
 
 <template>
-  <SectionShell meta="SERVICES">
+  <SectionShell meta="SERVICES" :revealing="revealing">
     <header class="archive-heading">
       <p class="archive-heading__kicker">Index</p>
-      <h1 class="archive-heading__title">Услуги</h1>
+      <SiteScrambleTitle class="archive-heading__title" text="Услуги" />
     </header>
     <p class="archive-status">Раздел в работе.</p>
   </SectionShell>

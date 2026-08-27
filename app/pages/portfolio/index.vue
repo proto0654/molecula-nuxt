@@ -45,6 +45,8 @@ watch(page, (_next, prev) => {
   window.scrollTo(0, 0);
 });
 
+const { revealing } = usePageContentReveal();
+
 useSeoMeta({
   title: 'Портфолио — WebLaba',
   description: 'Архив проектов WebLaba',
@@ -52,10 +54,10 @@ useSeoMeta({
 </script>
 
 <template>
-  <ArchiveShell>
+  <ArchiveShell :revealing="revealing">
     <header class="archive-heading">
       <p class="archive-heading__kicker">Index</p>
-      <h1 class="archive-heading__title">Portfolio</h1>
+      <SiteScrambleTitle class="archive-heading__title" text="Portfolio" />
     </header>
 
     <p v-if="pending && !entries.length" class="archive-status">Loading…</p>

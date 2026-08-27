@@ -22,7 +22,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 | [`CaseLightbox.vue`](../app/components/case/CaseLightbox.vue) | Dark overlay, technical index, close / prev-next |
 | [`CaseNavigation.vue`](../app/components/case/CaseNavigation.vue) | Numbered NEXT: Previous / Back to portfolio / Next |
 
-Route: [`app/pages/portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue). Composition + presentation helpers live in [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (`getCaseComposition`). Scroll entry: [`useCaseScrollEntry`](../app/composables/useCaseScrollEntry.ts). Case→case reveal: [`useCasePageTransition`](../app/composables/useCasePageTransition.ts). Slice bottom runway: [`useCaseSliceBottomSpace`](../app/composables/useCaseSliceBottomSpace.ts). Lightbox: [`useCaseLightbox`](../app/composables/useCaseLightbox.ts). Title scramble reuses [`textScramble`](../app/lib/hero-ui/textScramble.ts) (plain text from `stripTags`, not all-caps).
+Route: [`app/pages/portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue). Composition + presentation helpers live in [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (`getCaseComposition`). Scroll entry: [`useCaseScrollEntry`](../app/composables/useCaseScrollEntry.ts). Case→case reveal: [`useCasePageTransition`](../app/composables/useCasePageTransition.ts). Slice bottom runway: [`useCaseSliceBottomSpace`](../app/composables/useCaseSliceBottomSpace.ts). Lightbox: [`useCaseLightbox`](../app/composables/useCaseLightbox.ts). Title scramble reuses [`textScramble`](../app/lib/hero-ui/textScramble.ts) via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue). Reveal is **chained** after the molecule pose veil (`is-awaiting-pose` / [`useAwaitingPose`](../app/composables/useAwaitingPose.ts)) and, on case→case, after body phase `idle` (`revealReady`). Paint layer is absolute; non-letters stay locked so soft-wrap does not drift. Archive/section pages use [`usePageContentReveal`](../app/composables/usePageContentReveal.ts) so body fade-in starts on the same settle signal.
 
 ## Composition
 
@@ -71,15 +71,15 @@ Accent belongs on: section marker number, metadata labels, hover/active nav, sel
 | `--case-accent-ink` | `color-mix` of accent + bright ink — readable labels on dark bg |
 | `--case-space-hero` / `--case-space-first` / `--case-space-section` / `--case-space-visual` / `--case-space-footer` | Vertical rhythm |
 | `--case-pad-x` / `--case-pad-y` | Body inset inside corner ticks |
-| `--text-case-title` / `--text-case-title-split` | Large titles (not all-caps — long RU names) |
-| `--text-case-intro` | Header excerpt |
-| `--text-case-body` | CMS Overview body (~1–1.0625rem; not the tiny intro size) |
+| `--text-case-title` / `--text-case-title-split` | Large all-caps titles (USP-style tracking) |
+| `--text-case-intro` | Header excerpt / mobile caption (Exo 2 300) |
+| `--text-case-body` | CMS Overview body (~1–1.0625rem; Exo 2 300) |
 | `--case-media-max` | Cap tall **CMS prose** media only — **not** gallery / landing screens |
 | `--case-screen-max` | Desktop screens: `min(52rem, 78vw)` absolute + relative |
 | `--case-mobile-max` | Composite mockup width: `min(20rem, 34vw)` — no frame/backing on image |
 | `--case-mobile-caption-max` | Caption on mobile: `44rem` (two editorial cols on lg) |
 
-Display type is `--font-ui` (JetBrains Mono). There is no second display face.
+Display titles / markers use `--font-ui` (JetBrains Mono). Reading text (Overview prose, intro, captions) uses `--font-body` (Exo 2, weight 300; `strong` at 400). Prose headings (`h1`–`h4` inside `.case-content__prose`) stay Mono.
 
 ## Chrome
 
@@ -110,7 +110,7 @@ Hero media is **video only** (flat, no 3D). **`landing_screen`** is Interface in
 - `.case-content__body` — cols 4–10 (6 columns; no `max-width: 65ch`, not centered)
 - `.case-content__facts` — cols 10–13 when any fact exists; otherwise that span stays empty (negative space)
 
-CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong) — not a single typography utility. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph.
+CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong, figcaption) — not a single typography utility. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph.
 
 ## Visual media blocks
 
@@ -145,7 +145,7 @@ Bottom spacing: `--slice-bottom-space` from `useCaseSliceBottomSpace` — `stagg
 | **2** | `lift` | small scale + slight rotateX | Mobile mockup |
 | **3** | `screensGrid` / `landingOnly` / `slices` | existing 3D | Interface grid, landing-only, Slices only |
 
-Do not use Level 3 on Mobile. Header title scramble is intro, not scroll entry. Page reveal (case→case) is a separate L1 on `.case-page__body`.
+Do not use Level 3 on Mobile. Header title scramble is intro motion, gated on pose settle (and case body idle) — not scroll entry. Page reveal (case→case) is a separate L1 on `.case-page__body`.
 
 Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `overflow: hidden` on the visual field (clips 3D). Without `.js-enabled`, CSS `animation-timeline: view()` fallbacks run (`inner-page-enter-*`, `portfolio-parallax-odd/even`). Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts) / [`useReducedMotion`](../app/composables/useReducedMotion.ts). Home Navigator zoom/fill, pointer tilt, and connector are skipped under reduced motion.
 

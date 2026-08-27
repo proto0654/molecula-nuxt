@@ -65,5 +65,6 @@ Shell + stubs закрыты. Не ломать content pipeline и `absence = n
 - [x] Portfolio archive editorial listing + Home/Archive/Case handoffs
 - [x] Persistent molecular shell (layout canvas + SpatialController)
 - [x] Section route stubs + off-home chrome (header menu, transparent pages)
-- [ ] Реальный контент `/about` `/services` `/contact` (WP pages / ACF)
 - [x] Полировка molecular → route: pose reveal gate, live same-atom handoff, parallel zoom/orbit tweens (не packed ease)
+- [x] Case / section typography: Exo 2 body + Mono titles; `SiteScrambleTitle` chained to pose settle / case body idle
+- [ ] Реальный контент `/about` `/services` `/contact` (WP pages / ACF)

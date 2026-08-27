@@ -69,10 +69,15 @@ const ready = computed(
   () => Boolean(data.value?.caseData) && data.value?.caseData?.slug === slug.value,
 );
 
-const { appliedAccent, bodyClass } = useCasePageTransition({
+const { appliedAccent, bodyClass, phase } = useCasePageTransition({
   accentColor: () => caseData.value?.accentColor,
   ready,
 });
+
+/** Title scramble after pose settle and case body idle (not under exit veil). */
+const titleReady = computed(
+  () => ready.value && phase.value === 'idle',
+);
 
 const pageTitle = computed(() => {
   const c = caseData.value;
@@ -121,6 +126,7 @@ useSeoMeta({
           :case-data="caseData"
           :case-index="position?.index"
           :show-meta="!sections.content"
+          :reveal-ready="titleReady"
         />
         <CaseHeroMedia
           v-if="heroKind"

@@ -28,7 +28,8 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--grid-opacity` | `0.032` | Edge grid stroke alpha |
 | `--frame-opacity` | `0.28` | Corner ticks / active rail marker |
 | `--line-opacity` | `0.22` | Divider, SVG connector |
-| `--font-ui` | `'JetBrains Mono'`, ui-monospace fallbacks | All HUD type (self-hosted Cyrillic) |
+| `--font-ui` | `'JetBrains Mono'`, ui-monospace fallbacks | HUD / titles / markers (self-hosted Cyrillic) |
+| `--font-body` | `'Exo 2'`, system sans | Case reading text — prose, intro, captions (300 / 400) |
 | `--text-meta` | `0.625rem` | `⟨ SYS · … ⟩`, header, status |
 | `--text-index` | `0.5625rem` | Nav `01`–`05` |
 | `--text-nav` | `0.6875rem` | Nav labels, return control |
@@ -153,7 +154,8 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 - UI language: **Russian** (`html lang="ru"`). Nav / HUD uppercase tracked labels (`ГЛАВНАЯ`, `О НАС`, …).
 - Blurbs: lowercase techno one-liners (RU) prefixed `// ` in the 3D typewriter; on mobile, break onto a second line at the content ` / ` separator.
 - USPs: short RU headlines in HUD space, uppercase tracked (`text-transform: uppercase`).
-- Font: self-hosted **JetBrains Mono** — `public/fonts/*.woff2` for CSS HUD; `*.ttf` for troika (`AtomLabel`) because troika needs ttf/woff, not woff2.
+- Fonts: self-hosted **JetBrains Mono** — `public/fonts/JetBrainsMono-*.woff2` for CSS HUD/titles; `*.ttf` for troika (`AtomLabel`) because troika needs ttf/woff, not woff2. Case reading text: self-hosted **Exo 2** Light/Regular (`Exo2-*-*.woff2` subsets) via `--font-body`.
+- Case / section titles: all-caps scramble via `SiteScrambleTitle`, armed until `!is-awaiting-pose` (and case body idle). Absolute paint layer + locked non-letters. Archive/section body fade uses `usePageContentReveal` on the same settle.
 - Decorative Unicode allowed: `⟨ ⟩`, `⟦ ⟧`, `·`, `//`. Avoid emoji and heavy box drawing.
 
 ## Do / do not
