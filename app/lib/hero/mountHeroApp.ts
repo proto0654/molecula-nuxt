@@ -23,6 +23,7 @@ import { SiteHeader } from '../hero-ui/SiteHeader';
 import { UspHeadline } from '../hero-ui/UspHeadline';
 import { HeroAutoplay } from './HeroAutoplay';
 import { HOME_ITEM_ID } from '../spatial/spatialAtoms';
+import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { SpatialController, type SpatialApplyOptions } from '../spatial/SpatialController';
 import type { SpatialState } from '../spatial/types';
 import type { TransitionListener } from '../navigation/TransitionState';
@@ -171,6 +172,43 @@ export function mountHeroApp(
     controller.setAccentWireframeAtom(null, null);
   }
 
+  function applyBondFlow(): void {
+    if (prefersReducedMotion()) {
+      controller.setBondFlowAtom(null);
+      return;
+    }
+
+    const committedId = navigationState.committedItemId;
+    const previewId = navigationState.previewItemId;
+    const hasDistinctPreview = Boolean(
+      previewId && previewId !== committedId,
+    );
+    const previewItem =
+      hasDistinctPreview && previewId ? getItemById(previewId) : undefined;
+    const committedItem = committedId ? getItemById(committedId) : undefined;
+
+    if (!isHome || navigator.busy) {
+      controller.setBondFlowAtom(null);
+      return;
+    }
+
+    if (hasDistinctPreview && previewItem) {
+      controller.setBondFlowAtom(previewItem.atomId);
+      return;
+    }
+
+    if (autoplay.isDwelling()) {
+      const nextId = autoplay.getNextItemId();
+      const nextItem = nextId ? getItemById(nextId) : undefined;
+      if (nextItem && nextItem.atomId !== committedItem?.atomId) {
+        controller.setBondFlowAtom(nextItem.atomId);
+        return;
+      }
+    }
+
+    controller.setBondFlowAtom(null);
+  }
+
   function applyVisuals(): void {
     const committedId = navigationState.committedItemId;
     const previewId = navigationState.previewItemId;
@@ -193,6 +231,7 @@ export function mountHeroApp(
     );
     controller.setWireframeAtom(committedItem?.atomId ?? null);
     applyAccentWireframe();
+    applyBondFlow();
 
     const titleHighlightIds: string[] = [];
     if (isHome && committedItem && committedId && !navigator.busy) {
@@ -419,6 +458,7 @@ export function mountHeroApp(
       committedItemId: navigationState.committedItemId,
     });
     applyAccentWireframe();
+    applyBondFlow();
 
     if (
       isHome &&

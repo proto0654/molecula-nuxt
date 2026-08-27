@@ -66,6 +66,10 @@ export class Bond {
     return this.line;
   }
 
+  setMaterial(material: LineDashedMaterial): void {
+    this.line.material = material;
+  }
+
   /** Rebuild endpoints when atom layout (orbit / hub radius) changes. */
   setEndpoints(
     from: Vector3Like,

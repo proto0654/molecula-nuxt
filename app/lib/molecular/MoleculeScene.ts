@@ -29,6 +29,14 @@ const WIREFRAME_OPACITY = 0.22;
 const PULSE_OPACITY_MIN = 0.035;
 const PULSE_OPACITY_MAX = WIREFRAME_OPACITY;
 const PULSE_SPEED = 2.4;
+/** One bond dash repeat per wireframe pulse cycle (2π / PULSE_SPEED). */
+const BOND_DASH_SIZE = 0.07;
+const BOND_DASH_GAP = 0.05;
+const BOND_DASH_PERIOD = BOND_DASH_SIZE + BOND_DASH_GAP;
+/** Dash cycles per wireframe pulse beat — >1 reads livelier while staying in phase. */
+const BOND_FLOW_RATE = 4;
+const BOND_FLOW_SPEED =
+  (BOND_DASH_PERIOD * PULSE_SPEED * BOND_FLOW_RATE) / (Math.PI * 2);
 /** Slower enter/exit so fade reads clearly (not brighter). */
 const ACCENT_ENTER_FOLLOW = 3.8;
 /** Match AtomSelectionIndicator color follow for settled freeze chrome. */
@@ -41,6 +49,43 @@ function smoothstep01(t: number): number {
 
 export type AccentWireframeMode = 'static' | 'pulse';
 const BOND_COLOR = 0x5a636c;
+const BOND_IDLE_OPACITY = 0.55;
+const BOND_FLOW_OPACITY = 0.68;
+/** World-units per second — hover preview; autoplay locks to PULSE_SPEED via elapsed. */
+const BOND_FLOW_ENTER_FOLLOW = 3.8;
+
+type BondFlowMaterialUserData = {
+  dashOffset?: { value: number };
+};
+
+/** Inject dashOffset into the dashed fragment shader (not exposed on the material in r178). */
+function createBondFlowMaterial(): LineDashedMaterial {
+  const material = new LineDashedMaterial({
+    color: BOND_COLOR,
+    transparent: true,
+    opacity: BOND_FLOW_OPACITY,
+    dashSize: BOND_DASH_SIZE,
+    gapSize: BOND_DASH_GAP,
+    scale: 1,
+    depthWrite: false,
+  });
+  material.customProgramCacheKey = () => 'molecule-bond-flow-dash';
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.dashOffset = { value: 0 };
+    (material.userData as BondFlowMaterialUserData).dashOffset =
+      shader.uniforms.dashOffset;
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        'uniform float totalSize;',
+        'uniform float totalSize;\nuniform float dashOffset;',
+      )
+      .replace(
+        'mod( vLineDistance, totalSize )',
+        'mod( vLineDistance + dashOffset, totalSize )',
+      );
+  };
+  return material;
+}
 
 /** Mobile-only: orbit span (peripheral positions + decorative rings). */
 const MOBILE_ORBIT_SCALE = 0.58;
@@ -70,6 +115,11 @@ export class MoleculeScene {
   /** Atom meshes only — used for hover raycasting (bonds excluded). */
   private readonly atomMeshes: Mesh[] = [];
   private readonly bondMaterial: LineDashedMaterial;
+  private readonly bondFlowMaterial: LineDashedMaterial;
+  private bondFlowToAtomId: string | null = null;
+  private bondFlowDashOffset = 0;
+  private bondFlowEnterMix = 0;
+  private targetBondFlowEnterMix = 0;
   private readonly wireframeMaterial: LineBasicMaterial;
   private readonly wireframe: LineSegments;
   private readonly accentWireframeMaterial: LineBasicMaterial;
@@ -128,12 +178,13 @@ export class MoleculeScene {
     this.bondMaterial = new LineDashedMaterial({
       color: BOND_COLOR,
       transparent: true,
-      opacity: 0.55,
-      dashSize: 0.07,
-      gapSize: 0.05,
+      opacity: BOND_IDLE_OPACITY,
+      dashSize: BOND_DASH_SIZE,
+      gapSize: BOND_DASH_GAP,
       scale: 1,
       depthWrite: false,
     });
+    this.bondFlowMaterial = createBondFlowMaterial();
 
     this.wireframeMaterial = new LineBasicMaterial({
       color: WIREFRAME_COLOR,
@@ -215,6 +266,7 @@ export class MoleculeScene {
     this.applyCompactLayout(this.compactLayout);
     this.syncWireframe();
     this.syncAccentWireframe();
+    this.syncBondFlowMaterials();
   }
 
   /**
@@ -313,6 +365,27 @@ export class MoleculeScene {
     this.targetAccentEnterMix = 0;
   }
 
+  private setBondFlowDashOffset(offset: number): void {
+    this.bondFlowDashOffset = offset;
+    const uniform = (this.bondFlowMaterial.userData as BondFlowMaterialUserData)
+      .dashOffset;
+    if (uniform) uniform.value = offset;
+  }
+
+  /** Hub → target atom: animate dash pattern along the bond (not opacity pulse). */
+  setBondFlowAtom(atomId: string | null): void {
+    if (atomId && this.bondLinks.some((link) => link.toId === atomId)) {
+      if (this.bondFlowToAtomId !== atomId) {
+        this.setBondFlowDashOffset(0);
+        this.bondFlowToAtomId = atomId;
+      }
+      this.targetBondFlowEnterMix = 1;
+      this.syncBondFlowMaterials();
+      return;
+    }
+    this.targetBondFlowEnterMix = 0;
+  }
+
   /** White orbit for the active peripheral atom (hover or committed). */
   setActiveOrbitAtom(atomId: string | null): void {
     this.decorativeNodes.setActiveOrbitAtom(atomId);
@@ -374,6 +447,7 @@ export class MoleculeScene {
   update(deltaSeconds: number, updateLabels = true, elapsed = 0): void {
     this.updateWireframeDim(deltaSeconds);
     this.updateAccentWireframePulse(deltaSeconds, elapsed);
+    this.updateBondFlow(deltaSeconds, elapsed);
     for (const atom of this.atoms) {
       if (updateLabels) {
         atom.updateLabel(this.camera);
@@ -429,6 +503,58 @@ export class MoleculeScene {
     this.accentWireframeMaterial.opacity = pulse * enter;
   }
 
+  private updateBondFlow(deltaSeconds: number, elapsed: number): void {
+    const enterT = 1 - Math.exp(-BOND_FLOW_ENTER_FOLLOW * deltaSeconds);
+    this.bondFlowEnterMix +=
+      (this.targetBondFlowEnterMix - this.bondFlowEnterMix) * enterT;
+
+    if (
+      this.targetBondFlowEnterMix === 0 &&
+      this.bondFlowEnterMix < 0.015 &&
+      this.bondFlowToAtomId
+    ) {
+      this.bondFlowEnterMix = 0;
+      this.bondFlowToAtomId = null;
+      this.setBondFlowDashOffset(0);
+      this.syncBondFlowMaterials();
+      return;
+    }
+
+    if (!this.bondFlowToAtomId || this.bondFlowEnterMix < 0.01) return;
+
+    const period = BOND_DASH_PERIOD;
+    const pulseSynced =
+      this.accentWireframeMode === 'pulse' &&
+      this.accentWireframeAtomId === this.bondFlowToAtomId;
+
+    if (pulseSynced) {
+      const cycle = ((elapsed * PULSE_SPEED) / (Math.PI * 2)) * BOND_FLOW_RATE;
+      const t = cycle - Math.floor(cycle);
+      this.setBondFlowDashOffset((period - t * period + period) % period);
+    } else {
+      this.setBondFlowDashOffset(
+        (this.bondFlowDashOffset - BOND_FLOW_SPEED * deltaSeconds + period) %
+          period,
+      );
+    }
+
+    const enter = smoothstep01(this.bondFlowEnterMix);
+    this.bondFlowMaterial.opacity =
+      BOND_IDLE_OPACITY + (BOND_FLOW_OPACITY - BOND_IDLE_OPACITY) * enter;
+    this.syncBondFlowMaterials();
+  }
+
+  private syncBondFlowMaterials(): void {
+    const activeToId =
+      this.bondFlowToAtomId && this.bondFlowEnterMix > 0.01
+        ? this.bondFlowToAtomId
+        : null;
+    for (const link of this.bondLinks) {
+      const isFlow = activeToId !== null && link.toId === activeToId;
+      link.bond.setMaterial(isFlow ? this.bondFlowMaterial : this.bondMaterial);
+    }
+  }
+
   render(): void {
     this.renderer.render(this.scene, this.camera);
   }
@@ -439,6 +565,7 @@ export class MoleculeScene {
     this.wireframeMaterial.dispose();
     this.accentWireframeMaterial.dispose();
     this.bondMaterial.dispose();
+    this.bondFlowMaterial.dispose();
     this.cache.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
@@ -486,6 +613,10 @@ export class MoleculeScene {
     this.accentWireframe.visible = false;
     this.accentEnterMix = 0;
     this.targetAccentEnterMix = 0;
+    this.bondFlowToAtomId = null;
+    this.setBondFlowDashOffset(0);
+    this.bondFlowEnterMix = 0;
+    this.targetBondFlowEnterMix = 0;
     for (const atom of this.atoms) {
       this.labelsGroup.remove(atom.atomLabel.object);
       this.moleculeGroup.remove(atom.object);

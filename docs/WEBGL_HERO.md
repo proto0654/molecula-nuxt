@@ -152,7 +152,7 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../app/lib/molecular/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `setApproachBusy`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloStates`, `setWireframeAtom`, `setAccentWireframeAtom`, `setAtomTitleHighlight`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `setApproachBusy`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloStates`, `setWireframeAtom`, `setAccentWireframeAtom`, `setBondFlowAtom`, `setAtomTitleHighlight`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
 
 Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation within `0.08` rad of target). The same gate starts the HUD USP scramble after commit.
 
@@ -198,7 +198,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 | Wait settle | Progress held at 0 until `isFocusSettled()` |
 | Fill | Progress 0→1 over `SLIDE_DURATION_MS` (~5500) |
 | Advance | Next item in `navigationConfig.items` order (wraps) |
-| Next preview | While dwelling (progress filling, no user preview): **pulsing accent wireframe** on the next item's atom (`setAccentWireframeAtom` pulse mode) |
+| Next preview | While dwelling (progress filling, no user preview): **pulsing accent wireframe** on the next item's atom (`setAccentWireframeAtom` pulse mode) + **flowing hub bond dashes** toward that atom (`setBondFlowAtom`, dash offset phase-locked to the wireframe pulse) |
 | Pause | Hover (atom or nav), manual select, mobile menu open, `navigator.busy`, off-home |
 | Resume | ~2s idle after interactions clear (`IDLE_RESUME_MS`) |
 
@@ -229,7 +229,7 @@ Orbit sweep is applied each frame as `stableFocus * axisAngle(progress * 2π)` o
 
 [`AtomHover.ts`](../app/lib/molecular/AtomHover.ts): raycasts **atom meshes only** (`MoleculeScene.getAtomMeshes()`). Dirty when pointer NDC changes, molecule quaternion / zoom progress changes, or resize. Enter/leave notifies `mountHeroApp.ts` → `NavigationState.setAtomHover`. Selection rings are siblings of the icosahedron on the atom **Group** (not children of the scaled mesh); labels live on `labelsGroup` (scene). Neither is in `atomMeshes` (empty `raycast`). Decorative ghost geometry and the selection wireframe are also not pick targets.
 
-Highlight is separate from focus orientation: `setHighlightedAtom` toggles a light emissive. Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloStates` (dual committed + preview). Committed wireframe shell: `setWireframeAtom` (static). Hover preview and autoplay-next hint: `setAccentWireframeAtom` (static on hover, pulse while autoplay dwelling). Title brightness: `setAtomTitleHighlight` (committed with blurb + distinct preview). Nav `.is-active` follows `activeItemId`; `.is-committed` follows `committedItemId`.
+Highlight is separate from focus orientation: `setHighlightedAtom` toggles a light emissive. Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloStates` (dual committed + preview). Committed wireframe shell: `setWireframeAtom` (static). Hover preview and autoplay-next hint: `setAccentWireframeAtom` (static on hover, pulse while autoplay dwelling). Hub bond dash flow: `setBondFlowAtom` (animated `dashOffset` on the hub→target bond; autoplay phase-locks to accent wireframe pulse; hover uses the same rate). Title brightness: `setAtomTitleHighlight` (committed with blurb + distinct preview). Nav `.is-active` follows `activeItemId`; `.is-committed` follows `committedItemId`.
 
 **Settled freeze chrome dim:** labels hide instantly in `freeze()`. After the approach timeline settles (`frozen && !approachBusy`), rings / ticks / center cross and both wireframe shells **lerp color** to black (`0x000000`, exp-follow ~6). While `Navigator` is `busy` (live approach / retarget), chrome stays at base colors. `unfreeze` / home cancels the dim. `mountHeroApp` mirrors `transitionState.busy` → `MoleculeController.setApproachBusy`; scene applies via `setChromeDimmed`. Atom mesh fill colors are unchanged.
 
@@ -343,7 +343,7 @@ Live site: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molec
 
 ## Gotchas
 
-- Bond connectors are dashed `Line`s inset from atom radii; `computeLineDistances()` is required for `LineDashedMaterial`. Not pick targets.
+- Bond connectors are dashed `Line`s inset from atom radii; `computeLineDistances()` is required for `LineDashedMaterial`. Idle bonds share one material; preview/autoplay-next uses a cloned flow material with a shader `dashOffset` (hub → peripheral). Not pick targets.
 - Atom materials are matte + `flatShading` (HIGH/MEDIUM standard, LOW lambert). Do not reintroduce Fresnel or high metalness — facets must stay readable.
 - Peripheral positions and decorative orbits must stay in sync via [`moleculeOrbits.ts`](../app/lib/molecular/moleculeOrbits.ts) (`ATOM_ORBIT_PLACEMENT` / `buildSphericalOrbitPlacements`). Each peripheral owns one hub-centered orbit (varied radius); directions use equal spherical spacing (not a shared ecliptic). Do not share one ring across multiple atoms or hard-code XYZ. Active orbit color follows highlight via `setActiveOrbitAtom` (black idle / dark gray active).
 - Atom colors are a local `COLOR_BY_LABEL` map in `Atom.ts`, not part of `AtomConfig`.

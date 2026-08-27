@@ -868,6 +868,11 @@ export class MoleculeController {
     this.scene.setAccentWireframeAtom(atomId, mode);
   }
 
+  /** Animate hub bond dashes flowing toward the target peripheral atom. */
+  setBondFlowAtom(atomId: string | null): void {
+    this.scene.setBondFlowAtom(atomId);
+  }
+
   /** White decorative orbit for the active peripheral (others stay black). */
   setActiveOrbitAtom(atomId: string | null): void {
     this.scene.setActiveOrbitAtom(atomId);
