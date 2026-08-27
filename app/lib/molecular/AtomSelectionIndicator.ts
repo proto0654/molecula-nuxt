@@ -1,4 +1,5 @@
 import {
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -17,8 +18,11 @@ export type SelectionGeometries = {
 };
 
 const RING_COLOR = 0xb8c0c8;
+const DIM_COLOR = 0x000000;
 const RING_SCALES = [1.28, 1.62, 2.02];
 const FOLLOW = 10;
+/** Softer than opacity follow — settled freeze chrome fade. */
+const COLOR_FOLLOW = 6;
 const HOVER_OPACITY = 0.4;
 const COMMITTED_OPACITY = 0.32;
 
@@ -46,9 +50,14 @@ export class AtomSelectionIndicator {
   private simple = false;
   private ticksEnabled = true;
   private centerEnabled = true;
+  private colorMix = 0;
+  private targetColorMix = 0;
 
   private readonly scratchParentQ = new Quaternion();
   private readonly scratchBillboard = new Quaternion();
+  private readonly scratchBaseColor = new Color(RING_COLOR);
+  private readonly scratchDimColor = new Color(DIM_COLOR);
+  private readonly scratchColor = new Color();
 
   constructor(radius: number, geometries: SelectionGeometries) {
     this.radius = radius;
@@ -147,6 +156,14 @@ export class AtomSelectionIndicator {
     this.centerEnabled = visible;
   }
 
+  /**
+   * Settled frozen approach: lerp reticle color toward black.
+   * Leaving the state sets false and restores `RING_COLOR`.
+   */
+  setDimmed(dimmed: boolean): void {
+    this.targetColorMix = dimmed ? 1 : 0;
+  }
+
   /** Keep rings / ticks sized to the live atom radius (hub compact layout). */
   setRadius(radius: number): void {
     this.radius = Math.max(radius, 1e-6);
@@ -162,8 +179,11 @@ export class AtomSelectionIndicator {
    */
   update(camera: Camera, delta: number, elapsed: number): void {
     const t = 1 - Math.exp(-FOLLOW * delta);
+    const colorT = 1 - Math.exp(-COLOR_FOLLOW * delta);
     this.opacity += (this.targetOpacity - this.opacity) * t;
     this.pulse += (this.targetPulse - this.pulse) * t;
+    this.colorMix += (this.targetColorMix - this.colorMix) * colorT;
+    this.applyColorMix();
 
     if (this.opacity < 0.01 && this.targetOpacity < 0.01) {
       this.object.visible = false;
@@ -213,6 +233,19 @@ export class AtomSelectionIndicator {
     this.ticks.scale.setScalar(innerScale);
     this.ticksMaterial.opacity = this.opacity * 0.55;
     this.crossMaterial.opacity = this.opacity * 0.7;
+  }
+
+  private applyColorMix(): void {
+    this.scratchColor.lerpColors(
+      this.scratchBaseColor,
+      this.scratchDimColor,
+      this.colorMix,
+    );
+    for (const material of this.ringMaterials) {
+      material.color.copy(this.scratchColor);
+    }
+    this.ticksMaterial.color.copy(this.scratchColor);
+    this.crossMaterial.color.copy(this.scratchColor);
   }
 
   dispose(): void {

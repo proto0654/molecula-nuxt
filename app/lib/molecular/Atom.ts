@@ -131,6 +131,10 @@ export class Atom {
     this.selection.setMode(mode);
   }
 
+  setSelectionDimmed(dimmed: boolean): void {
+    this.selection.setDimmed(dimmed);
+  }
+
   setBlurb(blurb: string | null): void {
     this.atomLabel.setBlurb(blurb);
   }

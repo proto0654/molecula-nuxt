@@ -246,6 +246,7 @@ export function mountHeroApp(
   });
 
   const unsubscribeTransition = navigator.transitionState.subscribe((snap) => {
+    controller.setApproachBusy(snap.busy);
     if (snap.phase === 'idle') {
       destination.hide();
     }

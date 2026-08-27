@@ -249,6 +249,8 @@ export class MoleculeController {
   private lastTime = 0;
   private running = false;
   private frozen = false;
+  /** Mirrors Navigator TransitionState.busy — chrome dim waits until approach settles. */
+  private approachBusy = false;
   private spatialMode: SpatialMode = 'home';
   private readonly canvas: HTMLCanvasElement;
   private readonly sampler: PerformanceSampler;
@@ -488,11 +490,23 @@ export class MoleculeController {
     this.resetPointerTilt();
     this.atomHover.clear();
     this.scene.setLabelsVisible(false);
+    this.syncChromeDim();
   }
 
   unfreeze(): void {
     this.frozen = false;
     this.scene.setLabelsVisible(true);
+    this.syncChromeDim();
+  }
+
+  /**
+   * While Navigator owns the approach timeline, keep selection chrome at base color.
+   * Settled freeze (`frozen && !busy`) lerps rings / cross / wireframe to black.
+   */
+  setApproachBusy(busy: boolean): void {
+    if (this.approachBusy === busy) return;
+    this.approachBusy = busy;
+    this.syncChromeDim();
   }
 
   /**
@@ -1013,6 +1027,11 @@ export class MoleculeController {
     for (const listener of this.afterUpdateListeners) {
       listener(delta);
     }
+  }
+
+  /** Settled off-home freeze: black chrome; busy approach or home: base colors. */
+  private syncChromeDim(): void {
+    this.scene.setChromeDimmed(this.frozen && !this.approachBusy);
   }
 
   start(): void {

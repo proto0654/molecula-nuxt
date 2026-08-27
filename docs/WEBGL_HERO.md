@@ -13,6 +13,7 @@ layouts/default.vue (persists)
           ├─ MoleculeController  → home: mouse pointermove → absolute tilt + AtomHover NDC
           │                      → home: touch/pen drag → incremental tilt; tap → pick
           │                      → freeze() at approach start and off-home: drop mouse tilt, hide labels
+          │                      → settled freeze (!busy): lerp selection rings/cross + wireframe → black
           │                      → rAF → compose + zoom/fill → labels (dirty) → selection → hover → onAfterUpdate
           │                         → render → PerformanceSampler (lock-once)
           ├─ SpatialController       spatialFromRoute → setMode / restoreOverview / focus* / freeze
@@ -146,7 +147,7 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../app/lib/molecular/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `setApproachBusy`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
 
 Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation within `0.08` rad of target). The same gate starts the HUD USP scramble after commit.
 
@@ -209,6 +210,8 @@ Orbit sweep is applied each frame as `stableFocus * axisAngle(progress * 2π)` o
 [`AtomHover.ts`](../app/lib/molecular/AtomHover.ts): raycasts **atom meshes only** (`MoleculeScene.getAtomMeshes()`). Dirty when pointer NDC changes, molecule quaternion / zoom progress changes, or resize. Enter/leave notifies `mountHeroApp.ts` → `NavigationState.setAtomHover`. Selection rings are siblings of the icosahedron on the atom **Group** (not children of the scaled mesh); labels live on `labelsGroup` (scene). Neither is in `atomMeshes` (empty `raycast`). Decorative ghost geometry and the selection wireframe are also not pick targets.
 
 Highlight is separate from focus orientation: `setHighlightedAtom` toggles a light emissive. Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloAtom`. The selected wireframe shell follows **committed** only (`setWireframeAtom`); hover must not show it. Nav `.is-active` follows `activeItemId`; `.is-committed` follows `committedItemId`.
+
+**Settled freeze chrome dim:** labels hide instantly in `freeze()`. After the approach timeline settles (`frozen && !approachBusy`), rings / ticks / center cross and the wireframe shell **lerp color** to black (`0x000000`, exp-follow ~6). While `Navigator` is `busy` (live approach / retarget), chrome stays at base colors. `unfreeze` / home cancels the dim. `mountHeroApp` mirrors `transitionState.busy` → `MoleculeController.setApproachBusy`; scene applies via `setChromeDimmed`. Atom mesh fill colors are unchanged.
 
 ## Quality and performance
 

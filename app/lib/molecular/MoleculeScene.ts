@@ -23,6 +23,9 @@ import type { MoleculeConfig } from './types';
 const SCENE_BG = 0x14161c;
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
+const WIREFRAME_DIM_COLOR = 0x000000;
+/** Match AtomSelectionIndicator color follow for settled freeze chrome. */
+const CHROME_COLOR_FOLLOW = 6;
 const BOND_COLOR = 0x5a636c;
 
 /** Mobile-only: orbit span (peripheral positions + decorative rings). */
@@ -57,9 +60,14 @@ export class MoleculeScene {
   private readonly wireframe: LineSegments;
   private readonly decorativeNodes: DecorativeNodes;
   private wireframeAtomId: string | null = null;
+  private wireframeColorMix = 0;
+  private targetWireframeColorMix = 0;
   private lastWidth = 1;
   private lastHeight = 1;
   private compactLayout = false;
+  private readonly wireframeBaseColor = new Color(WIREFRAME_COLOR);
+  private readonly wireframeDimColor = new Color(WIREFRAME_DIM_COLOR);
+  private readonly scratchWireframeColor = new Color();
 
   constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
     this.quality = quality;
@@ -250,6 +258,17 @@ export class MoleculeScene {
     this.labelsGroup.visible = visible;
   }
 
+  /**
+   * Settled frozen approach: lerp selection reticle + wireframe toward black.
+   * Leaving the state restores base chrome colors.
+   */
+  setChromeDimmed(dimmed: boolean): void {
+    this.targetWireframeColorMix = dimmed ? 1 : 0;
+    for (const atom of this.atoms) {
+      atom.setSelectionDimmed(dimmed);
+    }
+  }
+
   setDecorativeZoomFade(zoomProgress: number, fillProgress: number): void {
     this.decorativeNodes.setZoomFade(zoomProgress, fillProgress);
   }
@@ -289,6 +308,7 @@ export class MoleculeScene {
    * Caller must have already refreshed `moleculeGroup` world matrices.
    */
   update(deltaSeconds: number, updateLabels = true, elapsed = 0): void {
+    this.updateWireframeDim(deltaSeconds);
     for (const atom of this.atoms) {
       if (updateLabels) {
         atom.updateLabel(this.camera);
@@ -296,6 +316,18 @@ export class MoleculeScene {
       atom.tickLabelTypewriter(deltaSeconds);
       atom.updateSelection(this.camera, deltaSeconds, elapsed);
     }
+  }
+
+  private updateWireframeDim(deltaSeconds: number): void {
+    const t = 1 - Math.exp(-CHROME_COLOR_FOLLOW * deltaSeconds);
+    this.wireframeColorMix +=
+      (this.targetWireframeColorMix - this.wireframeColorMix) * t;
+    this.scratchWireframeColor.lerpColors(
+      this.wireframeBaseColor,
+      this.wireframeDimColor,
+      this.wireframeColorMix,
+    );
+    this.wireframeMaterial.color.copy(this.scratchWireframeColor);
   }
 
   render(): void {

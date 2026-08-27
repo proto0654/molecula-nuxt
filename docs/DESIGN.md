@@ -62,8 +62,9 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Caption remainder (idle) | `0x000000` | Matches idle letter |
 | Caption remainder (active) | `0xb8c0c8` | Committed remainder |
 | Caption blurb | `0x8b949e` | `AtomLabel` `BLURB_COLOR` |
-| Selection rings | `0xb8c0c8` | `AtomSelectionIndicator` `RING_COLOR` |
-| Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell |
+| Selection rings / ticks / cross | `0xb8c0c8` | `AtomSelectionIndicator` `RING_COLOR` (base) |
+| Selection chrome (settled freeze) | `0x000000` | Lerp after approach settle; opacity unchanged |
+| Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell (base); same black lerp when settled |
 | Decorative orbits / nodes | black @ ~0.42 / active `#3a3e44` @ ~0.55; nodes `0x6a737c` | `DecorativeNodes` (HIGH only) |
 | Highlight emissive | `0x4a525a` @ 0.1 | `Atom.ts` |
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
@@ -131,8 +132,8 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 - Idle titles are pure black; committed atom brightens letter + remainder via `setTitleActive` (tied to blurb commit).
 - On commit, typewriter `// blurb` under the title in the **same** group.
 - Screen-flat: scene-parented group, `quaternion.copy(camera.quaternion)`, scale by distance. Lift toward camera (`SURFACE_PAD`) so glyphs clear the atom.
-- Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; camera-quat billboard under molecule parent; not raycast targets.
-- Selected wireframe: shared `EdgesGeometry` icosahedron shell (~1.04× radius) on the **committed** atom only; quality may disable it.
+- Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; camera-quat billboard under molecule parent; not raycast targets. Settled off-home freeze lerps color to black (`setDimmed`); leave restores `RING_COLOR`.
+- Selected wireframe: shared `EdgesGeometry` icosahedron shell (~1.04× radius) on the **committed** atom only; quality may disable it. Same settled-freeze black lerp via `MoleculeScene.setChromeDimmed`.
 - Decorative ghost: one hub-centered orbit per peripheral (black idle / dark gray active) + wireframe fragments on `moleculeGroup`; HIGH only; fades with zoom/fill.
 
 ### 10. USP headline
