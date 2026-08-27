@@ -1687,6 +1687,18 @@ html.case-lightbox-open {
   gap: 1.75rem;
 }
 
+.case-nav__flow {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.case-nav__prev {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgb(214 219 224 / var(--line-opacity));
+}
+
 .case-nav__item {
   min-width: 0;
 }
@@ -1743,20 +1755,23 @@ html.case-lightbox-open {
     gap: 1.5rem 3rem;
   }
 
-  .case-nav__next {
-    grid-column: 1;
-    grid-row: 1;
+  .case-nav__prev {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
   }
 
-  .case-nav__prev {
+  .case-nav__flow {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 1;
+    padding-block: 0.85rem;
   }
 
   .case-nav__index {
     grid-column: 2;
-    grid-row: 1 / -1;
+    grid-row: 1;
     justify-self: end;
+    align-self: start;
+    padding-block: 0.85rem;
     text-align: right;
   }
 

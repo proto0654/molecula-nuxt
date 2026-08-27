@@ -38,34 +38,36 @@ useCaseScrollEntry({
     <div class="case-nav__links">
       <span class="case-scroll-trigger" aria-hidden="true" />
       <div class="case-nav__motion case-scroll-motion">
-        <div class="case-nav__item case-nav__next">
-          <NuxtLink
-            v-if="nextSlug"
-            :to="`/services/${nextSlug}`"
-            class="case-nav__link"
-          >
-            <span class="case-nav__dir">Next</span>
-            <span>{{ nextTitle || nextSlug }}</span>
-          </NuxtLink>
-          <span v-else class="case-nav__muted">
-            <span class="case-nav__dir">Next</span>
-            —
-          </span>
-        </div>
+        <div class="case-nav__flow">
+          <div class="case-nav__item case-nav__next">
+            <NuxtLink
+              v-if="nextSlug"
+              :to="`/services/${nextSlug}`"
+              class="case-nav__link"
+            >
+              <span class="case-nav__dir">Next</span>
+              <span>{{ nextTitle || nextSlug }}</span>
+            </NuxtLink>
+            <span v-else class="case-nav__muted">
+              <span class="case-nav__dir">Next</span>
+              —
+            </span>
+          </div>
 
-        <div class="case-nav__item case-nav__prev">
-          <NuxtLink
-            v-if="prevSlug"
-            :to="`/services/${prevSlug}`"
-            class="case-nav__link"
-          >
-            <span class="case-nav__dir">Previous</span>
-            <span>{{ prevTitle || prevSlug }}</span>
-          </NuxtLink>
-          <span v-else class="case-nav__muted">
-            <span class="case-nav__dir">Previous</span>
-            —
-          </span>
+          <div class="case-nav__item case-nav__prev">
+            <NuxtLink
+              v-if="prevSlug"
+              :to="`/services/${prevSlug}`"
+              class="case-nav__link"
+            >
+              <span class="case-nav__dir">Previous</span>
+              <span>{{ prevTitle || prevSlug }}</span>
+            </NuxtLink>
+            <span v-else class="case-nav__muted">
+              <span class="case-nav__dir">Previous</span>
+              —
+            </span>
+          </div>
         </div>
 
         <div class="case-nav__item case-nav__index">
