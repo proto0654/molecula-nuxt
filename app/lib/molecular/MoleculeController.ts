@@ -1089,10 +1089,6 @@ export class MoleculeController {
    */
   private updateZoomProgress(delta: number): void {
     if (this.transitionDriven) {
-      if (this.targetZoom === 0 && this.zoomProgress < 1e-4) {
-        this.zoomProgress = 0;
-        this.zoomAtomId = null;
-      }
       return;
     }
 

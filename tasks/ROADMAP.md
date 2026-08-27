@@ -66,4 +66,4 @@ Shell + stubs закрыты. Не ломать content pipeline и `absence = n
 - [x] Persistent molecular shell (layout canvas + SpatialController)
 - [x] Section route stubs + off-home chrome (header menu, transparent pages)
 - [ ] Реальный контент `/about` `/services` `/contact` (WP pages / ACF)
-- [ ] Полировка molecular → route как один жест (сейчас: focus → single approach → navigate; off-home header hops instantly)
+- [x] Полировка molecular → route: pose reveal gate, live same-atom handoff, parallel zoom/orbit tweens (не packed ease)

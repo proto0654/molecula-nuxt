@@ -92,8 +92,8 @@ export class Navigator {
   isLiveApproach(atomId: string | null): boolean {
     if (!atomId || this.transitionState.atomId !== atomId) return false;
     if (!this.transitionState.busy) return false;
-    if (!this.timeline) return false;
-    return !this.timeline.reversed();
+    if (this.timeline?.reversed()) return false;
+    return true;
   }
 
   get overlayRoot(): HTMLElement {
@@ -110,7 +110,6 @@ export class Navigator {
     const item = getItemByAtomId(atomId);
     this.navigationState.setCommitted(item?.id ?? null);
     this.controller.freeze();
-    this.armTicker();
     this.transitionState.patch({ busy: true });
 
     if (prefersReducedMotion()) {
@@ -128,7 +127,6 @@ export class Navigator {
         progress: 1,
       });
       this.controller.setTransitionDriven(false);
-      this.releaseTicker();
       this.emitNavigate(atomId);
       return;
     }
@@ -194,7 +192,6 @@ export class Navigator {
     this.navigatedAtomId = null;
     this.overlay.setOpacity(0);
     this.controller.freeze();
-    this.armTicker();
 
     if (prefersReducedMotion()) {
       this.controller.setCompositionFramingOverride(CENTER_FRAMING);
@@ -203,7 +200,6 @@ export class Navigator {
       this.controller.holdApproach({ immediate: true });
       this.controller.setCompositionFramingOverride(null);
       this.controller.setTransitionDriven(false);
-      this.releaseTicker();
       this.transitionState.patch({
         atomId,
         busy: false,
@@ -259,7 +255,6 @@ export class Navigator {
     this.overlay.setOpacity(0);
     this.controller.setCompositionFramingOverride(null);
     this.controller.setTransitionDriven(false);
-    this.releaseTicker();
     this.transitionState.patch({
       busy: false,
       phase: 'idle',
@@ -277,7 +272,6 @@ export class Navigator {
     this.navigatedAtomId = null;
     this.overlay.setOpacity(0);
     this.controller.freeze();
-    this.armTicker();
 
     if (prefersReducedMotion()) {
       this.controller.setCompositionFramingOverride(null);
@@ -285,7 +279,6 @@ export class Navigator {
       this.controller.setHighlightedAtom(atomId);
       this.controller.holdApproach({ immediate: true });
       this.controller.setTransitionDriven(false);
-      this.releaseTicker();
       this.transitionState.patch({
         atomId,
         busy: false,
@@ -349,7 +342,6 @@ export class Navigator {
         this.controller.settleApproachProgress();
         this.controller.setCompositionFramingOverride(null);
         this.controller.setTransitionDriven(false);
-        this.releaseTicker();
         this.timeline = null;
         this.transitionState.patch({
           atomId,
@@ -458,12 +450,10 @@ export class Navigator {
       this.softResetScene();
       this.transitionState.resetVisuals();
       this.controller.setTransitionDriven(false);
-      this.releaseTicker();
       return;
     }
 
     this.controller.setTransitionDriven(true);
-    this.armTicker();
     this.proxy = { ...from };
     this.transitionState.patch({
       busy: true,
@@ -491,7 +481,6 @@ export class Navigator {
         this.softResetScene();
         this.transitionState.resetVisuals();
         this.controller.setTransitionDriven(false);
-        this.releaseTicker();
         this.timeline = null;
       },
     });
@@ -537,7 +526,6 @@ export class Navigator {
     this.navigateListeners.clear();
     releaseRouteVeil();
     this.controller.setTransitionDriven(false);
-    this.releaseTicker();
   }
 
   private buildTimeline(
@@ -569,7 +557,16 @@ export class Navigator {
       Math.abs(from.screenY - CENTER_FRAMING.screenY),
       Math.abs(from.approach - CENTER_FRAMING.approach),
     );
-    const approachDur = APPROACH_DURATION * Math.max(approachGap, framingGap > 0.001 ? 0.35 : 0);
+    const needsZoom = approachGap > 0.02;
+    const needsFraming = framingGap > 0.001;
+    const needsOrbit = options.orbitSweep !== false;
+    // Dolly always gets a full second when it still has work — do not scale it
+    // down with framing leftover, and do not share an inOut ease with orbit.
+    const zoomDur = needsZoom ? APPROACH_DURATION : 0;
+    const orbitDur = needsOrbit ? APPROACH_DURATION : 0;
+    const framingDur = needsFraming
+      ? Math.max(zoomDur, APPROACH_DURATION * 0.65)
+      : 0;
 
     const tl = gsap.timeline({
       onUpdate: () => {
@@ -580,7 +577,6 @@ export class Navigator {
           this.controller.settleApproachProgress();
           this.controller.setCompositionFramingOverride(null);
           this.controller.setTransitionDriven(false);
-          this.releaseTicker();
           this.timeline = null;
           this.transitionState.patch({
             atomId,
@@ -593,7 +589,6 @@ export class Navigator {
           });
           return;
         }
-        this.releaseTicker();
         this.transitionState.patch({
           phase: 'complete',
           progress: 1,
@@ -635,39 +630,39 @@ export class Navigator {
       [],
       'approach',
     );
-    if (approachDur > 0.001) {
-      const approachProps: gsap.TweenVars = {
-        zoom: 1,
-        fill: 1,
-        screenX: CENTER_FRAMING.screenX,
-        screenY: CENTER_FRAMING.screenY,
-        approach: CENTER_FRAMING.approach,
-        duration: approachDur,
-        ease: 'power2.inOut',
-      };
-      if (options.orbitSweep !== false) {
-        approachProps.orbitSweep = 1;
-      }
-      tl.to(proxy, approachProps, 'approach');
-    } else {
-      proxy.zoom = 1;
-      proxy.fill = 1;
-      proxy.screenX = CENTER_FRAMING.screenX;
-      proxy.screenY = CENTER_FRAMING.screenY;
-      proxy.approach = CENTER_FRAMING.approach;
-      if (options.orbitSweep !== false) {
-        proxy.orbitSweep = 1;
-      }
-      tl.call(
-        () => {
-          this.controller.setZoomProgress(1);
-          this.controller.setFillProgress(1);
-          this.controller.setCompositionFramingOverride(CENTER_FRAMING);
-          if (options.orbitSweep !== false) {
-            this.controller.setOrbitSweepProgress(1);
-          }
+    if (needsZoom) {
+      tl.to(
+        proxy,
+        {
+          zoom: 1,
+          fill: 1,
+          duration: zoomDur,
+          ease: 'power1.inOut',
         },
-        [],
+        'approach',
+      );
+    }
+    if (needsFraming) {
+      tl.to(
+        proxy,
+        {
+          screenX: CENTER_FRAMING.screenX,
+          screenY: CENTER_FRAMING.screenY,
+          approach: CENTER_FRAMING.approach,
+          duration: framingDur,
+          ease: 'power2.inOut',
+        },
+        'approach',
+      );
+    }
+    if (needsOrbit) {
+      tl.to(
+        proxy,
+        {
+          orbitSweep: 1,
+          duration: orbitDur,
+          ease: 'none',
+        },
         'approach',
       );
     }
@@ -736,14 +731,5 @@ export class Navigator {
     this.timeline.kill();
     this.timeline = null;
     this.controller.finishOrbitSweep();
-  }
-
-  /** Disable GSAP catch-up so a long Vue tick cannot skip orbit frames. */
-  private armTicker(): void {
-    gsap.ticker.lagSmoothing(0);
-  }
-
-  private releaseTicker(): void {
-    gsap.ticker.lagSmoothing(500, 33);
   }
 }
