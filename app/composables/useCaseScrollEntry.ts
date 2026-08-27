@@ -2,6 +2,10 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { MaybeRefOrGetter } from 'vue';
 import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
+import {
+  isAwaitingPose,
+  subscribeAwaitingPose,
+} from '~/lib/navigation/poseReveal';
 
 /**
  * Scroll entry presets.
@@ -128,6 +132,7 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
   let loadHandlers: Array<{ img: HTMLImageElement; fn: () => void }> = [];
   let registered = false;
   let mq: MediaQueryList | null = null;
+  let stopPose: (() => void) | null = null;
 
   function kill() {
     for (const t of triggers) t.kill();
@@ -280,25 +285,35 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
     }
   }
 
+  function tryInit() {
+    if (isAwaitingPose()) return;
+    init();
+  }
+
   function onMqChange() {
-    nextTick(() => init());
+    nextTick(() => tryInit());
   }
 
   onMounted(() => {
     if (import.meta.client) {
       mq = window.matchMedia('(min-width: 1024px)');
       mq.addEventListener('change', onMqChange);
+      stopPose = subscribeAwaitingPose((awaiting) => {
+        if (!awaiting) nextTick(() => tryInit());
+      });
     }
-    nextTick(() => init());
+    nextTick(() => tryInit());
   });
 
   onBeforeUnmount(() => {
     mq?.removeEventListener('change', onMqChange);
+    stopPose?.();
+    stopPose = null;
     kill();
   });
 
   watch([root, presetRef], () => {
-    nextTick(() => init());
+    nextTick(() => tryInit());
   });
 
   return { refresh: init, kill };

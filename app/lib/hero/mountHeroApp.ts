@@ -20,6 +20,7 @@ import { UspHeadline } from '../hero-ui/UspHeadline';
 import { HOME_ITEM_ID } from '../spatial/spatialAtoms';
 import { SpatialController, type SpatialApplyOptions } from '../spatial/SpatialController';
 import type { SpatialState } from '../spatial/types';
+import type { TransitionListener } from '../navigation/TransitionState';
 
 const MOBILE_MQ = '(max-width: 767px)';
 const TABLET_MQ = '(min-width: 768px) and (max-width: 1023px)';
@@ -38,11 +39,15 @@ export type MountHeroAppOptions = {
    * Home `/` still uses the destination stub.
    */
   onNavigateRoute?: (route: string) => void | Promise<void>;
+  /** Warm the destination chunk on first commit (first click), not on reveal. */
+  prefetchRoute?: (route: string) => void;
 };
 
 export type MountedHeroApp = {
   dispose: () => void;
   applySpatial: (state: SpatialState, options?: SpatialApplyOptions) => void;
+  isBusy: () => boolean;
+  onTransition: (listener: TransitionListener) => () => void;
 };
 
 export function mountHeroApp(
@@ -187,6 +192,9 @@ export function mountHeroApp(
       return;
     }
 
+    if (item.route && item.route !== '/') {
+      options.prefetchRoute?.(item.route);
+    }
     navigationState.setCommitted(itemId);
     activateCommittedItem(itemId);
   }
@@ -272,6 +280,7 @@ export function mountHeroApp(
 
   const spatial = new SpatialController(controller, navigationState, {
     completeHandoff: () => navigator.completeHandoff(),
+    isLiveApproach: (atomId) => navigator.isLiveApproach(atomId),
     retargetApproach: (atomId) => navigator.retargetApproach(atomId),
     approachTo: (atomId) => navigator.approachTo(atomId),
     onModeChange: (state) => {
@@ -371,6 +380,8 @@ export function mountHeroApp(
       spatial.apply(state, applyOptions);
       syncSpatialDebug(state);
     },
+    isBusy: () => navigator.busy,
+    onTransition: (listener) => navigator.transitionState.subscribe(listener),
     dispose() {
       mobileMq.removeEventListener('change', onViewportChange);
       tabletMq.removeEventListener('change', onViewportChange);

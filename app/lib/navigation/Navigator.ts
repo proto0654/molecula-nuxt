@@ -85,6 +85,17 @@ export class Navigator {
     return this.transitionState.busy;
   }
 
+  /**
+   * True while a forward timeline still owns this atom's approach.
+   * Spatial must not `completeHandoff` in that case.
+   */
+  isLiveApproach(atomId: string | null): boolean {
+    if (!atomId || this.transitionState.atomId !== atomId) return false;
+    if (!this.transitionState.busy) return false;
+    if (!this.timeline) return false;
+    return !this.timeline.reversed();
+  }
+
   get overlayRoot(): HTMLElement {
     return this.overlay.root;
   }
@@ -99,6 +110,7 @@ export class Navigator {
     const item = getItemByAtomId(atomId);
     this.navigationState.setCommitted(item?.id ?? null);
     this.controller.freeze();
+    this.armTicker();
     this.transitionState.patch({ busy: true });
 
     if (prefersReducedMotion()) {
@@ -108,13 +120,15 @@ export class Navigator {
       this.overlay.setOpacity(0);
       this.transitionState.patch({
         atomId,
-        busy: true,
-        phase: 'complete',
+        busy: false,
+        phase: 'idle',
         zoom: 1,
         fill: 1,
         overlay: 0,
         progress: 1,
       });
+      this.controller.setTransitionDriven(false);
+      this.releaseTicker();
       this.emitNavigate(atomId);
       return;
     }
@@ -164,7 +178,7 @@ export class Navigator {
 
     this.timeline = this.buildTimeline(atomId, this.proxy, atomChanged, {
       emitNavigate: true,
-      settleOnComplete: false,
+      settleOnComplete: true,
       orbitSweep: true,
     });
   }
@@ -180,6 +194,7 @@ export class Navigator {
     this.navigatedAtomId = null;
     this.overlay.setOpacity(0);
     this.controller.freeze();
+    this.armTicker();
 
     if (prefersReducedMotion()) {
       this.controller.setCompositionFramingOverride(CENTER_FRAMING);
@@ -188,6 +203,7 @@ export class Navigator {
       this.controller.holdApproach({ immediate: true });
       this.controller.setCompositionFramingOverride(null);
       this.controller.setTransitionDriven(false);
+      this.releaseTicker();
       this.transitionState.patch({
         atomId,
         busy: false,
@@ -233,7 +249,8 @@ export class Navigator {
   }
 
   /**
-   * Release the GSAP timeline after a route hop so SpatialController can settle.
+   * Abort an in-flight timeline after a route hop to a *different* destination.
+   * Same-atom live approach is not released here — Spatial skips this call.
    * Does not rewind zoom/fill or dispose the veil.
    */
   completeHandoff(): void {
@@ -242,6 +259,7 @@ export class Navigator {
     this.overlay.setOpacity(0);
     this.controller.setCompositionFramingOverride(null);
     this.controller.setTransitionDriven(false);
+    this.releaseTicker();
     this.transitionState.patch({
       busy: false,
       phase: 'idle',
@@ -259,6 +277,7 @@ export class Navigator {
     this.navigatedAtomId = null;
     this.overlay.setOpacity(0);
     this.controller.freeze();
+    this.armTicker();
 
     if (prefersReducedMotion()) {
       this.controller.setCompositionFramingOverride(null);
@@ -266,6 +285,7 @@ export class Navigator {
       this.controller.setHighlightedAtom(atomId);
       this.controller.holdApproach({ immediate: true });
       this.controller.setTransitionDriven(false);
+      this.releaseTicker();
       this.transitionState.patch({
         atomId,
         busy: false,
@@ -329,6 +349,7 @@ export class Navigator {
         this.controller.settleApproachProgress();
         this.controller.setCompositionFramingOverride(null);
         this.controller.setTransitionDriven(false);
+        this.releaseTicker();
         this.timeline = null;
         this.transitionState.patch({
           atomId,
@@ -437,10 +458,12 @@ export class Navigator {
       this.softResetScene();
       this.transitionState.resetVisuals();
       this.controller.setTransitionDriven(false);
+      this.releaseTicker();
       return;
     }
 
     this.controller.setTransitionDriven(true);
+    this.armTicker();
     this.proxy = { ...from };
     this.transitionState.patch({
       busy: true,
@@ -468,6 +491,7 @@ export class Navigator {
         this.softResetScene();
         this.transitionState.resetVisuals();
         this.controller.setTransitionDriven(false);
+        this.releaseTicker();
         this.timeline = null;
       },
     });
@@ -513,6 +537,7 @@ export class Navigator {
     this.navigateListeners.clear();
     releaseRouteVeil();
     this.controller.setTransitionDriven(false);
+    this.releaseTicker();
   }
 
   private buildTimeline(
@@ -555,6 +580,7 @@ export class Navigator {
           this.controller.settleApproachProgress();
           this.controller.setCompositionFramingOverride(null);
           this.controller.setTransitionDriven(false);
+          this.releaseTicker();
           this.timeline = null;
           this.transitionState.patch({
             atomId,
@@ -567,7 +593,7 @@ export class Navigator {
           });
           return;
         }
-        // Stay busy so hover focus does not fight the settled destination pose.
+        this.releaseTicker();
         this.transitionState.patch({
           phase: 'complete',
           progress: 1,
@@ -709,5 +735,15 @@ export class Navigator {
     if (!this.timeline) return;
     this.timeline.kill();
     this.timeline = null;
+    this.controller.finishOrbitSweep();
+  }
+
+  /** Disable GSAP catch-up so a long Vue tick cannot skip orbit frames. */
+  private armTicker(): void {
+    gsap.ticker.lagSmoothing(0);
+  }
+
+  private releaseTicker(): void {
+    gsap.ticker.lagSmoothing(500, 33);
   }
 }

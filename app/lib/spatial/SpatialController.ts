@@ -17,6 +17,11 @@ export type SpatialApplyOptions = {
 
 export type SpatialControllerOptions = {
   completeHandoff?: () => void;
+  /**
+   * True when Navigator is already approaching this atom — leave the live
+   * GSAP timeline (do not kill / rewind).
+   */
+  isLiveApproach?: (atomId: string | null) => boolean;
   /** Off-home atom change while already at approach: pullback → focus → approach. */
   retargetApproach?: (atomId: string) => void;
   /** Leave rest / partial approach: animated focus → zoom+fill (no route emit). */
@@ -36,6 +41,7 @@ export class SpatialController {
   private readonly controller: MoleculeController;
   private readonly navigationState: NavigationState;
   private readonly completeHandoff: (() => void) | undefined;
+  private readonly isLiveApproach: ((atomId: string | null) => boolean) | undefined;
   private readonly retargetApproach: ((atomId: string) => void) | undefined;
   private readonly approachTo: ((atomId: string) => void) | undefined;
   private readonly onModeChange: ((state: SpatialState) => void) | undefined;
@@ -49,6 +55,7 @@ export class SpatialController {
     this.controller = controller;
     this.navigationState = navigationState;
     this.completeHandoff = options.completeHandoff;
+    this.isLiveApproach = options.isLiveApproach;
     this.retargetApproach = options.retargetApproach;
     this.approachTo = options.approachTo;
     this.onModeChange = options.onModeChange;
@@ -72,8 +79,17 @@ export class SpatialController {
     this.lastKey = key;
     this.state = state;
 
-    // Release any in-flight Navigator timeline before HUD/framing sync.
-    this.completeHandoff?.();
+    const nextAtomId = atomIdForSpatialState(state);
+    const live =
+      !options.immediate &&
+      state.mode !== 'home' &&
+      (this.isLiveApproach?.(nextAtomId) ?? false);
+
+    // Abort only when this apply is a new destination — never kill a live
+    // Navigator approach to the same atom (route commit during the last frames).
+    if (!live) {
+      this.completeHandoff?.();
+    }
     this.onModeChange?.(state);
 
     if (state.mode === 'home') {
@@ -88,7 +104,6 @@ export class SpatialController {
 
     this.controller.setMode(state.mode);
 
-    const nextAtomId = atomIdForSpatialState(state);
     const prevAtomId = this.controller.getFocusedAtomId();
     const atomChanged = nextAtomId !== null && nextAtomId !== prevAtomId;
     const atApproach = this.controller.isAtApproach();
@@ -100,6 +115,8 @@ export class SpatialController {
     if (snap) {
       this.focusNonHome(state);
       this.controller.holdApproach({ immediate: true });
+    } else if (live) {
+      // Navigator still owns zoom/fill/orbit — do not retarget or snap.
     } else if (atApproach && atomChanged && nextAtomId && this.retargetApproach) {
       // Defer focusAtom until after pullback — retarget owns the choreography.
       this.retargetApproach(nextAtomId);

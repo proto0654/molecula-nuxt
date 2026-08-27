@@ -6,12 +6,29 @@ import {
   setTransitionHandler,
   transitionTo,
 } from '~/lib/navigation/TransitionController';
+import {
+  armPoseWaitForRoute,
+  setAwaitingPose,
+} from '~/lib/navigation/poseReveal';
 
 const spatial = useSpatialState();
+const router = useRouter();
 
 const stageRef = ref<HTMLElement | null>(null);
 const chromeRef = ref<HTMLElement | null>(null);
 let hero: MountedHeroApp | null = null;
+let stopGuard: (() => void) | null = null;
+let stopTransition: (() => void) | null = null;
+
+function revealWhenSettled(): void {
+  if (!hero || hero.isBusy()) return;
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      if (hero?.isBusy()) return;
+      setAwaitingPose(false);
+    });
+  });
+}
 
 onMounted(() => {
   const stage = stageRef.value;
@@ -29,20 +46,42 @@ onMounted(() => {
     });
   });
 
+  stopGuard = router.beforeEach((to, from) => {
+    armPoseWaitForRoute(to.path, from.path, from.matched.length);
+  });
+
   hero = mountHeroApp(stage, {
     chromeRoot: chrome,
     onNavigateRoute: (route) => transitionTo(route),
+    prefetchRoute: (route) => {
+      void preloadRouteComponents(route);
+    },
+  });
+
+  stopTransition = hero.onTransition((snap) => {
+    if (!snap.busy) revealWhenSettled();
   });
 
   hero.applySpatial(spatial.value, { immediate: true });
+  setAwaitingPose(false);
 });
 
 watch(spatial, (state) => {
   hero?.applySpatial(state);
+  if (state.mode === 'home') {
+    setAwaitingPose(false);
+    return;
+  }
+  revealWhenSettled();
 });
 
 onBeforeUnmount(() => {
+  stopGuard?.();
+  stopGuard = null;
+  stopTransition?.();
+  stopTransition = null;
   setTransitionHandler(null);
+  setAwaitingPose(false);
   hero?.dispose();
   hero = null;
 });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const spatial = useSpatialState();
 const isHome = computed(() => spatial.value.mode === 'home');
+const awaitingPose = useAwaitingPose();
 
 useHead({
   htmlAttrs: computed(() => ({
@@ -10,7 +11,10 @@ useHead({
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'is-home': isHome }">
+  <div
+    class="app-shell"
+    :class="{ 'is-home': isHome, 'is-awaiting-pose': awaitingPose }"
+  >
     <ClientOnly>
       <MolecularHero />
       <template #fallback>

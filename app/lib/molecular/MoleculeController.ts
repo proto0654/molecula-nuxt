@@ -740,7 +740,7 @@ export class MoleculeController {
   setTransitionDriven(active: boolean): void {
     this.transitionDriven = active;
     if (!active) {
-      this.clearOrbitSweep();
+      this.finishOrbitSweep();
     }
   }
 
@@ -750,13 +750,13 @@ export class MoleculeController {
    */
   beginOrbitSweep(atomId: string): boolean {
     if (!getOrbitNormalForAtom(atomId, this.orbitSweepAxis)) {
-      this.clearOrbitSweep();
+      this.finishOrbitSweep();
       return false;
     }
     this.stableFocusForSweep.copy(this.targetFocusOrientation);
     this.orbitSweepProgress = 0;
     this.orbitSweepActive = true;
-    this.applyOrbitSweepTarget();
+    this.applyOrbitSweepPose();
     return true;
   }
 
@@ -764,23 +764,38 @@ export class MoleculeController {
   setOrbitSweepProgress(value: number): void {
     if (!this.orbitSweepActive) return;
     this.orbitSweepProgress = Math.max(0, Math.min(1, value));
-    this.applyOrbitSweepTarget();
+    this.applyOrbitSweepPose();
   }
 
-  clearOrbitSweep(): void {
+  /**
+   * End the sweep on the settled facing pose (2π ≡ identity).
+   * Snaps display + target so lagged slerp cannot take the short path home.
+   */
+  finishOrbitSweep(): void {
     if (!this.orbitSweepActive) return;
+    this.orbitSweepProgress = 1;
+    this.applyOrbitSweepPose();
     this.orbitSweepActive = false;
     this.orbitSweepProgress = 0;
-    this.targetFocusOrientation.copy(this.stableFocusForSweep);
   }
 
-  private applyOrbitSweepTarget(): void {
+  /**
+   * Direct pose write — not through `slerp(target)`. A moving 2π target
+   * plus shortest-path slerp skips the long way around the ring.
+   */
+  private applyOrbitSweepPose(): void {
+    if (this.orbitSweepProgress >= 1 - 1e-6) {
+      this.focusOrientation.copy(this.stableFocusForSweep);
+      this.targetFocusOrientation.copy(this.stableFocusForSweep);
+      return;
+    }
     const angle = this.orbitSweepProgress * Math.PI * 2;
     this.scratchOrbitSpin.setFromAxisAngle(this.orbitSweepAxis, angle);
     // Rest-frame orbit spin, then settled focus — atom travels along its ring.
     this.scratchFocusWithSweep
       .copy(this.stableFocusForSweep)
       .multiply(this.scratchOrbitSpin);
+    this.focusOrientation.copy(this.scratchFocusWithSweep);
     this.targetFocusOrientation.copy(this.scratchFocusWithSweep);
   }
 
@@ -923,11 +938,15 @@ export class MoleculeController {
    * - DECORATIVE: selection pulse (early-out when idle); ghost layer zoom-fades
    */
   update(delta: number): void {
-    const focusOrientT = 1 - Math.exp(-FOCUS_ORIENT_FOLLOW * delta);
-    this.focusOrientation.slerp(this.targetFocusOrientation, focusOrientT);
-
     const strengthT = 1 - Math.exp(-FOCUS_STRENGTH_FOLLOW * delta);
     this.focusStrength += (this.targetFocusStrength - this.focusStrength) * strengthT;
+
+    if (this.orbitSweepActive) {
+      this.applyOrbitSweepPose();
+    } else {
+      const focusOrientT = 1 - Math.exp(-FOCUS_ORIENT_FOLLOW * delta);
+      this.focusOrientation.slerp(this.targetFocusOrientation, focusOrientT);
+    }
 
     if (this.frozen) {
       this.mouseOrientation.identity();

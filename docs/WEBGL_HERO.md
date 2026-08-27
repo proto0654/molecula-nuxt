@@ -36,7 +36,7 @@ layouts/default.vue (persists)
 - **Pure math** (`app/lib/molecular/math/`) is side-effect free: `getStableFocusQuaternion` (writes into an `out` quaternion), `getFocusQuaternion`, `getAtomFocusDistance`, orientation, `projectToScreenInto`.
 - **UI** (`app/lib/hero-ui/*`) never touches Three.js objects. HUD look: [`DESIGN.md`](DESIGN.md) (CSS `:root` tokens + decorative patterns). Title + typewriter blurb are a scene-parented screen-flat troika block (`AtomLabel`). USP headline is DOM (`UspHeadline` + `textScramble`) in the rail↔molecule / header↔molecule void.
 - **3D vs screen-space:** Three.js owns the molecule world (atoms, bonds, captions, billboarded selection indicator, wireframe, decorative orbits/nodes) and viewport composition profiles. HTML/CSS/SVG owns grid, corners, header, USP headline, nav rail, mobile overlay, screen-space SVG connectors, transition veil. Bridge: world position → `projectToScreenInto` / `projectAtom` → CSS pixels. Do not drive atom locals from CSS sidebar width.
-- **Page transition:** GSAP approach (zoom+fill as one tween) stays in [`Navigator`](../app/lib/navigation/Navigator.ts); navigate fires at the end **without a veil**. [`completeHandoff`](../app/lib/navigation/Navigator.ts) freezes the live pose. Home unwinds to rest. Route hop is [`TransitionController.transitionTo`](../app/lib/navigation/TransitionController.ts). Persistent shell: [`SPATIAL.md`](SPATIAL.md).
+- **Page transition:** GSAP approach (zoom+fill as one tween) stays in [`Navigator`](../app/lib/navigation/Navigator.ts); navigate fires at the end **without an opaque veil**. Route commit ≠ visual reveal: [`poseReveal`](../app/lib/navigation/poseReveal.ts) / `.app-shell.is-awaiting-pose` hides `<NuxtPage>` until the pose is idle. [`completeHandoff`](../app/lib/navigation/Navigator.ts) aborts a foreign timeline — it does not kill a live same-atom approach. Home unwinds to rest. Route hop is [`TransitionController.transitionTo`](../app/lib/navigation/TransitionController.ts). Persistent shell: [`SPATIAL.md`](SPATIAL.md).
 - **Wiring** lives in [`mountHeroApp.ts`](../app/lib/hero/mountHeroApp.ts) + [`MolecularHero.vue`](../app/components/molecular/MolecularHero.vue) inside [`layouts/default.vue`](../app/layouts/default.vue). Content pipeline: [`CONTENT.md`](CONTENT.md).
 
 ## Declarative config
@@ -111,7 +111,7 @@ final = appliedFocus × mouseOrientation × baseOrientation
 | `focusStrength` | `MoleculeController` | Blend weight in `[0, 1]` (smoothed toward `targetFocusStrength`) |
 | `targetFocusStrength` | `MoleculeController` | `1` while focused, `0` after `clearFocus` |
 
-Follow rates (`MOUSE_FOLLOW`, `FOCUS_ORIENT_FOLLOW`, `FOCUS_STRENGTH_FOLLOW`) use frame-rate independent damping `1 - exp(-k·Δt)`.
+Follow rates (`MOUSE_FOLLOW`, `FOCUS_ORIENT_FOLLOW`, `FOCUS_STRENGTH_FOLLOW`) use frame-rate independent damping `1 - exp(-k·Δt)`. **Orbit sweep is the exception:** while `orbitSweepActive`, `focusOrientation` is written directly from `stableFocus * axisAngle(progress · 2π)` so the full revolution cannot take the quaternion short path.
 
 ### Mouse layer
 
@@ -146,7 +146,7 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../app/lib/molecular/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `clearOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
 
 Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation within `0.08` rad of target). The same gate starts the HUD USP scramble after commit.
 
@@ -196,7 +196,9 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 | `transitionTo(route)` | Nuxt `navigateTo` (handler set in `MolecularHero`); after `handoffRouteVeil()` for real routes |
 | `cancel()` | Unwind overlay → approach rewind → clear focus (soft reset; no hard state tear-down) |
 
-Phases: `idle` → `focus` → `approach` → `complete` (stays busy at destination so hover focus cannot fight the pose). Legacy `zoom` / `fill` / `overlay` remain in the type for unwind / older snapshots.
+Phases: `idle` → `focus` → `approach` → `idle` (busy clears when zoom/fill/orbit have settled so the shell can reveal the page). Legacy `zoom` / `fill` / `overlay` remain in the type for unwind / older snapshots.
+
+Orbit sweep is applied each frame as `stableFocus * axisAngle(progress * 2π)` onto `focusOrientation` — not chased through lagged slerp (shortest-path slerp skips the long way around the ring). While `busy`, `gsap.ticker.lagSmoothing(0)` so a long Vue tick cannot jump the tween. First-click commit prefetches the destination chunk (`preloadRouteComponents`); the page may mount under opacity 0, then fades in after settle. [`useCaseScrollEntry`](../app/composables/useCaseScrollEntry.ts) waits for that reveal before creating ScrollTriggers.
 
 **Current wiring:** `activateCommittedItem` focuses (`focusAtom`), types the blurb, and arms the USP; USP scrambles after `isFocusSettled()`. Used on first-click commit, mount, spatial home apply (`onHomeActivated`), and empty-canvas / logo restore. Second click on the same atom/nav item calls `navigateTo` (approach starts here; focus wait is skipped if already settled). At the navigate label: if `NavigationItem.route` is set and not `/` (e.g. `/portfolio`), `transitionTo`; otherwise show [`DestinationView`](../app/lib/hero-ui/DestinationView.ts) stub (**Return** → `cancel()`). Empty canvas click restores hub with full readout (and `cancel()` if a transition is busy).
 

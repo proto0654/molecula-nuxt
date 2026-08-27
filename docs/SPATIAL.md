@@ -87,7 +87,7 @@ Stub pages: [`/about`](../app/pages/about.vue), [`/services`](../app/pages/servi
 
 Home empty-canvas click / logo restore overview (`C`) and re-activate hub blurb + USP; it does not `clearFocus` into an empty rest. Hub π-flip runs only when retargeting onto `C` from another atom, not on initial home.
 
-Off-home, header route menu navigates immediately (`transitionTo` without the zoom veil). On home the two-step gesture is unchanged (hover preview, first click commit+focus, second click `Navigator.navigateTo`). Second click on already-committed Home is a no-op. Home `navigateTo` **eases** desktop stage bias → screen center in the same GSAP approach pass as zoom+fill (no instant framing snap). Peripherals also get a full **orbit sweep** (2π about the atom's ring) during that approach — ends on the settled facing pose.
+Off-home, header route menu commits the URL immediately (`transitionTo`); the page overlay stays hidden (`is-awaiting-pose`) until the molecule pose settles. On home the two-step gesture is unchanged (hover preview, first click commit+focus+prefetch, second click `Navigator.navigateTo`). Second click on already-committed Home is a no-op. Home `navigateTo` **eases** desktop stage bias → screen center in the same GSAP approach pass as zoom+fill (no instant framing snap). Peripherals also get a full **orbit sweep** (2π about the atom's ring) during that approach — the sweep is a direct quaternion write from progress, not lagged slerp, and ends on the settled facing pose.
 
 **Composition:** rest profiles are screen-centered. Hero desktop offset (`HOME_DESKTOP_FRAMING`, ~62% X) is a **home-only** framing override. Off-home and leave-home approach tween toward `CENTER_FRAMING`.
 
@@ -104,25 +104,29 @@ layout mount (once)
       HUD / Navigator / SpatialController
       applySpatial(initial, { immediate: true })
 route change
+  router.beforeEach → arm `is-awaiting-pose` (leave-home / atom change)
+  NuxtPage may mount under opacity 0
   useSpatialState updates
   SpatialController.apply
-    Navigator.completeHandoff()   release busy / GSAP, keep canvas
+    live Navigator approach to same atom → skip completeHandoff (GSAP keeps running)
+    otherwise completeHandoff() aborts a foreign timeline (keep canvas + zoom/fill)
     onModeChange → HUD + home-only desktop framing
     setMode + commit nav
     off-home:
+      live approach → leave Navigator in charge
       same atom at approach → leave live pose
       atom changed at approach → retargetApproach (pullback → focus → approach)
       not at approach → approachTo (animated focus → zoom+fill + orbit sweep)
       immediate / reduced motion → holdApproach snap
     freeze() if not home
-  NuxtPage swaps content
+  Navigator idle + pose settled → drop `is-awaiting-pose` (CSS fade)
 layout unmount (rare: leave app / HMR)
   controller.dispose()
 ```
 
 Production navigation must not create a second canvas, renderer, scene, camera, animation loop, pointer handler, or `MoleculeController`. `INSTANCE` on the spatial debug overlay increments only in the controller constructor.
 
-After a forward `Navigator` hop: freeze + hide labels at approach start, then focus → **one approach** (zoom+fill together) → navigate **with no veil**. The live approach pose is held as-is. Home is the only mode that unwinds to rest. Direct load of `/portfolio` snaps to the same approach on the work atom.
+After a forward `Navigator` hop: freeze + hide labels at approach start, then focus → **one approach** (zoom+fill together + orbit sweep) → navigate **with no opaque veil**. Route commit is not visual reveal: `.app-shell.is-awaiting-pose` keeps `<NuxtPage>` at opacity 0 until the timeline is idle. `completeHandoff` is an abort for a *different* destination — it must not kill a live approach to the same atom. Home is the only mode that unwinds to rest. Direct load of `/portfolio` snaps to the same approach on the work atom. Same-atom hops (archive↔case) do not wait on the molecule; in-page case choreography stays in `useCasePageTransition`.
 
 ## Debug
 
