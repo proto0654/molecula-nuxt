@@ -73,6 +73,9 @@ const ZOOM_VIEWPORT_FILL = 0.9;
  */
 const FILL_VIEWPORT_FILL = 1.35;
 
+/** Mobile: softer held approach — stays in frame, minimal push toward the viewer. */
+const FILL_VIEWPORT_FILL_MOBILE = 1.1;
+
 const AXIS_Y = new Vector3(0, 1, 0);
 const AXIS_X = new Vector3(1, 0, 0);
 
@@ -1196,9 +1199,13 @@ export class MoleculeController {
     this.scene.camera.getWorldPosition(this.scratchCameraPos);
     this.scene.camera.getWorldDirection(this.scratchLookDir);
 
+    const fillTarget =
+      this.compositionProfile.mode === 'mobile'
+        ? FILL_VIEWPORT_FILL_MOBILE
+        : FILL_VIEWPORT_FILL;
     this.focusDistanceOptions.viewportFill =
       ZOOM_VIEWPORT_FILL +
-      (FILL_VIEWPORT_FILL - ZOOM_VIEWPORT_FILL) * this.fillProgress;
+      (fillTarget - ZOOM_VIEWPORT_FILL) * this.fillProgress;
     const focusDistance = getAtomFocusDistance(
       atom.radius,
       this.scene.camera,
