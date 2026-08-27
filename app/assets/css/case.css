@@ -868,11 +868,13 @@
   margin: 0 0 1.15em;
   padding-left: 0;
   list-style: none;
+  --case-list-item-gap: 1rem;
 }
 
 .case-content__prose :is(ul, .wp-block-list) > li {
   position: relative;
   padding-left: 1.35rem;
+  padding-bottom: var(--case-list-item-gap);
 }
 
 .case-content__prose :is(ul, .wp-block-list) > li::before {
@@ -886,6 +888,15 @@
   transform: translateY(-50%);
 }
 
+.case-content__prose :is(ul, .wp-block-list) > li + li {
+  padding-top: var(--case-list-item-gap);
+  border-top: 1px solid rgb(214 219 224 / var(--line-opacity));
+}
+
+.case-content__prose :is(ul, .wp-block-list) > li + li::before {
+  top: calc(var(--case-list-item-gap) + 0.68em);
+}
+
 .case-content__prose ol {
   padding-left: 1.35rem;
   list-style-type: decimal;
@@ -893,7 +904,9 @@
 }
 
 .case-content__prose ol > li {
+  position: relative;
   padding-left: 0.2rem;
+  padding-bottom: var(--case-list-item-gap);
 }
 
 .case-content__prose ol > li::marker {
@@ -901,8 +914,9 @@
   font-size: 1.05em;
 }
 
-.case-content__prose li + li {
-  margin-top: 0.7em;
+.case-content__prose ol > li + li {
+  padding-top: var(--case-list-item-gap);
+  border-top: 1px solid rgb(214 219 224 / var(--line-opacity));
 }
 
 .case-content__prose li > p {
@@ -916,6 +930,7 @@
 @media (min-width: 1024px) {
   .case-content__prose :is(ul, ol, .wp-block-list) {
     margin-bottom: 1.35em;
+    --case-list-item-gap: 1.5rem;
   }
 
   .case-content__prose :is(ul, .wp-block-list) > li {
@@ -926,7 +941,6 @@
     padding-left: 1.55rem;
   }
 
-  .case-content__prose li + li,
   .case-content__prose li > p + p {
     margin-top: 1em;
   }
