@@ -1,7 +1,7 @@
 import type { QualityManager } from '../molecular/quality/QualityManager';
 
 /** Flip to `false` to hide the overlay in dev without a query param. */
-export const DEBUG_PERF = true;
+export const DEBUG_PERF = false;
 
 const UPDATE_MS = 250;
 /** Match `MOBILE_MQ` in main.ts / `--bp-mobile-max`. */

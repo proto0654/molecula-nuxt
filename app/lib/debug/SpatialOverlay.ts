@@ -1,5 +1,5 @@
 /** Flip to `false` to hide the overlay in dev without a query param. */
-export const DEBUG_SPATIAL = true;
+export const DEBUG_SPATIAL = false;
 
 function isOverlayEnabled(): boolean {
   if (!import.meta.dev) return false;

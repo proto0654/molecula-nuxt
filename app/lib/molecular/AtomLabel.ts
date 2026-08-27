@@ -189,7 +189,6 @@ export class AtomLabel {
 
   /** Type `// blurb` under the title. Pass null to hide immediately. */
   setBlurb(blurb: string | null): void {
-    this.setTitleActive(blurb !== null);
     this.typing = false;
     this.typeAccum = 0;
     this.typed = '';

@@ -88,15 +88,15 @@ focusItemId   = committed               ← click only; hover never centers
 
 Two-step gesture on **home** (app layer in `mountHeroApp.ts`, not inside Three.js):
 
-1. **Hover** (atom raycast or nav): highlight + pulsing selection reticle. **No** `focusAtom`.
+While committed, hover of another item shows **dual-state preview** on the hovered atom (pulsing reticle, bright title, static wireframe shell) without stealing focus or zoom. Committed atom keeps frozen reticle, blurb, and its own wireframe.
+
+1. **Hover** (atom raycast or nav): emissive highlight + pulsing selection reticle + bright title + static accent wireframe on the preview atom. **No** `focusAtom`, blurb, or USP.
 2. **First click** (atom or nav): `setCommitted` + `activateCommittedItem` (`focusAtom` + typewriter blurb + arm USP; scramble after `isFocusSettled`). Cold load, spatial return to `/`, empty-canvas restore, and header logo on home all commit hub `C` with the **same full readout** — there is no intermediate “deselected” home state.
 3. **Second click on the same item**: `navigator.navigateTo(atomId)` (single approach: zoom+fill together). Second click on Home is a no-op.
 4. **Click another item**: retarget commit + focus (not a page transition).
 5. **Empty canvas click / logo on home**: `restoreOverview()` (hub `C`) + re-activate hub blurb/USP; `cancel()` if a transition is busy.
 
 Off-home the molecule is frozen; nav clicks call `transitionTo` immediately. Spatial mapping: [`SPATIAL.md`](SPATIAL.md).
-
-While committed, hover of another item only updates nav highlight — it does not steal focus or zoom.
 
 ## Orientation (three quaternion layers + focus strength)
 
@@ -152,7 +152,7 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../app/lib/molecular/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `setApproachBusy`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloAtom`, `setWireframeAtom`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `setApproachBusy`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloStates`, `setWireframeAtom`, `setAccentWireframeAtom`, `setAtomTitleHighlight`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
 
 Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation within `0.08` rad of target). The same gate starts the HUD USP scramble after commit.
 
@@ -183,7 +183,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 
 ### Navigation connector bridge
 
-[`NavigationConnector`](../app/lib/hero-ui/NavigationConnector.ts) polls `projectAtom` in `onAfterUpdate`, reads sidebar anchors from `Navigation.getItemAnchor`, and draws an orthogonal SVG elbow. Endpoint tracks projection synchronously (no lag). Tip + tiny marker stop short of the atom. Idle / hover / active / zoom fade; soft distance fade when the span is extreme. Desktop-only (`≥1024`).
+[`NavigationConnector`](../app/lib/hero-ui/NavigationConnector.ts) polls `projectAtom` in `onAfterUpdate`, reads sidebar anchors from `Navigation.getItemAnchor`, and draws an orthogonal SVG elbow. Endpoint tracks projection synchronously (no lag). Tip + tiny marker stop short of the atom. **Routing:** when `previewItemId !== committedItemId`, the elbow follows the **preview** item (hover on canvas or nav) with `.is-hover` styling; otherwise it tracks the committed item (`.is-active`). Idle / hover / active / zoom fade; soft distance fade when the span is extreme. Desktop-only (`≥1024`).
 
 ### USP headline
 
@@ -198,6 +198,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 | Wait settle | Progress held at 0 until `isFocusSettled()` |
 | Fill | Progress 0→1 over `SLIDE_DURATION_MS` (~5500) |
 | Advance | Next item in `navigationConfig.items` order (wraps) |
+| Next preview | While dwelling (progress filling, no user preview): **pulsing accent wireframe** on the next item's atom (`setAccentWireframeAtom` pulse mode) |
 | Pause | Hover (atom or nav), manual select, mobile menu open, `navigator.busy`, off-home |
 | Resume | ~2s idle after interactions clear (`IDLE_RESUME_MS`) |
 
@@ -228,9 +229,9 @@ Orbit sweep is applied each frame as `stableFocus * axisAngle(progress * 2π)` o
 
 [`AtomHover.ts`](../app/lib/molecular/AtomHover.ts): raycasts **atom meshes only** (`MoleculeScene.getAtomMeshes()`). Dirty when pointer NDC changes, molecule quaternion / zoom progress changes, or resize. Enter/leave notifies `mountHeroApp.ts` → `NavigationState.setAtomHover`. Selection rings are siblings of the icosahedron on the atom **Group** (not children of the scaled mesh); labels live on `labelsGroup` (scene). Neither is in `atomMeshes` (empty `raycast`). Decorative ghost geometry and the selection wireframe are also not pick targets.
 
-Highlight is separate from focus orientation: `setHighlightedAtom` toggles a light emissive. Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloAtom`. The selected wireframe shell follows **committed** only (`setWireframeAtom`); hover must not show it. Nav `.is-active` follows `activeItemId`; `.is-committed` follows `committedItemId`.
+Highlight is separate from focus orientation: `setHighlightedAtom` toggles a light emissive. Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloStates` (dual committed + preview). Committed wireframe shell: `setWireframeAtom` (static). Hover preview and autoplay-next hint: `setAccentWireframeAtom` (static on hover, pulse while autoplay dwelling). Title brightness: `setAtomTitleHighlight` (committed with blurb + distinct preview). Nav `.is-active` follows `activeItemId`; `.is-committed` follows `committedItemId`.
 
-**Settled freeze chrome dim:** labels hide instantly in `freeze()`. After the approach timeline settles (`frozen && !approachBusy`), rings / ticks / center cross and the wireframe shell **lerp color** to black (`0x000000`, exp-follow ~6). While `Navigator` is `busy` (live approach / retarget), chrome stays at base colors. `unfreeze` / home cancels the dim. `mountHeroApp` mirrors `transitionState.busy` → `MoleculeController.setApproachBusy`; scene applies via `setChromeDimmed`. Atom mesh fill colors are unchanged.
+**Settled freeze chrome dim:** labels hide instantly in `freeze()`. After the approach timeline settles (`frozen && !approachBusy`), rings / ticks / center cross and both wireframe shells **lerp color** to black (`0x000000`, exp-follow ~6). While `Navigator` is `busy` (live approach / retarget), chrome stays at base colors. `unfreeze` / home cancels the dim. `mountHeroApp` mirrors `transitionState.busy` → `MoleculeController.setApproachBusy`; scene applies via `setChromeDimmed`. Atom mesh fill colors are unchanged.
 
 ## Quality and performance
 
@@ -350,10 +351,10 @@ Live site: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molec
 - `AtomSelectionIndicator`: concentric `LineLoop`s + ticks + center cross parented to the atom **Group**; **screen-flat billboard** via camera quaternion composed against parent world quaternion (not world-tilted); `depthTest` on; not in `atomMeshes`. Quality hides extra rings / ticks; LOW skips the pulse scale wave.
 - Atom rest-frame position for focus is `atom.object.position` (the Group), not `mesh.position` (local origin after the unit-icosahedron scale wrap).
 - Shared geometries live in `GeometryCache` — do not `geometry.dispose()` on atom/selection teardown. Bond lines own their geometry and dispose it in `Bond.dispose()`. `applyQuality` must not call `buildMolecule`.
-- Wireframe shell is decorative and committed-only; quality may disable it. Never add it to `atomMeshes`.
+- Wireframe shells are decorative; committed (`setWireframeAtom`) + accent preview/autoplay (`setAccentWireframeAtom`); quality may disable both. Never add them to `atomMeshes`.
 - Keep `navigationConfig.items[].atomId` aligned with molecule atom ids. Captions/blurbs/USPs/labels are authored once in `navigationConfig` (Russian); `moleculeConfig` reads captions via `getItemByAtomId`.
 - Troika captions load JetBrains Mono ttf via `import.meta.env.BASE_URL` + `fonts/JetBrainsMono-Regular.ttf` (Cyrillic). HUD CSS uses the matching `.woff2` from `public/fonts/`. Do not point troika at woff2.
-- Hover may **not** call `focusAtom` — only highlight / selection reticle. Focus comes from `committed` (first click). Zoom starts on the second click via `navigateTo`.
+- Hover may **not** call `focusAtom` — preview uses highlight / pulsing reticle / bright title / accent wireframe. Focus comes from `committed` (first click). Zoom starts on the second click via `navigateTo`.
 - USP reveal shares `isFocusSettled()` with zoom-in. Arm via `activateCommittedItem` on commit / home restore; do not scramble on hover or before the gate. Fade USP with zoom/fill; dispose with other HUD on HMR. Scramble must use a hidden measure layer + absolute paint layer + target-letter charset — a wide random charset or layout-affecting `textContent` will jump lines (especially on mobile where the block is vertically centered).
 - Do not put route / history / `navigateTo` inside `MoleculeController` click handling — pick notifies; app layer decides.
 - Mid-flight `navigateTo` retargets without hard-resetting zoom/fill/overlay; `cancel` builds an unwind timeline from live values (do not `timeline.reverse()` after a retarget that started mid-progress).

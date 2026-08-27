@@ -28,6 +28,26 @@ const MIN_ELBOW_RUN = 24;
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
+function resolveConnectorItem(state: NavigationState): {
+  itemId: string | null;
+  showAsActive: boolean;
+  showAsHover: boolean;
+} {
+  const committedId = state.committedItemId;
+  const previewId = state.previewItemId;
+  const hasDistinctPreview = Boolean(
+    previewId && previewId !== committedId,
+  );
+  const itemId = hasDistinctPreview
+    ? previewId
+    : committedId ?? previewId;
+  const showAsActive = Boolean(committedId && !hasDistinctPreview);
+  const showAsHover = Boolean(
+    hasDistinctPreview || (previewId !== null && !committedId),
+  );
+  return { itemId, showAsActive, showAsHover };
+}
+
 export type ProjectAtomFn = (atomId: string, out: AtomScreenPoint) => boolean;
 
 /**
@@ -80,12 +100,12 @@ export class NavigationConnector {
     parent.append(this.root);
 
     this.unsubscribe = state.subscribe(() => {
-      const id = state.committedItemId ?? state.previewItemId;
-      if (id && id !== this.lastItemId) {
+      const { itemId } = resolveConnectorItem(state);
+      if (itemId && itemId !== this.lastItemId) {
         this.pulse = prefersReducedMotion() ? 0 : 1;
-        this.lastItemId = id;
+        this.lastItemId = itemId;
       }
-      if (!id) {
+      if (!itemId) {
         this.lastItemId = null;
       }
     });
@@ -119,9 +139,9 @@ export class NavigationConnector {
     const vh = vv?.height ?? window.innerHeight;
     this.root.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
 
-    const itemId = this.state.committedItemId ?? this.state.previewItemId;
-    const committed = this.state.committedItemId !== null;
-    const preview = this.state.previewItemId !== null;
+    const { itemId, showAsActive, showAsHover } = resolveConnectorItem(
+      this.state,
+    );
 
     if (prefersReducedMotion()) {
       this.root.style.opacity = '0';
@@ -129,7 +149,7 @@ export class NavigationConnector {
       return;
     }
 
-    if (!itemId || (!committed && !preview)) {
+    if (!itemId || (!showAsActive && !showAsHover)) {
       this.targetOpacity = 0;
     } else {
       const item = getItemById(itemId);
@@ -141,7 +161,7 @@ export class NavigationConnector {
         if (!this.scratch.visible) {
           this.targetOpacity = 0;
         } else {
-          this.targetOpacity = committed ? 0.85 : 0.55;
+          this.targetOpacity = showAsActive ? 0.85 : 0.55;
         }
       }
     }
@@ -210,8 +230,8 @@ export class NavigationConnector {
     this.line.setAttribute('points', points);
     this.root.style.opacity = String(displayOpacity * distanceFade);
     this.root.classList.toggle('is-idle', false);
-    this.root.classList.toggle('is-active', committed);
-    this.root.classList.toggle('is-hover', !committed && preview);
+    this.root.classList.toggle('is-active', showAsActive);
+    this.root.classList.toggle('is-hover', showAsHover);
   }
 
   dispose(): void {

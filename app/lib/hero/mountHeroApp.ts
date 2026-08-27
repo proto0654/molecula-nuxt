@@ -139,26 +139,69 @@ export function mountHeroApp(
     uspHeadline.arm(item.usp);
   }
 
+  function applyAccentWireframe(): void {
+    const committedId = navigationState.committedItemId;
+    const previewId = navigationState.previewItemId;
+    const hasDistinctPreview = Boolean(
+      previewId && previewId !== committedId,
+    );
+    const previewItem =
+      hasDistinctPreview && previewId ? getItemById(previewId) : undefined;
+    const committedItem = committedId ? getItemById(committedId) : undefined;
+
+    if (!isHome || navigator.busy) {
+      controller.setAccentWireframeAtom(null, null);
+      return;
+    }
+
+    if (hasDistinctPreview && previewItem) {
+      controller.setAccentWireframeAtom(previewItem.atomId, 'static');
+      return;
+    }
+
+    if (autoplay.isDwelling()) {
+      const nextId = autoplay.getNextItemId();
+      const nextItem = nextId ? getItemById(nextId) : undefined;
+      if (nextItem && nextItem.atomId !== committedItem?.atomId) {
+        controller.setAccentWireframeAtom(nextItem.atomId, 'pulse');
+        return;
+      }
+    }
+
+    controller.setAccentWireframeAtom(null, null);
+  }
+
   function applyVisuals(): void {
     const committedId = navigationState.committedItemId;
     const previewId = navigationState.previewItemId;
-    const highlightId = committedId ?? previewId;
-    const highlightItem = highlightId ? getItemById(highlightId) : undefined;
-    controller.setHighlightedAtom(highlightItem?.atomId ?? null);
-    controller.setActiveOrbitAtom(highlightItem?.atomId ?? null);
+    const hasDistinctPreview = Boolean(
+      previewId && previewId !== committedId,
+    );
+    const committedItem = committedId ? getItemById(committedId) : undefined;
+    const previewItem =
+      hasDistinctPreview && previewId ? getItemById(previewId) : undefined;
 
-    if (committedId) {
-      const committed = getItemById(committedId);
-      controller.setHaloAtom(committed?.atomId ?? null, 'committed');
-      controller.setWireframeAtom(committed?.atomId ?? null);
-    } else if (previewId) {
-      const preview = getItemById(previewId);
-      controller.setHaloAtom(preview?.atomId ?? null, 'hover');
-      controller.setWireframeAtom(null);
-    } else {
-      controller.setHaloAtom(null, 'idle');
-      controller.setWireframeAtom(null);
+    const highlightAtomId = hasDistinctPreview
+      ? previewItem?.atomId
+      : committedItem?.atomId ?? previewItem?.atomId ?? null;
+    controller.setHighlightedAtom(highlightAtomId ?? null);
+    controller.setActiveOrbitAtom(highlightAtomId ?? null);
+
+    controller.setHaloStates(
+      committedItem?.atomId ?? null,
+      hasDistinctPreview ? previewItem?.atomId ?? null : null,
+    );
+    controller.setWireframeAtom(committedItem?.atomId ?? null);
+    applyAccentWireframe();
+
+    const titleHighlightIds: string[] = [];
+    if (isHome && committedItem && committedId && !navigator.busy) {
+      titleHighlightIds.push(committedItem.atomId);
     }
+    if (hasDistinctPreview && previewItem) {
+      titleHighlightIds.push(previewItem.atomId);
+    }
+    controller.setAtomTitleHighlight(titleHighlightIds);
 
     if (!isHome) {
       controller.setAtomBlurb(null, null);
@@ -375,6 +418,7 @@ export function mountHeroApp(
       menuOpen: mobileNav.isOpen,
       committedItemId: navigationState.committedItemId,
     });
+    applyAccentWireframe();
 
     if (
       isHome &&

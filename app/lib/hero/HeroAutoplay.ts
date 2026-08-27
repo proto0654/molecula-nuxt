@@ -33,6 +33,7 @@ export class HeroAutoplay {
   private index = 0;
   private idleElapsedMs = 0;
   private waitingForIdle = false;
+  private dwelling = false;
 
   constructor(options: HeroAutoplayOptions) {
     this.items = options.items;
@@ -67,6 +68,19 @@ export class HeroAutoplay {
     this.paused = true;
     this.waitingForIdle = true;
     this.idleElapsedMs = 0;
+    this.dwelling = false;
+  }
+
+  /** Next item in autoplay order (wraps). */
+  getNextItemId(): string | null {
+    if (this.items.length === 0) return null;
+    const nextIndex = (this.index + 1) % this.items.length;
+    return this.items[nextIndex] ?? null;
+  }
+
+  /** True while progress is filling after focus settles (no user preview). */
+  isDwelling(): boolean {
+    return this.running && this.dwelling;
   }
 
   /** Force index + progress reset (e.g. restore home selection). */
@@ -80,9 +94,13 @@ export class HeroAutoplay {
   }
 
   tick(dtMs: number, ctx: HeroAutoplayTickContext): void {
-    if (!this.running) return;
+    if (!this.running) {
+      this.dwelling = false;
+      return;
+    }
 
     if (!ctx.isHome || ctx.busy) {
+      this.dwelling = false;
       if (this.progress !== 0) {
         this.progress = 0;
         this.onProgress(0);
@@ -96,10 +114,12 @@ export class HeroAutoplay {
       this.paused = true;
       this.waitingForIdle = true;
       this.idleElapsedMs = 0;
+      this.dwelling = false;
       return;
     }
 
     if (this.waitingForIdle) {
+      this.dwelling = false;
       this.idleElapsedMs += dtMs;
       if (this.idleElapsedMs < this.idleResumeMs) return;
       this.waitingForIdle = false;
@@ -107,9 +127,13 @@ export class HeroAutoplay {
       this.idleElapsedMs = 0;
     }
 
-    if (this.paused) return;
+    if (this.paused) {
+      this.dwelling = false;
+      return;
+    }
 
     if (!ctx.isFocusSettled) {
+      this.dwelling = false;
       if (this.progress !== 0) {
         this.progress = 0;
         this.onProgress(0);
@@ -117,6 +141,7 @@ export class HeroAutoplay {
       return;
     }
 
+    this.dwelling = true;
     this.progress += dtMs / this.slideDurationMs;
     if (this.progress >= 1) {
       this.progress = 0;

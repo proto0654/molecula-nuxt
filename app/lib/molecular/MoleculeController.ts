@@ -828,16 +828,44 @@ export class MoleculeController {
     }
   }
 
-  /** Selection reticle: idle / hover pulse / committed freeze. One atom at a time. */
-  setHaloAtom(atomId: string | null, mode: HaloMode): void {
+  /** Selection reticle: idle / hover pulse / committed freeze. Dual-state supported. */
+  setHaloStates(
+    committedAtomId: string | null,
+    previewAtomId: string | null,
+  ): void {
     for (const atom of this.scene.getAtoms()) {
-      atom.setHaloMode(atom.id === atomId ? mode : 'idle');
+      if (previewAtomId && atom.id === previewAtomId) {
+        atom.setHaloMode('hover');
+      } else if (committedAtomId && atom.id === committedAtomId) {
+        atom.setHaloMode('committed');
+      } else {
+        atom.setHaloMode('idle');
+      }
     }
   }
 
-  /** Selected-atom wireframe shell (committed only; quality may hide it). */
+  /** @deprecated Prefer `setHaloStates` for dual committed + preview. */
+  setHaloAtom(atomId: string | null, mode: HaloMode): void {
+    if (mode === 'hover') {
+      this.setHaloStates(null, atomId);
+    } else if (mode === 'committed') {
+      this.setHaloStates(atomId, null);
+    } else {
+      this.setHaloStates(null, null);
+    }
+  }
+
+  /** Selected-atom wireframe shell (committed; quality may hide it). */
   setWireframeAtom(atomId: string | null): void {
     this.scene.setWireframeAtom(atomId);
+  }
+
+  /** Preview hover or autoplay-next wireframe (static or pulsing). */
+  setAccentWireframeAtom(
+    atomId: string | null,
+    mode: 'static' | 'pulse' | null,
+  ): void {
+    this.scene.setAccentWireframeAtom(atomId, mode);
   }
 
   /** White decorative orbit for the active peripheral (others stay black). */
@@ -861,6 +889,14 @@ export class MoleculeController {
   setAtomBlurb(atomId: string | null, blurb: string | null): void {
     for (const atom of this.scene.getAtoms()) {
       atom.setBlurb(atom.id === atomId ? blurb : null);
+    }
+  }
+
+  /** Bright title for committed and/or hover-preview atoms (no blurb required). */
+  setAtomTitleHighlight(atomIds: readonly string[]): void {
+    const active = new Set(atomIds);
+    for (const atom of this.scene.getAtoms()) {
+      atom.atomLabel.setTitleActive(active.has(atom.id));
     }
   }
 

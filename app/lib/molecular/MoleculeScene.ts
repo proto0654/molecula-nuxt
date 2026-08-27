@@ -24,8 +24,22 @@ const SCENE_BG = 0x14161c;
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
 const WIREFRAME_DIM_COLOR = 0x000000;
+const WIREFRAME_OPACITY = 0.22;
+/** Autoplay-next pulse: peak matches committed shell; trough nearly off. */
+const PULSE_OPACITY_MIN = 0.035;
+const PULSE_OPACITY_MAX = WIREFRAME_OPACITY;
+const PULSE_SPEED = 2.4;
+/** Slower enter/exit so fade reads clearly (not brighter). */
+const ACCENT_ENTER_FOLLOW = 3.8;
 /** Match AtomSelectionIndicator color follow for settled freeze chrome. */
 const CHROME_COLOR_FOLLOW = 6;
+
+function smoothstep01(t: number): number {
+  const x = Math.max(0, Math.min(1, t));
+  return x * x * (3 - 2 * x);
+}
+
+export type AccentWireframeMode = 'static' | 'pulse';
 const BOND_COLOR = 0x5a636c;
 
 /** Mobile-only: orbit span (peripheral positions + decorative rings). */
@@ -58,8 +72,14 @@ export class MoleculeScene {
   private readonly bondMaterial: LineDashedMaterial;
   private readonly wireframeMaterial: LineBasicMaterial;
   private readonly wireframe: LineSegments;
+  private readonly accentWireframeMaterial: LineBasicMaterial;
+  private readonly accentWireframe: LineSegments;
   private readonly decorativeNodes: DecorativeNodes;
   private wireframeAtomId: string | null = null;
+  private accentWireframeAtomId: string | null = null;
+  private accentWireframeMode: AccentWireframeMode | null = null;
+  private accentEnterMix = 0;
+  private targetAccentEnterMix = 0;
   private wireframeColorMix = 0;
   private targetWireframeColorMix = 0;
   private lastWidth = 1;
@@ -132,6 +152,22 @@ export class MoleculeScene {
     this.wireframe.visible = false;
     this.wireframe.renderOrder = 2;
 
+    this.accentWireframeMaterial = new LineBasicMaterial({
+      color: WIREFRAME_COLOR,
+      transparent: true,
+      opacity: WIREFRAME_OPACITY,
+      depthTest: true,
+      depthWrite: false,
+    });
+    this.accentWireframe = new LineSegments(
+      this.cache.getUnitIcosahedronEdges(quality.get().atomDetail),
+      this.accentWireframeMaterial,
+    );
+    this.accentWireframe.name = 'accent-wireframe';
+    this.accentWireframe.raycast = () => {};
+    this.accentWireframe.visible = false;
+    this.accentWireframe.renderOrder = 2;
+
     this.decorativeNodes = new DecorativeNodes(this.cache);
     this.decorativeNodes.setVisible(quality.get().decorativeNodes);
     this.moleculeGroup.add(this.decorativeNodes.object);
@@ -178,6 +214,7 @@ export class MoleculeScene {
 
     this.applyCompactLayout(this.compactLayout);
     this.syncWireframe();
+    this.syncAccentWireframe();
   }
 
   /**
@@ -211,6 +248,7 @@ export class MoleculeScene {
     this.decorativeNodes.setOrbitScale(orbitScale);
     this.syncBondEndpoints();
     this.syncWireframe();
+    this.syncAccentWireframe();
   }
 
   private syncBondEndpoints(): void {
@@ -238,15 +276,41 @@ export class MoleculeScene {
     this.wireframe.geometry = this.cache.getUnitIcosahedronEdges(
       settings.atomDetail,
     );
+    this.accentWireframe.geometry = this.cache.getUnitIcosahedronEdges(
+      settings.atomDetail,
+    );
     this.decorativeNodes.setVisible(settings.decorativeNodes);
     this.syncWireframe();
+    this.syncAccentWireframe();
     this.resize(this.lastWidth, this.lastHeight);
   }
 
-  /** Committed atom only — hover must not show the wireframe shell. */
+  /** Committed atom wireframe shell (static). */
   setWireframeAtom(atomId: string | null): void {
     this.wireframeAtomId = atomId;
     this.syncWireframe();
+  }
+
+  /** Preview / autoplay-next wireframe (static or pulsing). */
+  setAccentWireframeAtom(
+    atomId: string | null,
+    mode: AccentWireframeMode | null,
+  ): void {
+    if (atomId && mode) {
+      const prevAtom = this.accentWireframeAtomId;
+      const prevMode = this.accentWireframeMode;
+      this.accentWireframeAtomId = atomId;
+      this.accentWireframeMode = mode;
+      this.targetAccentEnterMix = 1;
+      if (mode === 'pulse' && (prevAtom !== atomId || prevMode !== 'pulse')) {
+        this.accentEnterMix = 0;
+      } else if (mode === 'static') {
+        this.accentEnterMix = 1;
+      }
+      this.syncAccentWireframe();
+      return;
+    }
+    this.targetAccentEnterMix = 0;
   }
 
   /** White orbit for the active peripheral atom (hover or committed). */
@@ -309,6 +373,7 @@ export class MoleculeScene {
    */
   update(deltaSeconds: number, updateLabels = true, elapsed = 0): void {
     this.updateWireframeDim(deltaSeconds);
+    this.updateAccentWireframePulse(deltaSeconds, elapsed);
     for (const atom of this.atoms) {
       if (updateLabels) {
         atom.updateLabel(this.camera);
@@ -328,6 +393,40 @@ export class MoleculeScene {
       this.wireframeColorMix,
     );
     this.wireframeMaterial.color.copy(this.scratchWireframeColor);
+    this.accentWireframeMaterial.color.copy(this.scratchWireframeColor);
+  }
+
+  private updateAccentWireframePulse(deltaSeconds: number, elapsed: number): void {
+    const enterT = 1 - Math.exp(-ACCENT_ENTER_FOLLOW * deltaSeconds);
+    this.accentEnterMix +=
+      (this.targetAccentEnterMix - this.accentEnterMix) * enterT;
+
+    if (
+      this.targetAccentEnterMix === 0 &&
+      this.accentEnterMix < 0.015 &&
+      this.accentWireframeAtomId
+    ) {
+      this.accentEnterMix = 0;
+      this.accentWireframeAtomId = null;
+      this.accentWireframeMode = null;
+      this.syncAccentWireframe();
+      return;
+    }
+
+    if (!this.accentWireframe.visible || !this.accentWireframeMode) return;
+
+    const enter = smoothstep01(this.accentEnterMix);
+    if (this.accentWireframeMode === 'static') {
+      this.accentWireframeMaterial.opacity = WIREFRAME_OPACITY * enter;
+      return;
+    }
+
+    const phase = 0.5 + 0.5 * Math.sin(elapsed * PULSE_SPEED);
+    const eased = smoothstep01(phase);
+    const pulse =
+      PULSE_OPACITY_MIN +
+      (PULSE_OPACITY_MAX - PULSE_OPACITY_MIN) * eased;
+    this.accentWireframeMaterial.opacity = pulse * enter;
   }
 
   render(): void {
@@ -338,6 +437,7 @@ export class MoleculeScene {
     this.clearMolecule();
     this.decorativeNodes.dispose();
     this.wireframeMaterial.dispose();
+    this.accentWireframeMaterial.dispose();
     this.bondMaterial.dispose();
     this.cache.dispose();
     this.renderer.dispose();
@@ -361,9 +461,31 @@ export class MoleculeScene {
     this.wireframe.visible = true;
   }
 
+  private syncAccentWireframe(): void {
+    const enabled = this.quality.get().selectedWireframe;
+    const atom = this.accentWireframeAtomId
+      ? this.getAtom(this.accentWireframeAtomId)
+      : undefined;
+    if (!enabled || !atom || !this.accentWireframeMode) {
+      this.accentWireframe.visible = false;
+      this.accentWireframe.removeFromParent();
+      return;
+    }
+    if (this.accentWireframe.parent !== atom.object) {
+      this.accentWireframe.removeFromParent();
+      atom.object.add(this.accentWireframe);
+    }
+    this.accentWireframe.scale.setScalar(atom.radius * WIREFRAME_SCALE);
+    this.accentWireframe.visible = true;
+  }
+
   private clearMolecule(): void {
     this.wireframe.removeFromParent();
     this.wireframe.visible = false;
+    this.accentWireframe.removeFromParent();
+    this.accentWireframe.visible = false;
+    this.accentEnterMix = 0;
+    this.targetAccentEnterMix = 0;
     for (const atom of this.atoms) {
       this.labelsGroup.remove(atom.atomLabel.object);
       this.moleculeGroup.remove(atom.object);

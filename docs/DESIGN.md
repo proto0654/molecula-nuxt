@@ -114,8 +114,9 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 ### 7. SVG navigation connector
 
-- [`NavigationConnector`](../src/ui/NavigationConnector.ts): elbow polyline from rail item → projected atom; tiny tip marker; stops short of the mesh.
-- States: idle hidden · hover fade-in · active stay visible · zoom fades with `zoomProgress`/`fillProgress`.
+- [`NavigationConnector`](../app/lib/hero-ui/NavigationConnector.ts): elbow polyline from rail item → projected atom; tiny tip marker; stops short of the mesh.
+- States: idle hidden · **hover** (distinct preview while committed) routes to preview item · **active** tracks committed · zoom fades with `zoomProgress`/`fillProgress`.
+- CSS: `.is-hover` softer stroke/fill than `.is-active` (`main.css`).
 - Endpoint tracks `projectAtom` 1:1. Soft distance fade when the span is extreme.
 - 1px stroke; short opacity pulse on section change. No glow, no looping dash.
 - Desktop-only (`≥1024`).
@@ -129,11 +130,11 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 ### 9. Atom caption block (troika, not DOM)
 
 - First letter centered on the camera-facing surface point; remainder to local `+X`.
-- Idle titles are pure black; committed atom brightens letter + remainder via `setTitleActive` (tied to blurb commit).
+- Idle titles are pure black; committed and hover-preview atoms brighten letter + remainder via `setAtomTitleHighlight` (orchestrated in `applyVisuals`; blurb is separate).
 - On commit, typewriter `// blurb` under the title in the **same** group.
 - Screen-flat: scene-parented group, `quaternion.copy(camera.quaternion)`, scale by distance. Lift toward camera (`SURFACE_PAD`) so glyphs clear the atom.
 - Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; camera-quat billboard under molecule parent; not raycast targets. Settled off-home freeze lerps color to black (`setDimmed`); leave restores `RING_COLOR`.
-- Selected wireframe: shared `EdgesGeometry` icosahedron shell (~1.04× radius) on the **committed** atom only; quality may disable it. Same settled-freeze black lerp via `MoleculeScene.setChromeDimmed`.
+- Wireframe: committed static shell (`setWireframeAtom`) + accent shell for hover preview / autoplay-next pulse (`setAccentWireframeAtom`); shared `EdgesGeometry` icosahedron (~1.04× radius); quality may disable both. Same settled-freeze black lerp via `MoleculeScene.setChromeDimmed`.
 - Decorative ghost: one hub-centered orbit per peripheral (black idle / dark gray active) + wireframe fragments on `moleculeGroup`; HIGH only; fades with zoom/fill.
 
 ### 10. USP headline

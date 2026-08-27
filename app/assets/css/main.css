@@ -975,6 +975,10 @@ html.nav-overlay-open body {
   stroke: rgb(214 219 224 / 0.38);
 }
 
+.nav-connector.is-hover .nav-connector__line {
+  stroke: rgb(214 219 224 / 0.28);
+}
+
 .nav-connector__endpoint {
   fill: none;
   stroke: rgb(214 219 224 / var(--line-opacity));
@@ -984,6 +988,11 @@ html.nav-overlay-open body {
 .nav-connector.is-active .nav-connector__endpoint {
   stroke: rgb(214 219 224 / 0.5);
   fill: rgb(214 219 224 / 0.12);
+}
+
+.nav-connector.is-hover .nav-connector__endpoint {
+  stroke: rgb(214 219 224 / 0.36);
+  fill: rgb(214 219 224 / 0.06);
 }
 
 /* --- Transition + destination --- */
