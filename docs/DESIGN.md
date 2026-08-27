@@ -90,8 +90,9 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 - [`SiteHeader`](../app/lib/hero-ui/SiteHeader.ts):
   - **Desktop (≥1024):** `[ МАРК ] ЛОГО` · slide progress track (viewport center, replaces former `⟨ SYS · МОЛЕКУЛА ⟩`) · `УЗЕЛ 04 / РАБОТЫ`. Inset from corner ticks via `--hud-header-inset`. Pointer-events none; no background blocks.
-  - **Mobile (≤767):** ЛОГО left + text control `МЕНЮ / NAV` (toggles to `ЗАКРЫТЬ / NAV`). Safe-area top padding. No hamburger glyph, no card.
-  - **Tablet:** header hidden; `.hud__meta` keeps `⟨ SYS · МОЛЕКУЛА ⟩`.
+  - **Mobile (≤767):** shared 3-col grid (`--mobile-header-grid`: side · center · side) — col 1 `[ МАРК ] ЛОГО`, col 3 `МЕНЮ / NAV` (home + off-home). Off-home col 2: SiteChrome meta (`CASE / NN`, `ARCHIVE`, section label) at ~0.469rem, muted `--ink-32` / `--ink-28`. Safe-area top padding. No hamburger glyph, no card.
+  - **Off-home desktop/tablet (≥768):** centered indexed route links (direct `transitionTo`); NODE hidden; SiteChrome meta stays top-right.
+  - **Tablet home:** header hidden; `.hud__meta` keeps `⟨ SYS · МОЛЕКУЛА ⟩`.
 
 ### 4. Hairline rule / rail divider
 
@@ -110,7 +111,8 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 - Full-viewport veil (`--color-bg`), not a card. Large numbering, thin item hairlines, subtle crosshair, status strip.
 - Open from MENU; close via CLOSE / ESC / backdrop / item select.
-- Same `selectItem` path as the rail.
+- **Home mobile:** same `selectItem` path as the rail (two-step molecule commit).
+- **Off-home mobile:** direct `transitionTo` per item — no atom commit step.
 
 ### 7. SVG navigation connector
 

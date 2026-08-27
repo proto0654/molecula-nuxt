@@ -238,6 +238,51 @@
   color: var(--case-accent-ink);
 }
 
+/* Mobile: 3-col header band — col 1 LOGO / col 2 meta / col 3 MENU (site-header) */
+@media (max-width: 767px) {
+  .case-chrome__header--meta {
+    display: grid;
+    grid-template-columns: var(--mobile-header-grid);
+    align-items: center;
+    column-gap: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: var(--mobile-header-pad-top) var(--mobile-header-pad-x) 0;
+  }
+
+  .case-chrome__meta {
+    grid-column: 2;
+    justify-self: center;
+    position: static;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.5rem;
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 0.46875rem;
+    letter-spacing: 0.07em;
+    color: var(--ink-28);
+  }
+
+  .case-chrome__meta .case-chrome__index {
+    margin: 0;
+    text-align: center;
+    letter-spacing: inherit;
+    color: var(--ink-32);
+  }
+
+  .case-chrome__meta .case-chrome__archive {
+    text-align: center;
+    letter-spacing: inherit;
+    color: var(--ink-28);
+  }
+}
+
 @media (min-width: 768px) {
   .case-chrome__grid {
     background-size: var(--grid-size-tablet) var(--grid-size-tablet);

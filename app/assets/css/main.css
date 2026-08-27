@@ -274,10 +274,8 @@ html.hero-lock #__nuxt {
   display: none;
 }
 
-/* Molecule nav (desktop rail + mobile bottom + menu) — home only. */
+/* Molecule nav (desktop rail + mobile bottom) — home only. Off-home mobile uses MENU + overlay. */
 .molecular-chrome:not(.is-home) .nav,
-.molecular-chrome:not(.is-home) .mobile-nav-overlay,
-.molecular-chrome:not(.is-home) .site-header__menu,
 .molecular-chrome:not(.is-home) .hero-slide-progress,
 .molecular-chrome.is-approaching .nav,
 .molecular-chrome.is-approaching .mobile-nav-overlay,
@@ -1336,6 +1334,13 @@ html.nav-overlay-open body {
 /* --- Mobile --- */
 
 @media (max-width: 767px) {
+  :root {
+    --mobile-header-pad-x: 1rem;
+    --mobile-header-pad-top: calc(0.85rem + env(safe-area-inset-top, 0px));
+    --mobile-header-side-col: 6.35rem;
+    --mobile-header-grid: var(--mobile-header-side-col) 1fr var(--mobile-header-side-col);
+  }
+
   .hud__grid {
     background-size: var(--grid-size-mobile) var(--grid-size-mobile);
     mask-image: radial-gradient(ellipse 70% 55% at 50% 54%, transparent 38%, #000 100%);
@@ -1355,15 +1360,16 @@ html.nav-overlay-open body {
   }
 
   .site-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
+    display: grid;
+    grid-template-columns: var(--mobile-header-grid);
+    align-items: center;
+    column-gap: 0;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     z-index: var(--z-header);
-    padding: calc(0.85rem + env(safe-area-inset-top, 0px)) 1rem 0;
+    padding: var(--mobile-header-pad-top) var(--mobile-header-pad-x) 0;
     pointer-events: none;
     font-size: var(--text-meta);
     letter-spacing: var(--track-meta);
@@ -1372,11 +1378,12 @@ html.nav-overlay-open body {
   }
 
   .site-header__logo {
+    grid-column: 1;
+    justify-self: start;
     position: relative;
     z-index: 1;
     color: var(--ui-primary);
     letter-spacing: 0.18em;
-    flex: 0 0 auto;
   }
 
   .hero-slide-progress--desktop,
@@ -1390,32 +1397,20 @@ html.nav-overlay-open body {
   }
 
   .site-header__menu {
+    grid-column: 3;
+    justify-self: end;
     display: block;
+    position: relative;
+    z-index: 3;
   }
 
+  .molecular-chrome:not(.is-home) .site-header__logo {
+    z-index: 3;
+  }
+
+  /* Off-home mobile: nav via overlay, not inline scroll on the right */
   .molecular-chrome:not(.is-home) .site-header__routes {
-    display: flex;
-    flex: 1 1 auto;
-    justify-content: flex-end;
-    flex-wrap: nowrap;
-    gap: 0.55rem;
-    max-width: none;
-    margin-left: 0.75rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    color: var(--ink-38);
-    letter-spacing: 0.12em;
-  }
-
-  .molecular-chrome:not(.is-home) .site-header__routes::-webkit-scrollbar {
     display: none;
-  }
-
-  .molecular-chrome:not(.is-home) .site-header__link {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    font-size: 0.5625rem;
   }
 
   .usp-headline {

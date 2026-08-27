@@ -18,7 +18,7 @@ app.vue
 | Layer | Lives | Notes |
 |---|---|---|
 | Canvas / molecule / HudFrame | layout, `position: fixed` | One renderer, scene, camera, rAF. Not remounted on navigation. |
-| SiteHeader, nav rail, mobile overlay | chrome root | Persistent chrome. Home: header slide progress (desktop) + nav progress above bottom rail (mobile) + molecule nav. Off-home: header route menu (direct hops); molecule nav / MENU hidden. USP + connectors home-only. |
+| SiteHeader, nav rail, mobile overlay | chrome root | Persistent chrome. Home: header slide progress (desktop) + nav progress above bottom rail (mobile) + molecule nav. Off-home desktop/tablet: centered header route links (direct hops). Off-home mobile: LOGO + MENU + overlay (direct hops). Molecule rail hidden off-home. USP + connectors home-only. |
 | Route veil | `document.body` via `routeVeil` | Survives the hop; destination dismisses it. |
 | Page content | `<NuxtPage />` | Archive / case / section content over the frozen molecule (no page scrim). |
 | SiteChrome | page | Meta only (`ARCHIVE`, `CASE / NN`, Index). No duplicate grid / frame / logo. |

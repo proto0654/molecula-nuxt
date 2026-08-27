@@ -94,6 +94,8 @@ Fixed overlay, same visual language as HUD (edge grid + four L-ticks), quieter, 
 | Archive `/portfolio` | SiteChrome | `ARCHIVE` (`aria-current="page"`) |
 | Case `/portfolio/[slug]` | SiteChrome | `CASE / NN` + Index → archive (restored page) |
 
+**Mobile off-home (≤767):** one band, shared `--mobile-header-grid` with [`SiteHeader`](../app/lib/hero-ui/SiteHeader.ts): col 1 LOGO · col 2 centered SiteChrome meta (muted) · col 3 `МЕНЮ / NAV` (overlay → direct `transitionTo`). No inline section links in the header; desktop/tablet keep centered route menu in SiteHeader + meta on the right.
+
 Top-left: `[ МАРК ] ЛОГО` → `/`. Do not put the 5-item molecular rail on archive or case.
 
 ## Grid

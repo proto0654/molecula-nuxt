@@ -291,7 +291,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `hero/HeroAutoplay.ts` | Home idle cycle: settle-gated progress, pause/resume, advance callback |
 | `hero-ui/HeroSlideProgress.ts` | Desktop header + mobile nav progress track |
 | `hero-ui/HudFrame.ts` | Grid + corner ticks (pointer-events none) |
-| `hero-ui/SiteHeader.ts` | LOGO (always); home desktop: slide progress + NODE; off-home: centered route menu (direct `transitionTo`); mobile MENU on home |
+| `hero-ui/SiteHeader.ts` | LOGO (always); home desktop: slide progress + NODE; off-home desktop/tablet: centered route links (direct `transitionTo`); mobile (home + off-home): MENU |
 | `hero-ui/UspHeadline.ts` / `hero-ui/textScramble.ts` | HUD USP scramble after focus settle |
 | `hero-ui/MobileNavOverlay.ts` | Editorial full-screen mobile nav index |
 | `hero-ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); mobile `nav__stack` (progress + row); `getItemAnchor`; zoom softness |
@@ -304,7 +304,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 
 - Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`. Home locks document scroll via `html.hero-lock`.
 - Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) — see [`DESIGN.md`](DESIGN.md). `NavigationItem.route` drives Nuxt when wired (`/portfolio`); other items still use DestinationView stub.
-- Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav, tablet framing, smaller remainder), mobile ≤767 (header + enlarged bottom rail + slide progress above nav + MENU overlay, mobile framing, full captions, touch drag/tap).
+- Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav on home; off-home header with centered route links), mobile ≤767 (home: header + bottom rail + slide progress + MENU overlay with two-step nav; off-home: header LOGO + MENU + overlay with direct route hops; mobile framing, full captions, touch drag/tap).
 - No postprocessing, bloom, particle systems, physics, realtime shadows, or environment maps. Scene uses a matching `Fog` for slight depth only.
 - Pixel ratio capped by the locked quality preset (`maxPixelRatio` 1.75 / 1.5 / 1), refreshed on every resize (monitor / OS DPR changes). Mobile starts MEDIUM (DPR ≤1.5, no ghosts/ticks); sampler may lock LOW (DPR 1, no wireframe). Never disable rotation, touch, raycast, focus, labels, zoom, or navigation.
 - GSAP drives the page-transition timeline; idle spin is unused.
@@ -362,7 +362,7 @@ Live site: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molec
 - Focus uses **rest-frame** atom position (ignore current group rotation) so the focus quaternion stays absolute and independent of the mouse layer.
 - `setCompositionProfile` must use FOV/aspect only — never `getBoundingClientRect` on the sidebar. Atom locals stay fixed. Prefer profiles over ad-hoc `setCompositionBias`.
 - `NavigationConnector` consumes screen pixels only (`projectAtom` + DOM anchors). Do not import scene graph objects into UI modules. Tip + tiny marker stop short of the atom.
-- Desktop rail / header / connector are CSS ≥1024; tablet keeps bottom nav; mobile uses header + compact rail + MENU overlay and hides the connector.
+- Desktop rail / header / connector are CSS ≥1024; tablet keeps bottom nav on home; mobile home uses header + compact rail + MENU overlay (two-step); mobile off-home uses header LOGO + MENU overlay (direct hops) and hides the connector.
 - `clearFocus` only lowers `focusStrength`; do not slerp focus orientation to identity on leave (avoids a long unused arc).
 - Central / Home atom (zero offset): no unique focus forward — on enter, apply a π flip about a random axis from the current focus pose (idempotent while already focused on hub). Peripheral focus uses `getStableFocusQuaternion`. **Hero leave approach** (peripherals only): one full revolution (2π) about the atom's orbit normal **in parallel with** zoom+fill (separate GSAP tweens) — ends back on the settled facing pose. `focusAtom` also clears residual pointer/touch tilt so the atom faces the camera.
 - Do not write `moleculeGroup.rotation.x/y += …`; apply composed absolute layers each frame (no rotation accumulation).

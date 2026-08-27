@@ -324,8 +324,17 @@ export function mountHeroApp(
 
   const mobileNav = new MobileNavOverlay(chromeRoot, navigationState, {
     onSelect: (itemId) => {
-      selectItem(itemId);
       setMenuOpen(false);
+
+      if (!isHome) {
+        const item = getItemById(itemId);
+        if (item?.route) {
+          void options.onNavigateRoute?.(item.route);
+        }
+        return;
+      }
+
+      selectItem(itemId);
     },
     onClose: () => setMenuOpen(false),
   });
