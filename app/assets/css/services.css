@@ -1,23 +1,4 @@
-/* Service detail — editorial, no featured wash. Reuses case tokens/grid. */
-
-html.js-enabled .service-page .service-page__body {
-  opacity: 0;
-}
-
-html.js-enabled .service-page.is-revealing .service-page__body {
-  opacity: 1;
-  transition: opacity 0.45s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.js-enabled .service-page .service-page__body,
-  html.js-enabled .service-page.is-revealing .service-page__body {
-    opacity: 1;
-    transition: none;
-  }
-}
-
-/* Shared editorial blocks (services + about) */
+/* Service detail — shared editorial chrome. */
 
 .editorial-header__tags {
   display: flex;
@@ -35,36 +16,6 @@ html.js-enabled .service-page.is-revealing .service-page__body {
   color: var(--wl-muted);
 }
 
-.editorial-repeater__heading {
-  margin: 0 0 1.75rem;
-  font-family: var(--font-ui);
-  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-  font-weight: 400;
-  letter-spacing: var(--track-case-title);
-  line-height: 1.25;
-  color: var(--color-ink-title);
-}
-
-.editorial-repeater-row + .editorial-repeater-row {
-  margin-top: 2.25rem;
-  padding-top: 2.25rem;
-  border-top: 1px solid var(--wl-line);
-}
-
-.editorial-repeater-row__title {
-  margin: 0 0 0.85rem;
-  font-family: var(--font-ui);
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  line-height: 1.3;
-  color: var(--color-ink-title);
-}
-
-.editorial-repeater-row__text {
-  margin: 0;
-}
-
 .editorial-cta-link {
   font-size: var(--text-meta);
   letter-spacing: var(--track-meta);
@@ -79,45 +30,14 @@ html.js-enabled .service-page.is-revealing .service-page__body {
   border-bottom-color: var(--color-ink-bright);
 }
 
-/* Service-specific */
-
-.service-offer__anchor {
-  color: inherit;
-  text-decoration: none;
-}
-
-.service-offer__anchor:hover {
-  color: var(--wl-accent);
-}
-
-.service-offer__price {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.55rem 1rem;
-  margin: 1.25rem 0 0;
-}
-
-.service-offer__from {
-  font-size: var(--text-meta);
-  letter-spacing: var(--track-meta);
-  text-transform: uppercase;
-  color: var(--wl-muted);
-}
-
-.service-offer__amount {
+.service-offer .archive-row__category.service-offer__price {
   font-family: var(--font-ui);
-  font-size: 1.15rem;
+  font-size: clamp(1.15rem, 2vw, 1.65rem);
   letter-spacing: 0.04em;
+  text-transform: none;
   color: var(--color-ink-title);
 }
 
-.service-offer__cta {
-  margin-left: auto;
-}
-
-@media (min-width: 1024px) {
-  .service-page .case-hero--text .case-hero__text {
-    grid-column: 1 / 10;
-  }
+.service-offer__order {
+  margin: 1.25rem 0 0;
 }

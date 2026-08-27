@@ -3,41 +3,21 @@ import type { AboutPage } from '~/types/wp';
 
 defineProps<{
   page: AboutPage;
-  sectionIndex: number;
 }>();
-
-const root = ref<HTMLElement | null>(null);
-
-useCaseScrollEntry({
-  root,
-  preset: 'fade',
-});
 </script>
 
 <template>
-  <section
-    v-if="page.skills.length"
-    ref="root"
-    class="case-section case-grid case-section--tone-editorial about-skills"
-  >
-    <CaseSectionMarker
-      class="case-zone-label"
-      :index="sectionIndex"
-      label="Skills"
-      tone="editorial"
-    />
-    <div class="case-section__body case-zone-body">
-      <span class="case-scroll-trigger" aria-hidden="true" />
-      <div class="case-scroll-motion">
-        <h2 v-if="page.sectionTitle" class="editorial-repeater__heading">
-          {{ page.sectionTitle }}
-        </h2>
-        <AboutSkillRow
-          v-for="(skill, i) in page.skills"
-          :key="skill.title || i"
-          :skill="skill"
-        />
-      </div>
-    </div>
+  <section v-if="page.skills.length" class="editorial-section about-skills">
+    <h2 v-if="page.sectionTitle" class="editorial-section-title">
+      {{ page.sectionTitle }}
+    </h2>
+    <ul class="archive-list">
+      <AboutSkillRow
+        v-for="(skill, i) in page.skills"
+        :key="skill.title || i"
+        :skill="skill"
+        :index="i + 1"
+      />
+    </ul>
   </section>
 </template>

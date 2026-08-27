@@ -2,12 +2,11 @@
 import { getServiceBySlug, getServiceSlimIndex, getThemeOptions } from '~/api';
 import { getServicePosition } from '~/domain/services/adjacent';
 import {
-  getServiceComposition,
   normalizeServiceChrome,
   normalizeServicePost,
   serviceExcerptPlain,
 } from '~/domain/services';
-import { stripTags } from '~/domain/portfolio/presentation';
+import { padCaseIndex, stripTags } from '~/domain/portfolio/presentation';
 
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
@@ -53,30 +52,21 @@ const chrome = computed(
       orderLabel: null,
     },
 );
-const composition = computed(() =>
-  service.value ? getServiceComposition(service.value) : null,
-);
-const sections = computed(
-  () =>
-    composition.value?.numbers ?? {
-      intro: 0,
-      offers: 0,
-      next: 0,
-    },
-);
 
 const ready = computed(
   () => Boolean(data.value?.service) && data.value?.service?.slug === slug.value,
 );
 
 const { revealing } = usePageContentReveal();
-const titleReady = computed(() => ready.value && revealing.value);
+
+const titlePlain = computed(() => {
+  if (!service.value) return '';
+  return stripTags(service.value.title) || service.value.slug;
+});
 
 const pageTitle = computed(() => {
-  const s = service.value;
-  if (!s) return 'Молекула';
-  const plainTitle = stripTags(s.title) || s.slug;
-  return `${plainTitle} — WebLaba`;
+  if (!service.value) return 'Молекула';
+  return `${titlePlain.value} — WebLaba`;
 });
 
 const pageDescription = computed(() => {
@@ -91,54 +81,53 @@ useSeoMeta({
 </script>
 
 <template>
-  <ServiceShell
-    :service-index="position?.index"
-    :sparse="composition?.sparse"
-    :revealing="revealing"
+  <ArchiveShell
+    :revealing="revealing && ready"
+    :detail-index="position?.index"
+    detail-variant="service"
+    archive-scope="services"
   >
-    <p v-if="!service && pending" class="case-page__status">Loading…</p>
+    <p v-if="!service && pending" class="archive-status">Loading…</p>
 
     <p
       v-else-if="error && !service && (!('statusCode' in error) || error.statusCode !== 404)"
-      class="case-page__status"
+      class="archive-status"
     >
       Service unavailable.<br />
       Try again later.
     </p>
 
     <template v-else-if="service">
-      <div class="case-grid case-hero case-hero--text">
-        <ServiceHeader
-          class="case-hero__text"
-          :service="service"
-          :service-index="position?.index"
-          :reveal-ready="titleReady"
-        />
-      </div>
+      <header class="archive-heading">
+        <p v-if="position?.index" class="archive-heading__kicker">
+          Service / {{ padCaseIndex(position.index) }}
+        </p>
+        <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
+        <ul v-if="service.tags.length" class="editorial-header__tags">
+          <li v-for="tag in service.tags" :key="tag" class="editorial-header__tag">
+            {{ tag }}
+          </li>
+        </ul>
+      </header>
 
-      <CaseSection
-        v-if="sections.intro && service.contentHtml"
-        :index="sections.intro"
-        label="Intro"
-        tone="editorial"
-      >
-        <div class="case-content__prose" v-html="service.contentHtml" />
-      </CaseSection>
-
-      <ServiceOffers
-        v-if="sections.offers"
-        :service="service"
-        :chrome="chrome"
-        :section-index="sections.offers"
+      <div
+        v-if="service.contentHtml"
+        class="archive-intro case-content__prose"
+        v-html="service.contentHtml"
       />
 
-      <ServiceNavigation
-        :section-index="sections.next"
+      <ServiceOffers :service="service" :chrome="chrome" />
+
+      <ArchiveDetailNav
         :prev-slug="position?.prev?.slug ?? null"
         :next-slug="position?.next?.slug ?? null"
         :prev-title="position?.prev?.title ?? null"
         :next-title="position?.next?.title ?? null"
+        base-path="/services"
+        index-label="Back to services"
+        archive-scope="services"
+        aria-label="Service navigation"
       />
     </template>
-  </ServiceShell>
+  </ArchiveShell>
 </template>

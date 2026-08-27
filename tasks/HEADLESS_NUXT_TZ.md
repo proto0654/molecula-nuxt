@@ -13,7 +13,7 @@
 
 # A. ГДЕ МЫ СЕЙЧАС ОСТАНОВИЛИСЬ
 
-**Дата чекпоинта:** 2026-08-27  
+**Дата чекпоинта:** 2026-08-28  
 **Ветка:** `main` (`origin` = `molecula-nuxt`)  
 **Удалено намеренно:** ветка `feat/headless-api-foundation` (неудачная Vite-API итерация; не переносить)
 
@@ -55,9 +55,9 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); paginate slim then `include` ids; SiteChrome meta `ARCHIVE`; transparent page over frozen molecule; featured wash on hover is CSS-only (`.archive-row__backdrop`), gated by `is-washes-ready` / [`usePortfolioWashGate`](../app/composables/usePortfolioWashGate.ts)
 - **Case page:** editorial inspection (12-col grid, SiteChrome `CASE / NN`); Interface = `landing_screen` + repeater; sequential `getCaseComposition` markers including NEXT; lightbox + `useCaseScrollEntry`; in-page case→case via `useCasePageTransition` (hold previous payload, no generic loader); Index restores `?page=` + scroll (`wl:archive-return`); featured wash is layout-owned (not remounted in CaseShell); same wash entrance gate from outside portfolio
 - **Typography:** `--font-ui` JetBrains Mono (HUD / all-caps titles / troika); `--font-body` Exo 2 300 (case prose / intro / captions). Titles via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue) — absolute paint layer, pose-gated (+ case `revealReady`); archive/section body fade via [`usePageContentReveal`](../app/composables/usePageContentReveal.ts)
-- **Services:** `/services` editorial archive (no featured wash); `/services/[slug]` title+tags → intro → offer repeater (price + options chrome) + prev/next; [`useServices`](../app/composables/useServices.ts); return key `wl:archive-return:services`
-- **About:** `/about` photo + tags + intro + skills repeater + CTA → `/contact`; [`useAbout`](../app/composables/useAbout.ts); empty repeater hides skills (no PHP demo fallback)
-- **Contact:** `/contact` from ACF options (`weblaba_contacts` + popup title/text); [`useContacts`](../app/composables/useContacts.ts) + [`ContactList`](../app/components/contact/ContactList.vue); empty repeater → `[]` (no PHP defaults); no popup overlay
+- **Services:** `/services` editorial archive (no featured wash); `/services/[slug]` on `ArchiveShell` — Index/`SERVICE / NN` kicker, intro, numbered offer repeater (`archive-row--detail`), `ArchiveDetailNav`; [`useServices`](../app/composables/useServices.ts); return key `wl:archive-return:services`
+- **About:** `/about` on `ArchiveShell` — Index kicker, tags, photo, intro, numbered skills repeater, CTA → `/contact`; [`useAbout`](../app/composables/useAbout.ts); empty repeater hides skills (no PHP demo fallback)
+- **Contact:** `/contact` on `ArchiveShell` — Index kicker, intro, optional section H2, [`ContactArchiveRow`](../app/components/contact/ContactArchiveRow.vue) list; [`useContacts`](../app/composables/useContacts.ts); empty repeater → `[]` (no PHP defaults); `_blank` → `rel="noopener noreferrer"`
 - **Off-home chrome:** header route menu (direct `transitionTo`); molecule rail / bottom nav / MENU hidden; logo clickable (`pointer-events: auto`)
 - **Approach:** `Navigator` single approach tween (zoom+fill together); `freeze()` + hide labels at start; no forward veil
 - **Prerender:** portfolio **and** service slugs queued at generate/build via live WP (+ `/about` `/services` `/contact`)

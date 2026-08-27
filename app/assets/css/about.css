@@ -1,25 +1,8 @@
-/* About detail — editorial case-grid (shared tokens with services). */
-
-html.js-enabled .about-page .about-page__body {
-  opacity: 0;
-}
-
-html.js-enabled .about-page.is-revealing .about-page__body {
-  opacity: 1;
-  transition: opacity 0.45s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.js-enabled .about-page .about-page__body,
-  html.js-enabled .about-page.is-revealing .about-page__body {
-    opacity: 1;
-    transition: none;
-  }
-}
+/* About — archive layout. */
 
 .about-photo {
-  margin: 0;
-  width: 100%;
+  margin: 0 0 var(--case-space-first);
+  max-width: min(16rem, 42vw);
 }
 
 .about-photo__img {
@@ -32,34 +15,4 @@ html.js-enabled .about-page.is-revealing .about-page__body {
 
 .about-cta {
   margin: 0;
-}
-
-/* Hero — photo in label column (1–3), title in body column (4–end) like CaseSection */
-
-.about-hero {
-  align-items: start;
-}
-
-.about-hero .case-header__title {
-  font-size: var(--text-case-title);
-  letter-spacing: 0.04em;
-  line-height: 1.05;
-}
-
-@media (min-width: 1024px) {
-  .about-page :is(.about-hero__text, .case-section .case-zone-body) {
-    grid-column: 4 / -1;
-  }
-
-  .about-page .about-hero__photo .about-photo__img {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    object-fit: cover;
-    object-position: center top;
-  }
-
-  .case-page--sparse .about-hero {
-    min-height: min(58vh, 28rem);
-    align-content: end;
-  }
 }

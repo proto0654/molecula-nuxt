@@ -176,12 +176,16 @@ useSeoMeta({
         :case-data="caseData"
         :section-index="sections.slices"
       />
-      <CaseNavigation
+      <ArchiveDetailNav
         :section-index="sections.next"
         :prev-slug="position?.prev?.slug ?? null"
         :next-slug="position?.next?.slug ?? null"
         :prev-title="position?.prev?.title ?? null"
         :next-title="position?.next?.title ?? null"
+        base-path="/portfolio"
+        index-label="Back to portfolio"
+        archive-scope="portfolio"
+        aria-label="Case navigation"
       />
       <CaseLightbox />
     </template>

@@ -33,9 +33,9 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 - Shared page meta: [`SiteChrome`](app/components/site/SiteChrome.vue) (`ARCHIVE` / `CASE / NN` / `SERVICE / NN` / section; no duplicate HUD frame)
 - Title scramble: [`SiteScrambleTitle`](app/components/site/ScrambleTitle.vue) — gated on pose settle (+ case body idle); archive/section body fade via [`usePageContentReveal`](app/composables/usePageContentReveal.ts)
 - Type: `--font-ui` JetBrains Mono (HUD / titles / troika); `--font-body` Exo 2 300 (case prose / intro / captions) — [`docs/DESIGN.md`](docs/DESIGN.md)
-- Services: [`app/pages/services/`](app/pages/services/) + [`app/components/service/`](app/components/service/) + [`useServices`](app/composables/useServices.ts) — archive like portfolio **without** featured wash; detail = title/tags + intro + offer repeater
-- About: [`app/pages/about.vue`](app/pages/about.vue) + [`app/components/about/`](app/components/about/) + [`useAbout`](app/composables/useAbout.ts)
-- Contact: [`app/pages/contact.vue`](app/pages/contact.vue) + [`app/components/contact/`](app/components/contact/) + [`useContacts`](app/composables/useContacts.ts) — ACF `weblaba_contacts` + popup title/text
+- Services: [`app/pages/services/`](app/pages/services/) + [`app/components/service/`](app/components/service/) + [`useServices`](app/composables/useServices.ts) — archive like portfolio **without** featured wash; detail = `ArchiveShell` + intro + numbered offer repeater + `ArchiveDetailNav`
+- About: [`app/pages/about.vue`](app/pages/about.vue) + [`app/components/about/`](app/components/about/) + [`useAbout`](app/composables/useAbout.ts) — `ArchiveShell` + photo + numbered skills repeater
+- Contact: [`app/pages/contact.vue`](app/pages/contact.vue) + [`ContactArchiveRow`](app/components/contact/ContactArchiveRow.vue) + [`useContacts`](app/composables/useContacts.ts) — `ArchiveShell` + numbered contact rows
 - Case visual: [`app/assets/css/case.css`](app/assets/css/case.css) + [`CaseShell`](app/components/case/CaseShell.vue) — [`docs/CASES.md`](docs/CASES.md) (featured wash is layout-owned, not inside CaseShell)
 - Archive visual: [`app/assets/css/archive.css`](app/assets/css/archive.css)
 

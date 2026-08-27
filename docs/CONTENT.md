@@ -9,10 +9,10 @@ pages / composables
   → app/api/*          (ofetch; no REST URLs in components)
   → app/domain/*       (normalize raw → Case / Service / AboutPage / ContactPage / NavigationMenu)
   → app/types/wp/*     (raw + domain types)
-  → components/archive/* + components/service/*  (editorial listing + service detail)
+  → components/archive/* + components/service/*  (editorial listing + detail repeaters)
   → components/case/*     (conditional case blocks)
-  → components/about/*    (about shell / header / skills / CTA — case-grid like services)
-  → components/contact/*  (contact shell / header / links — case-grid like about)
+  → components/about/*    (about photo / skills / CTA on archive layout)
+  → components/contact/*  (contact archive rows)
 ```
 
 Live response notes: [`api-real-response.md`](api-real-response.md).
@@ -61,17 +61,17 @@ Rules:
 | `/portfolio` | `usePortfolio(page)` — slim-index pagination (`include` ids), editorial rows |
 | `/portfolio/[slug]` | `CaseShell` + video hero + layout featured wash / accent overlay + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT |
 | `/services` | `useServices(page)` — slim-index pagination, editorial rows **without** featured wash |
-| `/services/[slug]` | `ServiceShell` + title/tags hero + intro (`contentHtml`) + offer repeater (price + «от» + order CTA) + prev/next |
-| `/about` | `AboutShell` + hero (photo in label col + title/tags) + intro + skills + CTA → `/contact` |
-| `/contact` | `ContactShell` + text hero (H1) + intro (`contact_popup_text`) + links repeater (`contact_popup_title` H2 + `weblaba_contacts`) |
+| `/services/[slug]` | `ArchiveShell` (`SERVICE / NN`) + Index kicker + title/tags + intro + offer repeater (`archive-list` rows: index, price meta, hover line/arrow, body + order CTA) + [`ArchiveDetailNav`](../app/components/archive/DetailNav.vue) |
+| `/about` | `ArchiveShell` + Index kicker + title/tags + optional photo + intro + skills repeater (`archive-list`) + CTA → `/contact` |
+| `/contact` | `ArchiveShell` + Index kicker «Контакты» + intro (`contact_popup_text`) + optional H2 (`contact_popup_title`) + contacts (`ContactArchiveRow` / `archive-list`) |
 
 Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
 
-Service detail composition: hero (title + tags, no featured) → intro if content → offers if rows (`services_section_heading` H2 only when both heading and rows exist) → NEXT. Price CTA only when `cf_price` is set. Chrome strings from theme options: `services_section_heading`, `services_price_from` (fallback «от»), `hero_order_label` (fallback «Заказать»).
+Service detail composition: Index kicker + `SERVICE / NN` when indexed → intro if content → offers if rows (`services_section_heading` H2 only when both heading and rows exist) → NEXT via `ArchiveDetailNav` (same `case-nav` tokens as portfolio case; archive variant aligns from column 3). Price in row meta (`от` + amount); order CTA in row body when `cf_price` is set. Chrome strings from theme options: `services_section_heading`, `services_price_from` (fallback «от»), `hero_order_label` (fallback «Заказать»).
 
-About order: hero (H1 + tags; photo in split column when set) → intro if content → skills if rows (H2 `about_section_title` only if title and rows) → CTA if `about_cta_label`. Section numbers via `getAboutComposition` (Intro / Skills / Contact).
+About order: Index kicker + H1 + tags → optional photo → intro if content → skills if rows (H2 `about_section_title` only if title and rows; `archive-list` with numbered rows) → CTA if `about_cta_label`.
 
-Contact order: text hero (H1 «Контакты») → intro if text → links if rows (`contact_popup_title` H2 only when title and rows exist). Section numbers via `getContactComposition`. All normalized contacts render (not filtered by `show_in_socialbar`). `_blank` gets `rel="noopener noreferrer"`.
+Contact order: Index kicker + H1 → intro if text → optional H2 + contacts if rows. Detail repeaters use `archive-row--detail` (dividers between items only — no bottom hairline on last row).
 
 SEO: `useSeoMeta` title + plain excerpt on case / service / about / contact pages.
 
@@ -104,6 +104,6 @@ Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `
 
 - Components must not call WordPress URLs directly.
 - Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally ([`main.css`](../app/assets/css/main.css)).
-- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing: [`archive.css`](../app/assets/css/archive.css). Services + about editorial: [`services.css`](../app/assets/css/services.css) (shared repeater/header/CTA tokens). About photo: [`about.css`](../app/assets/css/about.css). Contact: [`contact.css`](../app/assets/css/contact.css). Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive, case, service, about, or contact pages.
+- Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing + detail repeaters: [`archive.css`](../app/assets/css/archive.css). Services + about editorial tokens: [`services.css`](../app/assets/css/services.css). About photo: [`about.css`](../app/assets/css/about.css). Shared footer nav: [`DetailNav.vue`](../app/components/archive/DetailNav.vue) auto-imports as **`ArchiveDetailNav`**. Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive, case, service, about, or contact pages.
 - Service archive return uses session key `wl:archive-return:services` (portfolio keeps `wl:archive-return`).
 - `wpFetch` must not call `useRuntimeConfig()` after `await` inside `useAsyncData` (NUXT_E1001). Resolve base via `tryUseNuxtApp()?.$config` with env fallback ([`client.ts`](../app/api/client.ts)).
