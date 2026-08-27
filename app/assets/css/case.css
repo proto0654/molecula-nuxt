@@ -30,8 +30,10 @@
   --case-media-max: min(68vh, 38rem);
   --case-mobile-max: min(20rem, 34vw);
   --case-mobile-caption-max: 44rem;
-  /* Desktop / landing screens: absolute + relative width cap */
+  /* Desktop screens: absolute + relative width cap */
   --case-screen-max: min(52rem, 78vw);
+  /* Single landing_screen on desktop — narrower, left-aligned in center column */
+  --case-landing-max: min(40rem, 58vw);
   --slice-gap: clamp(0.75rem, 3vw, 1.5rem);
   --slice-col-stagger: clamp(4rem, 15vw, 10rem);
   --slice-scroll-lag-odd: clamp(14rem, 34vh, 26rem);
@@ -1197,8 +1199,8 @@
   }
 
   .case-inner-pages--landing-only {
-    max-width: var(--case-screen-max);
-    margin-inline: auto;
+    max-width: var(--case-landing-max);
+    margin-inline: 0;
   }
 }
 
