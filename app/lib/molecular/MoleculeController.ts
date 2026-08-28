@@ -14,9 +14,21 @@ import { projectToScreenInto } from './math/projection';
 import { moleculeConfig } from './moleculeConfig';
 import { getOrbitNormalForAtom } from './moleculeOrbits';
 import { MoleculeScene } from './MoleculeScene';
+import {
+  calibrateGyro,
+  needsOrientationPermission,
+  requestOrientationPermission,
+  sampleGyroTilt,
+  type GyroCalibration,
+  type GyroSample,
+} from './gyroTilt';
 import { PerformanceSampler } from './quality/PerformanceSampler';
 import type { QualityManager } from './quality/QualityManager';
 import { readQualitySearchParam } from './quality/QualityManager';
+import {
+  prefersTouchInput,
+  subscribePointerInput,
+} from '../a11y/pointerInput';
 import {
   prefersReducedMotion,
   subscribeReducedMotion,
@@ -183,6 +195,22 @@ export class MoleculeController {
   private dragYaw = 0;
   private dragPitch = 0;
 
+  /** Calibrated gyro contribution; composed with drag into the mouse target. */
+  private gyroYaw = 0;
+  private gyroPitch = 0;
+  private gyroCalibrated = false;
+  private gyroBound = false;
+  private gyroPermissionAsked = false;
+  private gyroPermission: 'unknown' | 'granted' | 'denied' | 'not-needed' =
+    'unknown';
+  private lastGyroBeta: number | null = null;
+  private lastGyroGamma: number | null = null;
+  private readonly gyroCal: GyroCalibration = { restBeta: 0, restGamma: 0 };
+  private readonly gyroSample: GyroSample = { yaw: 0, pitch: 0 };
+
+  /** Coarse / no-hover: gyro eligible, canvas hover skipped (autoplay safety). */
+  private touchInput = false;
+
   /** Atom id last passed to `focusAtom` while focus is active. */
   private focusedAtomId: string | null = null;
 
@@ -259,14 +287,20 @@ export class MoleculeController {
   private readonly sampler: PerformanceSampler;
   private readonly unsubscribeQuality: () => void;
   private readonly unsubscribeReducedMotion: () => void;
+  private readonly unsubscribePointerInput: () => void;
   private reducedMotion = false;
   private readonly onResizeBound: () => void;
+  private readonly onOrientationChangeBound: () => void;
   private readonly onPointerMoveBound: (event: PointerEvent) => void;
   private readonly onPointerLeaveBound: () => void;
   private readonly onClickBound: (event: MouseEvent) => void;
   private readonly onPointerDownBound: (event: PointerEvent) => void;
   private readonly onPointerUpBound: (event: PointerEvent) => void;
   private readonly onPointerCancelBound: (event: PointerEvent) => void;
+  private readonly onDeviceOrientationBound: (
+    event: DeviceOrientationEvent,
+  ) => void;
+  private readonly onVisibilityBound: () => void;
 
   constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
     this.instanceId = ++nextControllerInstanceId;
@@ -291,7 +325,16 @@ export class MoleculeController {
     this.unsubscribeReducedMotion = subscribeReducedMotion((next) => {
       this.reducedMotion = next;
       this.syncReducedMotionVisuals();
+      this.syncGyroBinding();
     });
+    this.touchInput = prefersTouchInput();
+    this.unsubscribePointerInput = subscribePointerInput((touch) => {
+      this.touchInput = touch;
+      this.syncGyroBinding();
+    });
+    this.gyroPermission = needsOrientationPermission()
+      ? 'unknown'
+      : 'not-needed';
     this.syncReducedMotionVisuals();
 
     this.onResizeBound = () => {
@@ -299,8 +342,15 @@ export class MoleculeController {
       this.scene.resize(width, height);
       this.applyCompositionBias();
       // Aspect / projection changed — refresh pick and label billboards.
-      this.atomHover.markDirty();
+      if (!this.touchInput) {
+        this.atomHover.markDirty();
+      }
       this.lastLabelZoomProgress = Number.NaN;
+    };
+
+    this.onOrientationChangeBound = () => {
+      this.onResizeBound();
+      this.invalidateGyroCalibration();
     };
 
     this.onPointerMoveBound = (event: PointerEvent) => {
@@ -360,6 +410,7 @@ export class MoleculeController {
       this.touchLastX = event.clientX;
       this.touchLastY = event.clientY;
       this.touchDragging = false;
+      this.foldGyroIntoDrag();
       this.canvas.setPointerCapture(event.pointerId);
       event.preventDefault();
     };
@@ -374,6 +425,7 @@ export class MoleculeController {
       this.suppressNextClick = true;
       if (!wasDragging) {
         this.emitPickAtClient(x, y);
+        void this.requestGyroPermissionAfterTap();
       }
     };
 
@@ -381,6 +433,14 @@ export class MoleculeController {
       if (event.pointerId !== this.touchPointerId) return;
       this.endTouchGesture(event.pointerId);
       this.suppressNextClick = true;
+    };
+
+    this.onDeviceOrientationBound = (event: DeviceOrientationEvent) => {
+      this.handleDeviceOrientation(event);
+    };
+
+    this.onVisibilityBound = () => {
+      this.syncGyroBinding();
     };
   }
 
@@ -407,7 +467,7 @@ export class MoleculeController {
     this.dragPitch += (stepY / h) * MAX_PITCH * TOUCH_DRAG_GAIN * 2;
     this.dragYaw = Math.max(-MAX_YAW, Math.min(MAX_YAW, this.dragYaw));
     this.dragPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.dragPitch));
-    this.applyDragOrientation();
+    this.applyMouseTarget();
     event.preventDefault();
   }
 
@@ -417,6 +477,7 @@ export class MoleculeController {
     }
     this.touchPointerId = null;
     this.touchDragging = false;
+    this.recalibrateGyroFromLastSample();
   }
 
   private emitPickAtClient(clientX: number, clientY: number): void {
@@ -444,10 +505,146 @@ export class MoleculeController {
     this.dragPitch = Math.max(-1, Math.min(1, pointer.y)) * MAX_PITCH;
   }
 
-  private applyDragOrientation(): void {
-    this.scratchYaw.setFromAxisAngle(AXIS_Y, this.dragYaw);
-    this.scratchPitch.setFromAxisAngle(AXIS_X, this.dragPitch);
+  private applyMouseTarget(): void {
+    const yaw = Math.max(
+      -MAX_YAW,
+      Math.min(MAX_YAW, this.dragYaw + this.gyroYaw),
+    );
+    const pitch = Math.max(
+      -MAX_PITCH,
+      Math.min(MAX_PITCH, this.dragPitch + this.gyroPitch),
+    );
+    this.scratchYaw.setFromAxisAngle(AXIS_Y, yaw);
+    this.scratchPitch.setFromAxisAngle(AXIS_X, pitch);
     this.targetMouseOrientation.copy(this.scratchYaw).multiply(this.scratchPitch);
+  }
+
+  /** Bake live gyro into drag so mute-on-touch does not jump the pose. */
+  private foldGyroIntoDrag(): void {
+    this.dragYaw = Math.max(
+      -MAX_YAW,
+      Math.min(MAX_YAW, this.dragYaw + this.gyroYaw),
+    );
+    this.dragPitch = Math.max(
+      -MAX_PITCH,
+      Math.min(MAX_PITCH, this.dragPitch + this.gyroPitch),
+    );
+    this.gyroYaw = 0;
+    this.gyroPitch = 0;
+    this.applyMouseTarget();
+  }
+
+  private handleDeviceOrientation(event: DeviceOrientationEvent): void {
+    if (this.frozen || this.reducedMotion) return;
+    if (this.touchPointerId !== null) return;
+    const beta = event.beta;
+    const gamma = event.gamma;
+    if (beta == null || gamma == null) return;
+
+    this.lastGyroBeta = beta;
+    this.lastGyroGamma = gamma;
+
+    if (!this.gyroCalibrated) {
+      calibrateGyro(beta, gamma, this.gyroCal);
+      this.gyroCalibrated = true;
+      this.gyroYaw = 0;
+      this.gyroPitch = 0;
+      this.applyMouseTarget();
+      return;
+    }
+
+    sampleGyroTilt(
+      beta,
+      gamma,
+      this.gyroCal,
+      MAX_YAW,
+      MAX_PITCH,
+      this.gyroSample,
+    );
+    if (
+      this.gyroSample.yaw === this.gyroYaw &&
+      this.gyroSample.pitch === this.gyroPitch
+    ) {
+      return;
+    }
+    this.gyroYaw = this.gyroSample.yaw;
+    this.gyroPitch = this.gyroSample.pitch;
+    this.applyMouseTarget();
+  }
+
+  private recalibrateGyroFromLastSample(): void {
+    if (this.lastGyroBeta == null || this.lastGyroGamma == null) {
+      this.invalidateGyroCalibration();
+      return;
+    }
+    calibrateGyro(this.lastGyroBeta, this.lastGyroGamma, this.gyroCal);
+    this.gyroCalibrated = true;
+    this.gyroYaw = 0;
+    this.gyroPitch = 0;
+    this.applyMouseTarget();
+  }
+
+  private invalidateGyroCalibration(): void {
+    this.gyroCalibrated = false;
+    this.lastGyroBeta = null;
+    this.lastGyroGamma = null;
+    this.gyroYaw = 0;
+    this.gyroPitch = 0;
+    if (!this.frozen) {
+      this.applyMouseTarget();
+    }
+  }
+
+  private syncGyroBinding(): void {
+    const canBind =
+      this.running &&
+      !this.frozen &&
+      !this.reducedMotion &&
+      this.touchInput &&
+      this.sampler.done &&
+      document.visibilityState === 'visible' &&
+      (this.gyroPermission === 'granted' ||
+        this.gyroPermission === 'not-needed');
+
+    if (canBind) {
+      this.bindGyro();
+    } else {
+      this.unbindGyro();
+    }
+  }
+
+  private bindGyro(): void {
+    if (this.gyroBound) return;
+    window.addEventListener('deviceorientation', this.onDeviceOrientationBound, {
+      passive: true,
+    });
+    this.gyroBound = true;
+    this.gyroCalibrated = false;
+  }
+
+  private unbindGyro(): void {
+    if (!this.gyroBound) return;
+    window.removeEventListener(
+      'deviceorientation',
+      this.onDeviceOrientationBound,
+    );
+    this.gyroBound = false;
+    this.gyroYaw = 0;
+    this.gyroPitch = 0;
+    this.gyroCalibrated = false;
+    if (!this.frozen) {
+      this.applyMouseTarget();
+    }
+  }
+
+  /** iOS: ask after the tap has already picked — never steal the first commit. */
+  private async requestGyroPermissionAfterTap(): Promise<void> {
+    if (this.gyroPermissionAsked) return;
+    if (!needsOrientationPermission()) return;
+    this.gyroPermissionAsked = true;
+    const granted = await requestOrientationPermission();
+    this.gyroPermission = granted ? 'granted' : 'denied';
+    this.syncGyroBinding();
   }
 
   getHoveredAtomId(): string | null {
@@ -494,12 +691,14 @@ export class MoleculeController {
     this.atomHover.clear();
     this.scene.setLabelsVisible(false);
     this.syncChromeDim();
+    this.syncGyroBinding();
   }
 
   unfreeze(): void {
     this.frozen = false;
     this.scene.setLabelsVisible(true);
     this.syncChromeDim();
+    this.syncGyroBinding();
   }
 
   /**
@@ -694,8 +893,8 @@ export class MoleculeController {
     this.focusedAtomId = atomId;
     this.targetFocusStrength = 1;
 
-    // Drop leftover touch drag / mouse tilt so focus lands on the look axis.
-    // Fine pointers rewrite tilt on the next `pointermove`.
+    // Drop leftover touch drag / mouse / gyro tilt so focus lands on the look axis.
+    // Fine pointers rewrite tilt on the next `pointermove`. Gyro recalibrates on the next sample.
     this.resetPointerTilt();
   }
 
@@ -705,10 +904,13 @@ export class MoleculeController {
     this.focusedAtomId = null;
   }
 
-  /** Clears accumulated yaw/pitch and both mouse orientation layers. */
+  /** Clears accumulated yaw/pitch, gyro contribution, and both mouse orientation layers. */
   private resetPointerTilt(): void {
     this.dragYaw = 0;
     this.dragPitch = 0;
+    this.gyroYaw = 0;
+    this.gyroPitch = 0;
+    this.gyroCalibrated = false;
     this.targetMouseOrientation.identity();
     this.mouseOrientation.identity();
   }
@@ -994,7 +1196,7 @@ export class MoleculeController {
    *
    * Update layers (do not mix):
    * - PER FRAME: quaternion follow, zoom translation, one matrix update
-   * - POINTER: raycast only when AtomHover is dirty
+   * - POINTER: raycast only when AtomHover is dirty (skipped on touch)
    * - TRANSFORM DEPENDENT: labels when orientation / zoom / fill changed
    * - STATE DRIVEN: highlight / selection / wireframe / blurb from NavigationState
    * - DECORATIVE: selection pulse (early-out when idle); ghost layer zoom-fades
@@ -1047,13 +1249,16 @@ export class MoleculeController {
     this.scene.moleculeGroup.updateMatrixWorld(true);
 
     // Molecule moved under a still pointer → need a fresh pick (not every idle frame).
+    // Touch has no canvas hover — skip or gyro would raycast stale NDC and pause autoplay.
     if (
       !this.lastHoverQuaternion.equals(this.scratchCompose) ||
       this.lastHoverZoomProgress !== this.zoomProgress
     ) {
       this.lastHoverQuaternion.copy(this.scratchCompose);
       this.lastHoverZoomProgress = this.zoomProgress;
-      this.atomHover.markDirty();
+      if (!this.touchInput) {
+        this.atomHover.markDirty();
+      }
     }
 
     const updateLabels =
@@ -1068,7 +1273,7 @@ export class MoleculeController {
 
     this.elapsed += delta;
     this.scene.update(delta, updateLabels, this.elapsed);
-    if (!this.frozen) {
+    if (!this.frozen && !this.touchInput) {
       this.updateHover();
     }
 
@@ -1086,7 +1291,7 @@ export class MoleculeController {
     if (this.running) return;
     this.running = true;
     window.addEventListener('resize', this.onResizeBound);
-    window.addEventListener('orientationchange', this.onResizeBound);
+    window.addEventListener('orientationchange', this.onOrientationChangeBound);
     const vv = window.visualViewport;
     if (vv) {
       vv.addEventListener('resize', this.onResizeBound);
@@ -1099,16 +1304,19 @@ export class MoleculeController {
     this.canvas.addEventListener('pointerup', this.onPointerUpBound);
     this.canvas.addEventListener('pointercancel', this.onPointerCancelBound);
     this.canvas.style.touchAction = 'none';
+    document.addEventListener('visibilitychange', this.onVisibilityBound);
     this.onResizeBound();
     this.lastTime = performance.now();
     this.rafId = requestAnimationFrame(this.tick);
+    this.syncGyroBinding();
   }
 
   stop(): void {
     if (!this.running) return;
     this.running = false;
+    this.unbindGyro();
     window.removeEventListener('resize', this.onResizeBound);
-    window.removeEventListener('orientationchange', this.onResizeBound);
+    window.removeEventListener('orientationchange', this.onOrientationChangeBound);
     const vv = window.visualViewport;
     if (vv) {
       vv.removeEventListener('resize', this.onResizeBound);
@@ -1116,6 +1324,7 @@ export class MoleculeController {
     }
     window.removeEventListener('pointermove', this.onPointerMoveBound);
     document.removeEventListener('pointerleave', this.onPointerLeaveBound);
+    document.removeEventListener('visibilitychange', this.onVisibilityBound);
     this.canvas.removeEventListener('click', this.onClickBound);
     this.canvas.removeEventListener('pointerdown', this.onPointerDownBound);
     this.canvas.removeEventListener('pointerup', this.onPointerUpBound);
@@ -1127,6 +1336,7 @@ export class MoleculeController {
     this.stop();
     this.unsubscribeQuality();
     this.unsubscribeReducedMotion();
+    this.unsubscribePointerInput();
     this.atomClickListeners.clear();
     this.afterUpdateListeners.clear();
     this.scene.dispose();
@@ -1145,6 +1355,9 @@ export class MoleculeController {
     this.mouseOrientation.copy(this.baseOrientation);
     this.dragYaw = 0;
     this.dragPitch = 0;
+    this.gyroYaw = 0;
+    this.gyroPitch = 0;
+    this.gyroCalibrated = false;
     for (const atom of this.scene.getAtoms()) {
       atom.selection.setSimple(true);
     }
@@ -1279,6 +1492,9 @@ export class MoleculeController {
     this.update(deltaSeconds);
     this.scene.render();
     this.sampler.tick(deltaSeconds);
+    if (!this.gyroBound && this.sampler.done) {
+      this.syncGyroBinding();
+    }
     this.rafId = requestAnimationFrame(this.tick);
   };
 };

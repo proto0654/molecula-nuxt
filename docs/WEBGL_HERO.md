@@ -12,6 +12,7 @@ layouts/default.vue (persists)
           ├─ canvas (#hero-canvas)   one renderer — not remounted on route change
           ├─ MoleculeController  → home: mouse pointermove → absolute tilt + AtomHover NDC
           │                      → home: touch/pen drag → incremental tilt; tap → pick
+          │                      → home: calibrated gyro (coarse, after sampler lock) → same mouse layer
           │                      → freeze() at approach start and off-home: drop mouse tilt, hide labels
           │                      → settled freeze (!busy): lerp selection rings/cross + wireframe → black
           │                      → rAF → compose + zoom/fill → labels (dirty) → selection → hover → onAfterUpdate
@@ -112,8 +113,8 @@ final = appliedFocus × mouseOrientation × baseOrientation
 | State | Location | Role |
 |-------|----------|------|
 | `baseOrientation` | `MoleculeController` | Rest pose (identity for now) |
-| `mouseOrientation` | `MoleculeController` | Smoothed limited yaw/pitch from pointer |
-| `targetMouseOrientation` | `MoleculeController` | Absolute target from latest normalized pointer |
+| `mouseOrientation` | `MoleculeController` | Smoothed limited yaw/pitch from pointer / touch / gyro |
+| `targetMouseOrientation` | `MoleculeController` | Absolute target from latest pointer, drag+gyro, or identity |
 | `focusOrientation` | `MoleculeController` | Smoothed atom→camera focus pose |
 | `targetFocusOrientation` | `MoleculeController` | Absolute target from latest `focusAtom(atomId)` |
 | `focusStrength` | `MoleculeController` | Blend weight in `[0, 1]` (smoothed toward `targetFocusStrength`) |
@@ -128,6 +129,18 @@ Follow rates (`MOUSE_FOLLOW`, `FOCUS_ORIENT_FOLLOW`, `FOCUS_STRENGTH_FOLLOW`) us
 3. Each frame: attenuate the mouse target by focus — `mouseScale = 1 - focusStrength * (1 - MOUSE_UNDER_FOCUS)` with `MOUSE_UNDER_FOCUS = 0.22`, then slerp `mouseOrientation` toward that attenuated target (`MOUSE_FOLLOW`).
 
 Focus orientation stays dominant; under focus the pointer remains a **subtle secondary** tilt so the molecule does not freeze and the selected atom stays in the focus zone. Screen center restores mouse identity. Max angles capped (`MAX_YAW` / `MAX_PITCH`). Scratch quaternions / vectors reused (no per-frame allocations for those paths).
+
+### Gyro layer (touch / coarse)
+
+Gyro writes the **same** mouse target — not a fourth quaternion. Mapping lives in [`gyroTilt.ts`](../app/lib/molecular/gyroTilt.ts) (calibrated `dGamma` → yaw, weaker `dBeta` → pitch; deadzone + quantize so a still phone holds a constant target and labels can settle).
+
+1. Bind `deviceorientation` only when all of: `sampler.done`, `prefersTouchInput()`, `!frozen`, `!prefersReducedMotion()`, document visible, and iOS permission granted (or not required). Unbind on freeze / stop / hidden.
+2. First sample after bind / `focusAtom` (`resetPointerTilt`) / `orientationchange` is the rest pose (identity for the mouse layer).
+3. Finger down folds live gyro into drag (no jump) and mutes orientation until `pointerup` / `pointercancel`, which recalibrates rest to the last sample.
+4. iOS `requestPermission` runs **after** a successful tap pick — never steal the first commit. Deny → drag-only.
+5. Canvas hover is skipped on touch: pose changes must not `markDirty` / `updateHover` (stale NDC would raycast the hub and pause autoplay). Tap still uses `pickAt`.
+
+Amplitude is a fraction of `MAX_YAW` / `MAX_PITCH` and is attenuated further by `MOUSE_UNDER_FOCUS` when focused.
 
 ### Focus layer
 
@@ -270,12 +283,13 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | File | Role |
 |------|------|
 | `MoleculeScene.ts` | Scene, camera, renderer, lights, fog, `buildMolecule`, `applyQuality`, dirty-gated labels, selection tick |
-| `MoleculeController.ts` | rAF, pointer / touch / viewport resize, orientation layers, zoom/fill, composition profile, pick, `projectAtom`, selection/caption/wireframe APIs, sampler |
+| `MoleculeController.ts` | rAF, pointer / touch / gyro / viewport resize, orientation layers, zoom/fill, composition profile, pick, `projectAtom`, selection/caption/wireframe APIs, sampler |
 | `composition/profiles.ts` | desktop / tablet / mobile framing (`screenX` / `screenY` / `approach`) + home desktop / center overrides |
 | `quality/QualityManager.ts` | Lock-once quality presets; `?quality=` / coarse-pointer start heuristic |
 | `quality/PerformanceSampler.ts` | Startup sample → lock + one emergency downgrade |
 | `resources/GeometryCache.ts` | Shared unit icosahedron / edges / circle / ticks / cross |
 | `moleculeOrbits.ts` | One hub orbit per peripheral (varied radius); equal spherical angles |
+| `gyroTilt.ts` | Calibrated `beta`/`gamma` → limited yaw/pitch + iOS permission helpers (no Three.js) |
 | `AtomHover.ts` | NDC raycast pick; enter/leave listeners |
 | `math/focusAtom.ts` | `getStableFocusQuaternion`, `getFocusQuaternion`, camera-framing helper |
 | `math/getAtomFocusDistance.ts` | FOV-based distance so an atom radius covers a viewport fraction |
@@ -308,7 +322,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 
 - Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`. Home locks document scroll via `html.hero-lock`.
 - Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) — see [`DESIGN.md`](DESIGN.md). `NavigationItem.route` drives Nuxt when wired (`/portfolio`); other items still use DestinationView stub.
-- Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav on home; off-home header with centered route links), mobile ≤767 (home: header + bottom rail + slide progress + MENU overlay with two-step nav; off-home: header LOGO + MENU + overlay with direct route hops; mobile framing, full captions, touch drag/tap).
+- Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav on home; off-home header with centered route links), mobile ≤767 (home: header + bottom rail + slide progress + MENU overlay with two-step nav; off-home: header LOGO + MENU + overlay with direct route hops; mobile framing, full captions, touch drag/tap + calibrated gyro tilt).
 - No postprocessing, bloom, particle systems, physics, realtime shadows, or environment maps. Scene uses a matching `Fog` for slight depth only.
 - Pixel ratio capped by the locked quality preset (`maxPixelRatio` 1.75 / 1.5 / 1), refreshed on every resize (monitor / OS DPR changes). Mobile starts MEDIUM (DPR ≤1.5, no ghosts/ticks); sampler may lock LOW (DPR 1, no wireframe). Never disable rotation, touch, raycast, focus, labels, zoom, or navigation.
 - GSAP drives the page-transition timeline; idle spin is unused.
@@ -319,7 +333,7 @@ Separate concerns so nothing hidden reallocates every frame:
 | Layer | What |
 |--------|------|
 | **PER FRAME** | Quaternion follow, zoom translation, one `moleculeGroup.updateMatrixWorld(true)`; connector `projectAtom` + SVG update in `onAfterUpdate` |
-| **POINTER** | Raycast only when `AtomHover` is dirty (NDC or pose change) |
+| **POINTER** | Raycast only when `AtomHover` is dirty (NDC or pose change); skipped on touch |
 | **TRANSFORM DEPENDENT** | Labels when orientation / `zoomProgress` / `fillProgress` changed |
 | **STATE DRIVEN** | Highlight / selection / wireframe / blurb / nav from `NavigationState` (`mountHeroApp.ts`) |
 | **DECORATIVE** | Selection pulse (early-out when idle); ghost layer HIGH-only, fades with zoom/fill |
@@ -368,9 +382,10 @@ Live site: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molec
 - `NavigationConnector` consumes screen pixels only (`projectAtom` + DOM anchors). Do not import scene graph objects into UI modules. Tip + tiny marker stop short of the atom.
 - Desktop rail / header / connector are CSS ≥1024; tablet keeps bottom nav on home; mobile home uses header + compact rail + MENU overlay (two-step); mobile off-home uses header LOGO + MENU overlay (direct hops) and hides the connector.
 - `clearFocus` only lowers `focusStrength`; do not slerp focus orientation to identity on leave (avoids a long unused arc).
-- Central / Home atom (zero offset): no unique focus forward — on enter, apply a π flip about a random axis from the current focus pose (idempotent while already focused on hub). Peripheral focus uses `getStableFocusQuaternion`. **Hero leave approach** (peripherals only): one full revolution (2π) about the atom's orbit normal **in parallel with** zoom+fill (separate GSAP tweens) — ends back on the settled facing pose. `focusAtom` also clears residual pointer/touch tilt so the atom faces the camera.
+- Central / Home atom (zero offset): no unique focus forward — on enter, apply a π flip about a random axis from the current focus pose (idempotent while already focused on hub). Peripheral focus uses `getStableFocusQuaternion`. **Hero leave approach** (peripherals only): one full revolution (2π) about the atom's orbit normal **in parallel with** zoom+fill (separate GSAP tweens) — ends back on the settled facing pose. `focusAtom` also clears residual pointer/touch/gyro tilt so the atom faces the camera.
 - Do not write `moleculeGroup.rotation.x/y += …`; apply composed absolute layers each frame (no rotation accumulation).
 - Do not `new Vector3` / `new Quaternion` / options literals inside `tick` / `update` — use scratches and persistent options bags.
-- Hover stays dirty every frame while orientation/zoom is still damping (correct under a still pointer); idle settled frames do not raycast.
+- Hover stays dirty every frame while orientation/zoom is still damping (correct under a still pointer); idle settled frames do not raycast. On touch / coarse pointer, canvas hover is skipped entirely so gyro pose changes cannot fake a hub hover and pause autoplay.
+- Gyro must write `targetMouseOrientation` (composed with drag); do not add a fourth quaternion layer or `moleculeGroup.rotation +=`. Recalibrate rest on focus / drag-end / `orientationchange`. Do not bind until `PerformanceSampler` has locked.
 - Dispose path: HMR / home unmount disposes navigator, destination, USP, hud, nav, controller. `Navigator.dispose()` kills the timeline and calls `releaseRouteVeil()` — the overlay is **not** removed if it was handed off to the destination page. `MoleculeScene.dispose` clears meshes, `renderer.dispose()`, then `forceContextLoss()`.
 - Graphite colors in `COLOR_BY_LABEL` must stay darker than caption ink (see [`DESIGN.md`](DESIGN.md) scene tokens).
