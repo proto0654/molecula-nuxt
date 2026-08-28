@@ -239,6 +239,22 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
     padding: 0;
   }
 
+  .editorial-hero.editorial-hero--no-media {
+    min-height: var(--editorial-hero-min-height-no-media);
+    align-items: start;
+  }
+
+  .editorial-hero.editorial-hero--no-media .editorial-hero__content,
+  .editorial-hero.editorial-hero--no-media .editorial-hero__aside {
+    align-self: start;
+    height: auto;
+  }
+
+  .editorial-hero--case.editorial-hero--no-media,
+  .case-page--sparse .editorial-hero--case.editorial-hero--no-media {
+    min-height: var(--editorial-hero-min-height-no-media);
+  }
+
   .editorial-hero--case {
     min-height: min(72vh, 42rem);
   }

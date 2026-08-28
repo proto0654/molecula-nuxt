@@ -205,6 +205,7 @@
   --editorial-hero-gap: var(--case-col-gap);
   --editorial-hero-min-height: min(58vh, 28rem);
   --editorial-hero-min-height-sparse: min(62vh, 34rem);
+  --editorial-hero-min-height-no-media: min(36vh, 18rem);
   --editorial-hero-media-inset: clamp(1.5rem, 7vw, 3.25rem);
   --editorial-hero-media-inset-desktop: clamp(4rem, 10vw, 7rem);
   --editorial-hero-media-inset-about: clamp(2.75rem, 14vw, 5rem);
