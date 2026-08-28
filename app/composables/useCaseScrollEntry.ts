@@ -38,14 +38,20 @@ const ENTRY_START = 'top bottom+=12%';
 const ENTRY_END = 'top 30%';
 
 const SLICE_STOPS = [
-  { t: 0, opacity: 0, rotateX: 72, yMul: 1, z: -120 },
-  { t: 0.12, opacity: 0.5, rotateX: 68, yMul: 0.94, z: -108 },
-  { t: 0.28, opacity: 0.78, rotateX: 58, yMul: 0.76, z: -82 },
-  { t: 0.45, opacity: 0.95, rotateX: 40, yMul: 0.48, z: -48 },
-  { t: 0.62, opacity: 1, rotateX: 20, yMul: 0.22, z: -18 },
-  { t: 0.78, opacity: 1, rotateX: 7, yMul: 0.07, z: -5 },
-  { t: 0.92, opacity: 1, rotateX: 2, yMul: 0.015, z: -1 },
-  { t: 1, opacity: 1, rotateX: 0, yMul: 0, z: 0 },
+  { t: 0, opacity: 0, rotateX: 72, rotateY: 0, yMul: 1, z: -120, scale: 0.96 },
+  { t: 0.12, opacity: 0.5, rotateX: 68, rotateY: 0, yMul: 0.94, z: -108, scale: 0.97 },
+  { t: 0.28, opacity: 0.78, rotateX: 58, rotateY: 0, yMul: 0.76, z: -82, scale: 0.98 },
+  { t: 0.45, opacity: 0.95, rotateX: 40, rotateY: 0, yMul: 0.48, z: -48, scale: 0.99 },
+  { t: 0.62, opacity: 1, rotateX: 20, rotateY: 0, yMul: 0.22, z: -18, scale: 1 },
+  { t: 0.78, opacity: 1, rotateX: 7, rotateY: 0, yMul: 0.07, z: -5, scale: 1 },
+  { t: 0.92, opacity: 1, rotateX: 2, rotateY: 0, yMul: 0.015, z: -1, scale: 1 },
+  { t: 1, opacity: 1, rotateX: 0, rotateY: 0, yMul: 0, z: 0, scale: 1 },
+] as const;
+
+const GRID_COL_FROM = [
+  { rotateX: 12, rotateY: 16, z: -80 },
+  { rotateX: 16, rotateY: 0, z: -60 },
+  { rotateX: 12, rotateY: -16, z: -80 },
 ] as const;
 
 function collectPairs(
@@ -88,14 +94,34 @@ function parseLagPx(motion: HTMLElement): number {
   return px;
 }
 
+function readCaseCol(motion: HTMLElement): number {
+  const raw =
+    motion.dataset.caseCol ??
+    motion.closest<HTMLElement>('[data-case-col]')?.dataset.caseCol ??
+    '0';
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function readSliceDeckRotateY(motion: HTMLElement): number {
+  if (motion.classList.contains('case-scroll-motion--lag-odd-desktop')) return -8;
+  if (motion.classList.contains('case-scroll-motion--lag-odd-mobile')) return -6;
+  if (motion.classList.contains('case-scroll-motion--lag-even-desktop')) return 8;
+  if (motion.classList.contains('case-scroll-motion--lag-even-mobile')) return 6;
+  return 0;
+}
+
 function buildSliceTimeline(motion: HTMLElement, lagPx: number): gsap.core.Timeline {
   const tl = gsap.timeline({ paused: true });
+  const deckRotateY = readSliceDeckRotateY(motion);
   const from = SLICE_STOPS[0]!;
   gsap.set(motion, {
     opacity: from.opacity,
     rotateX: from.rotateX,
+    rotateY: deckRotateY,
     z: from.z,
     y: from.yMul * lagPx,
+    scale: from.scale,
     transformOrigin: 'center bottom',
     force3D: true,
   });
@@ -104,13 +130,16 @@ function buildSliceTimeline(motion: HTMLElement, lagPx: number): gsap.core.Timel
     const prev = SLICE_STOPS[i - 1]!;
     const stop = SLICE_STOPS[i]!;
     const duration = stop.t - prev.t;
+    const rotateY = stop.t >= 0.62 ? 0 : deckRotateY * (1 - stop.t / 0.62);
     tl.to(
       motion,
       {
         opacity: stop.opacity,
         rotateX: stop.rotateX,
+        rotateY,
         z: stop.z,
         y: stop.yMul * lagPx,
+        scale: stop.scale,
         duration,
         ease: 'none',
       },
@@ -204,11 +233,11 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
       if (preset === 'lift') {
         gsap.set(motion, {
           opacity: 0,
-          y: 28,
-          scale: 0.97,
-          rotateX: 10,
+          y: 36,
+          scale: 0.96,
+          rotateX: 14,
           rotateY: 0,
-          z: 0,
+          z: -90,
           transformOrigin: 'center bottom',
           transformPerspective: 900,
           force3D: true,
@@ -218,6 +247,7 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
           y: 0,
           scale: 1,
           rotateX: 0,
+          z: 0,
           duration: 0.85,
           ease: 'power2.out',
           scrollTrigger: {
@@ -248,10 +278,10 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
       if (preset === 'landingOnly') {
         gsap.set(motion, {
           opacity: 0,
-          rotateX: 82,
+          rotateX: 24,
           rotateY: 0,
-          z: -125,
-          y: 0,
+          z: -140,
+          y: 40,
           transformOrigin: 'center center',
           force3D: true,
         });
@@ -259,6 +289,7 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
           opacity: 1,
           rotateX: 0,
           z: 0,
+          y: 0,
           ease: 'power2.out',
           scrollTrigger: { trigger, start, end, scrub: true },
         });
@@ -266,19 +297,24 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
         continue;
       }
 
+      const col = readCaseCol(motion);
+      const colFrom = GRID_COL_FROM[col] ?? GRID_COL_FROM[1]!;
       gsap.set(motion, {
         opacity: 0,
-        rotateX: 0,
-        rotateY: 72,
-        z: 0,
-        y: 0,
+        rotateX: colFrom.rotateX,
+        rotateY: colFrom.rotateY,
+        z: colFrom.z,
+        y: 24,
         transformOrigin: 'center center',
         force3D: true,
       });
       const tween = gsap.to(motion, {
         opacity: 1,
+        rotateX: 0,
         rotateY: 0,
-        ease: 'none',
+        z: 0,
+        y: 0,
+        ease: 'power2.out',
         scrollTrigger: { trigger, start, end, scrub: true },
       });
       if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);

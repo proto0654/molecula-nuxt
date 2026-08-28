@@ -25,6 +25,11 @@ const { refresh: refreshScroll } = useCaseScrollEntry({
   preset: 'slices',
 });
 
+useCaseInteractive({
+  root,
+  mode: 'slice',
+});
+
 const { update: updateBottomSpace } = useCaseSliceBottomSpace(root, {
   onUpdate: () => refreshScroll(),
 });
@@ -52,6 +57,12 @@ const gridStyle = computed(() => {
   } as Record<string, string>;
 });
 
+function sliceColDesktop(index: number): number {
+  const L = layout.value;
+  if (!L) return 0;
+  return Math.floor(index / L.rows);
+}
+
 function openFull() {
   const slices = props.caseData.mobileSlices;
   if (!slices) return;
@@ -77,7 +88,7 @@ function openFull() {
   >
     <div
       ref="root"
-      class="case-slices case-scroll-field"
+      class="case-slices case-scroll-field case-interactive case-interactive--slices"
       :class="{
         'case-slices--single': layout.total <= 1,
       }"
@@ -91,17 +102,19 @@ function openFull() {
           'case-slices__cell--stagger-desktop': cell.colOddDesktop,
           'case-slices__cell--stagger-mobile': cell.colOddMobile,
         }"
+        :data-case-col="String(sliceColDesktop(cell.index))"
       >
         <div class="case-slices__stagger">
           <span class="case-scroll-trigger" aria-hidden="true" />
           <div
-            class="case-scroll-motion"
+            class="case-scroll-motion case-interactive__slice"
             :class="{
               'case-scroll-motion--lag-odd-desktop': cell.colOddDesktop,
               'case-scroll-motion--lag-even-desktop': !cell.colOddDesktop,
               'case-scroll-motion--lag-odd-mobile': cell.colOddMobile,
               'case-scroll-motion--lag-even-mobile': !cell.colOddMobile,
             }"
+            :data-case-col="String(sliceColDesktop(cell.index))"
           >
             <button
               type="button"
@@ -111,6 +124,7 @@ function openFull() {
               @click="openFull"
             >
               <span class="case-slices__meta">{{ cell.label }}</span>
+              <span class="case-slices__connector" aria-hidden="true" />
               <span
                 class="case-slices__surface"
                 role="img"
@@ -118,6 +132,7 @@ function openFull() {
                   caseData.mobileSlices?.image.alt || stripTags(caseData.title)
                 "
               />
+              <span class="case-interactive__glare case-interactive__glare--slice" aria-hidden="true" />
             </button>
           </div>
         </div>

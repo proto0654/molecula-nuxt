@@ -12,7 +12,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 | [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title (USP-style scramble reveal), excerpt; facts only when there is no CMS body |
 | [`EditorialHero.vue`](../app/components/EditorialHero.vue) | Unified 50/50 hero shell (all detail pages; variants `archive` / `case` / `about`) |
 | [`EditorialHeroMedia.vue`](../app/components/EditorialHeroMedia.vue) | Left column frame: video, image, or outline placeholder |
-| [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Presentational `<video>` inside hero media frame |
+| [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Hero `<video>` shell + scroll-gated autoplay (see below) |
 | [`CaseSectionMarker.vue`](../app/components/case/CaseSectionMarker.vue) | Shared `NN / LABEL` marker (`editorial` rail + vertical guide, `visual` hairline, `quiet` almost clean) |
 | [`CaseSection.vue`](../app/components/case/CaseSection.vue) | Numbered marker + body; `visual` full-bleed / `center` cols 4–10 / `tone` |
 | [`CaseContent.vue`](../app/components/case/CaseContent.vue) | Editorial Overview: 3-col label + 6-col CMS body + optional facts |
@@ -126,6 +126,29 @@ Media resolution ([`editorialHero.ts`](../app/domain/editorialHero.ts)):
 
 **Featured image** also drives the persistent layout wash ([`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue)) on cases. **`landing_screen`** is Interface index 0 (with repeater). `screenshot_image` is not a hero.
 
+### Case hero video (scroll-gated autoplay)
+
+When ACF `video` is present, hero media is a `<video>` — not viewport autoplay. Playback is tied to **page scroll position**:
+
+| `scrollTop` | Video | Featured backdrop |
+|-------------|-------|-------------------|
+| `≤ 2px` | play (resume `currentTime`) | wash + tint visible |
+| `> 2px` | pause | wash + tint fade out |
+
+Manual play while scrolled down is blocked (`play` event → immediate `pause`). User can still use `controls` (including unmute) at the top.
+
+**Markup** ([`CaseVideo.vue`](../app/components/case/CaseVideo.vue)): `[data-case-video-shell]` + skeleton until `.is-loaded`; `[data-case-video]` with `controls`, `playsinline`, `muted`, `preload="none"` — no `autoplay` attribute.
+
+**Boot** ([`useCaseVideoBoot`](../app/composables/useCaseVideoBoot.ts) on [`portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue)):
+
+1. Enter beats / title scramble (`titleReady`)
+2. `initCaseVideos({ deferKickoff: true })` — listeners + load handlers; skeleton visible immediately
+3. After `pageRevealing`: double rAF → `kickoffDeferredCaseVideos()` — first `play()` so video fetch does not compete with H1/CMS
+
+**Reduced motion:** no defer kickoff; scroll gating and `controls` remain.
+
+**Scroll source:** [`getCaseScrollTop()`](../app/composables/useCaseTopScrollBand.ts) reads `window.scrollY` (ready for a future smooth-scroll proxy).
+
 **Overview (CMS content)** is its own 12-col composition, not `CaseSection` body (cols 4–12):
 
 - marker `NN / OVERVIEW` — cols 1–4 (editorial rail + vertical guide on lg)
@@ -146,16 +169,16 @@ Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in cente
 
 | Mode | When | Layout | GSAP |
 |------|------|--------|------|
-| **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | rotateY 72→0, origin center, scrub `bottom+=12%`→`top 30%` |
-| **Landing-only** | only `landing_screen` | one full-width card, no stair | rotateX 82→0 + translateZ −125, ease power2.out |
+| **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | kinetic wave per column (`rotateY` ±16° / `rotateX` 12–16° + `translateZ`), scrub `bottom+=12%`→`top 30%`; pointer parallax + magnetic card focus via [`useCaseInteractive`](../app/composables/useCaseInteractive.ts) |
+| **Landing-only** | only `landing_screen` | one full-width card, no stair | kinetic float (`translateZ` −140 + `rotateX` 24° + `translateY` 40); viewport scanner + specular tilt on pointer |
 
 Stair (desktop, first card in col): `--stair-0` `clamp(7rem, 28vw, 18rem)`, `--stair-1` `clamp(3.5rem, 14vw, 9rem)`. Reset under `prefers-reduced-motion`.
 
-Perspective desktop stage: 1000px / origin 50% 42%. Card shadow `10px 18px 36px rgba(0,0,0,0.28)`. Full intrinsic height; width via `--case-screen-max` on landing-only.
+Perspective desktop stage: 1000px / origin 50% 42%. Card shadow `10px 18px 36px rgba(0,0,0,0.28)`. Full intrinsic height; width via `--case-screen-max` on landing-only. Landing viewport window: `aspect-ratio 16/10`, hairline scan rail.
 
 ### Mobile slices
 
-Same center column as Interface (`.case-zone-center`, cols 4–9 on lg) — not full-bleed. Breakpoint **768**. Perspective 960px / origin 50% 100%. Brick stagger `--slice-col-stagger: clamp(4rem, 15vw, 10rem)`. Scrub multi-stop rotateX 72→0 + Z + Y-lag (`--slice-scroll-lag-odd/even`).
+Same center column as Interface (`.case-zone-center`, cols 4–9 on lg) — not full-bleed. Breakpoint **768**. Perspective 960px / origin 50% 100%. Brick stagger `--slice-col-stagger: clamp(4rem, 15vw, 10rem)`. Scrub multi-stop rotateX 72→0 + deck unfold (`rotateY` ±6–8° → 0) + Z + Y-lag (`--slice-scroll-lag-odd/even`). Hover: slice projection + hairline connectors between cells.
 
 Bottom spacing: `--slice-bottom-space` from `useCaseSliceBottomSpace` — `stagger + max(0, lastTriggerTop + 0.70·vh − scrollHeight)` (two-pass measure; no fixed `65vh` runway). Fallback CSS = stagger only. Reset under `prefers-reduced-motion`.
 
@@ -164,7 +187,7 @@ Bottom spacing: `--slice-bottom-space` from `useCaseSliceBottomSpace` — `stagg
 | Level | Preset | Motion | Where |
 |-------|--------|--------|--------|
 | **1** | `fade` | opacity + translateY (play on enter) | Overview, NEXT |
-| **2** | `lift` | small scale + slight rotateX | Mobile mockup |
+| **2** | `lift` | spatial device rise (`translateZ` −90 + `rotateX` 14°) + pointer tilt / gyro glare | Mobile mockup |
 | **3** | `screensGrid` / `landingOnly` / `slices` | existing 3D | Interface grid, landing-only, Slices only |
 
 Do not use Level 3 on Mobile. Header title scramble is intro motion, gated on pose settle (and case body idle) — not scroll entry. Numbered sections + NEXT footer rows use the same listing conductor as archives ([`useListingReveal`](../app/composables/useListingReveal.ts) on [`CaseShell`](../app/components/case/CaseShell.vue)); gallery / slices / mobile mockup keep ScrollTrigger L2/L3. Page reveal (case→case) is a separate L1 on `.case-page__body`.
@@ -182,7 +205,7 @@ Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `ove
 
 Do not drop filled `screen-mobile` / `screenshot_image` / mobile signature. Both mockup and slices may appear on the same case.
 
-**Composite mockup (Mobile):** flat `screenshot_image` (no card frame). lg grid: mockup `--case-mobile-max` + caption spanning two `22rem` tracks (`--case-mobile-caption-max`). Body zone cols 4–12.
+**Composite mockup (Mobile):** flat `screenshot_image` (no card frame). lg grid: mockup `--case-mobile-max` + caption spanning two `22rem` tracks (`--case-mobile-caption-max`). Body zone cols 4–12. Pointer tilt + glass glare on desktop; `DeviceOrientation` tilt on touch devices. Interactive layer gated by [`caseMotionGate`](../app/composables/caseMotionGate.ts) during route exit / case→case transition.
 
 ### Lightbox
 

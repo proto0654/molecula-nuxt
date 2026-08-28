@@ -15,6 +15,11 @@ useCaseScrollEntry({
   preset: 'lift',
 });
 
+useCaseInteractive({
+  root,
+  mode: 'device',
+});
+
 function openMockup() {
   if (!props.caseData.mobile) return;
   lightbox.open(
@@ -36,7 +41,7 @@ function openMockup() {
     label="Mobile"
     tone="quiet"
   >
-    <div ref="root" class="case-mobile case-scroll-field">
+    <div ref="root" class="case-mobile case-scroll-field case-interactive case-interactive--device">
       <div class="case-mobile__mockup">
         <span class="case-scroll-trigger" aria-hidden="true" />
         <div class="case-scroll-motion">
@@ -47,12 +52,16 @@ function openMockup() {
             @click="openMockup"
           >
             <span class="case-mobile__meta">MOBILE / 01</span>
-            <img
-              class="case-mobile__img"
-              :src="caseImageUrl(caseData.mobile.image)"
-              :alt="caseData.mobile.image.alt || stripTags(caseData.title)"
-              loading="lazy"
-            />
+            <div class="case-interactive__tilt case-mobile__device">
+              <img
+                class="case-mobile__img"
+                :src="caseImageUrl(caseData.mobile.image)"
+                :alt="caseData.mobile.image.alt || stripTags(caseData.title)"
+                loading="lazy"
+              />
+              <span class="case-interactive__glare case-interactive__glare--device" aria-hidden="true" />
+              <span class="case-mobile__shadow" aria-hidden="true" />
+            </div>
           </button>
         </div>
       </div>

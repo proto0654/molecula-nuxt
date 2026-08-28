@@ -21,6 +21,8 @@ const archiveHref = ref('/portfolio');
 onMounted(() => {
   archiveHref.value = archiveIndexHref();
 });
+
+defineExpose({ root });
 </script>
 
 <template>

@@ -444,8 +444,12 @@ html.hero-lock #__nuxt {
   mask-image: var(--portfolio-backdrop-mask);
 }
 
-.portfolio-backdrop.is-on .portfolio-backdrop__wash {
+.portfolio-backdrop.is-on.is-at-top .portfolio-backdrop__wash {
   opacity: 0.22;
+}
+
+.portfolio-backdrop.is-on:not(.is-at-top) .portfolio-backdrop__wash {
+  opacity: 0;
 }
 
 /* Solid accent overlay — own opacity, not nested under wash. */
@@ -460,8 +464,12 @@ html.hero-lock #__nuxt {
   pointer-events: none;
 }
 
-.portfolio-backdrop.has-tint.is-on .portfolio-backdrop__tint {
+.portfolio-backdrop.has-tint.is-on.is-at-top .portfolio-backdrop__tint {
   opacity: 0.18;
+}
+
+.portfolio-backdrop.has-tint.is-on:not(.is-at-top) .portfolio-backdrop__tint {
+  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

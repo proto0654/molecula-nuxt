@@ -28,6 +28,11 @@ const scrollPreset = computed(() =>
 
 useCaseScrollEntry({ root, preset: scrollPreset });
 
+useCaseInteractive({
+  root,
+  mode: computed(() => (landingOnly.value ? 'landing' : 'grid')),
+});
+
 const lightboxItems = computed<CaseLightboxItem[]>(() =>
   items.value.map((item, index) => ({
     image: item.image,
@@ -67,6 +72,10 @@ function aspectStyle(item: (typeof items.value)[number]) {
 function labelFor(index: number): string {
   return lightboxItems.value[index]?.label ?? `SCREEN / ${padCaseIndex(index + 1)}`;
 }
+
+function mobileColFor(index: number): number {
+  return index % 2;
+}
 </script>
 
 <template>
@@ -79,16 +88,24 @@ function labelFor(index: number): string {
   >
     <div
       ref="root"
-      class="case-inner-pages"
-      :class="{ 'case-inner-pages--landing-only': landingOnly }"
+      class="case-inner-pages case-interactive"
+      :class="{
+        'case-inner-pages--landing-only': landingOnly,
+        'case-interactive--landing': landingOnly,
+        'case-interactive--grid': !landingOnly,
+      }"
     >
       <div class="case-inner-pages__stage case-inner-pages__stage--mobile">
         <div
           v-for="(item, index) in items"
           :key="'m-' + item.image.id + '-' + index"
           class="case-inner-pages__card-wrapper"
+          :data-case-col="String(mobileColFor(index))"
         >
-          <div class="case-inner-pages__card-motion case-scroll-motion">
+          <div
+            class="case-inner-pages__card-motion case-scroll-motion"
+            :data-case-col="String(mobileColFor(index))"
+          >
             <button
               type="button"
               class="case-inner-pages__card-button"
@@ -96,12 +113,33 @@ function labelFor(index: number): string {
               @click="openAt(index)"
             >
               <span class="case-inner-pages__meta">{{ labelFor(index) }}</span>
-              <figure class="case-inner-pages__card" :style="aspectStyle(item)">
-                <img
-                  :src="itemSrc(item)"
-                  :alt="itemAlt(item, index)"
-                  :loading="landingOnly || index === 0 ? 'eager' : 'lazy'"
-                  :fetchpriority="landingOnly || index === 0 ? 'high' : undefined"
+              <figure
+                class="case-inner-pages__card"
+                :class="{ 'case-interactive__viewport': landingOnly }"
+                :style="landingOnly ? undefined : aspectStyle(item)"
+              >
+                <div
+                  class="case-interactive__scanner"
+                  :class="{ 'case-interactive__tilt': landingOnly }"
+                >
+                  <img
+                    :src="itemSrc(item)"
+                    :alt="itemAlt(item, index)"
+                    :loading="landingOnly || index === 0 ? 'eager' : 'lazy'"
+                    :fetchpriority="landingOnly || index === 0 ? 'high' : undefined"
+                  />
+                </div>
+                <span
+                  v-if="landingOnly"
+                  class="case-interactive__scan-rail"
+                  aria-hidden="true"
+                >
+                  <span class="case-interactive__scan-thumb" />
+                </span>
+                <span
+                  v-if="landingOnly"
+                  class="case-interactive__glare"
+                  aria-hidden="true"
                 />
               </figure>
             </button>
@@ -115,6 +153,7 @@ function labelFor(index: number): string {
           v-for="(colItems, col) in columns"
           :key="'col-' + col"
           class="case-inner-pages__column"
+          :data-case-col="String(col)"
         >
           <div
             v-for="(placed, row) in colItems"
@@ -124,8 +163,12 @@ function labelFor(index: number): string {
               [`case-inner-pages__card-wrapper--stair-${col}`]:
                 !landingOnly && row === 0 && col < 2,
             }"
+            :data-case-col="String(col)"
           >
-            <div class="case-inner-pages__card-motion case-scroll-motion">
+            <div
+              class="case-inner-pages__card-motion case-scroll-motion"
+              :data-case-col="String(col)"
+            >
               <button
                 type="button"
                 class="case-inner-pages__card-button"
@@ -137,17 +180,35 @@ function labelFor(index: number): string {
                 }}</span>
                 <figure
                   class="case-inner-pages__card"
-                  :style="aspectStyle(placed.item)"
+                  :class="{ 'case-interactive__viewport': landingOnly }"
+                  :style="landingOnly ? undefined : aspectStyle(placed.item)"
                 >
-                  <img
-                    :src="itemSrc(placed.item)"
-                    :alt="itemAlt(placed.item, placed.index)"
-                    :loading="
-                      landingOnly || placed.index === 0 ? 'eager' : 'lazy'
-                    "
-                    :fetchpriority="
-                      landingOnly || placed.index === 0 ? 'high' : undefined
-                    "
+                  <div
+                    class="case-interactive__scanner"
+                    :class="{ 'case-interactive__tilt': landingOnly }"
+                  >
+                    <img
+                      :src="itemSrc(placed.item)"
+                      :alt="itemAlt(placed.item, placed.index)"
+                      :loading="
+                        landingOnly || placed.index === 0 ? 'eager' : 'lazy'
+                      "
+                      :fetchpriority="
+                        landingOnly || placed.index === 0 ? 'high' : undefined
+                      "
+                    />
+                  </div>
+                  <span
+                    v-if="landingOnly"
+                    class="case-interactive__scan-rail"
+                    aria-hidden="true"
+                  >
+                    <span class="case-interactive__scan-thumb" />
+                  </span>
+                  <span
+                    v-if="landingOnly"
+                    class="case-interactive__glare"
+                    aria-hidden="true"
                   />
                 </figure>
               </button>
