@@ -151,7 +151,6 @@ export class MobileNavOverlay {
   private playEnter(onReady?: () => void): void {
     this.enterGeneration += 1;
     const gen = this.enterGeneration;
-    this.root.classList.remove('is-entering');
 
     const lastI = Math.min(
       navigationConfig.items.length - 1,
@@ -179,6 +178,9 @@ export class MobileNavOverlay {
       onReady?.();
       return;
     }
+
+    // Before first paint: hide static borders and prep ::before lines (see main.css).
+    this.root.classList.add('is-entering');
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {

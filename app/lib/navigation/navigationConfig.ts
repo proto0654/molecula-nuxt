@@ -28,7 +28,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: 'about',
-      label: 'О нас',
+      label: 'Обо мне',
       atomId: 'H1',
       route: '/about',
       blurb: 'студия weblaba',
@@ -41,7 +41,7 @@ export const navigationConfig: NavigationConfig = {
       atomId: 'H2',
       route: '/services',
       blurb: 'разработка и дизайн',
-      blurbCta: ', чтобы выбрать услуги',
+      blurbCta: ', выбирай предложение',
       usp: 'От идеи до релиза',
     },
     {

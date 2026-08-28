@@ -7,7 +7,7 @@ import {
 
 const SERVICE_EMBED = 'wp:featuredmedia,wp:term';
 
-/** Minimal fields for adjacent-service ordering (menu_order ASC, date DESC). */
+/** Minimal fields for adjacent-service ordering (menu_order ASC, date ASC). */
 export type ServiceSlimItem = {
   id: number;
   slug: string;

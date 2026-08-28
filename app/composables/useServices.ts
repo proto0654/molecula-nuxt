@@ -16,7 +16,7 @@ type ArchivePagePayload = {
 
 /**
  * Slim-index paginated archive. Order matches SERVICE / NN
- * (`menu_order ASC`, then `date DESC`).
+ * (`menu_order ASC`, then `date ASC`).
  */
 export function useServices(options: UseServicesOptions = {}) {
   const perPage = options.perPage ?? 12;

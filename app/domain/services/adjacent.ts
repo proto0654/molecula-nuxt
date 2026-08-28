@@ -6,13 +6,13 @@ export type AdjacentServices = {
 };
 
 /**
- * Production order: menu_order ASC, then date DESC among ties.
+ * Production order: menu_order ASC, then date ASC among ties (oldest first).
  * Do not use archive-page array index.
  */
 export function sortServiceSlimIndex(items: ServiceSlimItem[]): ServiceSlimItem[] {
   return [...items].sort((a, b) => {
     if (a.menu_order !== b.menu_order) return a.menu_order - b.menu_order;
-    return b.date.localeCompare(a.date);
+    return a.date.localeCompare(b.date);
   });
 }
 
