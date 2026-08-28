@@ -33,7 +33,7 @@ export class SiteHeader {
     this.logoBtn = document.createElement('button');
     this.logoBtn.type = 'button';
     this.logoBtn.className = 'site-header__logo';
-    this.logoBtn.textContent = '[ МАРК ] ЛОГО';
+    this.logoBtn.textContent = '[ WEB-LABA ]';
     this.logoBtn.setAttribute('aria-label', 'Главная');
     attachTapGuard(this.logoBtn, () => {
       this.onSelect?.('home');
