@@ -57,9 +57,10 @@ export function resolveAboutHeroMedia(
 }
 
 export function resolveServiceHeroMedia(
-  _image: CaseImage | null,
-  _alt: string,
+  image: CaseImage | null,
+  alt: string,
 ): EditorialHeroMedia {
+  if (image) return { kind: 'image', image, alt };
   return { kind: 'placeholder' };
 }
 

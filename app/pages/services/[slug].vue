@@ -76,7 +76,9 @@ const pageDescription = computed(() => {
 });
 
 const heroMedia = computed(() =>
-  service.value ? resolveServiceHeroMedia(null, '') : { kind: 'placeholder' as const },
+  service.value
+    ? resolveServiceHeroMedia(service.value.featuredImage, titlePlain.value)
+    : { kind: 'placeholder' as const },
 );
 
 useSeoMeta({
