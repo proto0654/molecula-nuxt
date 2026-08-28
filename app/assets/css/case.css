@@ -1680,7 +1680,7 @@ html.js-enabled .case-page.is-revealing
 
 .case-inner-pages__stage--mobile .case-inner-pages__card-wrapper {
   display: inline-block;
-  width: min(52vw, 100%);
+  width: 100%;
   margin: 0 0 var(--inner-pages-gap-y);
   break-inside: avoid;
   position: relative;
@@ -1698,14 +1698,21 @@ html.js-enabled .case-page.is-revealing
 @media (max-width: 1023px) {
   .case-inner-pages--landing-only .case-inner-pages__stage--mobile .case-inner-pages__card-wrapper {
     display: block;
-    width: 100vw;
-    max-width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
+    width: var(--content-bleed-width);
+    max-width: none;
+    margin-inline: calc(-1 * var(--content-bleed-x));
   }
 
   .case-inner-pages--landing-only .case-inner-pages__stage--mobile .case-inner-pages__meta {
     padding-inline: var(--case-pad-x);
+  }
+
+  .case-inner-pages:not(.case-inner-pages--landing-only) .case-inner-pages__stage--mobile {
+    overflow-x: clip;
+  }
+
+  .case-slices {
+    overflow-x: clip;
   }
 }
 

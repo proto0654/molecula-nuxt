@@ -216,6 +216,10 @@
   --editorial-hero-media-ratio-about: 1 / 1;
   --editorial-hero-frame-side: calc(var(--line-draw-duration) * 0.25);
 
+  /* Break out of --case-pad-x without 100vw (scrollbar-safe full bleed). */
+  --content-bleed-x: var(--case-pad-x);
+  --content-bleed-width: calc(100% + 2 * var(--content-bleed-x));
+
   /* Breakpoints (documentation / matchMedia in main.ts — CSS uses the same px) */
   --bp-mobile-max: 767px;
   --bp-tablet-min: 768px;
