@@ -5,13 +5,6 @@ defineProps<{
   caseData: Case;
   sectionIndex: number;
 }>();
-
-const root = ref<HTMLElement | null>(null);
-
-useCaseScrollEntry({
-  root,
-  preset: 'fade',
-});
 </script>
 
 <template>
@@ -21,10 +14,9 @@ useCaseScrollEntry({
     label="Mobile"
     tone="editorial"
   >
-    <div ref="root" class="case-mobile-signature">
-      <span class="case-scroll-trigger" aria-hidden="true" />
+    <div class="case-mobile-signature">
       <div
-        class="case-mobile-signature__prose case-scroll-motion"
+        class="case-mobile-signature__prose"
         v-html="caseData.mobileSignatureHtml"
       />
     </div>

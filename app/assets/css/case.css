@@ -202,6 +202,348 @@
   justify-content: flex-end;
 }
 
+html.js-enabled .archive-page:not(.is-revealing) .case-chrome__header--meta,
+html.js-enabled .case-page:not(.is-revealing) .case-chrome__header--meta {
+  opacity: 0;
+}
+
+html.js-enabled .archive-page.is-revealing .case-chrome__header--meta,
+html.js-enabled .case-page.is-revealing .case-chrome__header--meta {
+  animation: wl-enter-fade var(--enter-duration) var(--enter-ease) both;
+  animation-delay: var(--enter-beat-chrome);
+}
+
+html.js-enabled .case-page:not(.is-revealing) .case-header__index {
+  opacity: 0;
+}
+
+html.js-enabled .case-page:not(.is-revealing) .case-header__intro,
+html.js-enabled .case-page:not(.is-revealing) .case-header .case-facts,
+html.js-enabled .case-page:not(.is-revealing) .case-hero__visual {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .case-page.is-revealing .case-header__index {
+  animation: wl-enter-fade var(--enter-duration) var(--enter-ease) both;
+  animation-delay: var(--enter-beat-kicker);
+}
+
+html.js-enabled .case-page.is-revealing .case-header__intro,
+html.js-enabled .case-page.is-revealing .case-header .case-facts,
+html.js-enabled .case-page.is-revealing .case-hero__visual {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: var(--enter-beat-lead);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .archive-page .case-chrome__header--meta,
+  html.js-enabled .case-page .case-chrome__header--meta,
+  html.js-enabled .case-page .case-header__index,
+  html.js-enabled .case-page .case-header__intro,
+  html.js-enabled .case-page .case-header .case-facts,
+  html.js-enabled .case-page .case-hero__visual {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+/* Case listing reveal — sections + NEXT footer (docs/MOTION.md). */
+html.js-enabled .case-page .case-section:not(.case-nav),
+html.js-enabled .case-page nav.case-nav.case-section {
+  position: relative;
+}
+
+/* Hairline on marker rail — matches original border-top/bottom, not full section width. */
+html.js-enabled .case-page .case-marker--editorial,
+html.js-enabled .case-page .case-marker--visual {
+  position: relative;
+}
+
+html.js-enabled .case-page .case-marker--editorial::after,
+html.js-enabled .case-page .case-marker--visual::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--wl-line);
+  clip-path: inset(0 0 0 0);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 1023px) {
+  html.js-enabled .case-page .case-marker--editorial::after,
+  html.js-enabled .case-page .case-marker--visual::after {
+    top: auto;
+    bottom: 0;
+  }
+}
+
+html.js-enabled .case-page .case-nav .case-nav__prev {
+  position: relative;
+}
+
+html.js-enabled .case-page .case-nav .case-nav__prev::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--wl-line);
+  clip-path: inset(0 0 0 0);
+  pointer-events: none;
+}
+
+html.js-enabled .case-page .case-marker--editorial,
+html.js-enabled .case-page .case-marker--visual {
+  border-color: transparent;
+}
+
+html.js-enabled .case-page .case-nav .case-nav__prev {
+  border-top-color: transparent;
+}
+
+html.js-enabled .case-page:not(.is-revealing) .case-marker--editorial::after,
+html.js-enabled .case-page:not(.is-revealing) .case-marker--visual::after,
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) .case-marker--editorial::after,
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) .case-marker--visual::after,
+html.js-enabled .case-page:not(.is-revealing) .case-nav .case-nav__prev::after,
+html.js-enabled .case-page.is-revealing .case-nav:not(.is-revealed) .case-nav__prev::after {
+  clip-path: inset(0 100% 0 0);
+}
+
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed .case-marker--editorial::after,
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed .case-marker--visual::after,
+html.js-enabled .case-page.is-revealing .case-nav.is-revealed .case-marker--editorial::after {
+  animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger))
+  );
+}
+
+html.js-enabled .case-page.is-revealing .case-nav.is-revealed .case-nav__prev::after {
+  clip-path: inset(0 0 0 0);
+}
+
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] .case-marker--editorial::after,
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] .case-marker--visual::after,
+html.js-enabled .case-page.is-revealing .case-nav.is-revealed[data-reveal='in'] .case-marker--editorial::after {
+  animation-delay: 0s;
+}
+
+html.js-enabled .case-page:not(.is-revealing) .case-section:not(.case-nav) > *,
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) > *,
+html.js-enabled .case-page:not(.is-revealing) nav.case-nav.case-section > *,
+html.js-enabled .case-page.is-revealing nav.case-nav.case-section:not(.is-revealed) > * {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed > *,
+html.js-enabled .case-page.is-revealing nav.case-nav.case-section.is-revealed > * {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
+      var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] > *,
+html.js-enabled .case-page.is-revealing nav.case-nav.case-section.is-revealed[data-reveal='in'] > * {
+  animation-delay: var(--reveal-content-delay);
+}
+
+/* Prose / caption lists — own listing rows; body shell stays visible for stagger. */
+html.js-enabled .case-page
+  .case-section:not(.case-nav).is-revealed
+  > :is(
+    .case-content__body,
+    .case-section__body,
+    .case-mobile-signature,
+    .case-mobile__caption
+  ):has(:is(ul, ol, .wp-block-list) > li) {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+html.js-enabled .case-page
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li
+  + li::after,
+html.js-enabled .case-page
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li
+  + li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--wl-line);
+  clip-path: inset(0 0 0 0);
+  pointer-events: none;
+  z-index: 1;
+}
+
+html.js-enabled .case-page
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li
+  + li,
+html.js-enabled .case-page
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li
+  + li {
+  border-top-color: transparent;
+}
+
+html.js-enabled .case-page:not(.is-revealing)
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li
+  + li::after,
+html.js-enabled .case-page:not(.is-revealing)
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li
+  + li::before,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li
+  + li:not(.is-revealed)::after,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li
+  + li:not(.is-revealed)::before {
+  clip-path: inset(0 100% 0 0);
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li
+  + li.is-revealed::after,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li
+  + li.is-revealed::before {
+  animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger))
+  );
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li
+  + li.is-revealed[data-reveal='in']::after,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li
+  + li.is-revealed[data-reveal='in']::before {
+  animation-delay: 0s;
+}
+
+html.js-enabled .case-page:not(.is-revealing)
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, ol, .wp-block-list)
+  > li,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, ol, .wp-block-list)
+  > li:not(.is-revealed) {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, ol, .wp-block-list)
+  > li.is-revealed {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
+      var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, ol, .wp-block-list)
+  > li.is-revealed[data-reveal='in'] {
+  animation-delay: var(--reveal-content-delay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .case-page .case-marker--editorial::after,
+  html.js-enabled .case-page .case-marker--visual::after,
+  html.js-enabled .case-page .case-nav .case-nav__prev::after,
+  html.js-enabled .case-page .case-section:not(.case-nav) > *,
+  html.js-enabled .case-page nav.case-nav.case-section > * {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+    animation: none;
+  }
+
+  html.js-enabled .case-page .case-marker--editorial,
+  html.js-enabled .case-page .case-marker--visual {
+    border-color: rgb(214 219 224 / var(--line-opacity));
+  }
+
+  html.js-enabled .case-page .case-nav .case-nav__prev {
+    border-top-color: rgb(214 219 224 / var(--line-opacity));
+  }
+
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    :is(ul, .wp-block-list)
+    > li
+    + li,
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    ol
+    > li
+    + li {
+    border-top-color: rgb(214 219 224 / var(--line-opacity));
+  }
+
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    :is(ul, ol, .wp-block-list)
+    > li,
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    :is(ul, .wp-block-list)
+    > li
+    + li::after,
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    ol
+    > li
+    + li::before {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+    animation: none;
+  }
+}
+
 .case-chrome__logo {
   pointer-events: auto;
   color: var(--ui-primary);
@@ -896,11 +1238,17 @@
   content: '';
   position: absolute;
   left: 0;
-  top: 0.68em;
+  top: 0.5lh;
   width: 0.5625rem;
   height: 0.5625rem;
   background: var(--case-accent-ink);
   transform: translateY(-50%);
+}
+
+.case-content__prose :is(ul, .wp-block-list) > li + li::before,
+.case-mobile__caption :is(ul, .wp-block-list) > li + li::before,
+.case-mobile-signature__prose :is(ul, .wp-block-list) > li + li::before {
+  top: calc(var(--case-list-item-gap) + 0.5lh);
 }
 
 .case-content__prose :is(ul, .wp-block-list) > li + li,
@@ -908,12 +1256,6 @@
 .case-mobile-signature__prose :is(ul, .wp-block-list) > li + li {
   padding-top: var(--case-list-item-gap);
   border-top: 1px solid rgb(214 219 224 / var(--line-opacity));
-}
-
-.case-content__prose :is(ul, .wp-block-list) > li + li::before,
-.case-mobile__caption :is(ul, .wp-block-list) > li + li::before,
-.case-mobile-signature__prose :is(ul, .wp-block-list) > li + li::before {
-  top: calc(var(--case-list-item-gap) + 0.68em);
 }
 
 .case-content__prose ol,
@@ -1816,7 +2158,7 @@ html.case-lightbox-open {
   .case-nav__flow {
     grid-column: 1;
     grid-row: 1;
-    padding-block: 0.85rem;
+    padding-block: 0.75rem;
   }
 
   .case-nav__index {
@@ -1824,7 +2166,7 @@ html.case-lightbox-open {
     grid-row: 1;
     justify-self: end;
     align-self: start;
-    padding-block: 0.85rem;
+    padding-block: 0.75rem;
     text-align: right;
   }
 

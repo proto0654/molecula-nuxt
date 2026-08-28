@@ -28,6 +28,9 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--grid-opacity` | `0.032` | Edge grid stroke alpha |
 | `--frame-opacity` | `0.28` | Corner ticks / active rail marker |
 | `--line-opacity` | `0.22` | Divider, SVG connector |
+| `--wl-line` | → `rgb(214 219 224 / var(--line-opacity))` | **Hairline language** — all 1px rules site-wide |
+| `--line-draw-duration` / `--line-draw-ease` / `--reveal-content-delay` | `1.25s` / `cubic-bezier(0.33, 0, 0.18, 1)` / `500ms` | Animated draw — see [Hairline language](#hairline-language) + [`MOTION.md`](MOTION.md) |
+| `--enter-*` / `--reveal-cap` | see [`MOTION.md`](MOTION.md) | Off-home HTML entrance (beats, listing chain) |
 | `--font-ui` | `'JetBrains Mono'`, ui-monospace fallbacks | HUD / titles / markers (self-hosted Cyrillic) |
 | `--font-body` | `'Exo 2'`, system sans | Case reading text — prose, intro, captions (300 / 400) |
 | `--text-meta` | `0.625rem` | `⟨ SYS · … ⟩`, header, status |
@@ -47,6 +50,62 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--bp-desktop-min` | `1024px` | Desktop composition + full captions |
 
 Reuse these variables for any new overlay. Do not introduce filled boxes or extra borders unless a pattern below already uses a 1px tick.
+
+## Hairline language
+
+Site-wide design principle: **thin rules structure the layout** — they are not cards, not frames, not decoration for its own sake. One vocabulary everywhere: the same color, weight, placement logic, and (when animated) the same draw.
+
+### Tokens
+
+| Token | Role |
+|-------|------|
+| `--line-opacity` | Alpha for all hairlines (HUD, archive, case, prose) |
+| `--wl-line` | Canonical 1px color — always prefer this over ad-hoc `border-color` |
+| `--line-draw-duration` | Full-width wipe duration (left → right) |
+| `--line-draw-ease` | Draw easing — even, readable, not snappy |
+| `--reveal-content-delay` | Gap between line finish and content fade — line leads, copy follows |
+
+Motion choreography (chain vs viewport, `--reveal-cap`, `--enter-stagger`) lives in [`MOTION.md`](MOTION.md). This section is the **static design contract**; motion is the same principle applied at enter time.
+
+### Rules
+
+1. **1px only.** Height or stroke width = 1px. No 2px dividers, no box shadows as separators.
+2. **Color = `--wl-line`.** Exception: partial prose headings may use a gradient fade to transparent (still sourced from `--line-opacity`).
+3. **Placement follows the grid**, not the viewport edge blindly:
+   - **Editorial rail** — horizontal rule on the marker / label column (cols 1–4 on case 12-col), optionally paired with a short vertical guide. Do not span the full section width if the editorial rail is only in the label column.
+   - **Listing row** — full width of the row container (`::before` top; last row may have bottom `::after`).
+   - **Short tick** — accent line inside a row (e.g. `.archive-row__line`); `scaleX` from the left, not a full bleed.
+   - **Partial prose rule** — subsection headings (`h2`/`h3`): ~48–62% width, gradient tail; between list items: full width of the list block.
+4. **Implement lines on pseudos for animation**, keep `border-top` / `border-bottom` as the no-JS / reduced-motion fallback. When `.js-enabled` and entering, set `border-color: transparent` and draw with `::before` / `::after` at the **same geometry** as the static border — offsets must not drift.
+5. **Draw methods** (do not animate `width` or `border`):
+   - Full bleed: `clip-path: inset(0 100% 0 0)` → `inset(0 0 0 0)` (`wl-enter-line`).
+   - Short tick: `transform: scaleX(0 → 1)` + `transform-origin: left` (`wl-enter-line-scale`).
+6. **Content waits on the line** when listed: row / section / list item body fades in after `--reveal-content-delay` so the wipe reads first.
+
+### Where it applies
+
+| Surface | Hairline role |
+|---------|----------------|
+| HUD | Mobile nav top gradient; desktop rail right divider ([§4](#4-hairline-rule--rail-divider)) |
+| Archive index | Row top (+ last row bottom); short `.archive-row__line` tick |
+| Archive / service detail footer | Separator above Previous only (`.case-nav__prev`); case NEXT uses marker rail |
+| Case sections | Marker rail (`editorial` / `visual` tone); NEXT footer same as editorial |
+| Case CMS prose | Subheading partial rules; `ul`/`ol` item separators |
+| About / contact / services body | `.archive-row--detail` text rows (same listing language) |
+| Mobile nav overlay | Item separators |
+
+New listings, sections, or footer blocks **must** use this language — not a one-off border, not a new animation curve.
+
+### Do / do not
+
+| Do | Do not |
+|----|--------|
+| `--wl-line` + grid-aligned pseudos | Random `border-top` colors or 2px rules |
+| Match static border position when swapping to pseudo | Section-level full-bleed line when the design is editorial-rail only |
+| One draw curve site-wide | Per-page line timing or direction |
+| Line → content on enter | Fade the whole block including the line |
+
+Case-specific marker tones and grid columns: [`CASES.md`](CASES.md). Enter implementation: [`MOTION.md`](MOTION.md).
 
 ## Scene tokens (Three.js)
 
@@ -96,8 +155,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 ### 4. Hairline rule / rail divider
 
-- Tablet/mobile nav top: 1px gradient (`.nav::before`).
-- Desktop: thin right-edge divider on the rail (`.nav::after`) at `--line-opacity`.
+Part of the site-wide [hairline language](#hairline-language). Tablet/mobile nav top: 1px gradient (`.nav::before`). Desktop: thin right-edge divider on the rail (`.nav::after`) at `--line-opacity`.
 
 ### 5. Indexed text nav
 
@@ -161,7 +219,7 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 - Blurbs: lowercase techno one-liners (RU) prefixed `// ` in the 3D typewriter; on mobile, break onto a second line at the content ` / ` separator. Part 1 = WebLaba / section context (`navigationConfig.blurb`). Part 2 on navigable atoms = `{кликай|тапай}{blurbCta}` via [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) (`blurbCta` includes leading space or punctuation, e.g. « для связи со мной», «, будем знакомиться»). Hub atom (Главная) — description only, no CTA.
 - USPs: short RU headlines in HUD space, uppercase tracked (`text-transform: uppercase`); authored in `navigationConfig.items[].usp` until WP fields exist.
 - Fonts: self-hosted **JetBrains Mono** — `public/fonts/JetBrainsMono-*.woff2` for CSS HUD/titles; `*.ttf` for troika (`AtomLabel`) because troika needs ttf/woff, not woff2. Case reading text: self-hosted **Exo 2** Light/Regular (`Exo2-*-*.woff2` subsets) via `--font-body`.
-- Case / section titles: all-caps scramble via `SiteScrambleTitle`, armed until `!is-awaiting-pose` (and case body idle). Absolute paint layer + locked non-letters. Archive/section body fade uses `usePageContentReveal` on the same settle.
+- Case / section titles: all-caps scramble via `SiteScrambleTitle`, armed until `!is-awaiting-pose` (and case body idle). Absolute paint layer + locked non-letters. Off-home HTML entrance (chrome → kicker → scramble → lead → listing hairlines) uses `usePageContentReveal` on the same settle — [`MOTION.md`](MOTION.md).
 - Decorative Unicode allowed: `⟨ ⟩`, `⟦ ⟧`, `·`, `//`. Avoid emoji and heavy box drawing.
 
 ## Do / do not

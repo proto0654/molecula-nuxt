@@ -9,7 +9,13 @@ const props = defineProps<{
   hasSlices?: boolean;
   landingOnly?: boolean;
   bodyClass?: string;
+  revealing?: boolean;
 }>();
+
+const root = ref<HTMLElement | null>(null);
+const revealingGate = computed(() => Boolean(props.revealing));
+
+useListingReveal(root, revealingGate);
 
 const archiveHref = ref('/portfolio');
 
@@ -20,12 +26,14 @@ onMounted(() => {
 
 <template>
   <div
+    ref="root"
     class="case-page"
     :class="{
       'case-page--sparse': sparse,
       'case-page--text-hero': textHero,
       'case-page--has-slices': hasSlices,
       'case-page--landing-only': landingOnly,
+      'is-revealing': revealing,
     }"
     :style="accentColor ? { '--case-accent': accentColor } : undefined"
   >

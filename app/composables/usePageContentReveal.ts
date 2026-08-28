@@ -1,8 +1,8 @@
 import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
 
 /**
- * Drive archive/section body enter after the molecule pose veil lifts.
- * Pairs with `.archive-page.is-revealing` and SiteScrambleTitle pose gate.
+ * EnterGate for off-home HTML: `.is-revealing` after the molecule pose veil lifts.
+ * Pairs with CSS beats, useListingReveal, and SiteScrambleTitle. See docs/MOTION.md.
  */
 export function usePageContentReveal() {
   const awaitingPose = useAwaitingPose();

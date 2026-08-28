@@ -14,21 +14,67 @@
   padding: var(--case-pad-y) var(--case-pad-x) var(--case-space-footer);
 }
 
-/* Hold body until pose settle + usePageContentReveal (avoids scramble under veil). */
-html.js-enabled .archive-page__body {
+/* Entrance beats — docs/MOTION.md. Do not fade the whole body (chrome is outside it). */
+html.js-enabled .archive-page:not(.is-revealing) .archive-heading__kicker,
+html.js-enabled .archive-page:not(.is-revealing) .archive-intro,
+html.js-enabled .archive-page:not(.is-revealing) .about-photo,
+html.js-enabled .archive-page:not(.is-revealing) .editorial-header__tags,
+html.js-enabled .archive-page:not(.is-revealing) .editorial-section-title,
+html.js-enabled .archive-page:not(.is-revealing) [data-enter='tail']:not(.case-nav),
+html.js-enabled .archive-page.is-revealing [data-enter='tail']:not(.is-revealed):not(.case-nav) {
   opacity: 0;
 }
 
-html.js-enabled .archive-page.is-revealing .archive-page__body {
-  opacity: 1;
-  transition: opacity 0.45s ease;
+html.js-enabled .archive-page:not(.is-revealing) .archive-intro,
+html.js-enabled .archive-page:not(.is-revealing) .about-photo,
+html.js-enabled .archive-page:not(.is-revealing) .editorial-header__tags,
+html.js-enabled .archive-page:not(.is-revealing) .editorial-section-title,
+html.js-enabled .archive-page:not(.is-revealing) [data-enter='tail']:not(.case-nav),
+html.js-enabled .archive-page.is-revealing [data-enter='tail']:not(.is-revealed):not(.case-nav) {
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .archive-page.is-revealing .archive-heading__kicker {
+  animation: wl-enter-fade var(--enter-duration) var(--enter-ease) both;
+  animation-delay: var(--enter-beat-kicker);
+}
+
+html.js-enabled .archive-page.is-revealing .archive-intro,
+html.js-enabled .archive-page.is-revealing .about-photo,
+html.js-enabled .archive-page.is-revealing .editorial-header__tags,
+html.js-enabled .archive-page.is-revealing .editorial-section-title {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: var(--enter-beat-lead);
+}
+
+html.js-enabled .archive-page.is-revealing [data-enter='tail'].is-revealed:not(.case-nav) {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger))
+  );
+}
+
+html.js-enabled .archive-page.is-revealing [data-enter='tail'].is-revealed[data-reveal='in']:not(.case-nav) {
+  animation-delay: 0s;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.js-enabled .archive-page__body,
-  html.js-enabled .archive-page.is-revealing .archive-page__body {
+  html.js-enabled .archive-page .archive-heading__kicker,
+  html.js-enabled .archive-page .archive-intro,
+  html.js-enabled .archive-page .about-photo,
+  html.js-enabled .archive-page .editorial-header__tags,
+  html.js-enabled .archive-page .editorial-section-title,
+  html.js-enabled .archive-page [data-enter='tail']:not(.case-nav),
+  html.js-enabled .archive-page nav.case-nav--archive .case-nav__prev::after,
+  html.js-enabled .archive-page nav.case-nav--archive .case-nav__motion {
     opacity: 1;
-    transition: none;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+    animation: none;
+  }
+
+  html.js-enabled .archive-page nav.case-nav--archive .case-nav__prev {
+    border-top-color: rgb(214 219 224 / var(--line-opacity));
   }
 }
 
@@ -118,6 +164,61 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
   }
 }
 
+/* Service / archive detail footer — animate existing prev separator only (no top hairline). */
+html.js-enabled .archive-page nav.case-nav--archive .case-nav__prev {
+  position: relative;
+}
+
+html.js-enabled .archive-page nav.case-nav--archive .case-nav__prev::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--wl-line);
+  clip-path: inset(0 0 0 0);
+  pointer-events: none;
+}
+
+html.js-enabled .archive-page nav.case-nav--archive .case-nav__prev {
+  border-top-color: transparent;
+}
+
+html.js-enabled .archive-page:not(.is-revealing) nav.case-nav--archive .case-nav__prev::after,
+html.js-enabled .archive-page.is-revealing nav.case-nav--archive:not(.is-revealed) .case-nav__prev::after {
+  clip-path: inset(0 100% 0 0);
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav--archive.is-revealed .case-nav__prev::after {
+  animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger))
+  );
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav--archive.is-revealed[data-reveal='in'] .case-nav__prev::after {
+  animation-delay: 0s;
+}
+
+html.js-enabled .archive-page:not(.is-revealing) nav.case-nav--archive .case-nav__motion,
+html.js-enabled .archive-page.is-revealing nav.case-nav--archive:not(.is-revealed) .case-nav__motion {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav--archive.is-revealed .case-nav__motion {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
+      var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav--archive.is-revealed[data-reveal='in'] .case-nav__motion {
+  animation-delay: var(--reveal-content-delay);
+}
+
 .archive-list {
   list-style: none;
   margin: 0;
@@ -125,15 +226,84 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
 }
 
 .archive-row {
-  border-top: 1px solid var(--wl-line);
+  position: relative;
 }
 
-.archive-row:last-child {
-  border-bottom: 1px solid var(--wl-line);
+.archive-row::before,
+.archive-row:last-child:not(.archive-row--detail)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--wl-line);
+  clip-path: inset(0 0 0 0);
+  pointer-events: none;
+  z-index: 1;
 }
 
-.archive-row--detail:last-child {
-  border-bottom: 0;
+.archive-row::before {
+  top: 0;
+}
+
+.archive-row:last-child:not(.archive-row--detail)::after {
+  bottom: 0;
+}
+
+html.js-enabled .archive-page:not(.is-revealing) .archive-row::before,
+html.js-enabled .archive-page:not(.is-revealing) .archive-row:last-child:not(.archive-row--detail)::after,
+html.js-enabled .archive-page.is-revealing .archive-row:not(.is-revealed)::before,
+html.js-enabled .archive-page.is-revealing .archive-row:not(.is-revealed):last-child:not(.archive-row--detail)::after {
+  clip-path: inset(0 100% 0 0);
+}
+
+html.js-enabled .archive-page.is-revealing .archive-row.is-revealed::before,
+html.js-enabled .archive-page.is-revealing .archive-row.is-revealed:last-child:not(.archive-row--detail)::after {
+  animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger))
+  );
+}
+
+html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal='in']::before,
+html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal='in']:last-child:not(.archive-row--detail)::after {
+  animation-delay: 0s;
+}
+
+html.js-enabled .archive-page:not(.is-revealing) .archive-row .archive-row__link,
+html.js-enabled .archive-page.is-revealing .archive-row:not(.is-revealed) .archive-row__link {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .archive-page.is-revealing .archive-row.is-revealed .archive-row__link {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
+      var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal='in'] .archive-row__link {
+  animation-delay: var(--reveal-content-delay);
+}
+
+html.js-enabled .archive-page:not(.is-revealing) .archive-row__line,
+html.js-enabled .archive-page.is-revealing .archive-row:not(.is-revealed) .archive-row__line {
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+html.js-enabled .archive-page.is-revealing .archive-row.is-revealed .archive-row__line {
+  animation: wl-enter-line-scale var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
+      var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal='in'] .archive-row__line {
+  animation-delay: var(--reveal-content-delay);
 }
 
 /* Text-only rows — no specimen column (contact, skills, offers). */
@@ -280,6 +450,7 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
   width: 2.25rem;
   height: 1px;
   background: var(--wl-line);
+  transform-origin: left center;
 }
 
 .archive-row__arrow {
@@ -407,7 +578,8 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
     transform: none;
   }
 
-  .archive-row__link:hover .archive-row__line {
+  .archive-row.is-revealed .archive-row__link:hover .archive-row__line,
+  html:not(.js-enabled) .archive-row__link:hover .archive-row__line {
     width: 4.5rem;
     background: var(--case-accent-ink, var(--wl-accent));
   }
@@ -428,7 +600,8 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
     color: var(--wl-accent);
   }
 
-  .archive-row__link:hover .archive-row__line {
+  .archive-row.is-revealed .archive-row__link:hover .archive-row__line,
+  html:not(.js-enabled) .archive-row__link:hover .archive-row__line {
     background: var(--wl-accent);
   }
 }
@@ -461,7 +634,13 @@ html.js-enabled .archive-page.is-revealing .archive-page__body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .archive-page.is-revealing .archive-page__body {
+  html.js-enabled .archive-page .archive-row::before,
+  html.js-enabled .archive-page .archive-row:last-child:not(.archive-row--detail)::after,
+  html.js-enabled .archive-page .archive-row .archive-row__link,
+  html.js-enabled .archive-page .archive-row__line {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
     animation: none;
   }
 

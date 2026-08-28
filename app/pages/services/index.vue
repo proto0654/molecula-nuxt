@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { consumeArchiveReturn } from '~/lib/navigation/archiveReturn';
-import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
+import { restoreArchiveScroll } from '~/lib/navigation/archiveReturn';
 
 const route = useRoute();
 
@@ -14,22 +13,7 @@ const page = computed(() => {
 const { entries, pagination, pending, error } = useServices({ page, perPage: 12 });
 
 function restoreScroll() {
-  const restored = consumeArchiveReturn('services');
-  if (!restored) return;
-  const reduced = prefersReducedMotion();
-  requestAnimationFrame(() => {
-    const row = document.querySelector<HTMLElement>(
-      `[data-slug="${CSS.escape(restored.slug)}"]`,
-    );
-    if (row) {
-      row.scrollIntoView({
-        block: 'center',
-        behavior: reduced ? 'auto' : 'smooth',
-      });
-      return;
-    }
-    window.scrollTo({ top: restored.y, behavior: reduced ? 'auto' : 'smooth' });
-  });
+  restoreArchiveScroll('services');
 }
 
 onMounted(() => {

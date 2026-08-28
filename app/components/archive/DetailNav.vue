@@ -26,14 +26,7 @@ onMounted(() => {
   archiveHref.value = archiveIndexHref(undefined, props.archiveScope);
 });
 
-const root = ref<HTMLElement | null>(null);
-
 const isCase = computed(() => props.sectionIndex != null && props.sectionIndex > 0);
-
-useCaseScrollEntry({
-  root,
-  preset: 'fade',
-});
 
 function itemHref(slug: string) {
   return `${props.basePath}/${slug}`;
@@ -42,12 +35,12 @@ function itemHref(slug: string) {
 
 <template>
   <nav
-    ref="root"
     class="case-nav"
     :class="{
       'case-nav--archive': !isCase,
       'case-section case-grid case-section--tone-editorial': isCase,
     }"
+    :data-enter="isCase ? undefined : 'tail'"
     :aria-label="ariaLabel"
   >
     <CaseSectionMarker
@@ -59,8 +52,7 @@ function itemHref(slug: string) {
     />
 
     <div class="case-nav__links">
-      <span v-if="isCase" class="case-scroll-trigger" aria-hidden="true" />
-      <div class="case-nav__motion" :class="{ 'case-scroll-motion': isCase }">
+      <div class="case-nav__motion">
         <div class="case-nav__flow">
           <div class="case-nav__item case-nav__next">
             <NuxtLink

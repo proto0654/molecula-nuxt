@@ -91,10 +91,14 @@ const { appliedAccent, bodyClass, phase } = useCasePageTransition({
   ready,
 });
 
+const { revealing } = usePageContentReveal();
+
 /** Title scramble after pose settle and case body idle (not under exit veil). */
 const titleReady = computed(
   () => ready.value && phase.value === 'idle',
 );
+
+const pageRevealing = computed(() => revealing.value && ready.value);
 
 const pageTitle = computed(() => {
   const c = caseData.value;
@@ -123,6 +127,7 @@ useSeoMeta({
     :has-slices="composition?.hasSlices"
     :landing-only="composition?.landingOnly"
     :body-class="bodyClass"
+    :revealing="pageRevealing"
   >
     <p v-if="!caseData && pending" class="case-page__status">Loading…</p>
 

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { consumeArchiveReturn } from '~/lib/navigation/archiveReturn';
+import { restoreArchiveScroll } from '~/lib/navigation/archiveReturn';
 import { categoryNameMap } from '~/domain/portfolio/archive';
-import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
 
 const route = useRoute();
 
@@ -18,22 +17,7 @@ const { data: categories } = usePortfolioCategories();
 const categoryById = computed(() => categoryNameMap(categories.value));
 
 function restoreScroll() {
-  const restored = consumeArchiveReturn();
-  if (!restored) return;
-  const reduced = prefersReducedMotion();
-  requestAnimationFrame(() => {
-    const row = document.querySelector<HTMLElement>(
-      `[data-slug="${CSS.escape(restored.slug)}"]`,
-    );
-    if (row) {
-      row.scrollIntoView({
-        block: 'center',
-        behavior: reduced ? 'auto' : 'smooth',
-      });
-      return;
-    }
-    window.scrollTo({ top: restored.y, behavior: reduced ? 'auto' : 'smooth' });
-  });
+  restoreArchiveScroll();
 }
 
 onMounted(() => {

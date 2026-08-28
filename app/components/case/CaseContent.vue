@@ -6,13 +6,6 @@ const props = defineProps<{
   sectionIndex: number;
 }>();
 
-const root = ref<HTMLElement | null>(null);
-
-useCaseScrollEntry({
-  root,
-  preset: 'fade',
-});
-
 const hasMeta = computed(
   () =>
     Boolean(props.caseData.client) ||
@@ -24,7 +17,6 @@ const hasMeta = computed(
 <template>
   <section
     v-if="caseData.contentHtml"
-    ref="root"
     class="case-section case-grid case-content case-section--tone-editorial"
   >
     <CaseSectionMarker
@@ -34,11 +26,7 @@ const hasMeta = computed(
       tone="editorial"
     />
     <div class="case-content__body">
-      <span class="case-scroll-trigger" aria-hidden="true" />
-      <div
-        class="case-content__prose case-scroll-motion"
-        v-html="caseData.contentHtml"
-      />
+      <div class="case-content__prose" v-html="caseData.contentHtml" />
     </div>
     <aside v-if="hasMeta" class="case-content__facts">
       <CaseFacts :case-data="caseData" />

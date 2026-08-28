@@ -23,7 +23,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 | [`CaseLightbox.vue`](../app/components/case/CaseLightbox.vue) | Dark overlay, technical index, close / prev-next |
 | [`ArchiveDetailNav.vue`](../app/components/archive/DetailNav.vue) | Shared NEXT footer: `case-nav` tokens. Case mode (`sectionIndex`) adds numbered marker + scroll fade; archive mode (`case-nav--archive`) aligns from column 3 on desktop. Used on `/portfolio/[slug]` and `/services/[slug]`. |
 
-Route: [`app/pages/portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue). Composition + presentation helpers live in [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (`getCaseComposition`). Scroll entry: [`useCaseScrollEntry`](../app/composables/useCaseScrollEntry.ts). Case→case reveal: [`useCasePageTransition`](../app/composables/useCasePageTransition.ts). Slice bottom runway: [`useCaseSliceBottomSpace`](../app/composables/useCaseSliceBottomSpace.ts). Lightbox: [`useCaseLightbox`](../app/composables/useCaseLightbox.ts). Title scramble reuses [`textScramble`](../app/lib/hero-ui/textScramble.ts) via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue). Reveal is **chained** after the molecule pose veil (`is-awaiting-pose` / [`useAwaitingPose`](../app/composables/useAwaitingPose.ts)) and, on case→case, after body phase `idle` (`revealReady`). Paint layer is absolute; non-letters stay locked so soft-wrap does not drift. Archive/section pages use [`usePageContentReveal`](../app/composables/usePageContentReveal.ts) so body fade-in starts on the same settle signal.
+Route: [`app/pages/portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue). Composition + presentation helpers live in [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (`getCaseComposition`). Scroll entry: [`useCaseScrollEntry`](../app/composables/useCaseScrollEntry.ts). Case→case reveal: [`useCasePageTransition`](../app/composables/useCasePageTransition.ts). Slice bottom runway: [`useCaseSliceBottomSpace`](../app/composables/useCaseSliceBottomSpace.ts). Lightbox: [`useCaseLightbox`](../app/composables/useCaseLightbox.ts). Title scramble reuses [`textScramble`](../app/lib/hero-ui/textScramble.ts) via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue). Reveal is **chained** after the molecule pose veil (`is-awaiting-pose` / [`useAwaitingPose`](../app/composables/useAwaitingPose.ts)) and, on case→case, after body phase `idle` (`revealReady`). Paint layer is absolute; non-letters stay locked so soft-wrap does not drift. Archive/section pages use [`usePageContentReveal`](../app/composables/usePageContentReveal.ts) so entrance beats start on the same settle signal. Listing hairlines chain in-view then IO below the fold — [`MOTION.md`](MOTION.md).
 
 ## Composition
 
@@ -59,7 +59,7 @@ Recipes the layout must hold together:
 
 Density classes on `.case-page`: `--sparse`, `--text-hero`, `--has-slices`, `--landing-only`. First body section uses `--case-space-first` (split hero uses `--case-space-hero`) so hero + section gaps do not stack. Sparse pages give the intro viewport height and pull NEXT closer. Slices already have a scroll runway — footer gap is the section token, not a second footer token.
 
-Marker tones: **editorial** (Overview, Next) = horizontal rail + occasional vertical guide on the label column. **visual** (Interface, Slices) = `NN / LABEL` hairline, no extra HUD on cards. **quiet** (Mobile) = index only. Card labels (`LANDING / 01`, `SCREEN / NN`) stay; do not add rails per card.
+Marker tones: **editorial** (Overview, Next) = horizontal rail + occasional vertical guide on the label column. **visual** (Interface, Slices) = `NN / LABEL` hairline, no extra HUD on cards. **quiet** (Mobile) = index only. Card labels (`LANDING / 01`, `SCREEN / NN`) stay; do not add rails per card. All marker / list / footer rules follow the site [hairline language](DESIGN.md#hairline-language).
 
 ## Tokens
 
@@ -151,7 +151,7 @@ Bottom spacing: `--slice-bottom-space` from `useCaseSliceBottomSpace` — `stagg
 | **2** | `lift` | small scale + slight rotateX | Mobile mockup |
 | **3** | `screensGrid` / `landingOnly` / `slices` | existing 3D | Interface grid, landing-only, Slices only |
 
-Do not use Level 3 on Mobile. Header title scramble is intro motion, gated on pose settle (and case body idle) — not scroll entry. Page reveal (case→case) is a separate L1 on `.case-page__body`.
+Do not use Level 3 on Mobile. Header title scramble is intro motion, gated on pose settle (and case body idle) — not scroll entry. Numbered sections + NEXT footer rows use the same listing conductor as archives ([`useListingReveal`](../app/composables/useListingReveal.ts) on [`CaseShell`](../app/components/case/CaseShell.vue)); gallery / slices / mobile mockup keep ScrollTrigger L2/L3. Page reveal (case→case) is a separate L1 on `.case-page__body`.
 
 Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `overflow: hidden` on the visual field (clips 3D). Without `.js-enabled`, CSS `animation-timeline: view()` fallbacks run (`inner-page-enter-*`, `portfolio-parallax-odd/even`). Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts) / [`useReducedMotion`](../app/composables/useReducedMotion.ts). Home Navigator zoom/fill, pointer tilt, and connector are skipped under reduced motion.
 
@@ -176,7 +176,7 @@ Minimal dark overlay, technical index, close; gallery prev/next. Full source ima
 
 [`/portfolio`](../app/pages/portfolio/index.vue) is an editorial index, not a molecular scene and not agency cards. CSS: [`archive.css`](../app/assets/css/archive.css).
 
-Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, category/meta, compact specimen (`featuredImage ?? landingScreen`). Pagination `01 02 03 →` as crawlable `NuxtLink`s. Desktop 12-col; tablet compressed row; mobile stacks specimen above text. Hover: small specimen shift + title + accent line + arrow (off under reduced motion). Featured wash + accent overlay are **CSS-only** per row (`:hover` / `:focus-within` on `.archive-row__backdrop`) — no JS preview store. Landing-only rows have no wash layer.
+Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, category/meta, compact specimen (`featuredImage ?? landingScreen`). Pagination `01 02 03 →` as crawlable `NuxtLink`s. Desktop 12-col; tablet compressed row; mobile stacks specimen above text. Hover: small specimen shift + title + accent line + arrow (off under reduced motion). Featured wash + accent overlay are **CSS-only** per row (`:hover` / `:focus-within` on `.archive-row__backdrop`) — no JS preview store. Landing-only rows have no wash layer. First-viewport rows draw full-width hairlines in a capped stagger; below-fold rows draw once on intersect — [`MOTION.md`](MOTION.md). Do not put GSAP or ScrollTrigger on archive listings.
 
 ## Footer / NEXT
 

@@ -122,8 +122,25 @@
   --wl-bg: var(--color-bg);
   --wl-text: var(--color-ink);
   --wl-muted: var(--ui-muted);
+  /* Hairline language — static + draw tokens; docs/DESIGN.md § Hairline language */
   --wl-line: rgb(214 219 224 / var(--line-opacity));
   --wl-accent: var(--color-ink-white);
+
+  /* Off-home HTML entrance — docs/MOTION.md */
+  --enter-stagger: 55ms;
+  --enter-duration: 0.55s;
+  --enter-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --enter-y: 10px;
+  --enter-beat-chrome: 0ms;
+  --enter-beat-kicker: 40ms;
+  --enter-beat-title: 80ms;
+  --enter-beat-lead: 140ms;
+  --enter-beat-list: 180ms;
+  --line-draw-duration: 1.25s;
+  --line-draw-ease: cubic-bezier(0.33, 0, 0.18, 1);
+  --reveal-cap: 6;
+  --reveal-content-delay: 500ms;
+  --reveal-i: 0;
 
   /* Type — Mono HUD/titles; Exo 2 for case reading text */
   --font-ui: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Consolas,
@@ -189,6 +206,48 @@
   --bp-tablet-min: 768px;
   --bp-tablet-max: 1023px;
   --bp-desktop-min: 1024px;
+}
+
+@keyframes wl-enter-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wl-enter-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--enter-y), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Full-width hairlines — wipe left → right (clip-path reads clearer than scaleX on 1px). */
+@keyframes wl-enter-line {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Short meta tick — scale from left origin. */
+@keyframes wl-enter-line-scale {
+  from {
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
 }
 
 *,

@@ -6,6 +6,33 @@ export type ArchiveReturnState = {
   y: number;
 };
 
+/** True while archive index is jumping to a restored row (listing measure waits). */
+let restoring = false;
+const restoreIdle = new Set<() => void>();
+
+export function beginArchiveRestore(): void {
+  restoring = true;
+}
+
+export function endArchiveRestore(): void {
+  if (!restoring) return;
+  restoring = false;
+  for (const fn of restoreIdle) fn();
+  restoreIdle.clear();
+}
+
+export function isArchiveRestoring(): boolean {
+  return restoring;
+}
+
+/** Resolves after restore scroll (or immediately if none). */
+export function whenArchiveRestoreIdle(): Promise<void> {
+  if (!restoring) return Promise.resolve();
+  return new Promise((resolve) => {
+    restoreIdle.add(() => resolve());
+  });
+}
+
 const SCOPE_CONFIG: Record<ArchiveReturnScope, { key: string; basePath: string }> = {
   portfolio: { key: 'wl:archive-return', basePath: '/portfolio' },
   services: { key: 'wl:archive-return:services', basePath: '/services' },
@@ -70,4 +97,22 @@ export function archiveIndexHref(
   const base = SCOPE_CONFIG[scope].basePath;
   if (page <= 1) return base;
   return `${base}?page=${page}`;
+}
+
+/** Jump to the saved row (instant) and release the listing-reveal wait. */
+export function restoreArchiveScroll(scope: ArchiveReturnScope = 'portfolio'): void {
+  const restored = consumeArchiveReturn(scope);
+  if (!restored || !import.meta.client) return;
+  beginArchiveRestore();
+  requestAnimationFrame(() => {
+    const row = document.querySelector<HTMLElement>(
+      `[data-slug="${CSS.escape(restored.slug)}"]`,
+    );
+    if (row) {
+      row.scrollIntoView({ block: 'center', behavior: 'auto' });
+    } else {
+      window.scrollTo({ top: restored.y, behavior: 'auto' });
+    }
+    endArchiveRestore();
+  });
 }

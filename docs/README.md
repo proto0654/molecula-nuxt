@@ -7,7 +7,8 @@
 | [WEBGL_HERO.md](WEBGL_HERO.md) | Three.js molecule math / HUD wiring |
 | [CONTENT.md](CONTENT.md) | WP API → normalize → portfolio / services / about → prerender |
 | [CASES.md](CASES.md) | Case + archive visual system (composition, chrome, listing, transitions) |
-| [DESIGN.md](DESIGN.md) | HUD tokens, decorative patterns, scene palette |
+| [MOTION.md](MOTION.md) | Off-home HTML entrance: pose gate, beats, listing chain vs viewport |
+| [DESIGN.md](DESIGN.md) | HUD tokens, **hairline language**, decorative patterns, scene palette |
 | [HERO_WP_FIELDS.md](HERO_WP_FIELDS.md) | ACF Options repeater spec + seed for hero nav copy |
 | [api-real-response.md](api-real-response.md) | Live WordPress REST structure (ACF, menus, pagination) |
 | [../CONTEXT.md](../CONTEXT.md) | Short permanent project facts |

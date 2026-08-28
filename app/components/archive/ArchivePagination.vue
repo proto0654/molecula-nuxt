@@ -24,6 +24,7 @@ const pages = computed(() =>
   <nav
     v-if="totalPages > 1"
     class="archive-pagination"
+    data-enter="tail"
     aria-label="Pagination"
   >
     <NuxtLink

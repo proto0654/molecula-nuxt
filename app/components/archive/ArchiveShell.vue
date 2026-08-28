@@ -16,6 +16,11 @@ const props = withDefaults(
   },
 );
 
+const root = ref<HTMLElement | null>(null);
+const revealingGate = computed(() => Boolean(props.revealing));
+
+useListingReveal(root, revealingGate);
+
 const archiveHref = ref(
   props.archiveScope === 'services' ? '/services' : '/portfolio',
 );
@@ -31,6 +36,7 @@ const chromeVariant = computed(() =>
 
 <template>
   <div
+    ref="root"
     class="archive-page"
     :class="{
       'is-revealing': revealing,
