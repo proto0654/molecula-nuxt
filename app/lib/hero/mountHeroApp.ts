@@ -449,7 +449,7 @@ export function mountHeroApp(
   });
 
 /** Mobile: smaller atom captions and typewriter blurbs. */
-const MOBILE_CAPTION_TITLE_SCALE = 0.82;
+const MOBILE_CAPTION_TITLE_SCALE = 0.72;
 const MOBILE_CAPTION_BLURB_SCALE = 0.88;
 
   function applyViewportMode(): void {
