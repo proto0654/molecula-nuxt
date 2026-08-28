@@ -34,7 +34,7 @@ export class SiteHeader {
     this.logoBtn.type = 'button';
     this.logoBtn.className = 'site-header__logo';
     this.logoBtn.textContent = '[ WEB-LABA ]';
-    this.logoBtn.setAttribute('aria-label', 'Главная');
+    this.logoBtn.setAttribute('aria-label', 'WebLaba, на главную');
     attachTapGuard(this.logoBtn, () => {
       this.onSelect?.('home');
     });

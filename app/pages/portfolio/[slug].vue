@@ -21,6 +21,7 @@ import {
 } from '~/domain/portfolio/presentation';
 
 import { resolveCaseHeroMedia } from '~/domain/editorialHero';
+import { stripTags } from '~/domain/portfolio/presentation';
 
 
 
@@ -217,35 +218,31 @@ const pageRevealing = computed(() => revealing.value && ready.value);
 
 
 const pageTitle = computed(() => {
-
   const c = caseData.value;
-
-  if (!c) return 'Молекула';
-
-  const plainTitle = c.title.replace(/<[^>]*>/g, '').trim() || c.slug;
-
-  return `${plainTitle} — WebLaba`;
-
+  if (!c) return null;
+  return stripTags(c.title) || c.slug;
 });
-
-
 
 const pageDescription = computed(() => {
-
   const c = caseData.value;
-
-  return c ? caseExcerptPlain(c) ?? undefined : undefined;
-
+  if (!c) return undefined;
+  const plain = pageTitle.value;
+  return (
+    caseExcerptPlain(c) ??
+    (plain ? `Кейс «${plain}» — портфолио WebLaba` : undefined)
+  );
 });
 
+const ogImage = computed(() =>
+  backdropUrl.value ? absoluteMediaUrl(backdropUrl.value) : undefined,
+);
 
-
-useSeoMeta({
-
+usePageSeo({
   title: pageTitle,
-
   description: pageDescription,
-
+  ogImage,
+  deferTitle: true,
+  ogType: 'article',
 });
 
 
@@ -410,11 +407,11 @@ onMounted(() => {
 
         base-path="/portfolio"
 
-        index-label="Back to portfolio"
+        index-label="К портфолио"
 
         archive-scope="portfolio"
 
-        aria-label="Case navigation"
+        aria-label="Навигация по кейсам"
 
       />
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { aboutExcerptPlain } from '~/domain/about';
 import { resolveAboutHeroMedia } from '~/domain/editorialHero';
+import { demoteCmsH1 } from '~/domain/wp';
 import { stripTags } from '~/domain/portfolio/presentation';
 
 const { page, pending, error } = useAbout();
@@ -15,15 +16,23 @@ const heroMedia = computed(() =>
   page.value ? resolveAboutHeroMedia(page.value.photo, titlePlain.value) : { kind: 'placeholder' as const },
 );
 
-const pageTitle = computed(() => `${titlePlain.value} — WebLaba`);
 const pageDescription = computed(() => {
   if (!page.value) return 'О студии WebLaba';
   return aboutExcerptPlain(page.value) ?? 'О студии WebLaba';
 });
 
-useSeoMeta({
-  title: pageTitle,
+const ogImage = computed(() =>
+  page.value?.photo?.url ? absoluteMediaUrl(page.value.photo.url) : undefined,
+);
+
+const contentHtml = computed(() =>
+  page.value?.contentHtml ? demoteCmsH1(page.value.contentHtml) : null,
+);
+
+usePageSeo({
+  title: titlePlain,
   description: pageDescription,
+  ogImage,
 });
 </script>
 
@@ -52,9 +61,9 @@ useSeoMeta({
         </header>
 
         <div
-          v-if="page.contentHtml"
+          v-if="contentHtml"
           class="archive-intro case-content__prose"
-          v-html="page.contentHtml"
+          v-html="contentHtml"
         />
       </EditorialHero>
 

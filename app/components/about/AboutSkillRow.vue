@@ -13,7 +13,7 @@ defineProps<{
     <div class="archive-row__link">
       <span class="archive-row__index">{{ padCaseIndex(index) }}</span>
       <span class="archive-row__copy">
-        <span v-if="skill.title" class="archive-row__title">{{ skill.title }}</span>
+        <h3 v-if="skill.title" class="archive-row__title">{{ skill.title }}</h3>
         <span class="archive-row__meta">
           <span class="archive-row__category">Skill</span>
           <span class="archive-row__line" aria-hidden="true" />

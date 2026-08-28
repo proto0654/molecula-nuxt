@@ -1002,6 +1002,8 @@ html.js-enabled .case-page.is-revealing
 }
 
 .case-marker__label {
+  margin: 0;
+  font: inherit;
   font-size: var(--text-meta);
   letter-spacing: var(--track-meta);
   text-transform: uppercase;

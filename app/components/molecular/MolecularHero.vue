@@ -88,7 +88,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="molecular-shell" aria-label="Molecular shell">
+  <div class="molecular-shell">
     <div id="hero-stage" ref="stageRef" class="molecular-hero" />
     <div ref="chromeRef" class="molecular-chrome" />
   </div>

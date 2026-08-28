@@ -26,14 +26,12 @@ const entityLabel = computed(() => (props.variant === 'service' ? 'SERVICE' : 'C
         <p
           v-if="variant === 'archive'"
           class="case-chrome__index"
-          aria-current="page"
         >
           ARCHIVE
         </p>
         <p
           v-else-if="variant === 'section'"
           class="case-chrome__index"
-          aria-current="page"
         >
           {{ sectionLabel }}
         </p>

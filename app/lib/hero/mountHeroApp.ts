@@ -72,6 +72,11 @@ export function mountHeroApp(
 
   const canvas = document.createElement('canvas');
   canvas.id = 'hero-canvas';
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute(
+    'aria-label',
+    'Интерактивная навигация-молекула: выберите раздел сайта',
+  );
   stage.append(canvas);
   stage.classList.add('is-interactive');
 

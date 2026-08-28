@@ -32,9 +32,13 @@ watch(page, (_next, prev) => {
 const { revealing } = usePageContentReveal();
 const { washesReady } = usePortfolioWashGate();
 
-useSeoMeta({
-  title: 'Портфолио — WebLaba',
-  description: 'Архив проектов WebLaba',
+const pageTitle = computed(() =>
+  page.value > 1 ? `Портфолио — страница ${page.value}` : 'Портфолио',
+);
+
+usePageSeo({
+  title: pageTitle,
+  description: 'Кейсы и проекты студии WebLaba — портфолио веб-разработки и дизайна',
 });
 </script>
 
@@ -42,7 +46,7 @@ useSeoMeta({
   <ArchiveShell :revealing="revealing" :washes-ready="washesReady">
     <header class="archive-heading">
       <p class="archive-heading__kicker">Index</p>
-      <SiteScrambleTitle class="archive-heading__title" text="Portfolio" />
+      <SiteScrambleTitle class="archive-heading__title" text="Портфолио" />
     </header>
 
     <p v-if="pending && !entries.length" class="archive-status">Loading…</p>

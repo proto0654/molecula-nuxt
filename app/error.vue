@@ -8,8 +8,13 @@ const message = computed(() => {
   return props.error.statusMessage || 'Something went wrong.';
 });
 
-useSeoMeta({
-  title: `${props.error.statusCode || 'Error'} — WebLaba`,
+const errorTitle = computed(() =>
+  props.error.statusCode === 404 ? 'Страница не найдена' : 'Ошибка',
+);
+
+usePageSeo({
+  title: errorTitle,
+  description: 'Запрошенная страница недоступна. Вернитесь на главную WebLaba.',
 });
 </script>
 

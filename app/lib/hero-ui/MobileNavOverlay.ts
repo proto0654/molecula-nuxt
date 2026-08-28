@@ -1,3 +1,4 @@
+import { createFocusTrap, setPageInert } from '../a11y/focusTrap';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { navigationConfig } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
@@ -19,6 +20,7 @@ export class MobileNavOverlay {
   private readonly onSelect: NavSelectListener | undefined;
   private readonly onCloseRequest: (() => void) | undefined;
   private readonly onKeyDownBound: (event: KeyboardEvent) => void;
+  private focusTrap: ReturnType<typeof createFocusTrap> | null = null;
   private open = false;
   private enterGeneration = 0;
   private static readonly REVEAL_CAP = 6;
@@ -127,6 +129,11 @@ export class MobileNavOverlay {
     document.documentElement.classList.toggle('nav-overlay-open', next);
     if (next) {
       this.state.setNavHover(null);
+      this.focusTrap = createFocusTrap(this.root, {
+        onEscape: () => this.requestClose(),
+      });
+      this.focusTrap.activate();
+      setPageInert(true);
       this.playEnter(() => {
         const active =
           this.itemElements.get(
@@ -135,6 +142,10 @@ export class MobileNavOverlay {
         if (active instanceof HTMLElement) active.focus();
       });
     } else {
+      this.focusTrap?.deactivate();
+      this.focusTrap = null;
+      setPageInert(false);
+      document.querySelector<HTMLElement>('.site-header__menu')?.focus();
       this.state.setNavHover(null);
       this.resetEnter();
     }
@@ -212,6 +223,11 @@ export class MobileNavOverlay {
     for (const [id, el] of this.itemElements) {
       el.classList.toggle('is-active', id === active);
       el.classList.toggle('is-committed', id === committed);
+      if (id === committed) {
+        el.setAttribute('aria-current', 'page');
+      } else {
+        el.removeAttribute('aria-current');
+      }
     }
     const id = committed ?? active;
     if (!id) {
@@ -227,6 +243,8 @@ export class MobileNavOverlay {
   }
 
   dispose(): void {
+    this.focusTrap?.deactivate();
+    setPageInert(false);
     window.removeEventListener('keydown', this.onKeyDownBound);
     document.documentElement.classList.remove('nav-overlay-open');
     this.unsubscribe();

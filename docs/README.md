@@ -8,6 +8,7 @@
 | [CONTENT.md](CONTENT.md) | WP API → normalize → portfolio / services / about → prerender |
 | [CASES.md](CASES.md) | Case + archive visual system (composition, chrome, listing, transitions) |
 | [MOTION.md](MOTION.md) | Off-home HTML entrance: pose gate, beats, listing chain vs viewport |
+| [SEO.md](SEO.md) | `usePageSeo`, canonical/OG, sitemap/robots, WP plain text, a11y landmarks |
 | [DESIGN.md](DESIGN.md) | HUD tokens, **hairline language**, decorative patterns, scene palette |
 | [HERO_WP_FIELDS.md](HERO_WP_FIELDS.md) | ACF Options repeater spec + seed for hero nav copy |
 | [api-real-response.md](api-real-response.md) | Live WordPress REST structure (ACF, menus, pagination) |

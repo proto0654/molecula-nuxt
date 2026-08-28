@@ -73,7 +73,7 @@ About order: Index kicker + H1 + tags → optional photo → intro if content �
 
 Contact order: Index kicker + H1 → intro if text → optional H2 + contacts if rows. Detail repeaters use `archive-row--detail` (dividers between items only — no bottom hairline on last row).
 
-SEO: `useSeoMeta` title + plain excerpt on case / service / about / contact pages.
+SEO: [`usePageSeo`](../app/composables/usePageSeo.ts) on all routes — title (`— WebLaba` suffix except home full title), description, OG/Twitter, canonical. Home copy in [`homeSeo.ts`](../app/domain/seo/homeSeo.ts) (from live weblaba.ru Yoast). WP titles/excerpts via [`htmlToPlainText`](../app/domain/wp/htmlPlain.ts) (entity decode). Build writes `robots.txt` + `sitemap.xml` — see [`SEO.md`](SEO.md).
 
 ## Hero navigation copy
 

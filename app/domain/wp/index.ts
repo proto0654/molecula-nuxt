@@ -1,4 +1,9 @@
 export {
+  decodeHtmlEntities,
+  demoteCmsH1,
+  htmlToPlainText,
+} from './htmlPlain';
+export {
   emptyToNull,
   stripHtmlToPlain,
   normalizeSizes,

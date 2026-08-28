@@ -7,6 +7,7 @@ import {
   serviceExcerptPlain,
 } from '~/domain/services';
 import { resolveServiceHeroMedia } from '~/domain/editorialHero';
+import { demoteCmsH1 } from '~/domain/wp';
 import { padCaseIndex, stripTags } from '~/domain/portfolio/presentation';
 
 const route = useRoute();
@@ -65,15 +66,26 @@ const titlePlain = computed(() => {
   return stripTags(service.value.title) || service.value.slug;
 });
 
-const pageTitle = computed(() => {
-  if (!service.value) return 'Молекула';
-  return `${titlePlain.value} — WebLaba`;
-});
+const pageTitle = computed(() => titlePlain.value || null);
 
 const pageDescription = computed(() => {
   const s = service.value;
-  return s ? serviceExcerptPlain(s) ?? undefined : undefined;
+  if (!s) return undefined;
+  return (
+    serviceExcerptPlain(s) ??
+    (titlePlain.value ? `Услуга «${titlePlain.value}» — WebLaba` : undefined)
+  );
 });
+
+const ogImage = computed(() =>
+  service.value?.featuredImage?.url
+    ? absoluteMediaUrl(service.value.featuredImage.url)
+    : undefined,
+);
+
+const introHtml = computed(() =>
+  service.value?.contentHtml ? demoteCmsH1(service.value.contentHtml) : null,
+);
 
 const heroMedia = computed(() =>
   service.value
@@ -81,9 +93,12 @@ const heroMedia = computed(() =>
     : { kind: 'placeholder' as const },
 );
 
-useSeoMeta({
+usePageSeo({
   title: pageTitle,
   description: pageDescription,
+  ogImage,
+  deferTitle: true,
+  ogType: 'article',
 });
 </script>
 
@@ -119,9 +134,9 @@ useSeoMeta({
         </header>
 
         <div
-          v-if="service.contentHtml"
+          v-if="introHtml"
           class="archive-intro case-content__prose"
-          v-html="service.contentHtml"
+          v-html="introHtml"
         />
       </EditorialHero>
 
@@ -133,9 +148,9 @@ useSeoMeta({
         :prev-title="position?.prev?.title ?? null"
         :next-title="position?.next?.title ?? null"
         base-path="/services"
-        index-label="Back to services"
+        index-label="К услугам"
         archive-scope="services"
-        aria-label="Service navigation"
+        aria-label="Навигация по услугам"
       />
     </template>
   </ArchiveShell>

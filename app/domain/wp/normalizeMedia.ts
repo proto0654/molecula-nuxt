@@ -7,6 +7,7 @@ import type {
   WpTag,
 } from '~/types/wp';
 import type { CaseImage, CaseVideo } from '~/types/wp';
+import { htmlToPlainText } from './htmlPlain';
 
 export function emptyToNull(value: string | false | null | undefined): string | null {
   if (value === false || value == null) return null;
@@ -16,7 +17,7 @@ export function emptyToNull(value: string | false | null | undefined): string | 
 
 export function stripHtmlToPlain(html: string | null): string | null {
   if (!html) return null;
-  const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const text = htmlToPlainText(html);
   return text.length > 0 ? text : null;
 }
 

@@ -12,8 +12,8 @@ const pageDescription = computed(() => {
   return contactExcerptPlain(page.value) ?? 'Контакты WebLaba';
 });
 
-useSeoMeta({
-  title: 'Контакты — WebLaba',
+usePageSeo({
+  title: 'Контакты',
   description: pageDescription,
 });
 </script>

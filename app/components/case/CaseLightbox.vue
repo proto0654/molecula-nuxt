@@ -1,12 +1,15 @@
 <script setup lang="ts">
+import { createFocusTrap, setPageInert } from '~/lib/a11y/focusTrap';
+
 const lightbox = useCaseLightbox();
+const panelRef = ref<HTMLElement | null>(null);
+
+let trap: ReturnType<typeof createFocusTrap> | null = null;
+let triggerEl: HTMLElement | null = null;
 
 function onKey(e: KeyboardEvent) {
   if (!lightbox.state.open) return;
-  if (e.key === 'Escape') {
-    e.preventDefault();
-    lightbox.close();
-  } else if (e.key === 'ArrowRight') {
+  if (e.key === 'ArrowRight') {
     e.preventDefault();
     lightbox.next();
   } else if (e.key === 'ArrowLeft') {
@@ -15,12 +18,41 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
+watch(
+  () => lightbox.state.open,
+  (open) => {
+    if (open) {
+      triggerEl =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      setPageInert(true);
+      nextTick(() => {
+        const panel = panelRef.value;
+        if (!panel) return;
+        trap = createFocusTrap(panel, { onEscape: () => lightbox.close() });
+        trap.activate();
+        panel.querySelector<HTMLElement>('button')?.focus();
+      });
+      return;
+    }
+
+    trap?.deactivate();
+    trap = null;
+    setPageInert(false);
+    triggerEl?.focus();
+    triggerEl = null;
+  },
+);
+
 onMounted(() => {
   window.addEventListener('keydown', onKey);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKey);
+  trap?.deactivate();
+  setPageInert(false);
   if (lightbox.state.open) lightbox.close();
 });
 </script>
@@ -37,10 +69,10 @@ onBeforeUnmount(() => {
       <button
         type="button"
         class="case-lightbox__backdrop"
-        aria-label="Close"
+        aria-label="Закрыть"
         @click="lightbox.close"
       />
-      <div class="case-lightbox__panel">
+      <div ref="panelRef" class="case-lightbox__panel">
         <header class="case-lightbox__bar">
           <p class="case-lightbox__index">{{ lightbox.current.label }}</p>
           <div class="case-lightbox__actions">
@@ -48,27 +80,27 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="case-lightbox__nav"
-                aria-label="Previous"
+                aria-label="Предыдущее"
                 @click="lightbox.prev"
               >
-                Prev
+                Назад
               </button>
               <button
                 type="button"
                 class="case-lightbox__nav"
-                aria-label="Next"
+                aria-label="Следующее"
                 @click="lightbox.next"
               >
-                Next
+                Вперёд
               </button>
             </template>
             <button
               type="button"
               class="case-lightbox__close"
-              aria-label="Close"
+              aria-label="Закрыть"
               @click="lightbox.close"
             >
-              Close
+              Закрыть
             </button>
           </div>
         </header>

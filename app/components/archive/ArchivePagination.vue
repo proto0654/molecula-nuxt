@@ -25,7 +25,7 @@ const pages = computed(() =>
     v-if="totalPages > 1"
     class="archive-pagination"
     data-enter="tail"
-    aria-label="Pagination"
+    aria-label="Пагинация"
   >
     <NuxtLink
       v-if="page > 1"
@@ -36,6 +36,7 @@ const pages = computed(() =>
       <a
         :href="href"
         class="archive-pagination__arrow"
+        aria-label="Предыдущая страница"
         @click="navigate"
       >←</a>
     </NuxtLink>
@@ -62,6 +63,7 @@ const pages = computed(() =>
       <a
         :href="href"
         class="archive-pagination__arrow"
+        aria-label="Следующая страница"
         @click="navigate"
       >→</a>
     </NuxtLink>

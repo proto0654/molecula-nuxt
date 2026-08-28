@@ -27,9 +27,13 @@ watch(page, (_next, prev) => {
 
 const { revealing } = usePageContentReveal();
 
-useSeoMeta({
-  title: 'Услуги — WebLaba',
-  description: 'Услуги WebLaba',
+const pageTitle = computed(() =>
+  page.value > 1 ? `Услуги — страница ${page.value}` : 'Услуги',
+);
+
+usePageSeo({
+  title: pageTitle,
+  description: 'Разработка и дизайн цифровых продуктов — услуги студии WebLaba',
 });
 </script>
 

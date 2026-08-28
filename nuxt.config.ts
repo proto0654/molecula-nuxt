@@ -1,5 +1,12 @@
 import { $fetch } from 'ofetch';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
+import {
+  buildRobotsTxt,
+  buildSitemapXml,
+  setPrerenderRoutes,
+} from './lib/seo-static';
 
 function wpApiBase(): string {
   return (
@@ -51,7 +58,8 @@ export default defineNuxtConfig({
     // Set via NUXT_APP_BASE_URL for GitHub Pages (e.g. /molecula-nuxt/). Do not hardcode.
     baseURL: process.env.NUXT_APP_BASE_URL || '/',
     head: {
-      title: 'Молекула',
+      title: 'WebLaba',
+      titleTemplate: '%s',
       htmlAttrs: { lang: 'ru' },
       meta: [
         { charset: 'utf-8' },
@@ -63,6 +71,8 @@ export default defineNuxtConfig({
     public: {
       /** WordPress REST base. Override with NUXT_PUBLIC_WP_API_BASE. */
       wpApiBase: 'https://weblaba.ru/wp-json',
+      /** Public site origin for canonical/OG/sitemap. Override with NUXT_PUBLIC_SITE_URL. */
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://weblaba.ru',
     },
   },
   typescript: {
@@ -107,6 +117,14 @@ export default defineNuxtConfig({
       } catch (err) {
         console.warn('[prerender] failed to fetch service slugs:', err);
       }
+
+      setPrerenderRoutes(existing);
+    },
+    'nitro:build:public-assets'(nitro) {
+      const publicDir = nitro.options.output.publicDir;
+      writeFileSync(join(publicDir, 'robots.txt'), buildRobotsTxt());
+      writeFileSync(join(publicDir, 'sitemap.xml'), buildSitemapXml());
+      console.info('[seo] wrote robots.txt and sitemap.xml');
     },
   },
 });

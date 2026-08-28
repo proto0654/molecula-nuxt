@@ -18,6 +18,6 @@ withDefaults(
   <header class="case-marker" :class="`case-marker--${tone}`">
     <span class="case-marker__num">{{ padCaseIndex(index) }}</span>
     <span class="case-marker__slash" aria-hidden="true">/</span>
-    <span class="case-marker__label">{{ label }}</span>
+    <h2 class="case-marker__label">{{ label }}</h2>
   </header>
 </template>

@@ -19,8 +19,6 @@ defineProps<{
       :src="video.url"
       :width="video.width ?? undefined"
       :height="video.height ?? undefined"
-    >
-      <track kind="captions" />
-    </video>
+    />
   </div>
 </template>

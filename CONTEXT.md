@@ -37,6 +37,7 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 - Services: [`app/pages/services/`](app/pages/services/) + [`app/components/service/`](app/components/service/) + [`useServices`](app/composables/useServices.ts) — archive like portfolio **without** featured wash; detail = `ArchiveShell` + intro + numbered offer repeater + `ArchiveDetailNav`
 - About: [`app/pages/about.vue`](app/pages/about.vue) + [`app/components/about/`](app/components/about/) + [`useAbout`](app/composables/useAbout.ts) — `ArchiveShell` + photo + numbered skills repeater
 - Contact: [`app/pages/contact.vue`](app/pages/contact.vue) + [`ContactArchiveRow`](app/components/contact/ContactArchiveRow.vue) + [`useContacts`](app/composables/useContacts.ts) — `ArchiveShell` + numbered contact rows
+- SEO / a11y: [`usePageSeo`](app/composables/usePageSeo.ts) + [`homeSeo`](app/domain/seo/homeSeo.ts) + [`htmlPlain`](app/domain/wp/htmlPlain.ts); static `robots.txt` / `sitemap.xml` on generate — [`docs/SEO.md`](docs/SEO.md)
 - Case visual: [`app/assets/css/case.css`](app/assets/css/case.css) + [`CaseShell`](app/components/case/CaseShell.vue) — [`docs/CASES.md`](docs/CASES.md) (featured wash is layout-owned, not inside CaseShell)
 - Archive visual: [`app/assets/css/archive.css`](app/assets/css/archive.css)
 
@@ -46,4 +47,4 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 
 ## Docs hub
 
-See [`docs/README.md`](docs/README.md). Spatial shell: [`docs/SPATIAL.md`](docs/SPATIAL.md). Case / archive visual: [`docs/CASES.md`](docs/CASES.md). Page entrance: [`docs/MOTION.md`](docs/MOTION.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). Hero WP fields: [`docs/HERO_WP_FIELDS.md`](docs/HERO_WP_FIELDS.md). Hero math: [`docs/WEBGL_HERO.md`](docs/WEBGL_HERO.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+See [`docs/README.md`](docs/README.md). Spatial shell: [`docs/SPATIAL.md`](docs/SPATIAL.md). Case / archive visual: [`docs/CASES.md`](docs/CASES.md). Page entrance: [`docs/MOTION.md`](docs/MOTION.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). SEO / a11y: [`docs/SEO.md`](docs/SEO.md). Hero WP fields: [`docs/HERO_WP_FIELDS.md`](docs/HERO_WP_FIELDS.md). Hero math: [`docs/WEBGL_HERO.md`](docs/WEBGL_HERO.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).

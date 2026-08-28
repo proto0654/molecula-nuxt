@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ArchiveReturnScope } from '~/lib/navigation/archiveReturn';
 import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
+import { stripTags } from '~/domain/portfolio/presentation';
 
 const props = withDefaults(
   defineProps<{
@@ -16,7 +17,7 @@ const props = withDefaults(
   }>(),
   {
     archiveScope: 'portfolio',
-    ariaLabel: 'Navigation',
+    ariaLabel: 'Навигация',
   },
 );
 
@@ -30,6 +31,11 @@ const isCase = computed(() => props.sectionIndex != null && props.sectionIndex >
 
 function itemHref(slug: string) {
   return `${props.basePath}/${slug}`;
+}
+
+function plainTitle(title: string | null | undefined): string {
+  if (!title) return '';
+  return stripTags(title);
 }
 </script>
 
@@ -47,7 +53,7 @@ function itemHref(slug: string) {
       v-if="isCase"
       class="case-zone-label"
       :index="sectionIndex!"
-      label="Next"
+      label="Далее"
       tone="editorial"
     />
 
@@ -66,11 +72,11 @@ function itemHref(slug: string) {
               :to="itemHref(nextSlug)"
               class="case-nav__link"
             >
-              <span class="case-nav__dir">Next</span>
-              <span>{{ nextTitle || nextSlug }}</span>
+              <span class="case-nav__dir">Следующий</span>
+              <span>{{ plainTitle(nextTitle) || nextSlug }}</span>
             </NuxtLink>
             <span v-else class="case-nav__muted">
-              <span class="case-nav__dir">Next</span>
+              <span class="case-nav__dir">Следующий</span>
               —
             </span>
           </div>
@@ -81,11 +87,11 @@ function itemHref(slug: string) {
               :to="itemHref(prevSlug)"
               class="case-nav__link"
             >
-              <span class="case-nav__dir">Previous</span>
-              <span>{{ prevTitle || prevSlug }}</span>
+              <span class="case-nav__dir">Предыдущий</span>
+              <span>{{ plainTitle(prevTitle) || prevSlug }}</span>
             </NuxtLink>
             <span v-else class="case-nav__muted">
-              <span class="case-nav__dir">Previous</span>
+              <span class="case-nav__dir">Предыдущий</span>
               —
             </span>
           </div>
@@ -93,7 +99,7 @@ function itemHref(slug: string) {
 
         <div class="case-nav__item case-nav__index">
           <NuxtLink :to="archiveHref" class="case-nav__link">
-            <span class="case-nav__dir">Index</span>
+            <span class="case-nav__dir">Архив</span>
             {{ indexLabel }}
           </NuxtLink>
         </div>

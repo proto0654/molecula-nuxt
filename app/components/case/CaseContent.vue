@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Case } from '~/types/wp';
+import { demoteCmsH1 } from '~/domain/wp';
 
 const props = defineProps<{
   caseData: Case;
@@ -12,11 +13,15 @@ const hasMeta = computed(
     Boolean(props.caseData.technologies) ||
     Boolean(props.caseData.projectUrl),
 );
+
+const proseHtml = computed(() =>
+  props.caseData.contentHtml ? demoteCmsH1(props.caseData.contentHtml) : null,
+);
 </script>
 
 <template>
   <section
-    v-if="caseData.contentHtml"
+    v-if="proseHtml"
     class="case-section case-grid case-content case-section--tone-editorial"
   >
     <CaseSectionMarker
@@ -26,7 +31,7 @@ const hasMeta = computed(
       tone="editorial"
     />
     <div class="case-content__body">
-      <div class="case-content__prose" v-html="caseData.contentHtml" />
+      <div class="case-content__prose" v-html="proseHtml" />
     </div>
     <aside v-if="hasMeta" class="case-content__facts">
       <CaseFacts :case-data="caseData" />

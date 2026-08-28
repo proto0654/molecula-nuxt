@@ -1,4 +1,5 @@
 import type { Case, CaseImage, CaseMobileSlices } from '~/types/wp';
+import { htmlToPlainText } from '~/domain/wp/htmlPlain';
 
 const LANDING_SIZES = ['weblaba-landing', 'weblaba-screen', 'medium_large', 'large'] as const;
 const SCREEN_SIZES = ['weblaba-screen', 'weblaba-landing', 'medium_large', 'large'] as const;
@@ -293,7 +294,7 @@ export function caseFeaturedBackdropUrl(c: Case): string | null {
 }
 
 export function stripTags(html: string): string {
-  return html.replace(/<[^>]*>/g, '').trim();
+  return htmlToPlainText(html);
 }
 
 export type CaseSectionKey =

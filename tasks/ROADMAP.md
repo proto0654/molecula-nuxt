@@ -53,7 +53,7 @@ STEPs 1–19 остаются Done. Мелкий долг foundation:
 
 - [x] §15 Prev/next titles: slim index includes `title`; footer uses real titles
 - [ ] §16 Menu: API `menus/v1` + `useWpMenu` есть, ни одна страница composable не вызывает
-- [ ] §23 SEO: `useSeoMeta` title + excerpt есть, canonical нет
+- [x] §23 SEO: `usePageSeo` (title, description, OG, canonical), `robots.txt` + `sitemap.xml` on generate — [`docs/SEO.md`](../docs/SEO.md)
 
 Смежные (не отдельные STEPs): нет `srcset` (§22). Error states (§21) на foundation-уровне уже есть — отдельный чекбокс не нужен.
 
