@@ -1,5 +1,15 @@
 /* About — archive layout. */
 
+.editorial-hero--about .editorial-hero__aside {
+  padding: var(--editorial-hero-media-inset-about);
+}
+
+@media (min-width: 1024px) {
+  .editorial-hero--about .editorial-hero__aside {
+    padding: var(--editorial-hero-media-inset-about-desktop);
+  }
+}
+
 .about-cta {
   margin: 0;
 }

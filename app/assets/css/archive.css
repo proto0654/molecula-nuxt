@@ -231,6 +231,10 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
     height: 100%;
   }
 
+  .editorial-hero:not(.editorial-hero--about) .editorial-hero__aside {
+    padding: var(--editorial-hero-media-inset-desktop);
+  }
+
   .editorial-hero--case {
     min-height: min(72vh, 42rem);
   }
