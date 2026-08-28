@@ -2092,6 +2092,14 @@ html.js-enabled .case-page.is-revealing
 }
 
 @media (min-width: 1024px) {
+  .case-section:has(.case-mobile) .case-zone-label {
+    grid-column: 1 / -1;
+  }
+
+  .case-section:has(.case-mobile) .case-marker--visual {
+    margin: 0 0 1.35rem;
+  }
+
   .case-mobile {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 2rem 2.5rem;
@@ -2101,11 +2109,15 @@ html.js-enabled .case-page.is-revealing
     justify-self: end;
   }
 
+  .case-mobile__meta {
+    display: none;
+  }
+
   .case-mobile__caption {
     grid-column: 2;
     width: 100%;
     max-width: none;
-    padding-top: 2rem;
+    padding-top: 0;
   }
 }
 

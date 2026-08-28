@@ -40,7 +40,7 @@ function openMockup() {
     v-if="caseData.mobile"
     :index="sectionIndex"
     label="Mobile"
-    tone="quiet"
+    tone="visual"
   >
     <div ref="root" class="case-mobile case-scroll-field case-interactive case-interactive--device">
       <div class="case-mobile__mockup">
