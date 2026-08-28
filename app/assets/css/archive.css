@@ -446,10 +446,8 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
   margin-top: var(--case-space-section);
 }
 
-@media (min-width: 768px) {
-  .case-nav--archive .case-nav__links {
-    padding-left: calc(2.75rem + 1.25rem);
-  }
+.case-nav__decor {
+  display: none;
 }
 
 @media (min-width: 1024px) {
@@ -459,9 +457,27 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
     column-gap: var(--case-col-gap);
   }
 
+  .case-nav--archive .case-nav__decor {
+    display: block;
+    grid-column: 1 / 7;
+    position: relative;
+    min-height: 4.75rem;
+    border-top: 1px solid rgb(214 219 224 / var(--line-opacity));
+  }
+
+  .case-nav--archive .case-nav__decor::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 4.75rem;
+    background: rgb(214 219 224 / var(--line-opacity));
+    pointer-events: none;
+  }
+
   .case-nav--archive .case-nav__links {
-    grid-column: 3 / -1;
-    padding-left: 0;
+    grid-column: 7 / -1;
   }
 }
 

@@ -32,7 +32,7 @@
   --case-mobile-caption-max: 44rem;
   /* Desktop screens: absolute + relative width cap */
   --case-screen-max: min(52rem, 78vw);
-  /* Single landing_screen on desktop — narrower, left-aligned in center column */
+  /* Single landing_screen on desktop — narrower, centered in center column */
   --case-landing-max: min(40rem, 58vw);
   --slice-gap: clamp(0.75rem, 3vw, 1.5rem);
   --slice-col-stagger: clamp(4rem, 15vw, 10rem);
@@ -1797,7 +1797,7 @@ html.js-enabled .case-page.is-revealing
 
   .case-inner-pages--landing-only {
     max-width: var(--case-landing-max);
-    margin-inline: 0;
+    margin-inline: auto;
   }
 }
 
@@ -2431,14 +2431,13 @@ html.case-lightbox-open {
 }
 
 @media (min-width: 1024px) {
-  .case-nav__links {
-    grid-column: 4 / -1;
+  /* Footer nav — 50/50: editorial marker left, stacked links right. */
+  nav.case-nav.case-section .case-zone-label {
+    grid-column: 1 / 7;
   }
 
-  .case-nav__motion {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 1.5rem 3rem;
+  .case-nav__links {
+    grid-column: 7 / -1;
   }
 
   .case-nav__prev {
@@ -2447,18 +2446,11 @@ html.case-lightbox-open {
   }
 
   .case-nav__flow {
-    grid-column: 1;
-    grid-row: 1;
     padding-block: 0.75rem;
   }
 
   .case-nav__index {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-    align-self: start;
     padding-block: 0.75rem;
-    text-align: right;
   }
 
   .case-nav__flow .case-nav__link,

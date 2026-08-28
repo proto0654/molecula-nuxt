@@ -1557,11 +1557,7 @@ html.nav-overlay-open body {
   }
 
   .nav__mark {
-    display: block;
-    flex: 0 0 auto;
-    font-size: 0.75rem;
-    letter-spacing: var(--track-mark);
-    color: var(--ink-38);
+    display: none;
   }
 
   .nav__list {

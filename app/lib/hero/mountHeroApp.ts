@@ -302,6 +302,36 @@ export function mountHeroApp(
     activateCommittedItem(itemId);
   }
 
+  /** Mobile overlay: route first — SpatialController runs a single approachTo. */
+  function selectFromMobileMenu(itemId: string): void {
+    if (navigator.busy) return;
+    const item = getItemById(itemId);
+    if (!item) return;
+
+    if (itemId === HOME_ITEM_ID) {
+      if (isHome) {
+        restoreHomeSelection();
+      } else if (item.route) {
+        void options.onNavigateRoute?.(item.route);
+      }
+      return;
+    }
+
+    if (item.route && item.route !== '/') {
+      options.prefetchRoute?.(item.route);
+      autoplay.pause();
+      uspHeadline.hide();
+      void options.onNavigateRoute?.(item.route);
+      return;
+    }
+
+    if (isHome) {
+      selectItem(itemId);
+    } else if (item.route) {
+      void options.onNavigateRoute?.(item.route);
+    }
+  }
+
   function restoreHomeSelection(): void {
     if (navigator.busy) {
       destination.hide();
@@ -336,16 +366,7 @@ export function mountHeroApp(
   const mobileNav = new MobileNavOverlay(chromeRoot, navigationState, {
     onSelect: (itemId) => {
       setMenuOpen(false);
-
-      if (!isHome) {
-        const item = getItemById(itemId);
-        if (item?.route) {
-          void options.onNavigateRoute?.(item.route);
-        }
-        return;
-      }
-
-      selectItem(itemId);
+      selectFromMobileMenu(itemId);
     },
     onClose: () => setMenuOpen(false),
   });

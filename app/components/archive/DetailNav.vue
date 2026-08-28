@@ -51,6 +51,12 @@ function itemHref(slug: string) {
       tone="editorial"
     />
 
+    <div
+      v-else
+      class="case-nav__decor case-zone-label"
+      aria-hidden="true"
+    />
+
     <div class="case-nav__links">
       <div class="case-nav__motion">
         <div class="case-nav__flow">
