@@ -139,6 +139,10 @@ export class Atom {
     this.atomLabel.setBlurb(blurb);
   }
 
+  setLabelVisible(visible: boolean): void {
+    this.atomLabel.setVisible(visible);
+  }
+
   updateLabel(camera: Camera): void {
     this.atomLabel.update(camera, this.mesh);
   }

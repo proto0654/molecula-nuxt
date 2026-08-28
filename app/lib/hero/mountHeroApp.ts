@@ -26,7 +26,7 @@ import { NavigationConnector } from '../hero-ui/NavigationConnector';
 import { SiteHeader } from '../hero-ui/SiteHeader';
 import { UspHeadline } from '../hero-ui/UspHeadline';
 import { HeroAutoplay } from './HeroAutoplay';
-import { HOME_ITEM_ID } from '../spatial/spatialAtoms';
+import { HOME_ITEM_ID, hubAtomId } from '../spatial/spatialAtoms';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { SpatialController, type SpatialApplyOptions } from '../spatial/SpatialController';
 import type { SpatialState } from '../spatial/types';
@@ -245,6 +245,13 @@ export function mountHeroApp(
       titleHighlightIds.push(previewItem.atomId);
     }
     controller.setAtomTitleHighlight(titleHighlightIds);
+
+    const hubId = hubAtomId();
+    const hideHubLabel =
+      isHome &&
+      ((committedItem?.atomId !== undefined && committedItem.atomId !== hubId) ||
+        (hasDistinctPreview && previewItem?.atomId !== hubId));
+    controller.setAtomLabelVisible(hubId, !hideHubLabel);
 
     if (!isHome) {
       controller.setAtomBlurb(null, null);

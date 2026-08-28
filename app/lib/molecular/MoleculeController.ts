@@ -905,6 +905,10 @@ export class MoleculeController {
     }
   }
 
+  setAtomLabelVisible(atomId: string, visible: boolean): void {
+    this.scene.getAtom(atomId)?.setLabelVisible(visible);
+  }
+
   /**
    * Shifts rest framing from a viewport composition profile.
    * World atom locals stay unchanged; offsets use FOV + aspect + camera axes.

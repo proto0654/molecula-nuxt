@@ -156,6 +156,10 @@ export class AtomLabel {
     this.remainder.visible = visible && this.remainder.text.length > 0;
   }
 
+  setVisible(visible: boolean): void {
+    this.object.visible = visible;
+  }
+
   /** Scales title + blurb together (mobile hub matches peripheral caption size). */
   setFontScale(scale: number): void {
     const next = Math.max(0.25, scale);
