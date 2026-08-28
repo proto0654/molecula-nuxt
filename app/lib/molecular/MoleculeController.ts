@@ -4,6 +4,7 @@ import type { HaloMode } from './AtomSelectionIndicator';
 import {
   COMPOSITION_PROFILES,
   type CompositionProfile,
+  type ViewportMode,
 } from './composition/profiles';
 import { getStableFocusQuaternion } from './math/focusAtom';
 import {
@@ -89,11 +90,26 @@ const ZOOM_VIEWPORT_FILL = 0.9;
  * Extra viewport fill at `fillProgress = 1` (atom overflows the frame).
  * Effective fill = lerp(ZOOM_VIEWPORT_FILL, this, fillProgress).
  */
-const FILL_VIEWPORT_FILL = 1.35;
+const FILL_VIEWPORT_FILL_DESKTOP = 1.75;
+
+const FILL_VIEWPORT_FILL_TABLET = 1.35;
 
 /** Mobile: softer held approach — stays in frame, minimal push toward the viewer. */
 const FILL_VIEWPORT_FILL_MOBILE = 1.1;
 
+function fillViewportTargetForMode(mode: ViewportMode): number {
+  switch (mode) {
+    case 'mobile':
+      return FILL_VIEWPORT_FILL_MOBILE;
+    case 'tablet':
+      return FILL_VIEWPORT_FILL_TABLET;
+    case 'desktop':
+      return FILL_VIEWPORT_FILL_DESKTOP;
+  }
+}
+
+/** Keep the mesh shell in front of the camera near plane at full fill. */
+const NEAR_SHELL_MARGIN = 0.02;
 const AXIS_Y = new Vector3(0, 1, 0);
 const AXIS_X = new Vector3(1, 0, 0);
 
@@ -1477,13 +1493,12 @@ export class MoleculeController {
     this.scene.camera.getWorldPosition(this.scratchCameraPos);
     this.scene.camera.getWorldDirection(this.scratchLookDir);
 
-    const fillTarget =
-      this.compositionProfile.mode === 'mobile'
-        ? FILL_VIEWPORT_FILL_MOBILE
-        : FILL_VIEWPORT_FILL;
+    const fillTarget = fillViewportTargetForMode(this.compositionProfile.mode);
     this.focusDistanceOptions.viewportFill =
       ZOOM_VIEWPORT_FILL +
       (fillTarget - ZOOM_VIEWPORT_FILL) * this.fillProgress;
+    this.focusDistanceOptions.minCenterDistance =
+      this.scene.camera.near + atom.radius + NEAR_SHELL_MARGIN;
     const focusDistance = getAtomFocusDistance(
       atom.radius,
       this.scene.camera,

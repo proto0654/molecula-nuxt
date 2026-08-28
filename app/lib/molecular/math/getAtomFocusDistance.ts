@@ -14,6 +14,11 @@ export type AtomFocusDistanceOptions = {
    */
   safetyMargin?: number;
   /**
+   * Minimum camera→atom-center distance so the near shell stays in front of
+   * `camera.near` (pass `camera.near + atomRadius` plus a small margin).
+   */
+  minCenterDistance?: number;
+  /**
    * Which FOV axis limits the fit.
    * - `vertical` — use `camera.fov` (current default)
    * - `horizontal` — derive HFOV from fov + aspect
@@ -55,6 +60,7 @@ export function getAtomFocusDistance(
 ): number {
   const viewportFill = options.viewportFill ?? DEFAULT_VIEWPORT_FILL;
   const safetyMargin = options.safetyMargin ?? DEFAULT_SAFETY_MARGIN;
+  const minCenterDistance = options.minCenterDistance;
   const fit = options.fit ?? 'vertical';
 
   const radius = Math.max(atomRadius, 1e-6);
@@ -71,12 +77,23 @@ export function getAtomFocusDistance(
 
   switch (fit) {
     case 'horizontal':
-      return dHorizontal;
+      return clampMinCenterDistance(dHorizontal, minCenterDistance);
     case 'contain':
       // Larger distance ⇒ smaller on screen ⇒ fits the tighter axis.
-      return Math.max(dVertical, dHorizontal);
+      return clampMinCenterDistance(
+        Math.max(dVertical, dHorizontal),
+        minCenterDistance,
+      );
     case 'vertical':
     default:
-      return dVertical;
+      return clampMinCenterDistance(dVertical, minCenterDistance);
   }
+}
+
+function clampMinCenterDistance(
+  distance: number,
+  minCenterDistance: number | undefined,
+): number {
+  if (minCenterDistance === undefined) return distance;
+  return Math.max(distance, minCenterDistance);
 }
