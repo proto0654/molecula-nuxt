@@ -22,6 +22,7 @@ const frameAspectRatio = computed(() =>
 );
 
 const bleedMobile = computed(() => props.variant !== 'about');
+const showsAside = computed(() => props.media.kind !== 'placeholder');
 </script>
 
 <template>
@@ -29,7 +30,10 @@ const bleedMobile = computed(() => props.variant !== 'about');
     class="editorial-hero"
     :class="[
       `editorial-hero--${variant}`,
-      { 'editorial-hero--bleed-mobile': bleedMobile },
+      {
+        'editorial-hero--bleed-mobile': bleedMobile,
+        'editorial-hero--no-media': media.kind === 'placeholder',
+      },
     ]"
   >
     <div class="editorial-hero__content">
@@ -37,6 +41,7 @@ const bleedMobile = computed(() => props.variant !== 'about');
     </div>
     <div class="editorial-hero__aside">
       <EditorialHeroMedia
+        v-if="showsAside"
         :media="media"
         :image-variant="imageVariant"
         :aspect-ratio="frameAspectRatio"

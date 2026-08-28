@@ -235,6 +235,10 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
     padding: var(--editorial-hero-media-inset-desktop);
   }
 
+  .editorial-hero.editorial-hero--no-media .editorial-hero__aside {
+    padding: 0;
+  }
+
   .editorial-hero--case {
     min-height: min(72vh, 42rem);
   }
@@ -277,6 +281,15 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
   .editorial-hero--bleed-mobile .editorial-hero-media__frame {
     width: 100%;
     max-width: none;
+  }
+
+  .editorial-hero--no-media .editorial-hero__aside {
+    display: none;
+  }
+
+  .editorial-hero--no-media .editorial-hero__content {
+    order: 0;
+    margin-top: 0;
   }
 }
 
