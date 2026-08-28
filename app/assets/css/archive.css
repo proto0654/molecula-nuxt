@@ -14,6 +14,24 @@
   padding: var(--case-pad-y) var(--case-pad-x) var(--case-space-footer);
 }
 
+@media (min-width: 1024px) {
+  .archive-page__body {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--case-col-gap);
+  }
+
+  .archive-page__body > * {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .archive-page__body > .archive-pagination,
+  .archive-page__body > .about-cta {
+    grid-column: 4 / -1;
+  }
+}
+
 /* Entrance beats — docs/MOTION.md. Do not fade the whole body (chrome is outside it). */
 html.js-enabled .archive-page:not(.is-revealing) .archive-heading__kicker,
 html.js-enabled .archive-page:not(.is-revealing) .archive-intro,
@@ -707,11 +725,11 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
   }
 
   .archive-row--detail .archive-row__index {
-    grid-column: 1 / 3;
+    grid-column: 1 / 4;
   }
 
   .archive-row--detail .archive-row__copy {
-    grid-column: 3 / 10;
+    grid-column: 4 / -1;
   }
 }
 
@@ -890,15 +908,15 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
   }
 
   .archive-row__index {
-    grid-column: 1 / 3;
+    grid-column: 1 / 4;
   }
 
   .archive-row__copy {
-    grid-column: 3 / 9;
+    grid-column: 4 / 10;
   }
 
   .archive-row__specimen {
-    grid-column: 9 / 13;
+    grid-column: 10 / -1;
     aspect-ratio: 16 / 9;
   }
 
