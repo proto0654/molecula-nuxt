@@ -317,9 +317,15 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
   font-size: var(--text-hero-title);
   font-weight: 400;
   letter-spacing: var(--track-case-title);
-  line-height: 0.95;
+  line-height: var(--editorial-hero-title-leading);
   color: var(--color-ink-title);
   text-transform: uppercase;
+}
+
+.editorial-hero__content
+  :is(.archive-heading__title, .case-header__title)
+  :is(.scramble-title, .scramble-title__measure, .scramble-title__display) {
+  line-height: inherit;
 }
 
 .editorial-hero__content

@@ -60,7 +60,7 @@ Recipes the layout must hold together:
 
 Density classes on `.case-page`: `--sparse`, `--has-slices`, `--landing-only`. First body section uses `--case-space-first` (case hero uses `--case-space-hero`) so hero + section gaps do not stack. Sparse pages give the intro viewport height and pull NEXT closer. Slices already have a scroll runway — footer gap is the section token, not a second footer token.
 
-Marker tones: **editorial** (Overview, Next) = horizontal rail + occasional vertical guide on the label column. **visual** (Interface, Slices) = `NN / LABEL` hairline, no extra HUD on cards. **quiet** (Mobile) = index only. Card labels (`LANDING / 01`, `SCREEN / NN`) stay; do not add rails per card. All marker / list / footer rules follow the site [hairline language](DESIGN.md#hairline-language).
+Marker tones: **editorial** (Overview, Next) = horizontal rail + occasional vertical guide on the label column. **visual** (Interface, Mobile, Slices) = full-width `NN / LABEL` hairline on lg. Card labels (`LANDING / 01`, `SCREEN / NN`) stay on cards; on lg the composite mockup hides `MOBILE / 01` (lightbox label unchanged). All marker / list / footer rules follow the site [hairline language](DESIGN.md#hairline-language).
 
 ## Tokens
 
@@ -81,6 +81,7 @@ Accent belongs on: section marker number, metadata labels, hover/active nav, sel
 | `--text-case-nav-title` | Footer case titles on lg (`clamp(0.9375rem, 1.35vw, 1.1875rem)`) |
 | `--case-media-max` | Cap tall **CMS prose** media only — **not** gallery / landing screens |
 | `--case-screen-max` | Desktop screens: `min(52rem, 78vw)` absolute + relative |
+| `--case-landing-max` | Landing-only desktop card cap: `min(40rem, 58vw)` — centered in `.case-zone-center` |
 | `--case-mobile-max` | Composite mockup width: `min(20rem, 34vw)` — no frame/backing on image |
 | `--case-mobile-caption-max` | Caption on mobile: `44rem` (two editorial cols on lg) |
 
@@ -165,16 +166,16 @@ Optional; missing blocks leave no reserved gap. Numbered sections count **visibl
 
 ### Desktop screens (Interface)
 
-Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in center column (cols 4–9 / `.case-zone-center`). Mobile masonry respects the same `--case-pad-x` page inset as other blocks — no extra breakout beyond the layout frame.
+Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in center column (cols 4–10 / `.case-zone-center`). Repeater masonry respects `--case-pad-x`; landing-only card breaks out to full viewport width on mobile (`<1024px`, same bleed pattern as `.editorial-hero--bleed-mobile`).
 
 | Mode | When | Layout | GSAP |
 |------|------|--------|------|
 | **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | per-card `rotateY` flip (±50° by column), scrub `top 88%`→`top 62%`; no repeater pointer layer. CSS fallback: `grid-screen-flip-y` (`animation-timeline: view()`, entry 22%–38%) |
-| **Landing-only** | only `landing_screen` | one full-width card, no stair | kinetic float (`translateZ` −140 + `rotateX` 24° + `translateY` 40); specular tilt + glare on pointer |
+| **Landing-only** | only `landing_screen` | one card; mobile: full viewport width; desktop: centered in center column (`--case-landing-max`) | kinetic float (`translateZ` −140 + `rotateX` 24° + `translateY` 40); specular tilt + glare on pointer |
 
 Stair (desktop, first card in col): `--stair-0` `clamp(7rem, 28vw, 18rem)`, `--stair-1` `clamp(3.5rem, 14vw, 9rem)`. Reset under `prefers-reduced-motion`.
 
-Perspective desktop stage: 1000px / origin 50% 42%. Card shadow `10px 18px 36px rgba(0,0,0,0.28)`. **Full intrinsic height always** — never clip or scan-window a landing / repeater screen. Width via `--case-screen-max` on landing-only. Pointer tilt is nested inside ScrollTrigger so the two transforms do not fight. Interactive listeners idle unless [`caseMotionGate`](../app/composables/caseMotionGate.ts) is on (body `idle`, payload ready, pose settled) and the lightbox is closed.
+Perspective desktop stage: 1000px / origin 50% 42%. Card shadow `10px 18px 36px rgba(0,0,0,0.28)`. **Full intrinsic height always** — never clip or scan-window a landing / repeater screen. Landing-only width: mobile full bleed; desktop `--case-landing-max` centered in center column. Pointer tilt is nested inside ScrollTrigger so the two transforms do not fight. Interactive listeners idle unless [`caseMotionGate`](../app/composables/caseMotionGate.ts) is on (body `idle`, payload ready, pose settled) and the lightbox is closed.
 
 ### Mobile slices
 
@@ -205,7 +206,7 @@ Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `ove
 
 Do not drop filled `screen-mobile` / `screenshot_image` / mobile signature. Both mockup and slices may appear on the same case.
 
-**Composite mockup (Mobile):** flat `screenshot_image` (no card frame). lg grid: mockup `--case-mobile-max` + caption spanning two `22rem` tracks (`--case-mobile-caption-max`). Body zone cols 4–12. Pointer tilt + glass glare on desktop; `DeviceOrientation` tilt on touch devices. Interactive layer gated by [`caseMotionGate`](../app/composables/caseMotionGate.ts) during route exit / case→case transition.
+**Composite mockup (Mobile):** flat `screenshot_image` (no card frame). Desktop (`≥1024px`): page **subgrid** split aligned with footer nav — mockup cols 1–6 (right-aligned within left half, external `margin-inline-end`), caption cols 7–12; section marker spans full width (`tone="visual"`). Service-style archive footer uses the same 50/50 split with a decorative left rail (no index). Pointer tilt + glass glare on desktop; `DeviceOrientation` tilt on touch devices. Interactive layer gated by [`caseMotionGate`](../app/composables/caseMotionGate.ts) during route exit / case→case transition.
 
 ### Lightbox
 
@@ -219,7 +220,7 @@ Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, 
 
 ## Footer / NEXT
 
-Numbered editorial section. Order: **Next** + case title, **Previous** + case title (stacked, left-aligned on all breakpoints), **Index / Back to portfolio** (right column on lg; last in the stack on mobile). Desktop case titles use `--text-case-nav-title`. Muted `—` when there is no neighbour. Not a blog footer.
+Numbered editorial section. Desktop (`≥1024px`): **50/50** page grid — marker cols 1–6 (editorial rail + `NN / Next`), links cols 7–12. Service detail uses the same split with a decorative left rail (no index label). Order in the links column: **Next** + case title, **Previous** + case title, **Index / Back to portfolio** — stacked on all breakpoints (no right-floated Index on lg). Desktop case titles use `--text-case-nav-title`. Muted `—` when there is no neighbour. Not a blog footer.
 
 ## Page transitions
 

@@ -208,6 +208,7 @@
   --editorial-hero-media-inset: clamp(1.5rem, 7vw, 3.25rem);
   --editorial-hero-content-gap: clamp(1.25rem, 3vh, 2rem);
   --text-hero-title: var(--text-case-title-split);
+  --editorial-hero-title-leading: 1.15;
   --editorial-hero-media-ratio: 16 / 9;
   --editorial-hero-media-ratio-about: 1 / 1;
   --editorial-hero-frame-side: calc(var(--line-draw-duration) * 0.25);
@@ -217,6 +218,12 @@
   --bp-tablet-min: 768px;
   --bp-tablet-max: 1023px;
   --bp-desktop-min: 1024px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --editorial-hero-title-leading: 1.06;
+  }
 }
 
 @keyframes wl-enter-frame-v {

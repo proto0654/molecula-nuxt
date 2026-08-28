@@ -116,7 +116,7 @@ All detail pages share one hero system: [`.editorial-hero`](../app/components/Ed
 | **Col 1 (left)** | Media frame — video, featured image, or outline placeholder; centered with equal inset; negative space around the frame |
 | **Col 2 (right)** | All hero copy: kicker, title, tags, intro |
 
-Desktop: `1fr 1fr` grid (`≥1024px`), both columns vertically centered. Unified typography inside `.editorial-hero__content` (`--text-hero-title`, `--editorial-hero-content-gap`). Media uses `object-fit: cover` inside the frame.
+Desktop: `1fr 1fr` grid (`≥1024px`), both columns vertically centered. Unified typography inside `.editorial-hero__content` (`--text-hero-title`, `--editorial-hero-title-leading`, `--editorial-hero-content-gap`). Media uses `object-fit: cover` inside the frame.
 
 Frame aspect: video native ratio when known, else `16 / 9`. **About exception** (`variant="about"`): always `1 / 1` on all breakpoints; media inset preserved on all sides. **Other detail pages** on mobile (`<1024px`): `.editorial-hero--bleed-mobile` — media breaks out to full viewport width (`100vw`); vertical inset kept, horizontal inset removed.
 
@@ -134,6 +134,7 @@ Tokens (`main.css`):
 | `--editorial-hero-media-ratio-about` | About frame aspect (`1 / 1`) |
 | `--editorial-hero-content-gap` | Space between title block and intro |
 | `--text-hero-title` | Hero title size (→ `--text-case-title-split`) |
+| `--editorial-hero-title-leading` | Hero title line-height (`1.15` default; `1.06` on `≥1024px`) — ScrambleTitle measure/display inherit |
 | `--editorial-hero-frame-side` | Per-edge draw delay (`line-draw / 4`) |
 | `--editorial-hero-min-height` / `--editorial-hero-min-height-sparse` | Hero block min height |
 
