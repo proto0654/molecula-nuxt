@@ -448,6 +448,10 @@ export function mountHeroApp(
     },
   });
 
+/** Mobile: smaller atom captions and typewriter blurbs. */
+const MOBILE_CAPTION_TITLE_SCALE = 0.82;
+const MOBILE_CAPTION_BLURB_SCALE = 0.88;
+
   function applyViewportMode(): void {
     const mode = resolveViewportMode({
       desktop: desktopMq.matches,
@@ -456,6 +460,12 @@ export function mountHeroApp(
     const profile = COMPOSITION_PROFILES[mode];
     controller.setCaptionsCompact(false);
     controller.setCaptionRemainderScale(mode === 'tablet' ? 0.82 : 1);
+    controller.setCaptionTitleScale(
+      mode === 'mobile' ? MOBILE_CAPTION_TITLE_SCALE : 1,
+    );
+    controller.setCaptionBlurbScale(
+      mode === 'mobile' ? MOBILE_CAPTION_BLURB_SCALE : 1,
+    );
     controller.setCompositionProfile(profile);
     // Home desktop only: stage bias. Elsewhere profile is already centered.
     // Skip while Navigator owns framing (approach / retarget center override).

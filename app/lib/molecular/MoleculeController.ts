@@ -1113,6 +1113,18 @@ export class MoleculeController {
     }
   }
 
+  setCaptionTitleScale(scale: number): void {
+    for (const atom of this.scene.getAtoms()) {
+      atom.atomLabel.setTitleScale(scale);
+    }
+  }
+
+  setCaptionBlurbScale(scale: number): void {
+    for (const atom of this.scene.getAtoms()) {
+      atom.atomLabel.setBlurbScale(scale);
+    }
+  }
+
   /** Typewriter blurb under the caption; one atom at a time. */
   setAtomBlurb(atomId: string | null, blurb: string | null): void {
     for (const atom of this.scene.getAtoms()) {

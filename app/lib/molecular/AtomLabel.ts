@@ -67,6 +67,8 @@ export class AtomLabel {
   private readonly baseRemainderFontSize: number;
   private readonly baseBlurbFontSize: number;
   private fontScale = 1;
+  private titleScale = 1;
+  private blurbScale = 1;
   private remainderScale = 1;
   private remainderVisible = true;
   private titleActive = false;
@@ -160,11 +162,27 @@ export class AtomLabel {
     this.object.visible = visible;
   }
 
-  /** Scales title + blurb together (mobile hub matches peripheral caption size). */
+  /** Per-atom radius compensation (hub matches peripheral caption size on mobile). */
   setFontScale(scale: number): void {
     const next = Math.max(0.25, scale);
     if (next === this.fontScale) return;
     this.fontScale = next;
+    this.applyFontSizes();
+  }
+
+  /** Viewport typography: main caption letter + remainder. */
+  setTitleScale(scale: number): void {
+    const next = Math.max(0.5, scale);
+    if (next === this.titleScale) return;
+    this.titleScale = next;
+    this.applyFontSizes();
+  }
+
+  /** Viewport typography: typewriter blurb under the caption. */
+  setBlurbScale(scale: number): void {
+    const next = Math.max(0.5, scale);
+    if (next === this.blurbScale) return;
+    this.blurbScale = next;
     this.applyFontSizes();
   }
 
@@ -263,15 +281,19 @@ export class AtomLabel {
   }
 
   private get effectiveLetterFontSize(): number {
-    return this.baseLetterFontSize * this.fontScale;
+    return this.baseLetterFontSize * this.fontScale * this.titleScale;
   }
 
   private applyFontSizes(): void {
     const letterSize = this.effectiveLetterFontSize;
     this.letter.fontSize = letterSize;
     this.remainder.fontSize =
-      this.baseRemainderFontSize * this.fontScale * this.remainderScale;
-    this.blurb.fontSize = this.baseBlurbFontSize * this.fontScale;
+      this.baseRemainderFontSize *
+      this.fontScale *
+      this.titleScale *
+      this.remainderScale;
+    this.blurb.fontSize =
+      this.baseBlurbFontSize * this.fontScale * this.blurbScale;
     this.blurb.maxWidth = letterSize * 14;
     this.blurb.position.y = -letterSize * 0.72;
     this.letter.sync(() => this.layoutBlock());
