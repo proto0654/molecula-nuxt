@@ -5,7 +5,6 @@ const props = defineProps<{
   accentColor?: string | null;
   caseIndex?: number | null;
   sparse?: boolean;
-  textHero?: boolean;
   hasSlices?: boolean;
   landingOnly?: boolean;
   bodyClass?: string;
@@ -30,7 +29,6 @@ onMounted(() => {
     class="case-page"
     :class="{
       'case-page--sparse': sparse,
-      'case-page--text-hero': textHero,
       'case-page--has-slices': hasSlices,
       'case-page--landing-only': landingOnly,
       'is-revealing': revealing,

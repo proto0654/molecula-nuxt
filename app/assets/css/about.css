@@ -1,18 +1,5 @@
 /* About — archive layout. */
 
-.about-photo {
-  margin: 0 0 var(--case-space-first);
-  max-width: min(16rem, 42vw);
-}
-
-.about-photo__img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-  object-position: center top;
-}
-
 .about-cta {
   margin: 0;
 }

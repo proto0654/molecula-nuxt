@@ -1,27 +1,10 @@
 import type { Case, CaseImage, CaseMobileSlices } from '~/types/wp';
 
-export type CaseHeroKind = 'video' | 'landing';
-export type CaseHeroLayout = 'split' | 'text';
-
 const LANDING_SIZES = ['weblaba-landing', 'weblaba-screen', 'medium_large', 'large'] as const;
 const SCREEN_SIZES = ['weblaba-screen', 'weblaba-landing', 'medium_large', 'large'] as const;
 
 export const CASE_LANDING_SIZES = LANDING_SIZES;
 export const CASE_SCREEN_SIZES = SCREEN_SIZES;
-
-/**
- * Hero media: video only.
- * `landing_screen` lives in Screens (index 0 with repeater) — not duplicated in hero.
- */
-export function getCaseHeroKind(c: Case): CaseHeroKind | null {
-  if (c.video) return 'video';
-  return null;
-}
-
-export function getCaseHeroLayout(kind: CaseHeroKind | null): CaseHeroLayout {
-  if (kind === 'video') return 'split';
-  return 'text';
-}
 
 export type CaseScreenItem = {
   image: CaseImage;
@@ -302,20 +285,6 @@ export function caseImageUrl(
   return image.url;
 }
 
-export function caseHeroImageUrl(c: Case, kind: CaseHeroKind): string | null {
-  if (kind === 'landing' && c.landingScreen) {
-    return caseImageUrl(c.landingScreen, LANDING_SIZES);
-  }
-  return null;
-}
-
-export function caseHeroAlt(c: Case, kind: CaseHeroKind): string {
-  if (kind === 'landing') {
-    return c.landingScreen?.alt || stripTags(c.title);
-  }
-  return stripTags(c.title);
-}
-
 /** Featured image URL for fixed page backdrop (under chrome grid). */
 export function caseFeaturedBackdropUrl(c: Case): string | null {
   if (!c.featuredImage) return null;
@@ -357,7 +326,6 @@ export type CaseComposition = {
   numbers: CaseSectionNumbers;
   /** Header + NEXT only — no body sections. */
   sparse: boolean;
-  textHero: boolean;
   firstBody: Exclude<CaseSectionKey, 'next'> | null;
   landingOnly: boolean;
   hasSlices: boolean;
@@ -451,7 +419,6 @@ export function getCaseComposition(c: Case): CaseComposition {
     sections,
     numbers,
     sparse: firstBody == null,
-    textHero: getCaseHeroKind(c) == null,
     firstBody,
     landingOnly: isCaseScreensLandingOnly(c),
     hasSlices: numbers.slices > 0,

@@ -201,11 +201,31 @@
   --z-overlay: 5;
   --z-debug: 10;
 
+  /* Editorial hero (inner detail pages — about, service, contact, case) */
+  --editorial-hero-gap: var(--case-col-gap);
+  --editorial-hero-min-height: min(58vh, 28rem);
+  --editorial-hero-min-height-sparse: min(62vh, 34rem);
+  --editorial-hero-media-inset: clamp(1.5rem, 7vw, 3.25rem);
+  --editorial-hero-content-gap: clamp(1.25rem, 3vh, 2rem);
+  --text-hero-title: var(--text-case-title-split);
+  --editorial-hero-media-ratio: 16 / 9;
+  --editorial-hero-media-ratio-about: 1 / 1;
+  --editorial-hero-frame-side: calc(var(--line-draw-duration) * 0.25);
+
   /* Breakpoints (documentation / matchMedia in main.ts — CSS uses the same px) */
   --bp-mobile-max: 767px;
   --bp-tablet-min: 768px;
   --bp-tablet-max: 1023px;
   --bp-desktop-min: 1024px;
+}
+
+@keyframes wl-enter-frame-v {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
 }
 
 @keyframes wl-enter-fade {

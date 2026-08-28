@@ -10,8 +10,9 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 |------|------|
 | [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page shell; density + body-phase classes. Featured wash lives in layout [`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue). Decorative grid/frame/logo come from the persistent HUD. |
 | [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Index, title (USP-style scramble reveal), excerpt; facts only when there is no CMS body |
-| [`CaseHeroMedia.vue`](../app/components/case/CaseHeroMedia.vue) | Hero video only (flat, no 3D) |
-| [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Presentational `<video>` used **inside** the hero only |
+| [`EditorialHero.vue`](../app/components/EditorialHero.vue) | Unified 50/50 hero shell (all detail pages; variants `archive` / `case` / `about`) |
+| [`EditorialHeroMedia.vue`](../app/components/EditorialHeroMedia.vue) | Left column frame: video, image, or outline placeholder |
+| [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Presentational `<video>` inside hero media frame |
 | [`CaseSectionMarker.vue`](../app/components/case/CaseSectionMarker.vue) | Shared `NN / LABEL` marker (`editorial` rail + vertical guide, `visual` hairline, `quiet` almost clean) |
 | [`CaseSection.vue`](../app/components/case/CaseSection.vue) | Numbered marker + body; `visual` full-bleed / `center` cols 4–10 / `tone` |
 | [`CaseContent.vue`](../app/components/case/CaseContent.vue) | Editorial Overview: 3-col label + 6-col CMS body + optional facts |
@@ -33,7 +34,7 @@ Narrative (not printed on the page): INTRO → INSPECT → EXPLORE → MOBILE �
 
 | Narrative | Block | Marker | When |
 |-----------|--------|--------|------|
-| INTRO | Header ± video; featured = persistent backdrop | none | always header |
+| INTRO | Header + hero media; featured = persistent backdrop | none | always header |
 | INSPECT | Overview | `NN / OVERVIEW` | `contentHtml` |
 | EXPLORE | Interface (`landing_screen` + repeater) | `NN / INTERFACE` | any screen item |
 | MOBILE | Composite mockup | `NN / MOBILE` | `c.mobile` |
@@ -43,7 +44,7 @@ Narrative (not printed on the page): INTRO → INSPECT → EXPLORE → MOBILE �
 
 `getCaseComposition` assigns sequential numbers to **mounted** blocks only. Slices count only when `getCaseSliceLayout` succeeds. Featured-only cases are `01 / NEXT`.
 
-Landing stays in Interface (not hero). Hero media is **video only**.
+Landing stays in Interface (not hero). Hero media resolves via [`editorialHero.ts`](../app/domain/editorialHero.ts): **video** → **featured image** → **outline placeholder**. Frame aspect: video native dimensions when known, else `16 / 9` (images use the same frame ratio for consistency). Space is reserved up front — no vertical jump on video load.
 
 Recipes the layout must hold together:
 
@@ -57,7 +58,7 @@ Recipes the layout must hold together:
 | F | header + featured image only |
 | G | header + gallery + slices |
 
-Density classes on `.case-page`: `--sparse`, `--text-hero`, `--has-slices`, `--landing-only`. First body section uses `--case-space-first` (split hero uses `--case-space-hero`) so hero + section gaps do not stack. Sparse pages give the intro viewport height and pull NEXT closer. Slices already have a scroll runway — footer gap is the section token, not a second footer token.
+Density classes on `.case-page`: `--sparse`, `--has-slices`, `--landing-only`. First body section uses `--case-space-first` (case hero uses `--case-space-hero`) so hero + section gaps do not stack. Sparse pages give the intro viewport height and pull NEXT closer. Slices already have a scroll runway — footer gap is the section token, not a second footer token.
 
 Marker tones: **editorial** (Overview, Next) = horizontal rail + occasional vertical guide on the label column. **visual** (Interface, Slices) = `NN / LABEL` hairline, no extra HUD on cards. **quiet** (Mobile) = index only. Card labels (`LANDING / 01`, `SCREEN / NN`) stay; do not add rails per card. All marker / list / footer rules follow the site [hairline language](DESIGN.md#hairline-language).
 
@@ -103,12 +104,27 @@ Top-left: `[ МАРК ] ЛОГО` → `/`. Do not put the 5-item molecular rail 
 
 `.case-grid` is 12 columns. Named zones include `.case-zone-center` (cols 4–10 on lg — Interface and Slices). Mobile: one column + pad tokens.
 
-Hero layouts:
+## Hero (unified editorial)
 
-- **split** — video: text cols 1–5, visual 6–12
-- **text** — no hero media (featured is backdrop only)
+All detail pages (about, service, contact, case) use [`.editorial-hero`](../app/components/EditorialHero.vue) — **50/50** on desktop (`≥1024px`):
 
-Hero media is **video only** (flat, no 3D). **`landing_screen`** is Interface index 0 (with repeater). **Featured image** drives the persistent layout wash ([`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue) / [`usePortfolioBackdrop`](../app/composables/usePortfolioBackdrop.ts)) under the chrome grid — not a per-page remount. Case **accent** is a separate solid color overlay on that layer (`opacity ~0.18`, same vertical mask) — not `color-mix` into the image and never `--wl-bg`. `screenshot_image` is not a hero.
+| Half | Role |
+|------|------|
+| **Left** | [`EditorialHeroMedia`](../app/components/EditorialHeroMedia.vue) — video, featured image, or outline placeholder; centered in column with `--editorial-hero-media-inset`; frame draws on enter (four edges sequentially) |
+| **Right** | Copy: kicker, title, tags, intro / case header |
+
+Case variant: `.editorial-hero--case` — taller min-height; Overview after hero keeps 50/50 (marker cols 1–6, prose cols 7–12). About variant: `.editorial-hero--about` — square media frame on all breakpoints; padded inset on all sides. Service / contact / case on mobile: `.editorial-hero--bleed-mobile` — media spans full viewport width.
+
+Media resolution ([`editorialHero.ts`](../app/domain/editorialHero.ts)):
+
+| Page | Source |
+|------|--------|
+| Case | `video` → `featuredImage` → placeholder |
+| Service | `featuredImage` → placeholder |
+| About | `photo` → placeholder |
+| Contact | placeholder always |
+
+**Featured image** also drives the persistent layout wash ([`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue)) on cases. **`landing_screen`** is Interface index 0 (with repeater). `screenshot_image` is not a hero.
 
 **Overview (CMS content)** is its own 12-col composition, not `CaseSection` body (cols 4–12):
 

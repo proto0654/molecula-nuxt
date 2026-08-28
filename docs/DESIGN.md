@@ -107,6 +107,38 @@ New listings, sections, or footer blocks **must** use this language — not a on
 
 Case-specific marker tones and grid columns: [`CASES.md`](CASES.md). Enter implementation: [`MOTION.md`](MOTION.md).
 
+## Editorial hero (inner pages)
+
+All detail pages share one hero system: [`.editorial-hero`](../app/components/EditorialHero.vue) + [`.editorial-hero-media`](../app/components/EditorialHeroMedia.vue).
+
+| Half | Role |
+|------|------|
+| **Col 1 (left)** | Media frame — video, featured image, or outline placeholder; centered with equal inset; negative space around the frame |
+| **Col 2 (right)** | All hero copy: kicker, title, tags, intro |
+
+Desktop: `1fr 1fr` grid (`≥1024px`), both columns vertically centered. Unified typography inside `.editorial-hero__content` (`--text-hero-title`, `--editorial-hero-content-gap`). Media uses `object-fit: cover` inside the frame.
+
+Frame aspect: video native ratio when known, else `16 / 9`. **About exception** (`variant="about"`): always `1 / 1` on all breakpoints; media inset preserved on all sides. **Other detail pages** on mobile (`<1024px`): `.editorial-hero--bleed-mobile` — media breaks out to full viewport width (`100vw`); vertical inset kept, horizontal inset removed.
+
+Frame outline enters via four sequential edge draws ([`MOTION.md`](MOTION.md)); media fill fades after the draw. Aspect-ratio box reserves space before video metadata loads.
+
+Media resolution: [`editorialHero.ts`](../app/domain/editorialHero.ts).
+
+Tokens (`main.css`):
+
+| Token | Use |
+|-------|-----|
+| `--editorial-hero-gap` | Column gap (→ `--case-col-gap`) |
+| `--editorial-hero-media-inset` | Equal padding around media in left column |
+| `--editorial-hero-media-ratio` | Default frame aspect (`16 / 9`) |
+| `--editorial-hero-media-ratio-about` | About frame aspect (`1 / 1`) |
+| `--editorial-hero-content-gap` | Space between title block and intro |
+| `--text-hero-title` | Hero title size (→ `--text-case-title-split`) |
+| `--editorial-hero-frame-side` | Per-edge draw delay (`line-draw / 4`) |
+| `--editorial-hero-min-height` / `--editorial-hero-min-height-sparse` | Hero block min height |
+
+Scope: detail pages only — archive index listings stay single-column.
+
 ## Scene tokens (Three.js)
 
 Not CSS — hex in module constants. Background **must** equal `--color-bg`.

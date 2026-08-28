@@ -6,6 +6,7 @@ import {
   normalizeServicePost,
   serviceExcerptPlain,
 } from '~/domain/services';
+import { resolveServiceHeroMedia } from '~/domain/editorialHero';
 import { padCaseIndex, stripTags } from '~/domain/portfolio/presentation';
 
 const route = useRoute();
@@ -74,6 +75,12 @@ const pageDescription = computed(() => {
   return s ? serviceExcerptPlain(s) ?? undefined : undefined;
 });
 
+const heroMedia = computed(() =>
+  service.value
+    ? resolveServiceHeroMedia(service.value.featuredImage, titlePlain.value)
+    : { kind: 'placeholder' as const },
+);
+
 useSeoMeta({
   title: pageTitle,
   description: pageDescription,
@@ -98,23 +105,25 @@ useSeoMeta({
     </p>
 
     <template v-else-if="service">
-      <header class="archive-heading">
-        <p v-if="position?.index" class="archive-heading__kicker">
-          Service / {{ padCaseIndex(position.index) }}
-        </p>
-        <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
-        <ul v-if="service.tags.length" class="editorial-header__tags">
-          <li v-for="tag in service.tags" :key="tag" class="editorial-header__tag">
-            {{ tag }}
-          </li>
-        </ul>
-      </header>
+      <EditorialHero :media="heroMedia">
+        <header class="archive-heading">
+          <p v-if="position?.index" class="archive-heading__kicker">
+            Service / {{ padCaseIndex(position.index) }}
+          </p>
+          <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
+          <ul v-if="service.tags.length" class="editorial-header__tags">
+            <li v-for="tag in service.tags" :key="tag" class="editorial-header__tag">
+              {{ tag }}
+            </li>
+          </ul>
+        </header>
 
-      <div
-        v-if="service.contentHtml"
-        class="archive-intro case-content__prose"
-        v-html="service.contentHtml"
-      />
+        <div
+          v-if="service.contentHtml"
+          class="archive-intro case-content__prose"
+          v-html="service.contentHtml"
+        />
+      </EditorialHero>
 
       <ServiceOffers :service="service" :chrome="chrome" />
 

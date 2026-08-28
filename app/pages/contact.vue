@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { contactExcerptPlain } from '~/domain/contacts';
+import { contactHeroMedia } from '~/domain/editorialHero';
 
 const { page, pending, error } = useContacts();
 const { revealing } = usePageContentReveal();
+
+const heroMedia = contactHeroMedia();
 
 const pageDescription = computed(() => {
   if (!page.value) return 'Контакты WebLaba';
@@ -17,11 +20,6 @@ useSeoMeta({
 
 <template>
   <ArchiveShell :revealing="revealing">
-    <header class="archive-heading">
-      <p class="archive-heading__kicker">Index</p>
-      <SiteScrambleTitle class="archive-heading__title" text="Контакты" />
-    </header>
-
     <p v-if="pending && !page" class="archive-status">Loading…</p>
 
     <p v-else-if="error && !page" class="archive-status">
@@ -30,7 +28,14 @@ useSeoMeta({
     </p>
 
     <template v-else-if="page">
-      <p v-if="page.text" class="archive-intro">{{ page.text }}</p>
+      <EditorialHero :media="heroMedia">
+        <header class="archive-heading">
+          <p class="archive-heading__kicker">Index</p>
+          <SiteScrambleTitle class="archive-heading__title" text="Контакты" />
+        </header>
+
+        <p v-if="page.text" class="archive-intro">{{ page.text }}</p>
+      </EditorialHero>
 
       <h2 v-if="page.title && page.contacts.length" class="editorial-section-title">
         {{ page.title }}

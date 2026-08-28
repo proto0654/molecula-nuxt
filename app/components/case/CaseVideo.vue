@@ -7,7 +7,14 @@ defineProps<{
 </script>
 
 <template>
-  <video class="case-media__el" controls preload="metadata" :src="video.url">
+  <video
+    class="editorial-hero-media__el"
+    controls
+    preload="metadata"
+    :src="video.url"
+    :width="video.width ?? undefined"
+    :height="video.height ?? undefined"
+  >
     <track kind="captions" />
   </video>
 </template>

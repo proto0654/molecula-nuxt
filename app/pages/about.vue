@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { aboutExcerptPlain } from '~/domain/about';
+import { resolveAboutHeroMedia } from '~/domain/editorialHero';
 import { stripTags } from '~/domain/portfolio/presentation';
 
 const { page, pending, error } = useAbout();
@@ -9,6 +10,10 @@ const titlePlain = computed(() => {
   if (!page.value) return 'О нас';
   return stripTags(page.value.title) || 'О нас';
 });
+
+const heroMedia = computed(() =>
+  page.value ? resolveAboutHeroMedia(page.value.photo, titlePlain.value) : { kind: 'placeholder' as const },
+);
 
 const pageTitle = computed(() => `${titlePlain.value} — WebLaba`);
 const pageDescription = computed(() => {
@@ -35,28 +40,23 @@ useSeoMeta({
     </p>
 
     <template v-else-if="page">
-      <header class="archive-heading">
-        <p class="archive-heading__kicker">Index</p>
-        <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
-        <ul v-if="page.tags.length" class="editorial-header__tags">
-          <li v-for="tag in page.tags" :key="tag" class="editorial-header__tag">
-            {{ tag }}
-          </li>
-        </ul>
-      </header>
+      <EditorialHero :media="heroMedia" variant="about" image-variant="about">
+        <header class="archive-heading">
+          <p class="archive-heading__kicker">Index</p>
+          <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
+          <ul v-if="page.tags.length" class="editorial-header__tags">
+            <li v-for="tag in page.tags" :key="tag" class="editorial-header__tag">
+              {{ tag }}
+            </li>
+          </ul>
+        </header>
 
-      <AboutPhoto
-        v-if="page.photo"
-        class="about-photo"
-        :photo="page.photo"
-        :alt="titlePlain"
-      />
-
-      <div
-        v-if="page.contentHtml"
-        class="archive-intro case-content__prose"
-        v-html="page.contentHtml"
-      />
+        <div
+          v-if="page.contentHtml"
+          class="archive-intro case-content__prose"
+          v-html="page.contentHtml"
+        />
+      </EditorialHero>
 
       <AboutSkills :page="page" />
 

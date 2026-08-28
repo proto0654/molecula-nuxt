@@ -24,8 +24,6 @@ export {
 } from './archive';
 
 export {
-  getCaseHeroKind,
-  getCaseHeroLayout,
   getCaseComposition,
   getCaseSectionNumbers,
   caseHasSlices,
@@ -34,8 +32,6 @@ export {
   balanceCaseScreenColumns,
   caseFeaturedBackdropUrl,
   padCaseIndex,
-  type CaseHeroKind,
-  type CaseHeroLayout,
   type CaseSectionKey,
   type CaseSectionTone,
   type CaseSectionSpec,
