@@ -49,7 +49,7 @@ Do **not** assign `animation-delay: index * n` to every row. A below-fold item w
 
 After gate + archive-return restore + two rAFs:
 
-1. Collect `.archive-list .archive-row`, `[data-enter="tail"]` (except `.case-nav`, handled below), on case pages `.case-section:not(.case-nav)` + `nav.case-nav.case-section`, CMS list rows in case prose/caption, and `nav.case-nav--archive` on service detail pages.
+1. Collect `.archive-list .archive-row`, `[data-enter="tail"]` (except `.case-nav`, handled below), on case pages `.case-section:not(.case-nav)` + `nav.case-nav.case-section`, CMS prose blocks (`p`, headings before lists) and list rows in case prose/caption, and `nav.case-nav--archive` on service detail pages.
 2. In-view = intersects the viewport with an ~8% bottom inset.
 3. In-view items in DOM order: `data-reveal="chain"`, `--reveal-i: min(i, cap-1)`. Cap **6**, stagger `--enter-stagger` (55ms).
 4. Below-fold: one `IntersectionObserver` (`rootMargin: 0px 0px -8% 0px`), `once`. On intersect: `data-reveal="in"`, delay **0**.

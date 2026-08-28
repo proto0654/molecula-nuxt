@@ -2,6 +2,11 @@ import type { MaybeRefOrGetter } from 'vue';
 import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
 import { whenArchiveRestoreIdle } from '~/lib/navigation/archiveReturn';
 
+const CASE_PROSE_BLOCK_SELECTOR =
+  '.case-page .case-content__prose > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading), ' +
+  '.case-page .case-mobile__caption > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading), ' +
+  '.case-page .case-mobile-signature__prose > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading)';
+
 const CASE_LIST_SELECTOR =
   '.case-page .case-content__prose :is(ul, .wp-block-list) > li, ' +
   '.case-page .case-mobile__caption :is(ul, .wp-block-list) > li, ' +
@@ -12,6 +17,8 @@ const CASE_LIST_SELECTOR =
 
 const ITEM_SELECTOR =
   '.archive-row, [data-enter="tail"], .case-page .case-section:not(.case-nav), .case-page nav.case-nav.case-section, .archive-page nav.case-nav--archive, ' +
+  CASE_PROSE_BLOCK_SELECTOR +
+  ', ' +
   CASE_LIST_SELECTOR;
 const VIEW_INSET = 0.08;
 const DEFAULT_CAP = 6;

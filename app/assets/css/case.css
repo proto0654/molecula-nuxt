@@ -416,6 +416,48 @@ html.js-enabled .case-page
   transform: none;
 }
 
+html.js-enabled .case-page:not(.is-revealing)
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading),
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading):not(.is-revealed),
+html.js-enabled .case-page:not(.is-revealing)
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, ol, .wp-block-list)
+  > li,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, ol, .wp-block-list)
+  > li:not(.is-revealed) {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading).is-revealed,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, ol, .wp-block-list)
+  > li.is-revealed {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
+      var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading).is-revealed[data-reveal='in'],
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, ol, .wp-block-list)
+  > li.is-revealed[data-reveal='in'] {
+  animation-delay: var(--reveal-content-delay);
+}
+
 html.js-enabled .case-page
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
   :is(ul, .wp-block-list)
@@ -503,36 +545,6 @@ html.js-enabled .case-page.is-revealing
   animation-delay: 0s;
 }
 
-html.js-enabled .case-page:not(.is-revealing)
-  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  :is(ul, ol, .wp-block-list)
-  > li,
-html.js-enabled .case-page.is-revealing
-  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  :is(ul, ol, .wp-block-list)
-  > li:not(.is-revealed) {
-  opacity: 0;
-  transform: translate3d(0, var(--enter-y), 0);
-}
-
-html.js-enabled .case-page.is-revealing
-  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  :is(ul, ol, .wp-block-list)
-  > li.is-revealed {
-  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
-  animation-delay: calc(
-    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
-      var(--reveal-content-delay)
-  );
-}
-
-html.js-enabled .case-page.is-revealing
-  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  :is(ul, ol, .wp-block-list)
-  > li.is-revealed[data-reveal='in'] {
-  animation-delay: var(--reveal-content-delay);
-}
-
 @media (prefers-reduced-motion: reduce) {
   html.js-enabled .case-page .case-marker--editorial::after,
   html.js-enabled .case-page .case-marker--visual::after,
@@ -568,6 +580,9 @@ html.js-enabled .case-page.is-revealing
     border-top-color: rgb(214 219 224 / var(--line-opacity));
   }
 
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading),
   html.js-enabled .case-page
     :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
     :is(ul, ol, .wp-block-list)
