@@ -140,7 +140,7 @@ Gyro writes the **same** mouse target — not a fourth quaternion. Mapping lives
 4. iOS `requestPermission` runs **after** a successful tap pick — never steal the first commit. Deny → drag-only.
 5. Canvas hover is skipped on touch: pose changes must not `markDirty` / `updateHover` (stale NDC would raycast the hub and pause autoplay). Tap still uses `pickAt`.
 
-Amplitude is a fraction of `MAX_YAW` / `MAX_PITCH` and is attenuated further by `MOUSE_UNDER_FOCUS` when focused.
+Amplitude is a fraction of `MAX_YAW` / `MAX_PITCH`, attenuated under focus via `GYRO_UNDER_FOCUS` (higher than drag-only `MOUSE_UNDER_FOCUS` because home is always committed).
 
 ### Focus layer
 

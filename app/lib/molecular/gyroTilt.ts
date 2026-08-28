@@ -16,20 +16,20 @@ export type GyroSample = {
 };
 
 /** Fraction of MAX_YAW used at full gamma deflection. */
-export const GYRO_YAW_SCALE = 0.45;
+export const GYRO_YAW_SCALE = 0.72;
 
 /** Fraction of MAX_PITCH used at full beta deflection (weaker than yaw). */
-export const GYRO_PITCH_SCALE = 0.22;
+export const GYRO_PITCH_SCALE = 0.38;
 
 /** Ignore device motion smaller than this (degrees). */
-const DEADZONE_DEG = 2;
+const DEADZONE_DEG = 1;
 
 /** Quantize remaining deltas so a still phone holds a constant target. */
-const QUANTIZE_DEG = 0.5;
+const QUANTIZE_DEG = 0.35;
 
 /** Device degrees that map to full gyro yaw / pitch contribution. */
-const YAW_RANGE_DEG = 28;
-const PITCH_RANGE_DEG = 28;
+const YAW_RANGE_DEG = 18;
+const PITCH_RANGE_DEG = 22;
 
 type OrientationPermission = 'granted' | 'denied';
 

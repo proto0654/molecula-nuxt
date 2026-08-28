@@ -56,10 +56,16 @@ const TOUCH_DRAG_GAIN = 1.35;
 const MOUSE_FOLLOW = 6;
 
 /**
- * Mouse amplitude scale at `focusStrength = 1`.
+ * Mouse amplitude scale at `focusStrength = 1` (touch drag).
  * Focus orientation stays dominant; pointer remains a subtle secondary tilt.
  */
 const MOUSE_UNDER_FOCUS = 0.22;
+
+/**
+ * Gyro keeps more amplitude under focus — home is always committed so drag-only
+ * attenuation made tilt ~3° and effectively invisible on phone.
+ */
+const GYRO_UNDER_FOCUS = 0.62;
 
 /** Higher = snappier slerp toward `targetFocusOrientation`. */
 const FOCUS_ORIENT_FOLLOW = 4;
@@ -257,7 +263,6 @@ export class MoleculeController {
   private readonly scratchPitch = new Quaternion();
   private readonly scratchIdentity = new Quaternion();
   private readonly scratchAppliedFocus = new Quaternion();
-  private readonly scratchAttenuatedMouse = new Quaternion();
   private readonly scratchCompose = new Quaternion();
   private readonly scratchMoleculePos = new Vector3();
   private readonly scratchAtomPos = new Vector3();
@@ -1216,16 +1221,31 @@ export class MoleculeController {
       this.mouseOrientation.identity();
       this.targetMouseOrientation.identity();
     } else {
-      // Focus dominant: shrink pointer tilt as focusStrength rises (never zero).
       const mouseScale =
         1 - this.focusStrength * (1 - MOUSE_UNDER_FOCUS);
-      this.scratchAttenuatedMouse.slerpQuaternions(
-        this.scratchIdentity,
-        this.targetMouseOrientation,
-        mouseScale,
+      const gyroScale =
+        1 - this.focusStrength * (1 - GYRO_UNDER_FOCUS);
+      const yaw = Math.max(
+        -MAX_YAW,
+        Math.min(
+          MAX_YAW,
+          this.dragYaw * mouseScale + this.gyroYaw * gyroScale,
+        ),
       );
+      const pitch = Math.max(
+        -MAX_PITCH,
+        Math.min(
+          MAX_PITCH,
+          this.dragPitch * mouseScale + this.gyroPitch * gyroScale,
+        ),
+      );
+      this.scratchYaw.setFromAxisAngle(AXIS_Y, yaw);
+      this.scratchPitch.setFromAxisAngle(AXIS_X, pitch);
+      this.targetMouseOrientation
+        .copy(this.scratchYaw)
+        .multiply(this.scratchPitch);
       const mouseT = 1 - Math.exp(-MOUSE_FOLLOW * delta);
-      this.mouseOrientation.slerp(this.scratchAttenuatedMouse, mouseT);
+      this.mouseOrientation.slerp(this.targetMouseOrientation, mouseT);
     }
 
     this.updateZoomProgress(delta);
