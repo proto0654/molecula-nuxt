@@ -6,6 +6,7 @@ import {
   isAwaitingPose,
   subscribeAwaitingPose,
 } from '~/lib/navigation/poseReveal';
+import { useCaseMotionGate } from '~/composables/caseMotionGate';
 
 /**
  * Scroll entry presets.
@@ -48,11 +49,20 @@ const SLICE_STOPS = [
   { t: 1, opacity: 1, rotateX: 0, rotateY: 0, yMul: 0, z: 0, scale: 1 },
 ] as const;
 
-const GRID_COL_FROM = [
-  { rotateX: 12, rotateY: 16, z: -80 },
-  { rotateX: 16, rotateY: 0, z: -60 },
-  { rotateX: 12, rotateY: -16, z: -80 },
-] as const;
+/** Per-column rotateY flip — starts once the screen is mostly in view. */
+const GRID_FLIP_Y = [50, -50, 50] as const;
+const GRID_FLIP_PERSPECTIVE = 1200;
+const GRID_FLIP_START = 'top 88%';
+const GRID_FLIP_END = 'top 62%';
+
+function readCaseCol(el: HTMLElement): number {
+  const raw =
+    el.dataset.caseCol ??
+    el.closest<HTMLElement>('[data-case-col]')?.dataset.caseCol ??
+    '0';
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) ? n : 0;
+}
 
 function collectPairs(
   scope: HTMLElement,
@@ -92,15 +102,6 @@ function parseLagPx(motion: HTMLElement): number {
   const px = probe.offsetHeight;
   probe.remove();
   return px;
-}
-
-function readCaseCol(motion: HTMLElement): number {
-  const raw =
-    motion.dataset.caseCol ??
-    motion.closest<HTMLElement>('[data-case-col]')?.dataset.caseCol ??
-    '0';
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : 0;
 }
 
 function readSliceDeckRotateY(motion: HTMLElement): number {
@@ -156,6 +157,7 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
   const end = options.end ?? ENTRY_END;
   const { root } = options;
   const presetRef = computed(() => toValue(options.preset) ?? 'screensGrid');
+  const motionGate = useCaseMotionGate();
 
   let triggers: ScrollTrigger[] = [];
   let loadHandlers: Array<{ img: HTMLImageElement; fn: () => void }> = [];
@@ -201,11 +203,40 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
     }
 
     const scope = resolveScope(el);
-    bindImageLoads(scope);
-    const pairs = collectPairs(scope, triggerSelector, motionSelector);
     const preset = presetRef.value;
 
+    bindImageLoads(scope);
+    const pairs = collectPairs(scope, triggerSelector, motionSelector);
+
     for (const { trigger, motion } of pairs) {
+      if (preset === 'screensGrid') {
+        const col = readCaseCol(motion);
+        const fromY = GRID_FLIP_Y[col] ?? GRID_FLIP_Y[1]!;
+        gsap.set(motion, {
+          opacity: 0,
+          rotateX: 0,
+          rotateY: fromY,
+          z: 0,
+          y: 0,
+          transformOrigin: 'center center',
+          transformPerspective: GRID_FLIP_PERSPECTIVE,
+          force3D: true,
+        });
+        const tween = gsap.to(motion, {
+          opacity: 1,
+          rotateY: 0,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger,
+            start: GRID_FLIP_START,
+            end: GRID_FLIP_END,
+            scrub: true,
+          },
+        });
+        if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+        continue;
+      }
+
       if (preset === 'fade') {
         gsap.set(motion, {
           opacity: 0,
@@ -296,33 +327,14 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
         if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
         continue;
       }
-
-      const col = readCaseCol(motion);
-      const colFrom = GRID_COL_FROM[col] ?? GRID_COL_FROM[1]!;
-      gsap.set(motion, {
-        opacity: 0,
-        rotateX: colFrom.rotateX,
-        rotateY: colFrom.rotateY,
-        z: colFrom.z,
-        y: 24,
-        transformOrigin: 'center center',
-        force3D: true,
-      });
-      const tween = gsap.to(motion, {
-        opacity: 1,
-        rotateX: 0,
-        rotateY: 0,
-        z: 0,
-        y: 0,
-        ease: 'power2.out',
-        scrollTrigger: { trigger, start, end, scrub: true },
-      });
-      if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
     }
   }
 
   function tryInit() {
-    if (isAwaitingPose()) return;
+    if (isAwaitingPose() || !motionGate.value) {
+      if (!motionGate.value) kill();
+      return;
+    }
     init();
   }
 
@@ -348,7 +360,7 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
     kill();
   });
 
-  watch([root, presetRef], () => {
+  watch([root, presetRef, motionGate], () => {
     nextTick(() => tryInit());
   });
 

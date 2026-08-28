@@ -31,22 +31,25 @@ export function useCaseVideoBoot(options: {
     dispose = null;
   }
 
-  function tryInit() {
+  /** Returns true when videos were bound under `root`. */
+  function tryInit(): boolean {
     teardown();
 
-    if (!import.meta.client || !toValue(options.enabled)) return;
+    if (!import.meta.client || !toValue(options.enabled)) return false;
 
     const el = toValue(options.root);
-    if (!el) return;
+    if (!el) return false;
 
     dispose = initCaseVideos(el, {
       deferKickoff: !prefersReducedMotion(),
     });
+    return true;
   }
 
   async function runKickoff(generation: number) {
     if (generation !== kickoffGeneration) return;
     if (!toValue(options.enabled) || !toValue(options.revealing)) return;
+    if (!toValue(options.root)) return;
 
     if (!prefersReducedMotion()) {
       await doubleRaf();
@@ -56,24 +59,35 @@ export function useCaseVideoBoot(options: {
     kickoffDeferredCaseVideos();
   }
 
-  watch(
-    () => [toValue(options.enabled), toValue(options.root)] as const,
-    () => {
-      kickoffGeneration += 1;
-      tryInit();
-    },
-    { immediate: true },
-  );
+  async function boot(generation: number) {
+    if (!tryInit()) return;
+    if (toValue(options.revealing)) {
+      await runKickoff(generation);
+    }
+  }
 
   watch(
-    () => toValue(options.revealing) && toValue(options.enabled),
-    (shouldKickoff) => {
-      if (!shouldKickoff) return;
+    () =>
+      [
+        toValue(options.enabled),
+        toValue(options.root),
+        toValue(options.revealing),
+      ] as const,
+    () => {
+      kickoffGeneration += 1;
       const generation = kickoffGeneration;
-      void runKickoff(generation);
+      void nextTick(() => {
+        void boot(generation);
+      });
     },
-    { immediate: true },
+    { immediate: true, flush: 'post' },
   );
+
+  onBeforeRouteUpdate(() => {
+    kickoffGeneration += 1;
+    teardown();
+    disposeAllCaseVideos();
+  });
 
   onBeforeRouteLeave(() => {
     kickoffGeneration += 1;

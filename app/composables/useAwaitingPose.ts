@@ -5,7 +5,9 @@ import {
 
 /** Reactive shell veil: page overlay hidden until the molecule pose settles. */
 export function useAwaitingPose() {
-  const awaitingPose = shallowRef(false);
+  const awaitingPose = shallowRef(
+    import.meta.client ? isAwaitingPose() : false,
+  );
 
   let stop: (() => void) | null = null;
 

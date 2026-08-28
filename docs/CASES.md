@@ -169,12 +169,12 @@ Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in cente
 
 | Mode | When | Layout | GSAP |
 |------|------|--------|------|
-| **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | kinetic wave per column (`rotateY` ±16° / `rotateX` 12–16° + `translateZ`), scrub `bottom+=12%`→`top 30%`; pointer parallax + magnetic card focus via [`useCaseInteractive`](../app/composables/useCaseInteractive.ts) |
-| **Landing-only** | only `landing_screen` | one full-width card, no stair | kinetic float (`translateZ` −140 + `rotateX` 24° + `translateY` 40); viewport scanner + specular tilt on pointer |
+| **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | per-card `rotateY` flip (±50° by column), scrub `top 88%`→`top 62%`; no repeater pointer layer. CSS fallback: `grid-screen-flip-y` (`animation-timeline: view()`, entry 22%–38%) |
+| **Landing-only** | only `landing_screen` | one full-width card, no stair | kinetic float (`translateZ` −140 + `rotateX` 24° + `translateY` 40); specular tilt + glare on pointer |
 
 Stair (desktop, first card in col): `--stair-0` `clamp(7rem, 28vw, 18rem)`, `--stair-1` `clamp(3.5rem, 14vw, 9rem)`. Reset under `prefers-reduced-motion`.
 
-Perspective desktop stage: 1000px / origin 50% 42%. Card shadow `10px 18px 36px rgba(0,0,0,0.28)`. Full intrinsic height; width via `--case-screen-max` on landing-only. Landing viewport window: `aspect-ratio 16/10`, hairline scan rail.
+Perspective desktop stage: 1000px / origin 50% 42%. Card shadow `10px 18px 36px rgba(0,0,0,0.28)`. **Full intrinsic height always** — never clip or scan-window a landing / repeater screen. Width via `--case-screen-max` on landing-only. Pointer tilt is nested inside ScrollTrigger so the two transforms do not fight. Interactive listeners idle unless [`caseMotionGate`](../app/composables/caseMotionGate.ts) is on (body `idle`, payload ready, pose settled) and the lightbox is closed.
 
 ### Mobile slices
 
@@ -188,11 +188,11 @@ Bottom spacing: `--slice-bottom-space` from `useCaseSliceBottomSpace` — `stagg
 |-------|--------|--------|--------|
 | **1** | `fade` | opacity + translateY (play on enter) | Overview, NEXT |
 | **2** | `lift` | spatial device rise (`translateZ` −90 + `rotateX` 14°) + pointer tilt / gyro glare | Mobile mockup |
-| **3** | `screensGrid` / `landingOnly` / `slices` | existing 3D | Interface grid, landing-only, Slices only |
+| **3** | `screensGrid` / `landingOnly` / `slices` | Y-flip / landing rise / slice deck | Interface grid (flip), landing-only, Slices |
 
 Do not use Level 3 on Mobile. Header title scramble is intro motion, gated on pose settle (and case body idle) — not scroll entry. Numbered sections + NEXT footer rows use the same listing conductor as archives ([`useListingReveal`](../app/composables/useListingReveal.ts) on [`CaseShell`](../app/components/case/CaseShell.vue)); gallery / slices / mobile mockup keep ScrollTrigger L2/L3. Page reveal (case→case) is a separate L1 on `.case-page__body`.
 
-Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `overflow: hidden` on the visual field (clips 3D). Without `.js-enabled`, CSS `animation-timeline: view()` fallbacks run (`inner-page-enter-*`, `portfolio-parallax-odd/even`). Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts) / [`useReducedMotion`](../app/composables/useReducedMotion.ts). Home Navigator zoom/fill, pointer tilt, and connector are skipped under reduced motion.
+Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `overflow: hidden` on the visual field (clips 3D). Without `.js-enabled`, CSS `animation-timeline: view()` fallbacks run (`grid-screen-flip-y`, `inner-page-enter-*`, `portfolio-parallax-odd/even`). Shared helper: [`prefersReducedMotion`](../app/lib/a11y/reducedMotion.ts) / [`useReducedMotion`](../app/composables/useReducedMotion.ts). Home Navigator zoom/fill, pointer tilt, and connector are skipped under reduced motion.
 
 ### Mobile modes (filled fields must render)
 

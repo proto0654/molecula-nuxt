@@ -91,7 +91,8 @@ function screenPackScore(
     0,
   );
   const targetCols = Math.min(columnCount, itemCount);
-  const tooFew = used < targetCols ? 1 : 0;
+  // Graduated: 1-of-3 and 2-of-3 must not tie, or greedy packs into a single column.
+  const tooFew = used < targetCols ? targetCols - used : 0;
 
   // Leading tracks only (trailing empties ignored for desc / spread).
   const active = heights.slice(0, Math.max(used, 1));

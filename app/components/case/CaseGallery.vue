@@ -30,7 +30,8 @@ useCaseScrollEntry({ root, preset: scrollPreset });
 
 useCaseInteractive({
   root,
-  mode: computed(() => (landingOnly.value ? 'landing' : 'grid')),
+  mode: 'landing',
+  enabled: computed(() => landingOnly.value),
 });
 
 const lightboxItems = computed<CaseLightboxItem[]>(() =>
@@ -91,8 +92,7 @@ function mobileColFor(index: number): number {
       class="case-inner-pages case-interactive"
       :class="{
         'case-inner-pages--landing-only': landingOnly,
-        'case-interactive--landing': landingOnly,
-        'case-interactive--grid': !landingOnly,
+        'case-interactive case-interactive--landing': landingOnly,
       }"
     >
       <div class="case-inner-pages__stage case-inner-pages__stage--mobile">
@@ -113,33 +113,27 @@ function mobileColFor(index: number): number {
               @click="openAt(index)"
             >
               <span class="case-inner-pages__meta">{{ labelFor(index) }}</span>
-              <figure
-                class="case-inner-pages__card"
-                :class="{ 'case-interactive__viewport': landingOnly }"
-                :style="landingOnly ? undefined : aspectStyle(item)"
-              >
-                <div
-                  class="case-interactive__scanner"
-                  :class="{ 'case-interactive__tilt': landingOnly }"
-                >
+              <div v-if="landingOnly" class="case-interactive__tilt">
+                <figure class="case-inner-pages__card" :style="aspectStyle(item)">
                   <img
                     :src="itemSrc(item)"
                     :alt="itemAlt(item, index)"
                     :loading="landingOnly || index === 0 ? 'eager' : 'lazy'"
                     :fetchpriority="landingOnly || index === 0 ? 'high' : undefined"
                   />
-                </div>
-                <span
-                  v-if="landingOnly"
-                  class="case-interactive__scan-rail"
-                  aria-hidden="true"
-                >
-                  <span class="case-interactive__scan-thumb" />
-                </span>
-                <span
-                  v-if="landingOnly"
-                  class="case-interactive__glare"
-                  aria-hidden="true"
+                  <span class="case-interactive__glare" aria-hidden="true" />
+                </figure>
+              </div>
+              <figure
+                v-else
+                class="case-inner-pages__card"
+                :style="aspectStyle(item)"
+              >
+                <img
+                  :src="itemSrc(item)"
+                  :alt="itemAlt(item, index)"
+                  :loading="index === 0 ? 'eager' : 'lazy'"
+                  :fetchpriority="index === 0 ? 'high' : undefined"
                 />
               </figure>
             </button>
@@ -178,37 +172,30 @@ function mobileColFor(index: number): number {
                 <span class="case-inner-pages__meta">{{
                   labelFor(placed.index)
                 }}</span>
-                <figure
-                  class="case-inner-pages__card"
-                  :class="{ 'case-interactive__viewport': landingOnly }"
-                  :style="landingOnly ? undefined : aspectStyle(placed.item)"
-                >
-                  <div
-                    class="case-interactive__scanner"
-                    :class="{ 'case-interactive__tilt': landingOnly }"
+                <div v-if="landingOnly" class="case-interactive__tilt">
+                  <figure
+                    class="case-inner-pages__card"
+                    :style="aspectStyle(placed.item)"
                   >
                     <img
                       :src="itemSrc(placed.item)"
                       :alt="itemAlt(placed.item, placed.index)"
-                      :loading="
-                        landingOnly || placed.index === 0 ? 'eager' : 'lazy'
-                      "
-                      :fetchpriority="
-                        landingOnly || placed.index === 0 ? 'high' : undefined
-                      "
+                      loading="eager"
+                      fetchpriority="high"
                     />
-                  </div>
-                  <span
-                    v-if="landingOnly"
-                    class="case-interactive__scan-rail"
-                    aria-hidden="true"
-                  >
-                    <span class="case-interactive__scan-thumb" />
-                  </span>
-                  <span
-                    v-if="landingOnly"
-                    class="case-interactive__glare"
-                    aria-hidden="true"
+                    <span class="case-interactive__glare" aria-hidden="true" />
+                  </figure>
+                </div>
+                <figure
+                  v-else
+                  class="case-inner-pages__card"
+                  :style="aspectStyle(placed.item)"
+                >
+                  <img
+                    :src="itemSrc(placed.item)"
+                    :alt="itemAlt(placed.item, placed.index)"
+                    :loading="placed.index === 0 ? 'eager' : 'lazy'"
+                    :fetchpriority="placed.index === 0 ? 'high' : undefined"
                   />
                 </figure>
               </button>

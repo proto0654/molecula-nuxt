@@ -28,6 +28,7 @@ const { refresh: refreshScroll } = useCaseScrollEntry({
 useCaseInteractive({
   root,
   mode: 'slice',
+  revision: computed(() => props.caseData.mobileSlices?.image.id ?? 0),
 });
 
 const { update: updateBottomSpace } = useCaseSliceBottomSpace(root, {
@@ -124,7 +125,16 @@ function openFull() {
               @click="openFull"
             >
               <span class="case-slices__meta">{{ cell.label }}</span>
-              <span class="case-slices__connector" aria-hidden="true" />
+              <span
+                class="case-slices__connector"
+                :class="{
+                  'case-slices__connector--desktop':
+                    cell.index + layout.rows < layout.total,
+                  'case-slices__connector--mobile':
+                    cell.index + layout.rowsMobile < layout.total,
+                }"
+                aria-hidden="true"
+              />
               <span
                 class="case-slices__surface"
                 role="img"

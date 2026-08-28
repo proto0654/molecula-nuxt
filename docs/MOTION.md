@@ -41,7 +41,9 @@ Do not fade the whole `.archive-page__body` — chrome sits outside the body and
 | 4 list | `.archive-row` | `--enter-beat-list` (180ms) + stagger | hairline `scaleX`, then row content |
 | 5 tail | `[data-enter="tail"]` (pagination, about CTA, archive `DetailNav`) | same split as list | opacity + `--enter-y` |
 
-Case pages share the same listing conductor as archives (numbered sections + NEXT footer rows). Hero beats 0–3 stay separate; gallery / slices / mobile mockup keep ScrollTrigger L2/L3. GSAP remains allowed **only** for case ScrollTrigger L2/L3, case→case, and `Navigator`.
+Case pages share the same listing conductor as archives (numbered sections + NEXT footer rows). Hero beats 0–3 stay separate; gallery / slices / mobile mockup keep ScrollTrigger L2/L3. GSAP remains allowed **only** for case ScrollTrigger L2/L3, case→case, `Navigator`, and pointer lerp (`gsap.quickTo` on nested tilt — landing / device / slice focus; not on the ScrollTrigger node).
+
+Pointer / gyro ([`useCaseInteractive`](../app/composables/useCaseInteractive.ts)) starts only after pose settle + body `idle`, pauses while the lightbox is open, and unbinds off-screen. **Do not crop** landing or repeater screens; the only cut media is mobile slices.
 
 ## Listing split (chain vs viewport)
 

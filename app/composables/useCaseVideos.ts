@@ -11,6 +11,7 @@ type VideoBinding = {
   shell: HTMLElement | null;
   onPlay: () => void;
   onLoaded: () => void;
+  onCanPlay: () => void;
   onError: () => void;
 };
 
@@ -66,9 +67,14 @@ function bindVideo(video: HTMLVideoElement, deferKickoff: boolean) {
 
   const onLoaded = () => {
     revealShell(shell);
-    if (!deferredKickoffs.has(video)) {
-      syncVideo(video);
-    }
+    if (deferredKickoffs.has(video)) return;
+    syncVideo(video);
+  };
+
+  const onCanPlay = () => {
+    revealShell(shell);
+    if (deferredKickoffs.has(video)) return;
+    syncVideo(video);
   };
 
   const onError = () => {
@@ -77,10 +83,10 @@ function bindVideo(video: HTMLVideoElement, deferKickoff: boolean) {
 
   video.addEventListener('play', onPlay);
   video.addEventListener('loadeddata', onLoaded);
-  video.addEventListener('canplay', onLoaded);
+  video.addEventListener('canplay', onCanPlay);
   video.addEventListener('error', onError);
 
-  bindings.set(video, { video, shell, onPlay, onLoaded, onError });
+  bindings.set(video, { video, shell, onPlay, onLoaded, onCanPlay, onError });
 
   if (deferKickoff && isCaseAtTop()) {
     deferredKickoffs.add(video);
@@ -95,7 +101,7 @@ function unbindVideo(video: HTMLVideoElement) {
 
   video.removeEventListener('play', binding.onPlay);
   video.removeEventListener('loadeddata', binding.onLoaded);
-  video.removeEventListener('canplay', binding.onLoaded);
+  video.removeEventListener('canplay', binding.onCanPlay);
   video.removeEventListener('error', binding.onError);
   video.pause();
 

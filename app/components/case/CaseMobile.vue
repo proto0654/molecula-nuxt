@@ -18,6 +18,7 @@ useCaseScrollEntry({
 useCaseInteractive({
   root,
   mode: 'device',
+  revision: computed(() => props.caseData.mobile?.image.id ?? 0),
 });
 
 function openMockup() {

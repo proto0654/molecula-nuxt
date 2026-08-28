@@ -1387,6 +1387,10 @@ html.js-enabled .case-page.is-revealing
   will-change: transform, opacity;
 }
 
+.case-inner-pages:not(.case-inner-pages--landing-only) .case-inner-pages__card-motion {
+  transform-style: flat;
+}
+
 .case-slices .case-scroll-motion,
 .case-mobile .case-scroll-motion {
   transform-origin: center bottom;
@@ -1397,25 +1401,60 @@ html.js-enabled .case-page.is-revealing
   perspective-origin: 50% 40%;
 }
 
-/* --- Interactive showcase (pointer / gyro) --- */
+/* --- Interactive showcase (pointer / gyro). Does not crop screens. --- */
+
+@property --tilt-x {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --tilt-y {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --glare-x {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 50;
+}
+
+@property --glare-y {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 50;
+}
+
+@property --glare-opacity {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
 
 .case-interactive {
-  --tilt-x: 0deg;
-  --tilt-y: 0deg;
-  --glare-x: 50%;
-  --glare-y: 50%;
+  position: relative;
+  --tilt-x: 0;
+  --tilt-y: 0;
+  --glare-x: 50;
+  --glare-y: 50;
   --glare-opacity: 0;
-  --scan-y: 0px;
-  --scan-progress: 0;
-  --parallax-x: 0px;
-  --parallax-y: 0px;
+  --cue-x: 0;
+  --cue-y: 0;
 }
 
 .case-interactive__tilt {
   position: relative;
+  width: 100%;
   transform-style: preserve-3d;
-  backface-visibility: hidden;
-  transform: perspective(920px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-origin: center center;
+  transform: perspective(920px)
+    rotateX(calc(var(--tilt-x) * 1deg))
+    rotateY(calc(var(--tilt-y) * 1deg));
+}
+
+.case-interactive.is-interactive-active .case-interactive__tilt {
   will-change: transform;
 }
 
@@ -1423,106 +1462,67 @@ html.js-enabled .case-page.is-revealing
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 1;
   opacity: var(--glare-opacity);
   background: radial-gradient(
-    circle at var(--glare-x) var(--glare-y),
+    circle at calc(var(--glare-x) * 1%) calc(var(--glare-y) * 1%),
     rgb(255 255 255 / 0.16) 0%,
     rgb(255 255 255 / 0.04) 28%,
     transparent 58%
   );
   mix-blend-mode: screen;
-  transition: opacity 0.35s ease;
 }
 
-.case-interactive__scanner {
-  display: block;
-  width: 100%;
-  transform: translate3d(0, var(--scan-y), 0);
-  will-change: transform;
-}
-
-.case-interactive__scanner img {
-  display: block;
-  width: 100%;
-  height: auto;
-  vertical-align: middle;
-}
-
-.case-interactive--landing .case-interactive__viewport {
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 16 / 10;
-  max-height: min(56vh, 36rem);
-}
-
-.case-interactive--landing .case-interactive__tilt {
-  transform-origin: center center;
-}
-
-.case-interactive__scan-rail {
+.case-interactive__cue {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  bottom: 0.4rem;
-  width: 1px;
-  background: rgb(214 219 224 / 0.22);
+  left: 0;
+  top: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 0;
   pointer-events: none;
-  z-index: 2;
+  opacity: 0;
+  font-size: var(--text-index);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--case-accent-ink);
+  transform: translate3d(
+    calc(var(--cue-x) * 1px + 12px),
+    calc(var(--cue-y) * 1px + 12px),
+    0
+  );
 }
 
-.case-interactive__scan-thumb {
-  position: absolute;
-  left: -1px;
-  width: 3px;
-  height: 18%;
-  min-height: 1.25rem;
-  background: var(--case-accent-ink);
-  top: calc(var(--scan-progress) * (100% - 18%));
-  transition: top 0.08s linear;
+.case-interactive.is-interactive-active .case-interactive__cue {
+  opacity: 1;
 }
 
-.case-interactive--grid .case-inner-pages__column {
-  transform: translate3d(var(--parallax-x), var(--parallax-y), 0);
-  will-change: transform;
-}
-
-.case-interactive--grid .case-inner-pages__stage--mobile .case-inner-pages__card-wrapper {
-  transform: translate3d(var(--parallax-x), var(--parallax-y), 0);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .case-interactive--grid.has-interactive-focus
-    .case-inner-pages__card-wrapper:not(.is-interactive-focus) {
-    opacity: 0.72;
-  }
-
-  .case-inner-pages__card-wrapper.is-interactive-focus .case-inner-pages__card {
-    border-color: color-mix(in srgb, var(--case-accent) 55%, rgb(214 219 224 / var(--line-opacity)));
-    box-shadow:
-      12px 22px 44px rgb(0 0 0 / 0.36),
-      0 0 0 1px color-mix(in srgb, var(--case-accent) 28%, transparent);
-  }
-
-  .case-inner-pages__card-wrapper.is-interactive-focus .case-inner-pages__card-motion {
-    transform: translate3d(0, -2px, 26px);
+@media (hover: none) {
+  .case-interactive__cue {
+    display: none;
   }
 }
 
 .case-interactive--device .case-mobile__device {
   position: relative;
+  --device-screen-inset-x: 6.4%;
+  --device-screen-inset-y: 8.2%;
+  --device-screen-radius: clamp(0.85rem, 11%, 1.55rem);
 }
 
 .case-interactive__glare--device {
-  border-radius: 0;
+  inset: var(--device-screen-inset-y) var(--device-screen-inset-x);
+  border-radius: var(--device-screen-radius);
+  overflow: hidden;
   background: linear-gradient(
     125deg,
-    transparent 35%,
-    rgb(255 255 255 / 0.12) 48%,
-    rgb(255 255 255 / 0.22) 52%,
-    transparent 65%
+    transparent 38%,
+    rgb(255 255 255 / 0.1) 48%,
+    rgb(255 255 255 / 0.2) 51%,
+    transparent 64%
   );
-  background-size: 220% 220%;
-  background-position: var(--glare-x) var(--glare-y);
+  background-size: 180% 170%;
+  background-position: calc(var(--glare-x) * 1%) calc(var(--glare-y) * 1%);
 }
 
 .case-mobile__shadow {
@@ -1534,76 +1534,109 @@ html.js-enabled .case-page.is-revealing
   pointer-events: none;
   background: radial-gradient(ellipse at center, rgb(0 0 0 / 0.34), transparent 72%);
   transform: translateZ(-2px);
-  filter: blur(2px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .case-interactive--device:not(.is-interactive-active) .case-interactive__tilt {
+    animation: case-device-idle 9s ease-in-out infinite;
+  }
+}
+
+@keyframes case-device-idle {
+  0%,
+  100% {
+    --tilt-x: 1.2;
+    --tilt-y: -2.2;
+    --glare-x: 34;
+    --glare-y: 30;
+    --glare-opacity: 0.42;
+  }
+  50% {
+    --tilt-x: -0.8;
+    --tilt-y: 2.4;
+    --glare-x: 66;
+    --glare-y: 58;
+    --glare-opacity: 0.55;
+  }
 }
 
 .case-interactive--slices .case-slices__card {
   position: relative;
-  transition:
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.35s ease;
+  overflow: visible;
 }
 
 .case-slices__connector {
   position: absolute;
-  right: calc(var(--slice-gap) * -0.45);
-  top: 50%;
-  width: calc(var(--slice-gap) * 0.45);
+  right: calc(var(--slice-gap) * -0.5);
+  top: calc(50% + 0.7rem);
+  width: calc(var(--slice-gap) * 0.5);
   height: 1px;
   pointer-events: none;
   opacity: 0;
-  background: linear-gradient(
-    90deg,
-    var(--case-accent-ink),
-    rgb(214 219 224 / calc(var(--line-opacity) * 0.5))
-  );
+  background: var(--wl-line);
   transform: translateY(-50%);
 }
 
-.case-slices__cell:not(:nth-last-child(-n + 2)) .case-slices__connector {
+.case-slices__connector--mobile {
   opacity: 0.38;
 }
 
+@media (min-width: 768px) {
+  .case-slices__connector--mobile {
+    opacity: 0;
+  }
+
+  .case-slices__connector--desktop {
+    opacity: 0.38;
+  }
+}
+
+.case-interactive--slices .case-interactive__slice.is-interactive-focus .case-slices__connector,
+.case-interactive--slices .case-interactive__slice:hover .case-slices__connector {
+  opacity: 0.85;
+  background: var(--case-accent-ink);
+}
+
 .case-interactive__glare--slice {
-  border-radius: 0;
   opacity: 0;
-  transition: opacity 0.35s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .case-interactive--slices .case-interactive__slice:hover .case-slices__card {
-    transform: translate3d(0, -3px, 18px);
-    border-color: color-mix(in srgb, var(--case-accent) 45%, rgb(214 219 224 / var(--line-opacity)));
+  .case-interactive--slices .case-interactive__slice:hover .case-slices__surface,
+  .case-interactive--slices .case-interactive__slice.is-interactive-focus .case-slices__surface {
     box-shadow: 8px 16px 32px rgb(0 0 0 / 0.28);
+    border-color: color-mix(
+      in srgb,
+      var(--case-accent) 45%,
+      rgb(214 219 224 / var(--line-opacity))
+    );
+    transform: translate3d(0, -3px, 18px);
   }
 
-  .case-interactive--slices .case-interactive__slice:hover .case-interactive__glare--slice {
+  .case-interactive--slices .case-interactive__slice:hover .case-interactive__glare--slice,
+  .case-interactive--slices
+    .case-interactive__slice.is-interactive-focus
+    .case-interactive__glare--slice {
     opacity: 0.55;
-  }
-
-  .case-interactive--slices .case-interactive__slice:hover .case-slices__surface {
-    background-position-y: calc(var(--bg-y, 0%) - 1.5%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .case-interactive__tilt,
-  .case-interactive--grid .case-inner-pages__column,
-  .case-interactive--grid .case-inner-pages__stage--mobile .case-inner-pages__card-wrapper,
-  .case-inner-pages__card-wrapper.is-interactive-focus .case-inner-pages__card-motion,
-  .case-interactive--slices .case-interactive__slice:hover .case-slices__card {
+  .case-interactive--slices .case-interactive__slice:hover .case-slices__surface,
+  .case-interactive--slices .case-interactive__slice.is-interactive-focus .case-slices__surface {
     transform: none !important;
+    animation: none !important;
   }
 
   .case-interactive__glare,
-  .case-interactive__glare--slice {
+  .case-interactive__glare--slice,
+  .case-interactive__cue {
     opacity: 0 !important;
   }
 
-  .case-interactive--grid.has-interactive-focus
-    .case-inner-pages__card-wrapper:not(.is-interactive-focus) {
-    opacity: 1;
+  .case-interactive--device:not(.is-interactive-active) .case-interactive__tilt {
+    animation: none;
   }
 }
 
@@ -1686,6 +1719,7 @@ html.js-enabled .case-page.is-revealing
 }
 
 .case-inner-pages__card {
+  position: relative;
   margin: 0;
   overflow: hidden;
   border: 1px solid rgb(214 219 224 / var(--line-opacity));
@@ -1767,21 +1801,46 @@ html.js-enabled .case-page.is-revealing
   }
 }
 
+.case-inner-pages:not(.case-inner-pages--landing-only) .case-inner-pages__stage {
+  perspective: 1200px;
+  perspective-origin: 50% 42%;
+}
+
 /* CSS scroll fallback when GSAP is off (no .js-enabled) */
 @supports (animation-timeline: view()) {
   html:not(.js-enabled)
-    .case-inner-pages__stage--mobile
+    .case-inner-pages:not(.case-inner-pages--landing-only)
     .case-inner-pages__card-motion {
-    animation: inner-page-enter-solo-mobile linear both;
+    animation: grid-screen-flip-y linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 30%;
+    animation-range: entry 22% entry 38%;
+  }
+
+  html:not(.js-enabled)
+    .case-inner-pages:not(.case-inner-pages--landing-only)
+    .case-inner-pages__card-motion[data-case-col='0'] {
+    --grid-flip-y: 50deg;
+  }
+
+  html:not(.js-enabled)
+    .case-inner-pages:not(.case-inner-pages--landing-only)
+    .case-inner-pages__card-motion[data-case-col='1'] {
+    --grid-flip-y: -50deg;
+  }
+
+  html:not(.js-enabled)
+    .case-inner-pages:not(.case-inner-pages--landing-only)
+    .case-inner-pages__card-motion[data-case-col='2'] {
+    --grid-flip-y: 50deg;
   }
 
   html:not(.js-enabled)
     .case-inner-pages--landing-only
     .case-inner-pages__stage--mobile
     .case-inner-pages__card-motion {
-    animation-name: inner-page-enter-solo;
+    animation: inner-page-enter-solo linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
     animation-timing-function: cubic-bezier(0.33, 0.85, 0.5, 1);
   }
 
@@ -1824,20 +1883,26 @@ html.js-enabled .case-page.is-revealing
     }
 
     html:not(.js-enabled)
-      .case-inner-pages__stage--desktop
-      .case-inner-pages__card-motion {
-      animation: inner-page-enter-solo-mobile linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 30%;
-    }
-
-    html:not(.js-enabled)
       .case-inner-pages--landing-only
       .case-inner-pages__stage--desktop
       .case-inner-pages__card-motion {
-      animation-name: inner-page-enter-solo;
+      animation: inner-page-enter-solo linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
       animation-timing-function: cubic-bezier(0.33, 0.85, 0.5, 1);
     }
+  }
+}
+
+@keyframes grid-screen-flip-y {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(var(--grid-flip-y, 50deg));
+  }
+
+  to {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg);
   }
 }
 
@@ -2132,6 +2197,7 @@ html.js-enabled .case-page.is-revealing
 
 .case-slices__surface {
   display: block;
+  position: relative;
   width: 100%;
   aspect-ratio: var(--slice-aspect, 1 / 2.3);
   border: 1px solid rgb(214 219 224 / var(--line-opacity));
@@ -2141,6 +2207,10 @@ html.js-enabled .case-page.is-revealing
   background-repeat: no-repeat;
   background-position: center top;
   background-position-y: var(--bg-y, 0%);
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease;
 }
 
 @media (min-width: 768px) {

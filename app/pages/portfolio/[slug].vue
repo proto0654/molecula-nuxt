@@ -184,7 +184,17 @@ const { appliedAccent, bodyClass, phase } = useCasePageTransition({
 
 
 
-provideCaseMotionGate(computed(() => phase.value === 'idle' && ready.value));
+const awaitingPose = useAwaitingPose();
+
+provideCaseMotionGate(
+
+  computed(
+
+    () => phase.value === 'idle' && ready.value && !awaitingPose.value,
+
+  ),
+
+);
 
 
 
@@ -255,6 +265,18 @@ useCaseVideoBoot({
   revealing: pageRevealing,
 
   root: computed(() => caseShellRef.value?.root ?? null),
+
+});
+
+
+
+onMounted(() => {
+
+  if (import.meta.client) {
+
+    window.scrollTo(0, 0);
+
+  }
 
 });
 
