@@ -75,6 +75,20 @@ Contact order: Index kicker + H1 → intro if text → optional H2 + contacts if
 
 SEO: `useSeoMeta` title + plain excerpt on case / service / about / contact pages.
 
+## Hero navigation copy
+
+Molecular hero nav labels, atom captions, typewriter blurbs, and USP headlines are authored in [`navigationConfig.ts`](../app/lib/navigation/navigationConfig.ts) (hardcoded RU). `moleculeConfig` atom captions resolve from `navigationConfig.label` via `getItemByAtomId` — do not duplicate label strings elsewhere.
+
+| Field | Rendered as | Current source | Target source (WP) |
+|-------|-------------|------------------|---------------------|
+| `label` | Nav rail, 3D atom caption | `navigationConfig.items[].label` | `menus/v1` main menu item title, matched by route slug |
+| `blurb` | Typewriter under atom on commit (`// part1 / part2`) | hardcode | ACF theme option or per-section field `hero_blurb` (TBD in WP) |
+| `usp` | HUD headline after focus settle | hardcode | ACF theme option or per-section field `hero_usp` (TBD in WP) |
+
+Blurbs: part 2 on navigation atoms carries click CTA (`клик — <раздел>`); hub (Главная) is descriptive only. Contact copy stays in config until a dedicated WP page entity and hero fields exist.
+
+Hero wiring: [`WEBGL_HERO.md`](WEBGL_HERO.md) § Navigation.
+
 Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, `getCaseComposition`, image URL, slice layout, `balanceCaseScreenColumns`). Archive row helpers: [`archive.ts`](../app/domain/portfolio/archive.ts) (`NN`, specimen, meta fallback). Service archive: [`app/domain/services/archive.ts`](../app/domain/services/archive.ts) (featured specimen, tags meta or chrome «Услуга»). Does not change the `Case` model shape beyond normalize mapping.
 
 ## EN fields (typed, unused in UI)

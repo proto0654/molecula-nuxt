@@ -70,6 +70,8 @@ Types in [`app/lib/molecular/types.ts`](../app/lib/molecular/types.ts):
 
 Helpers: `getItemById`, `getItemByAtomId`. Each nav item maps to exactly one molecule atom id. Atom `caption` is resolved from `navigationConfig` labels via `getItemByAtomId` in [`moleculeConfig.ts`](../app/lib/molecular/moleculeConfig.ts) — keep `items[].atomId` aligned with molecule atom ids; do not duplicate label strings.
 
+Copy (`label`, `blurb`, `usp`) is hardcoded in `navigationConfig` for now. Future WP-backed fields and migration path: [`CONTENT.md`](CONTENT.md) § Hero navigation copy.
+
 ## Navigation state
 
 [`NavigationState`](../app/lib/navigation/NavigationState.ts) is the **single source of truth** for the active nav item.

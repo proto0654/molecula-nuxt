@@ -1,11 +1,12 @@
 export type NavigationItem = {
   id: string;
+  /** Nav rail + 3D atom caption. Hardcoded; target: WP main menu title (see docs/CONTENT.md). */
   label: string;
   atomId: string;
   route?: string;
-  /** One-line techno blurb shown under the atom title on commit. */
+  /** One-line techno blurb shown under the atom title on commit. Hardcoded; target: WP hero_blurb. */
   blurb: string;
-  /** Short USP headline in HUD space after focus settles. */
+  /** Short USP headline in HUD space after focus settles. Hardcoded; target: WP hero_usp. */
   usp: string;
 };
 
@@ -20,32 +21,32 @@ export const navigationConfig: NavigationConfig = {
       label: 'Главная',
       atomId: 'C',
       route: '/',
-      blurb: 'узел истока / углеродное ядро',
-      usp: 'Сборка смысла из хаоса',
+      blurb: 'weblaba / студия веб-продуктов',
+      usp: 'Цифровые продукты из одного узла',
     },
     {
       id: 'about',
       label: 'О нас',
       atomId: 'H1',
       route: '/about',
-      blurb: 'идентичность / кто мы',
-      usp: 'Системное мышление в продукте',
+      blurb: 'студия weblaba / клик — о нас',
+      usp: 'Команда, процесс, подход',
     },
     {
       id: 'services',
       label: 'Услуги',
       atomId: 'H2',
       route: '/services',
-      blurb: 'возможности / что делаем',
-      usp: 'От концепции до релиза',
+      blurb: 'разработка и дизайн / клик — услуги',
+      usp: 'От идеи до релиза',
     },
     {
       id: 'work',
-      label: 'Работы',
+      label: 'Портфолио',
       atomId: 'H3',
       route: '/portfolio',
-      blurb: 'выбранные сигналы / архив',
-      usp: 'Сигналы, которые сработали',
+      blurb: 'архив проектов / клик — портфолио',
+      usp: 'Кейсы, которые работают',
     },
     {
       id: 'contact',

@@ -157,8 +157,9 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 ## Copy conventions
 
 - UI language: **Russian** (`html lang="ru"`). Nav / HUD uppercase tracked labels (`ГЛАВНАЯ`, `О НАС`, …).
-- Blurbs: lowercase techno one-liners (RU) prefixed `// ` in the 3D typewriter; on mobile, break onto a second line at the content ` / ` separator.
-- USPs: short RU headlines in HUD space, uppercase tracked (`text-transform: uppercase`).
+- Hero labels (nav rail + 3D atom caption): one string per item in `navigationConfig.items[].label`; keep aligned with WP page title / main menu item (see [`CONTENT.md`](CONTENT.md) § Hero navigation copy).
+- Blurbs: lowercase techno one-liners (RU) prefixed `// ` in the 3D typewriter; on mobile, break onto a second line at the content ` / ` separator. Part 1 = WebLaba / section context; part 2 on navigation atoms = click CTA (`клик — <раздел>`). Hub atom (Главная) — description only, no click CTA.
+- USPs: short RU headlines in HUD space, uppercase tracked (`text-transform: uppercase`); authored in `navigationConfig.items[].usp` until WP fields exist.
 - Fonts: self-hosted **JetBrains Mono** — `public/fonts/JetBrainsMono-*.woff2` for CSS HUD/titles; `*.ttf` for troika (`AtomLabel`) because troika needs ttf/woff, not woff2. Case reading text: self-hosted **Exo 2** Light/Regular (`Exo2-*-*.woff2` subsets) via `--font-body`.
 - Case / section titles: all-caps scramble via `SiteScrambleTitle`, armed until `!is-awaiting-pose` (and case body idle). Absolute paint layer + locked non-letters. Archive/section body fade uses `usePageContentReveal` on the same settle.
 - Decorative Unicode allowed: `⟨ ⟩`, `⟦ ⟧`, `·`, `//`. Avoid emoji and heavy box drawing.
