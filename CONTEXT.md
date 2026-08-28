@@ -45,4 +45,4 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 
 ## Docs hub
 
-See [`docs/README.md`](docs/README.md). Spatial shell: [`docs/SPATIAL.md`](docs/SPATIAL.md). Case / archive visual: [`docs/CASES.md`](docs/CASES.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). Hero math: [`docs/WEBGL_HERO.md`](docs/WEBGL_HERO.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+See [`docs/README.md`](docs/README.md). Spatial shell: [`docs/SPATIAL.md`](docs/SPATIAL.md). Case / archive visual: [`docs/CASES.md`](docs/CASES.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). Hero WP fields: [`docs/HERO_WP_FIELDS.md`](docs/HERO_WP_FIELDS.md). Hero math: [`docs/WEBGL_HERO.md`](docs/WEBGL_HERO.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).

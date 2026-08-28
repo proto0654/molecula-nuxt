@@ -65,12 +65,12 @@ Types in [`app/lib/molecular/types.ts`](../app/lib/molecular/types.ts):
 
 | Type | Fields |
 |------|--------|
-| `NavigationItem` | `id`, `label`, `atomId`, `blurb`, `usp`, optional `route` |
+| `NavigationItem` | `id`, `label`, `atomId`, `blurb`, optional `blurbCta`, `usp`, optional `route` |
 | `NavigationConfig` | `items: NavigationItem[]` |
 
 Helpers: `getItemById`, `getItemByAtomId`. Each nav item maps to exactly one molecule atom id. Atom `caption` is resolved from `navigationConfig` labels via `getItemByAtomId` in [`moleculeConfig.ts`](../app/lib/molecular/moleculeConfig.ts) — keep `items[].atomId` aligned with molecule atom ids; do not duplicate label strings.
 
-Copy (`label`, blurb part 1, `usp`) is hardcoded in `navigationConfig` for now; blurb CTA is assembled in [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts). Future WP-backed fields and migration path: [`CONTENT.md`](CONTENT.md) § Hero navigation copy.
+Copy (`label`, blurb part 1, optional `blurbCta`, `usp`) is hardcoded in `navigationConfig` for now. On commit, `mountHeroApp` passes `buildAtomBlurb(item)` to `setAtomBlurb` — part 2 is `{кликай|тапай}{blurbCta}` (touch via [`pointerInput.ts`](../app/lib/a11y/pointerInput.ts)); hub skips CTA. Pointer-type changes refresh the active blurb via `subscribePointerInput`. WP migration: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md), [`CONTENT.md`](CONTENT.md) § Hero navigation copy.
 
 ## Navigation state
 
@@ -93,7 +93,7 @@ Two-step gesture on **home** (app layer in `mountHeroApp.ts`, not inside Three.j
 While committed, hover of another item shows **dual-state preview** on the hovered atom (pulsing reticle, bright title, static wireframe shell) without stealing focus or zoom. Committed atom keeps frozen reticle, blurb, and its own wireframe.
 
 1. **Hover** (atom raycast or nav): emissive highlight + pulsing selection reticle + bright title + static accent wireframe on the preview atom. **No** `focusAtom`, blurb, or USP.
-2. **First click** (atom or nav): `setCommitted` + `activateCommittedItem` (`focusAtom` + typewriter blurb + arm USP; scramble after `isFocusSettled`). Cold load, spatial return to `/`, empty-canvas restore, and header logo on home all commit hub `C` with the **same full readout** — there is no intermediate “deselected” home state.
+2. **First click** (atom or nav): `setCommitted` + `activateCommittedItem` (`focusAtom` + typewriter blurb via `buildAtomBlurb` + arm USP; scramble after `isFocusSettled`). Blurb part 2 prompts a **second click** to navigate (contextual `{кликай|тапай}{blurbCta}`). Cold load, spatial return to `/`, empty-canvas restore, and header logo on home all commit hub `C` with the **same full readout** — there is no intermediate “deselected” home state.
 3. **Second click on the same item**: `navigator.navigateTo(atomId)` (single approach: zoom+fill together). Second click on Home is a no-op.
 4. **Click another item**: retarget commit + focus (not a page transition).
 5. **Empty canvas click / logo on home**: `restoreOverview()` (hub `C`) + re-activate hub blurb/USP; `cancel()` if a transition is busy.
@@ -283,7 +283,9 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `Atom.ts` / `Bond.ts` / `AtomLabel.ts` / `AtomSelectionIndicator.ts` | Group+flat icosahedron, dashed line, two-part caption (JetBrains Mono ttf via troika + `BASE_URL`), screen-flat reticle |
 | `DecorativeNodes.ts` | HIGH-only unpickable ghost (one hub orbit per atom + wireframe fragments); idle orbits black, active orbit dark gray via `setActiveOrbitAtom`; fades with zoom/fill |
 | `moleculeConfig.ts` / `types.ts` | Declarative molecule data; captions pulled from nav labels |
-| `navigation/navigationConfig.ts` | RU `NavigationItem[]` + blurbs + USPs + id/atom lookups |
+| `navigation/navigationConfig.ts` | RU `NavigationItem[]` + blurbs + optional `blurbCta` + USPs + id/atom lookups |
+| `navigation/buildAtomBlurb.ts` | Assemble typewriter string; `{кликай\|тапай}` + CTA tail |
+| `a11y/pointerInput.ts` | `(pointer: coarse)` / `(hover: none)` touch heuristic + subscribe |
 | `navigation/NavigationState.ts` | atomHover + navHover + committed; `focusItemId`; subscribe |
 | `navigation/Navigator.ts` | GSAP page-transition coordinator; `navigateTo` / `approachTo` / `retargetApproach` / `onNavigate` / `cancel` |
 | `navigation/routeVeil.ts` | Body-parented overlay acquire / handoff / dismiss across home unmount |

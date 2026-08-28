@@ -141,7 +141,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 ### 10. USP headline
 
-- [`UspHeadline`](../src/ui/UspHeadline.ts): short sentence per section (`navigationConfig.usp`).
+- [`UspHeadline`](../app/lib/hero-ui/UspHeadline.ts): short sentence per section (`navigationConfig.usp`).
 - **Desktop:** left void between rail and molecule; vertically centered (`top: 50%`); larger adaptive type (`clamp` ~1.35–2.15rem).
 - **Mobile:** golden section between header bottom and molecule center (`screenY` via `--composition-screen-y`); smaller segment on top (`1/φ²`); type `clamp` ~1.45–2rem — hierarchically above troika atom captions.
 - **Tablet:** top band under meta, centered.

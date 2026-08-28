@@ -150,6 +150,7 @@ Theme options chrome (same options payload):
 | `contact_popup_title` | `Свяжитесь со мной` | `Contact me` |
 | `contact_popup_text` | messenger CTA copy | EN pair |
 | `weblaba_contacts` | repeater (see below) | `label_en` per row |
+| `hero_nav_items` | **Not live yet** — planned repeater for molecular hero copy (`nav_id`, `label`, `blurb`, `blurb_cta`, `usp`). Spec + seed: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md) |
 
 Contacts repeater (`weblaba_contacts`, 2026-08-27): Telegram, `tel:`, VK, mailto. Fields: `label`, `label_en`, `url`, `icon` (Iconify id, e.g. `bx:bxltelegram`, `mdi:vk`), `target` (`_self` / `_blank`), `show_in_header` (legacy), `show_in_socialbar`. No WP page with slug `contact` — options only. Empty repeater is `false` / `[]`; Nuxt does not inject PHP Telegram+phone defaults.
 

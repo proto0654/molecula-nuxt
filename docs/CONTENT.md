@@ -82,10 +82,12 @@ Molecular hero nav labels, atom captions, typewriter blurbs, and USP headlines a
 | Field | Rendered as | Current source | Target source (WP) |
 |-------|-------------|------------------|---------------------|
 | `label` | Nav rail, 3D atom caption | `navigationConfig.items[].label` | `menus/v1` main menu item title, matched by route slug |
-| `blurb` | Typewriter under atom on commit (`// part1 / part2`) | part 1 + `blurbCta` tail hardcoded; verb from [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) | ACF theme option or per-section field `hero_blurb` / `hero_blurb_cta` (TBD in WP) |
-| `usp` | HUD headline after focus settle | hardcode | ACF theme option or per-section field `hero_usp` (TBD in WP) |
+| `blurb` | Typewriter under atom on commit (`// part1 / part2`) | part 1 + `blurbCta` in [`navigationConfig`](../app/lib/navigation/navigationConfig.ts); verb from [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) | ACF Options repeater `hero_nav_items` — see [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md) |
+| `usp` | HUD headline after focus settle | hardcode | same repeater field `usp` |
 
 Blurbs: part 1 + `blurbCta` glued to `{кликай|тапай}` (leading space or comma in `blurbCta`). Hub (Главная) is descriptive only.
+
+WP field spec + seed JSON: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md).
 
 Hero wiring: [`WEBGL_HERO.md`](WEBGL_HERO.md) § Navigation.
 
