@@ -11,7 +11,7 @@ const CASE_LIST_SELECTOR =
   '.case-page .case-mobile-signature__prose ol > li';
 
 const ITEM_SELECTOR =
-  '.archive-row, [data-enter="tail"], .case-page .case-section:not(.case-nav), .case-page nav.case-nav.case-section, ' +
+  '.archive-row, [data-enter="tail"], .case-page .case-section:not(.case-nav), .case-page nav.case-nav.case-section, .archive-page nav.case-nav--archive, ' +
   CASE_LIST_SELECTOR;
 const VIEW_INSET = 0.08;
 const DEFAULT_CAP = 6;

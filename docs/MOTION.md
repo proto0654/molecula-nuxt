@@ -57,7 +57,7 @@ After gate + archive-return restore + two rAFs:
 
 Uprock motif — implementation of [hairline language](DESIGN.md#hairline-language): the **full-width** row hairline (`::before` / last-row `::after`), wiped **left → right** via `clip-path: inset(0 100% 0 0)` → `inset(0 0 0 0)`. Short `.archive-row__line` tick uses `scaleX(0 → 1)` with `transform-origin: left center`. Row content starts after `--reveal-content-delay` so the draw reads first.
 
-Same motif on case section markers, CMS list rows, and case NEXT footer (marker rail). Service / archive detail footer animates only the **existing** Previous separator — no extra top hairline on `.case-nav__links`.
+Same motif on case section markers, CMS list rows, and footer nav. **Footer nav** (`nav.case-nav`) is one listing unit; when `is-revealed`, an internal chain runs via `--nav-origin` + step offsets: case — marker line → marker label → Next → Previous line → Previous → Index; service — Next → Previous line → Previous → Index.
 
 `archive-row--detail:last-child` has no bottom hairline (unchanged).
 

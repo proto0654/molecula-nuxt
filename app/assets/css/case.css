@@ -318,34 +318,48 @@ html.js-enabled .case-page.is-revealing .case-nav:not(.is-revealed) .case-nav__p
 }
 
 html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed .case-marker--editorial::after,
-html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed .case-marker--visual::after,
-html.js-enabled .case-page.is-revealing .case-nav.is-revealed .case-marker--editorial::after {
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed .case-marker--visual::after {
   animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
   animation-delay: calc(
     var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger))
   );
 }
 
-html.js-enabled .case-page.is-revealing .case-nav.is-revealed .case-nav__prev::after {
-  clip-path: inset(0 0 0 0);
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed {
+  --nav-origin: calc(var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)));
+}
+
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed[data-reveal='in'] {
+  --nav-origin: 0ms;
+}
+
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-marker--editorial::after {
+  animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: var(--nav-origin);
 }
 
 html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] .case-marker--editorial::after,
-html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] .case-marker--visual::after,
-html.js-enabled .case-page.is-revealing .case-nav.is-revealed[data-reveal='in'] .case-marker--editorial::after {
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] .case-marker--visual::after {
   animation-delay: 0s;
 }
 
 html.js-enabled .case-page:not(.is-revealing) .case-section:not(.case-nav) > *,
-html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) > *,
-html.js-enabled .case-page:not(.is-revealing) nav.case-nav.case-section > *,
-html.js-enabled .case-page.is-revealing nav.case-nav.case-section:not(.is-revealed) > * {
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) > * {
   opacity: 0;
   transform: translate3d(0, var(--enter-y), 0);
 }
 
-html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed > *,
-html.js-enabled .case-page.is-revealing nav.case-nav.case-section.is-revealed > * {
+html.js-enabled .case-page:not(.is-revealing) nav.case-nav .case-marker,
+html.js-enabled .case-page:not(.is-revealing) nav.case-nav .case-nav__item :is(.case-nav__link, .case-nav__muted),
+html.js-enabled .case-page.is-revealing nav.case-nav:not(.is-revealed) .case-marker,
+html.js-enabled .case-page.is-revealing nav.case-nav:not(.is-revealed)
+  .case-nav__item
+  :is(.case-nav__link, .case-nav__muted) {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed > * {
   animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
   animation-delay: calc(
     var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
@@ -353,8 +367,38 @@ html.js-enabled .case-page.is-revealing nav.case-nav.case-section.is-revealed > 
   );
 }
 
-html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] > *,
-html.js-enabled .case-page.is-revealing nav.case-nav.case-section.is-revealed[data-reveal='in'] > * {
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-marker {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(var(--nav-origin) + var(--reveal-content-delay));
+}
+
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-nav__next :is(.case-nav__link, .case-nav__muted) {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--nav-origin) + var(--enter-stagger) + var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-nav__prev::after {
+  animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: calc(var(--nav-origin) + (2 * var(--enter-stagger)));
+}
+
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-nav__prev :is(.case-nav__link, .case-nav__muted) {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--nav-origin) + (2 * var(--enter-stagger)) + var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-nav__index :is(.case-nav__link, .case-nav__muted) {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--nav-origin) + (3 * var(--enter-stagger)) + var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] > * {
   animation-delay: var(--reveal-content-delay);
 }
 
@@ -494,7 +538,8 @@ html.js-enabled .case-page.is-revealing
   html.js-enabled .case-page .case-marker--visual::after,
   html.js-enabled .case-page .case-nav .case-nav__prev::after,
   html.js-enabled .case-page .case-section:not(.case-nav) > *,
-  html.js-enabled .case-page nav.case-nav.case-section > * {
+  html.js-enabled .case-page nav.case-nav .case-marker,
+  html.js-enabled .case-page nav.case-nav .case-nav__item :is(.case-nav__link, .case-nav__muted) {
     opacity: 1;
     transform: none;
     clip-path: inset(0 0 0 0);
