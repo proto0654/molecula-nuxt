@@ -4,8 +4,10 @@ export type NavigationItem = {
   label: string;
   atomId: string;
   route?: string;
-  /** One-line techno blurb shown under the atom title on commit. Hardcoded; target: WP hero_blurb. */
+  /** Descriptive blurb (part 1). Navigable atoms get a dynamic click/tap CTA appended at runtime. */
   blurb: string;
+  /** CTA tail glued to «кликай/тапай» — leading space or punctuation included, e.g. « для связи со мной», «, будем знакомиться». */
+  blurbCta?: string;
   /** Short USP headline in HUD space after focus settles. Hardcoded; target: WP hero_usp. */
   usp: string;
 };
@@ -29,7 +31,8 @@ export const navigationConfig: NavigationConfig = {
       label: 'О нас',
       atomId: 'H1',
       route: '/about',
-      blurb: 'студия weblaba / клик — о нас',
+      blurb: 'студия weblaba',
+      blurbCta: ', будем знакомится',
       usp: 'Команда, процесс, подход',
     },
     {
@@ -37,7 +40,8 @@ export const navigationConfig: NavigationConfig = {
       label: 'Услуги',
       atomId: 'H2',
       route: '/services',
-      blurb: 'разработка и дизайн / клик — услуги',
+      blurb: 'разработка и дизайн',
+      blurbCta: ', чтобы выбрать услуги',
       usp: 'От идеи до релиза',
     },
     {
@@ -45,7 +49,8 @@ export const navigationConfig: NavigationConfig = {
       label: 'Портфолио',
       atomId: 'H3',
       route: '/portfolio',
-      blurb: 'архив проектов / клик — портфолио',
+      blurb: 'архив проектов',
+      blurbCta: ', переход в портфолио',
       usp: 'Кейсы, которые работают',
     },
     {
@@ -53,7 +58,8 @@ export const navigationConfig: NavigationConfig = {
       label: 'Контакты',
       atomId: 'H4',
       route: '/contact',
-      blurb: 'открытый канал / рукопожатие',
+      blurb: 'открытый канал',
+      blurbCta: ' для связи со мной',
       usp: 'Прямой канал без шума',
     },
   ],

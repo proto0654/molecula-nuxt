@@ -8,6 +8,10 @@ import { QualityManager } from '../molecular/quality/QualityManager';
 import { PerfOverlay } from '../debug/PerfOverlay';
 import { SpatialOverlay } from '../debug/SpatialOverlay';
 import {
+  buildAtomBlurb,
+  subscribePointerInput,
+} from '../navigation/buildAtomBlurb';
+import {
   getItemByAtomId,
   getItemById,
   navigationConfig,
@@ -136,7 +140,7 @@ export function mountHeroApp(
     const item = getItemById(itemId);
     if (!item) return;
     controller.focusAtom(item.atomId);
-    controller.setAtomBlurb(item.atomId, item.blurb);
+    controller.setAtomBlurb(item.atomId, buildAtomBlurb(item));
     uspHeadline.arm(item.usp);
   }
 
@@ -511,6 +515,13 @@ export function mountHeroApp(
   tabletMq.addEventListener('change', onViewportChange);
   desktopMq.addEventListener('change', onViewportChange);
 
+  const unsubscribePointer = subscribePointerInput(() => {
+    const committedId = navigationState.committedItemId;
+    if (!committedId) return;
+    const item = getItemById(committedId);
+    if (item) controller.setAtomBlurb(item.atomId, buildAtomBlurb(item));
+  });
+
   return {
     applySpatial(state, applyOptions) {
       spatial.apply(state, applyOptions);
@@ -523,6 +534,7 @@ export function mountHeroApp(
       mobileMq.removeEventListener('change', onViewportChange);
       tabletMq.removeEventListener('change', onViewportChange);
       desktopMq.removeEventListener('change', onViewportChange);
+      unsubscribePointer();
       unsubscribeNav();
       unsubscribeHover();
       unsubscribeClick();
