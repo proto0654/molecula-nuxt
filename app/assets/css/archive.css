@@ -240,8 +240,9 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
   }
 
   .editorial-hero.editorial-hero--no-media {
-    min-height: var(--editorial-hero-min-height-no-media);
+    min-height: 0;
     align-items: start;
+    padding-top: var(--editorial-hero-pad-top-no-media);
   }
 
   .editorial-hero.editorial-hero--no-media .editorial-hero__content,
@@ -252,7 +253,7 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
 
   .editorial-hero--case.editorial-hero--no-media,
   .case-page--sparse .editorial-hero--case.editorial-hero--no-media {
-    min-height: var(--editorial-hero-min-height-no-media);
+    min-height: 0;
   }
 
   .editorial-hero--case {
