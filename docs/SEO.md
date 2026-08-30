@@ -19,7 +19,7 @@ Env:
 | `NUXT_PUBLIC_SITE_URL` | Absolute origin for canonical, OG URL, sitemap (default `https://weblaba.ru`; GitHub Pages: `https://proto0654.github.io/molecula-nuxt`) |
 | `NUXT_APP_BASE_URL` | Path prefix (Pages: `/molecula-nuxt/`) |
 
-Global favicon / apple-touch: `public/sign-weblaba.svg` + `public/sign-weblaba.png` via `nuxt.config.ts` `app.head.link` (not per-page).
+Global favicon / apple-touch: `public/sign-weblaba.svg` + `public/sign-weblaba.png` via `nuxt.config.ts` `app.head.link` (`publicAsset()` prefixes `NUXT_APP_BASE_URL` for GitHub Pages).
 
 ## Homepage copy
 

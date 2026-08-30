@@ -15,6 +15,15 @@ function wpApiBase(): string {
   ).replace(/\/$/, '');
 }
 
+function appBaseURL(): string {
+  const base = process.env.NUXT_APP_BASE_URL || '/';
+  return base.endsWith('/') ? base : `${base}/`;
+}
+
+function publicAsset(path: string): string {
+  return `${appBaseURL()}${path.replace(/^\//, '')}`;
+}
+
 type SlimPost = { slug: string };
 
 async function fetchAllCptSlugs(cpt: string): Promise<string[]> {
@@ -56,7 +65,7 @@ export default defineNuxtConfig({
   },
   app: {
     // Set via NUXT_APP_BASE_URL for GitHub Pages (e.g. /molecula-nuxt/). Do not hardcode.
-    baseURL: process.env.NUXT_APP_BASE_URL || '/',
+    baseURL: appBaseURL(),
     head: {
       title: 'WebLaba',
       titleTemplate: '%s',
@@ -69,16 +78,16 @@ export default defineNuxtConfig({
         {
           rel: 'icon',
           type: 'image/svg+xml',
-          href: '/sign-weblaba.svg',
+          href: publicAsset('sign-weblaba.svg'),
         },
         {
           rel: 'icon',
           type: 'image/png',
-          href: '/sign-weblaba.png',
+          href: publicAsset('sign-weblaba.png'),
         },
         {
           rel: 'apple-touch-icon',
-          href: '/sign-weblaba.png',
+          href: publicAsset('sign-weblaba.png'),
         },
       ],
     },

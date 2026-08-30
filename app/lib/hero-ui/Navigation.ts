@@ -66,15 +66,26 @@ export class Navigation {
         button.dataset.route = item.route;
       }
 
+      const indexText = String(index + 1).padStart(2, '0');
+
       const idx = document.createElement('span');
       idx.className = 'nav__index';
-      idx.textContent = String(index + 1).padStart(2, '0');
+      idx.textContent = indexText;
+
+      const signal = document.createElement('span');
+      signal.className = 'nav__signal';
+
+      const signalLine = document.createElement('span');
+      signalLine.className = 'nav__signal-line';
+      signalLine.setAttribute('aria-hidden', 'true');
 
       const label = document.createElement('span');
       label.className = 'nav__label';
       label.textContent = item.label;
 
-      button.append(idx, label);
+      signal.append(signalLine, label);
+      button.append(idx, signal);
+      button.setAttribute('aria-label', `${indexText} ${item.label}`);
       button.addEventListener('pointerenter', () => {
         this.state.setNavHover(item.id);
       });
@@ -97,14 +108,30 @@ export class Navigation {
     parent.append(this.root);
 
     this.unsubscribe = this.state.subscribe(() => {
-      const active = this.state.activeItemId;
-      const committed = this.state.committedItemId;
-      for (const [id, el] of this.itemElements) {
-        el.classList.toggle('is-active', id === active);
-        el.classList.toggle('is-committed', id === committed);
-      }
-      this.scrollActiveIntoView();
+      this.syncItemStates();
     });
+    this.syncItemStates();
+  }
+
+  private syncItemStates(): void {
+    const active = this.state.activeItemId;
+    const committed = this.state.committedItemId;
+    const preview = this.state.previewItemId;
+    const hasDistinctPreview = Boolean(preview && preview !== committed);
+    for (const [id, el] of this.itemElements) {
+      el.classList.toggle('is-active', id === active);
+      el.classList.toggle('is-committed', id === committed);
+      el.classList.toggle(
+        'is-preview',
+        hasDistinctPreview && id === preview,
+      );
+      if (id === committed) {
+        el.setAttribute('aria-current', 'true');
+      } else {
+        el.removeAttribute('aria-current');
+      }
+    }
+    this.scrollActiveIntoView();
   }
 
   get navigationState(): NavigationState {
@@ -122,12 +149,31 @@ export class Navigation {
   getItemAnchor(itemId: string): { x: number; y: number } | null {
     const el = this.itemElements.get(itemId);
     if (!el) return null;
-    const label = el.querySelector('.nav__label') ?? el;
-    const rect = label.getBoundingClientRect();
-    if (rect.width <= 0 && rect.height <= 0) return null;
+
+    const label = el.querySelector('.nav__label');
+    const labelRect = label?.getBoundingClientRect();
+    const signalExpanded =
+      el.classList.contains('is-committed') ||
+      el.classList.contains('is-preview');
+
+    if (
+      signalExpanded &&
+      labelRect &&
+      labelRect.width > 0 &&
+      labelRect.height > 0
+    ) {
+      return {
+        x: labelRect.right + 10,
+        y: labelRect.top + labelRect.height * 0.5,
+      };
+    }
+
+    const index = el.querySelector('.nav__index') ?? el;
+    const indexRect = index.getBoundingClientRect();
+    if (indexRect.width <= 0 && indexRect.height <= 0) return null;
     return {
-      x: rect.right + 10,
-      y: rect.top + rect.height * 0.5,
+      x: indexRect.right + 24,
+      y: indexRect.top + indexRect.height * 0.5,
     };
   }
 
