@@ -34,11 +34,12 @@ const EXTRA_NODES: readonly {
 ];
 
 /**
- * Optional HIGH-only ghost geometry. Parent under `moleculeGroup`
- * so it rides molecule rotation. Never added to `atomMeshes`.
+ * Decorative orbit rings + optional ghost wire fragments.
+ * Parent under `moleculeGroup` so it rides molecule rotation.
+ * Never added to `atomMeshes`.
  *
  * One hub-centered orbit circle per peripheral atom (varied radius).
- * Idle orbits are black; the active atom's orbit turns white.
+ * Idle orbits are black; the active atom's orbit turns dark gray.
  */
 export class DecorativeNodes {
   readonly object: Group;
@@ -48,8 +49,10 @@ export class DecorativeNodes {
   private readonly orbitMaterials: LineBasicMaterial[] = [];
   private readonly orbitAtomIds: string[] = [];
   private readonly orbitDefs: OrbitDef[] = [];
+  private readonly ghostNodes: LineSegments[] = [];
   private readonly nodeMaterialIndex: number;
-  private enabled = true;
+  private orbitsEnabled = true;
+  private ghostNodesEnabled = false;
   private zoomFade = 1;
   private orbitScale = 1;
   private activeAtomId: string | null = null;
@@ -100,13 +103,14 @@ export class DecorativeNodes {
     for (let i = 0; i < EXTRA_NODES.length; i += 1) {
       const spec = EXTRA_NODES[i]!;
       const node = new LineSegments(
-        cache.getUnitIcosahedronEdges(0),
+        cache.getUnitOctahedronEdges(),
         nodeMaterial,
       );
       node.name = i === 0 ? 'decorative-node' : `decorative-node-${i}`;
       node.scale.setScalar(spec.scale);
       node.position.set(spec.position[0], spec.position[1], spec.position[2]);
       node.raycast = () => {};
+      this.ghostNodes.push(node);
       this.object.add(node);
     }
 
@@ -130,8 +134,12 @@ export class DecorativeNodes {
     this.syncOrbitColors();
   }
 
-  setVisible(visible: boolean): void {
-    this.enabled = visible;
+  applyQuality(options: {
+    orbits: boolean;
+    ghostNodes: boolean;
+  }): void {
+    this.orbitsEnabled = options.orbits;
+    this.ghostNodesEnabled = options.ghostNodes;
     this.syncVisibility();
   }
 
@@ -173,6 +181,14 @@ export class DecorativeNodes {
   }
 
   private syncVisibility(): void {
-    this.object.visible = this.enabled && this.zoomFade > 0.02;
+    const show = this.zoomFade > 0.02;
+    for (const orbit of this.orbitLoops) {
+      orbit.visible = show && this.orbitsEnabled;
+    }
+    for (const node of this.ghostNodes) {
+      node.visible = show && this.ghostNodesEnabled;
+    }
+    this.object.visible =
+      show && (this.orbitsEnabled || this.ghostNodesEnabled);
   }
 }

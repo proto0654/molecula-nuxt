@@ -225,7 +225,7 @@ export class MoleculeScene {
     this.accentWireframe.renderOrder = 2;
 
     this.decorativeNodes = new DecorativeNodes(this.cache);
-    this.decorativeNodes.setVisible(quality.get().decorativeNodes);
+    this.applyDecorativeQuality(quality.get());
     this.moleculeGroup.add(this.decorativeNodes.object);
 
     this.resize(window.innerWidth, window.innerHeight);
@@ -339,10 +339,17 @@ export class MoleculeScene {
     this.accentWireframe.geometry = this.cache.getUnitIcosahedronEdges(
       settings.atomDetail,
     );
-    this.decorativeNodes.setVisible(settings.decorativeNodes);
+    this.applyDecorativeQuality(settings);
     this.syncWireframe();
     this.syncAccentWireframe();
     this.resize(this.lastWidth, this.lastHeight);
+  }
+
+  private applyDecorativeQuality(settings: QualitySettings): void {
+    this.decorativeNodes.applyQuality({
+      orbits: settings.decorativeOrbits,
+      ghostNodes: settings.decorativeNodes,
+    });
   }
 
   /** Committed atom wireframe shell (static). */

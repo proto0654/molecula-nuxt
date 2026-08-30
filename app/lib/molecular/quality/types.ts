@@ -10,6 +10,9 @@ export type QualitySettings = {
   selectedWireframe: boolean;
   selectionRingCount: number;
   selectionTicks: boolean;
+  /** Hub-centered peripheral orbit rings (cheap LineLoops). */
+  decorativeOrbits: boolean;
+  /** Ghost wire fragments (octahedron edges). */
   decorativeNodes: boolean;
   material: QualityMaterialKind;
 };
