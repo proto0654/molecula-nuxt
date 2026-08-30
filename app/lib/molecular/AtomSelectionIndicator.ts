@@ -18,7 +18,7 @@ export type SelectionGeometries = {
 };
 
 const RING_COLOR = 0xb8c0c8;
-const DIM_COLOR = 0x000000;
+const DIM_COLOR = 0x4a4f54;
 const RING_SCALES = [1.28, 1.62, 2.02];
 const FOLLOW = 10;
 /** Softer than opacity follow — settled freeze chrome fade. */
@@ -157,7 +157,7 @@ export class AtomSelectionIndicator {
   }
 
   /**
-   * Settled frozen approach: lerp reticle color toward black.
+   * Settled frozen approach: lerp reticle color toward dim chrome (`DIM_COLOR`).
    * Leaving the state sets false and restores `RING_COLOR`.
    */
   setDimmed(dimmed: boolean): void {

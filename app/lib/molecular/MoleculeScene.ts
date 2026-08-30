@@ -23,7 +23,7 @@ import type { MoleculeConfig } from './types';
 const SCENE_BG = 0x14161c;
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
-const WIREFRAME_DIM_COLOR = 0x000000;
+const WIREFRAME_DIM_COLOR = 0x4a4f54;
 const WIREFRAME_OPACITY = 0.22;
 /** Autoplay-next pulse: peak matches committed shell; trough nearly off. */
 const PULSE_OPACITY_MIN = 0.035;
@@ -396,7 +396,7 @@ export class MoleculeScene {
   }
 
   /**
-   * Settled frozen approach: lerp selection reticle + wireframe toward black.
+   * Settled frozen approach: lerp selection reticle + wireframe toward dim chrome.
    * Leaving the state restores base chrome colors.
    */
   setChromeDimmed(dimmed: boolean): void {

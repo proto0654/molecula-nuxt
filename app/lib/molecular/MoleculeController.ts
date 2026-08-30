@@ -724,7 +724,7 @@ export class MoleculeController {
 
   /**
    * While Navigator owns the approach timeline, keep selection chrome at base color.
-   * Settled freeze (`frozen && !busy`) lerps rings / cross / wireframe to black.
+   * Settled freeze (`frozen && !busy`) lerps rings / cross / wireframe to dim chrome.
    */
   setApproachBusy(busy: boolean): void {
     if (this.approachBusy === busy) return;
@@ -1330,7 +1330,7 @@ export class MoleculeController {
     }
   }
 
-  /** Settled off-home freeze: black chrome; busy approach or home: base colors. */
+  /** Settled off-home freeze: dim chrome; busy approach or home: base colors. */
   private syncChromeDim(): void {
     this.scene.setChromeDimmed(this.frozen && !this.approachBusy);
   }
