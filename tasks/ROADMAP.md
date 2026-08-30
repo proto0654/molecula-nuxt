@@ -13,6 +13,7 @@
 - [x] Config-driven `Atom` (matte flat icosahedron) + `Bond` (dashed line); `userData.atomId`
 - [x] Five-atom test molecule (hub + peripherals on curated orbits)
 - [x] Pointer mouse influence via quaternion (`mouseOrientation` / `targetMouseOrientation`, axis-angle, slerp)
+- [x] Pointer spin rework: desktop orbit-bounded great-circle roll (`pointerSpin.ts`); touch trackball; hover pause on peripherals
 - [x] Pure math helpers (`getStableFocusQuaternion`, `getFocusQuaternion`, `getAtomFocusDistance`, orientation, projection)
 - [x] Focus orientation layer + `focusStrength ∈ [0,1]`; compose `appliedFocus × mouse × base`
 - [x] Atom hover picking (`AtomHover` raycast)

@@ -24,6 +24,15 @@ import {
   type GyroCalibration,
   type GyroSample,
 } from './gyroTilt';
+import {
+  TOUCH_SPIN_GAIN,
+  integrateSpin,
+  spinAxisFromDrag,
+  spinAxisScreenPerpendicular,
+  spinSpeedFromRadius,
+  spinSpeedLimitsFromExtent,
+  type SpinSpeedLimits,
+} from './pointerSpin';
 import { PerformanceSampler } from './quality/PerformanceSampler';
 import type { QualityManager } from './quality/QualityManager';
 import { readQualitySearchParam } from './quality/QualityManager';
@@ -44,22 +53,22 @@ import type { SpatialContext, SpatialMode } from '../spatial/types';
 
 let nextControllerInstanceId = 0;
 
-/** Limited yaw / pitch from pointer (radians) — not a full turn. */
+/** Limited yaw / pitch from gyro (radians) — not a full turn. */
 const MAX_YAW = Math.PI / 5;
 const MAX_PITCH = Math.PI / 7;
 
 /** Movement below this (CSS px) counts as tap; above as drag. */
 const TAP_MOVE_THRESHOLD_PX = 10;
 
-/** Touch drag sensitivity relative to canvas size → full max tilt. */
-const TOUCH_DRAG_GAIN = 1.35;
+/** Skip desktop spin integration when omega is below this (rad/s). */
+const SPIN_OMEGA_EPS = 1e-5;
 
 /** Higher = snappier slerp toward `targetMouseOrientation`. */
 const MOUSE_FOLLOW = 6;
 
 /**
- * Mouse amplitude scale at `focusStrength = 1` (touch drag).
- * Focus orientation stays dominant; pointer remains a subtle secondary tilt.
+ * Mouse / touch amplitude scale at `focusStrength = 1`.
+ * Focus orientation stays dominant; pointer remains a subtle secondary spin.
  */
 const MOUSE_UNDER_FOCUS = 0.22;
 
@@ -124,9 +133,9 @@ function getViewportSize(): { width: number; height: number } {
 }
 
 export type PointerNorm = {
-  /** Normalized X in [-1, 1]; 0 = screen center. */
+  /** Offset X in NDC; 0 = projected molecule origin. */
   x: number;
-  /** Normalized Y in [-1, 1]; 0 = screen center; +Y = up. */
+  /** Offset Y in NDC; 0 = projected molecule origin; +Y = up. */
   y: number;
 };
 
@@ -148,11 +157,14 @@ export class MoleculeController {
   /** Rest pose (identity for now). Absolute — never accumulated. */
   private readonly baseOrientation = new Quaternion();
 
-  /** Smoothed limited pointer tilt. */
+  /** Smoothed pointer layer (spin + gyro). */
   private readonly mouseOrientation = new Quaternion();
 
-  /** Absolute mouse target from the latest pointer sample. */
+  /** Target pointer layer: `gyroQ × spinOrientation`. */
   private readonly targetMouseOrientation = new Quaternion();
+
+  /** Accumulated free spin from mouse velocity / touch drag. */
+  private readonly spinOrientation = new Quaternion();
 
   /** Smoothed atom→camera focus pose. */
   private readonly focusOrientation = new Quaternion();
@@ -214,11 +226,13 @@ export class MoleculeController {
   /** Look-at used for composition distance (matches MoleculeScene camera). */
   private readonly compositionLookAt = new Vector3(0, 0.2, 0);
 
-  /** Accumulated touch-drag yaw / pitch (clamped to MAX_*). */
-  private dragYaw = 0;
-  private dragPitch = 0;
+  /** Fine pointer is inside the document — desktop spin from live offset. */
+  private hasFinePointer = false;
 
-  /** Calibrated gyro contribution; composed with drag into the mouse target. */
+  /** Cached canvas CSS box; refreshed on resize / visualViewport scroll. */
+  private readonly canvasRect = { left: 0, top: 0, width: 1, height: 1 };
+
+  /** Calibrated gyro contribution; composed with spin into the mouse target. */
   private gyroYaw = 0;
   private gyroPitch = 0;
   private gyroCalibrated = false;
@@ -256,11 +270,8 @@ export class MoleculeController {
   private touchDragging = false;
   private suppressNextClick = false;
 
-  /** Last orientation used for hover picking — dirty when it diverges. */
+  /** Last composed orientation — dirty hover pick when the molecule spins under a still pointer. */
   private readonly lastHoverQuaternion = new Quaternion();
-
-  /** Last zoom progress sampled for hover dirtying. */
-  private lastHoverZoomProgress = 0;
 
   /**
    * Last pose used for label billboards.
@@ -290,7 +301,20 @@ export class MoleculeController {
   private readonly scratchCameraUp = new Vector3();
   private readonly scratchRandomAxis = new Vector3();
   private readonly scratchHalfTurn = new Quaternion();
+  private readonly scratchSpinAxis = new Vector3();
+  private readonly scratchSpinDelta = new Quaternion();
   private readonly pointerNorm: PointerNorm = { x: 0, y: 0 };
+  /** Latest fine-pointer NDC (screen center = 0). */
+  private readonly pointerNdc = new Vector2();
+  /** Projected molecule origin in NDC — spin offset is relative to this, not authored framing. */
+  private readonly spinOriginNdc = new Vector2();
+  /** Max NDC offset of peripheral atoms from the hub — spin fades at the outer orbits. */
+  private spinExtentNdc = 0.32;
+  private readonly spinSpeedLimits: SpinSpeedLimits = {
+    deadzone: 0.04,
+    peak: 0.14,
+    fade: 0.33,
+  };
   private readonly atomHover = new AtomHover();
   private readonly atomClickListeners = new Set<AtomClickListener>();
   private readonly afterUpdateListeners = new Set<AfterUpdateListener>();
@@ -363,6 +387,10 @@ export class MoleculeController {
       const { width, height } = getViewportSize();
       this.scene.resize(width, height);
       this.applyCompositionBias();
+      this.refreshCanvasRect();
+      this.scene.moleculeGroup.updateMatrixWorld(true);
+      this.refreshSpinOriginNdc();
+      this.refreshSpinExtentNdc();
       // Aspect / projection changed — refresh pick and label billboards.
       if (!this.touchInput) {
         this.atomHover.markDirty();
@@ -384,29 +412,22 @@ export class MoleculeController {
       if (event.pointerType === 'touch' || event.pointerType === 'pen') {
         return;
       }
-      const rect = this.canvas.getBoundingClientRect();
+      const rect = this.canvasRect;
       const w = Math.max(rect.width, 1);
       const h = Math.max(rect.height, 1);
       const fracX = (event.clientX - rect.left) / w;
       const fracY = (event.clientY - rect.top) / h;
-      // Pick / hover use true viewport NDC (screen center).
       const ndcX = fracX * 2 - 1;
       const ndcY = -(fracY * 2 - 1);
-      // Mouse tilt origin follows active composition framing (visual molecule center).
-      const framing =
-        this.compositionFramingOverride ?? this.compositionProfile;
-      this.pointerNorm.x = (fracX - framing.screenX) * 2;
-      this.pointerNorm.y = (framing.screenY - fracY) * 2;
-      if (!this.reducedMotion) {
-        this.updateMouseInfluence(this.pointerNorm);
-        this.syncDragAnglesFromPointer(this.pointerNorm);
-      }
+      this.pointerNdc.set(ndcX, ndcY);
+      this.hasFinePointer = !this.reducedMotion;
       this.atomHover.setPointerNdc(ndcX, ndcY);
     };
 
     this.onPointerLeaveBound = () => {
       if (this.frozen) return;
       if (this.touchPointerId !== null) return;
+      this.hasFinePointer = false;
       this.atomHover.clear();
     };
 
@@ -432,6 +453,7 @@ export class MoleculeController {
       this.touchLastX = event.clientX;
       this.touchLastY = event.clientY;
       this.touchDragging = false;
+      this.hasFinePointer = false;
       this.foldGyroIntoDrag();
       this.canvas.setPointerCapture(event.pointerId);
       event.preventDefault();
@@ -477,18 +499,29 @@ export class MoleculeController {
       this.touchDragging = true;
     }
 
-    const rect = this.canvas.getBoundingClientRect();
-    const w = Math.max(rect.width, 1);
-    const h = Math.max(rect.height, 1);
     const stepX = event.clientX - this.touchLastX;
     const stepY = event.clientY - this.touchLastY;
     this.touchLastX = event.clientX;
     this.touchLastY = event.clientY;
 
-    this.dragYaw += (stepX / w) * MAX_YAW * TOUCH_DRAG_GAIN * 2;
-    this.dragPitch += (stepY / h) * MAX_PITCH * TOUCH_DRAG_GAIN * 2;
-    this.dragYaw = Math.max(-MAX_YAW, Math.min(MAX_YAW, this.dragYaw));
-    this.dragPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.dragPitch));
+    if (!spinAxisFromDrag(stepX, stepY, this.scratchSpinAxis)) {
+      event.preventDefault();
+      return;
+    }
+
+    const span = Math.min(
+      Math.max(this.canvasRect.width, 1),
+      Math.max(this.canvasRect.height, 1),
+    );
+    const mouseScale = 1 - this.focusStrength * (1 - MOUSE_UNDER_FOCUS);
+    const angle =
+      (Math.hypot(stepX, stepY) / span) * TOUCH_SPIN_GAIN * mouseScale;
+    integrateSpin(
+      this.spinOrientation,
+      this.scratchSpinAxis,
+      angle,
+      this.scratchSpinDelta,
+    );
     this.applyMouseTarget();
     event.preventDefault();
   }
@@ -503,7 +536,7 @@ export class MoleculeController {
   }
 
   private emitPickAtClient(clientX: number, clientY: number): void {
-    const rect = this.canvas.getBoundingClientRect();
+    const rect = this.canvasRect;
     const w = Math.max(rect.width, 1);
     const h = Math.max(rect.height, 1);
     const ndcX = ((clientX - rect.left) / w) * 2 - 1;
@@ -522,38 +555,90 @@ export class MoleculeController {
     }
   }
 
-  private syncDragAnglesFromPointer(pointer: PointerNorm): void {
-    this.dragYaw = Math.max(-1, Math.min(1, pointer.x)) * MAX_YAW;
-    this.dragPitch = Math.max(-1, Math.min(1, pointer.y)) * MAX_PITCH;
-  }
-
-  private applyMouseTarget(): void {
+  private applyMouseTarget(gyroScale = 1): void {
     const yaw = Math.max(
       -MAX_YAW,
-      Math.min(MAX_YAW, this.dragYaw + this.gyroYaw),
+      Math.min(MAX_YAW, this.gyroYaw * gyroScale),
     );
     const pitch = Math.max(
       -MAX_PITCH,
-      Math.min(MAX_PITCH, this.dragPitch + this.gyroPitch),
+      Math.min(MAX_PITCH, this.gyroPitch * gyroScale),
     );
     this.scratchYaw.setFromAxisAngle(AXIS_Y, yaw);
     this.scratchPitch.setFromAxisAngle(AXIS_X, pitch);
-    this.targetMouseOrientation.copy(this.scratchYaw).multiply(this.scratchPitch);
+    this.targetMouseOrientation
+      .copy(this.scratchYaw)
+      .multiply(this.scratchPitch)
+      .multiply(this.spinOrientation);
   }
 
-  /** Bake live gyro into drag so mute-on-touch does not jump the pose. */
+  /** Bake live gyro into spin so mute-on-touch does not jump the pose. */
   private foldGyroIntoDrag(): void {
-    this.dragYaw = Math.max(
-      -MAX_YAW,
-      Math.min(MAX_YAW, this.dragYaw + this.gyroYaw),
-    );
-    this.dragPitch = Math.max(
-      -MAX_PITCH,
-      Math.min(MAX_PITCH, this.dragPitch + this.gyroPitch),
-    );
+    this.scratchYaw.setFromAxisAngle(AXIS_Y, this.gyroYaw);
+    this.scratchPitch.setFromAxisAngle(AXIS_X, this.gyroPitch);
+    this.scratchSpinDelta.copy(this.scratchYaw).multiply(this.scratchPitch);
+    this.spinOrientation.premultiply(this.scratchSpinDelta);
     this.gyroYaw = 0;
     this.gyroPitch = 0;
     this.applyMouseTarget();
+  }
+
+  private refreshCanvasRect(): void {
+    const rect = this.canvas.getBoundingClientRect();
+    this.canvasRect.left = rect.left;
+    this.canvasRect.top = rect.top;
+    this.canvasRect.width = rect.width;
+    this.canvasRect.height = rect.height;
+  }
+
+  /**
+   * Screen position of the molecule origin (hub / group), in NDC.
+   * Home desktop bias, zoom, and approach all move this — do not use authored screenX.
+   * Caller must have a current world matrix on `moleculeGroup`.
+   */
+  private refreshSpinOriginNdc(): void {
+    this.scene.moleculeGroup.getWorldPosition(this.scratchMoleculePos);
+    const width = Math.max(this.canvasRect.width, 1);
+    const height = Math.max(this.canvasRect.height, 1);
+    projectToScreenInto(
+      this.scratchMoleculePos,
+      this.scene.camera,
+      { width, height },
+      this.scratchNdc,
+      this.scratchPixels,
+    );
+    this.spinOriginNdc.copy(this.scratchNdc);
+  }
+
+  /**
+   * Furthest peripheral atom from the hub in NDC — spin cuts off just outside the orbits.
+   */
+  private refreshSpinExtentNdc(): void {
+    const width = Math.max(this.canvasRect.width, 1);
+    const height = Math.max(this.canvasRect.height, 1);
+    const viewport = { width, height };
+    let maxR = 0;
+    for (const atom of this.scene.getAtoms()) {
+      if (atom.object.position.lengthSq() < 1e-12) continue;
+      atom.mesh.getWorldPosition(this.scratchAtomPos);
+      projectToScreenInto(
+        this.scratchAtomPos,
+        this.scene.camera,
+        viewport,
+        this.scratchNdc,
+        this.scratchPixels,
+      );
+      const dx = this.scratchNdc.x - this.spinOriginNdc.x;
+      const dy = this.scratchNdc.y - this.spinOriginNdc.y;
+      maxR = Math.max(maxR, Math.hypot(dx, dy));
+    }
+    if (maxR > 1e-6) {
+      this.spinExtentNdc = maxR;
+      const limits = spinSpeedLimitsFromExtent(maxR);
+      this.spinSpeedLimits.deadzone = limits.deadzone;
+      this.spinSpeedLimits.peak = limits.peak;
+      this.spinSpeedLimits.fade = limits.fade;
+    }
   }
 
   private handleDeviceOrientation(event: DeviceOrientationEvent): void {
@@ -704,7 +789,7 @@ export class MoleculeController {
   }
 
   /**
-   * Stop pointer/touch tilt, drop residual mouse pose, hide atom labels.
+   * Stop pointer/touch spin, drop residual mouse pose, hide atom labels.
    * Animation loop and renderer keep running.
    */
   freeze(): void {
@@ -734,7 +819,7 @@ export class MoleculeController {
   }
 
   /**
-   * Home is the only interactive mode. Other modes freeze pointer tilt.
+   * Home is the only interactive mode. Other modes freeze pointer spin.
    */
   setMode(mode: SpatialMode): void {
     this.spatialMode = mode;
@@ -862,7 +947,7 @@ export class MoleculeController {
    *
    * Hub / Home (zero offset): no unique forward — π flip only when retargeting
    * onto the hub from another atom. Initial overview keeps identity.
-   * Clears residual pointer/touch tilt so the focused atom actually faces the camera.
+   * Clears residual pointer/touch spin so the focused atom actually faces the camera.
    */
   focusAtom(atomId: string): void {
     const atom = this.scene.getAtom(atomId);
@@ -915,8 +1000,8 @@ export class MoleculeController {
     this.focusedAtomId = atomId;
     this.targetFocusStrength = 1;
 
-    // Drop leftover touch drag / mouse / gyro tilt so focus lands on the look axis.
-    // Fine pointers rewrite tilt on the next `pointermove`. Gyro recalibrates on the next sample.
+    // Drop leftover touch drag / mouse / gyro spin so focus lands on the look axis.
+    // Fine pointers resume velocity on the next `pointermove`. Gyro recalibrates on the next sample.
     this.resetPointerTilt();
   }
 
@@ -926,10 +1011,9 @@ export class MoleculeController {
     this.focusedAtomId = null;
   }
 
-  /** Clears accumulated yaw/pitch, gyro contribution, and both mouse orientation layers. */
+  /** Clears accumulated spin, gyro contribution, and both mouse orientation layers. */
   private resetPointerTilt(): void {
-    this.dragYaw = 0;
-    this.dragPitch = 0;
+    this.spinOrientation.identity();
     this.gyroYaw = 0;
     this.gyroPitch = 0;
     this.gyroCalibrated = false;
@@ -1212,29 +1296,16 @@ export class MoleculeController {
   }
 
   /**
-   * Maps normalized pointer [-1, 1] into a limited yaw/pitch target (no Euler).
-   * (0, 0) is the composition bias (visual molecule center), not screen center.
-   * Absolute rewrite — not accumulated.
-   */
-  updateMouseInfluence(pointer: PointerNorm): void {
-    const nx = Math.max(-1, Math.min(1, pointer.x));
-    const ny = Math.max(-1, Math.min(1, pointer.y));
-    this.scratchYaw.setFromAxisAngle(AXIS_Y, nx * MAX_YAW);
-    this.scratchPitch.setFromAxisAngle(AXIS_X, ny * MAX_PITCH);
-    // Yaw then pitch ≈ prior YXZ limited tilt.
-    this.targetMouseOrientation.copy(this.scratchYaw).multiply(this.scratchPitch);
-  }
-
-  /**
    * Frame-rate independent layer follow, then compose onto the group.
    * `final = appliedFocus * mouseOrientation * baseOrientation`
    * where `appliedFocus = slerp(I, focusOrientation, focusStrength)`.
-   * Under focus, mouse amplitude scales toward `MOUSE_UNDER_FOCUS` (secondary tilt).
+   * Under focus, spin / gyro amplitude scales toward `MOUSE_UNDER_FOCUS` /
+   * `GYRO_UNDER_FOCUS` (secondary motion).
    * Zoom writes `moleculeGroup.position` only — not mixed into quaternion layers.
    *
    * Update layers (do not mix):
-   * - PER FRAME: quaternion follow, zoom translation, one matrix update
-   * - POINTER: raycast only when AtomHover is dirty (skipped on touch)
+   * - PER FRAME: spin integrate, quaternion follow, zoom translation, one matrix update
+   * - POINTER: raycast when AtomHover is dirty (pointermove / resize / pose change)
    * - TRANSFORM DEPENDENT: labels when orientation / zoom / fill changed
    * - STATE DRIVEN: highlight / selection / wireframe / blurb from NavigationState
    * - DECORATIVE: selection pulse (early-out when idle); ghost layer zoom-fades
@@ -1253,30 +1324,61 @@ export class MoleculeController {
     if (this.frozen) {
       this.mouseOrientation.identity();
       this.targetMouseOrientation.identity();
+      this.spinOrientation.identity();
     } else {
       const mouseScale =
         1 - this.focusStrength * (1 - MOUSE_UNDER_FOCUS);
       const gyroScale =
         1 - this.focusStrength * (1 - GYRO_UNDER_FOCUS);
-      const yaw = Math.max(
-        -MAX_YAW,
-        Math.min(
-          MAX_YAW,
-          this.dragYaw * mouseScale + this.gyroYaw * gyroScale,
-        ),
-      );
-      const pitch = Math.max(
-        -MAX_PITCH,
-        Math.min(
-          MAX_PITCH,
-          this.dragPitch * mouseScale + this.gyroPitch * gyroScale,
-        ),
-      );
-      this.scratchYaw.setFromAxisAngle(AXIS_Y, yaw);
-      this.scratchPitch.setFromAxisAngle(AXIS_X, pitch);
-      this.targetMouseOrientation
-        .copy(this.scratchYaw)
-        .multiply(this.scratchPitch);
+
+      if (
+        this.hasFinePointer &&
+        !this.reducedMotion &&
+        !this.isSpinPausedByHover()
+      ) {
+        this.pointerNorm.x = this.pointerNdc.x - this.spinOriginNdc.x;
+        this.pointerNorm.y = this.pointerNdc.y - this.spinOriginNdc.y;
+        const radius = Math.hypot(this.pointerNorm.x, this.pointerNorm.y);
+        const omega =
+          spinSpeedFromRadius(radius, this.spinSpeedLimits) * mouseScale;
+        if (omega > SPIN_OMEGA_EPS) {
+          const camera = this.scene.camera;
+          camera.updateMatrixWorld(true);
+          this.scratchCameraRight
+            .setFromMatrixColumn(camera.matrixWorld, 0)
+            .normalize();
+          this.scratchCameraUp
+            .setFromMatrixColumn(camera.matrixWorld, 1)
+            .normalize();
+          if (
+            spinAxisScreenPerpendicular(
+              this.pointerNorm.x,
+              this.pointerNorm.y,
+              this.scratchCameraRight,
+              this.scratchCameraUp,
+              this.scratchSpinAxis,
+            )
+          ) {
+            // World/screen axis through the group origin; conjugate into the
+            // mouse layer so `focus * mouse` still rotates about that axis.
+            this.scratchAppliedFocus.slerpQuaternions(
+              this.scratchIdentity,
+              this.focusOrientation,
+              this.focusStrength,
+            );
+            this.scratchYaw.copy(this.scratchAppliedFocus).invert();
+            this.scratchSpinAxis.applyQuaternion(this.scratchYaw);
+            integrateSpin(
+              this.spinOrientation,
+              this.scratchSpinAxis,
+              -omega * delta,
+              this.scratchSpinDelta,
+            );
+          }
+        }
+      }
+
+      this.applyMouseTarget(gyroScale);
       const mouseT = 1 - Math.exp(-MOUSE_FOLLOW * delta);
       this.mouseOrientation.slerp(this.targetMouseOrientation, mouseT);
     }
@@ -1300,19 +1402,8 @@ export class MoleculeController {
 
     // One forced matrix pass after all transforms — labels + hover consume it.
     this.scene.moleculeGroup.updateMatrixWorld(true);
-
-    // Molecule moved under a still pointer → need a fresh pick (not every idle frame).
-    // Touch has no canvas hover — skip or gyro would raycast stale NDC and pause autoplay.
-    if (
-      !this.lastHoverQuaternion.equals(this.scratchCompose) ||
-      this.lastHoverZoomProgress !== this.zoomProgress
-    ) {
-      this.lastHoverQuaternion.copy(this.scratchCompose);
-      this.lastHoverZoomProgress = this.zoomProgress;
-      if (!this.touchInput) {
-        this.atomHover.markDirty();
-      }
-    }
+    this.refreshSpinOriginNdc();
+    this.refreshSpinExtentNdc();
 
     const updateLabels =
       !this.lastLabelQuaternion.equals(this.scratchCompose) ||
@@ -1327,6 +1418,10 @@ export class MoleculeController {
     this.elapsed += delta;
     this.scene.update(delta, updateLabels, this.elapsed);
     if (!this.frozen && !this.touchInput) {
+      if (!this.lastHoverQuaternion.equals(this.scratchCompose)) {
+        this.lastHoverQuaternion.copy(this.scratchCompose);
+        this.atomHover.markDirty();
+      }
       this.updateHover();
     }
 
@@ -1404,10 +1499,10 @@ export class MoleculeController {
 
   private syncReducedMotionVisuals(): void {
     if (!this.reducedMotion) return;
+    this.hasFinePointer = false;
     this.targetMouseOrientation.copy(this.baseOrientation);
     this.mouseOrientation.copy(this.baseOrientation);
-    this.dragYaw = 0;
-    this.dragPitch = 0;
+    this.spinOrientation.identity();
     this.gyroYaw = 0;
     this.gyroPitch = 0;
     this.gyroCalibrated = false;
@@ -1535,6 +1630,15 @@ export class MoleculeController {
   private updateHover(): void {
     // World matrices already refreshed once this frame in `update`.
     this.atomHover.update(this.scene.camera, this.scene.getAtomMeshes());
+  }
+
+  /** Desktop spin stops on peripheral hover; hub and the focused atom keep spinning. */
+  private isSpinPausedByHover(): boolean {
+    const hovered = this.atomHover.getHoveredAtomId();
+    if (!hovered) return false;
+    if (hovered === this.getHubAtomId()) return false;
+    if (hovered === this.focusedAtomId) return false;
+    return true;
   }
 
   private readonly tick = (time: number): void => {
