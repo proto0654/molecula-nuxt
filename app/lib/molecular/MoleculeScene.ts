@@ -304,6 +304,7 @@ export class MoleculeScene {
     }
     this.decorativeNodes.setOrbitScale(orbitScale);
     this.tagCloud.setLayoutScale(orbitScale);
+    this.tagCloud.setMobileInk(compact);
     this.tagCloud.update(this.camera, this.moleculeGroup);
     this.syncBondEndpoints();
     this.syncWireframe();
