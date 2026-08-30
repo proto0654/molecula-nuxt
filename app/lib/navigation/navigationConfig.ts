@@ -32,7 +32,7 @@ export const navigationConfig: NavigationConfig = {
       atomId: 'H1',
       route: '/about',
       blurb: 'студия weblaba',
-      blurbCta: ', будем знакомится',
+      blurbCta: ', будем знакомится →',
       usp: 'Команда, процесс, подход',
     },
     {
@@ -41,7 +41,7 @@ export const navigationConfig: NavigationConfig = {
       atomId: 'H2',
       route: '/services',
       blurb: 'разработка и дизайн',
-      blurbCta: ', выбирай предложение',
+      blurbCta: ', выбирай предложение →',
       usp: 'От идеи до релиза',
     },
     {
@@ -50,7 +50,7 @@ export const navigationConfig: NavigationConfig = {
       atomId: 'H3',
       route: '/portfolio',
       blurb: 'архив проектов',
-      blurbCta: ', переход в портфолио',
+      blurbCta: ', переход в портфолио →',
       usp: 'Кейсы, которые работают',
     },
     {
@@ -59,7 +59,7 @@ export const navigationConfig: NavigationConfig = {
       atomId: 'H4',
       route: '/contact',
       blurb: 'открытый канал',
-      blurbCta: ' для связи со мной',
+      blurbCta: ' для связи со мной →',
       usp: 'Прямой канал без шума',
     },
   ],
