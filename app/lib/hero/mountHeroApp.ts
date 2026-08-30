@@ -262,7 +262,24 @@ export function mountHeroApp(
       isHome &&
       ((committedItem?.atomId !== undefined && committedItem.atomId !== hubId) ||
         (hasDistinctPreview && previewItem?.atomId !== hubId));
-    controller.setAtomLabelVisible(hubId, !hideHubLabel);
+
+    if (mobileMq.matches && isHome) {
+      for (const item of navigationConfig.items) {
+        const atomId = item.atomId;
+        const inFocus =
+          hasDistinctPreview && previewItem?.atomId === atomId
+            ? true
+            : !hasDistinctPreview && committedItem?.atomId === atomId;
+        controller.setAtomLabelVisible(atomId, inFocus);
+      }
+    } else {
+      controller.setAtomLabelVisible(hubId, !hideHubLabel);
+      for (const item of navigationConfig.items) {
+        if (item.atomId !== hubId) {
+          controller.setAtomLabelVisible(item.atomId, true);
+        }
+      }
+    }
 
     if (!isHome) {
       controller.setAtomBlurb(null, null);
@@ -563,6 +580,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
 
   function onViewportChange(): void {
     applyViewportMode();
+    applyVisuals();
   }
 
   applyViewportMode();
