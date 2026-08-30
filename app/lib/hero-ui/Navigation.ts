@@ -16,8 +16,6 @@ export class Navigation {
   private readonly itemElements = new Map<string, HTMLElement>();
   private readonly listEl: HTMLElement;
   private readonly rowEl: HTMLElement;
-  private readonly statusNode: HTMLElement;
-  private readonly statusSignal: HTMLElement;
   private readonly slideProgress: HeroSlideProgress;
   private readonly unsubscribe: () => void;
   private readonly onSelect: NavSelectListener | undefined;
@@ -89,16 +87,6 @@ export class Navigation {
 
     this.rowEl.append(this.listEl);
 
-    const status = document.createElement('div');
-    status.className = 'nav__status';
-    status.setAttribute('aria-hidden', 'true');
-    this.statusNode = document.createElement('span');
-    this.statusNode.className = 'nav__status-node';
-    this.statusSignal = document.createElement('span');
-    this.statusSignal.className = 'nav__status-signal';
-    status.append(this.statusNode, this.statusSignal);
-    this.rowEl.append(status);
-
     stackEl.append(this.rowEl);
     this.root.append(stackEl);
 
@@ -115,10 +103,8 @@ export class Navigation {
         el.classList.toggle('is-active', id === active);
         el.classList.toggle('is-committed', id === committed);
       }
-      this.syncStatus();
       this.scrollActiveIntoView();
     });
-    this.syncStatus();
   }
 
   get navigationState(): NavigationState {
@@ -162,21 +148,6 @@ export class Navigation {
       block: 'nearest',
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     });
-  }
-
-  private syncStatus(): void {
-    const id = this.state.committedItemId ?? this.state.activeItemId;
-    if (!id) {
-      this.statusNode.textContent = 'УЗЕЛ --';
-      this.statusSignal.textContent = 'ПРОСТОЙ';
-      this.statusSignal.classList.remove('is-live');
-      return;
-    }
-    const index = navigationConfig.items.findIndex((entry) => entry.id === id);
-    this.statusNode.textContent = `УЗЕЛ ${String(index + 1).padStart(2, '0')}`;
-    const live = this.state.committedItemId !== null;
-    this.statusSignal.textContent = live ? 'АКТИВЕН' : 'ГОТОВ';
-    this.statusSignal.classList.toggle('is-live', live);
   }
 
   dispose(): void {

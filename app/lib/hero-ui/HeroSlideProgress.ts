@@ -2,7 +2,7 @@ export type HeroSlideProgressVariant = 'desktop' | 'mobile';
 
 /**
  * Thin progress track for hero slide autoplay.
- * Desktop: centered in header. Mobile: above bottom nav.
+ * Desktop home: bottom center. Mobile: above bottom nav.
  */
 export class HeroSlideProgress {
   readonly root: HTMLElement;

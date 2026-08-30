@@ -364,10 +364,6 @@ html.hero-lock #__nuxt {
   display: none;
 }
 
-.molecular-chrome.is-home .site-header__routes {
-  display: none;
-}
-
 /* Molecule nav (desktop rail + mobile bottom) — home only. Off-home mobile uses MENU + overlay. */
 .molecular-chrome:not(.is-home) .nav,
 .molecular-chrome:not(.is-home) .hero-slide-progress,
@@ -1162,10 +1158,6 @@ html.nav-overlay-open body {
   content: var(--glyph-angle-close);
 }
 
-.nav__status {
-  display: none;
-}
-
 /* --- Navigation connector (SVG) --- */
 
 .nav-connector {
@@ -1320,18 +1312,19 @@ html.nav-overlay-open body {
 
   .molecular-chrome.is-home .hero-slide-progress--desktop {
     display: block;
-    position: absolute;
+    position: fixed;
     left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    bottom: 1.5rem;
+    transform: translateX(-50%);
     width: min(28rem, calc(100vw - 2 * var(--sidebar-width) - 12rem));
+    z-index: var(--z-nav);
   }
 
   .hero-slide-progress--mobile {
     display: none;
   }
 
-  .molecular-chrome:not(.is-home) .site-header__routes {
+  .site-header__routes {
     display: flex;
     position: absolute;
     left: 50%;
@@ -1450,31 +1443,6 @@ html.nav-overlay-open body {
     content: none;
   }
 
-  .nav__status {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.35rem;
-    /* Center under the full HUD frame, not the sidebar rail alone */
-    position: fixed;
-    left: 50%;
-    bottom: 1.5rem;
-    transform: translateX(-50%);
-    margin-top: 0;
-    padding-left: 0;
-    width: max-content;
-    text-align: center;
-    font-size: var(--text-meta);
-    letter-spacing: var(--track-meta);
-    text-transform: uppercase;
-    color: var(--ui-muted);
-    pointer-events: none;
-    z-index: var(--z-nav);
-  }
-
-  .nav__status-signal.is-live {
-    color: var(--ink-70);
-  }
 }
 
 /* --- Tablet --- */

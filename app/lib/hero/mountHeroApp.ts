@@ -398,7 +398,10 @@ export function mountHeroApp(
 
     if (itemId === HOME_ITEM_ID) {
       restoreHomeSelection();
+      return;
     }
+
+    selectItem(itemId);
   });
 
   const unsubscribeTransition = navigator.transitionState.subscribe((snap) => {

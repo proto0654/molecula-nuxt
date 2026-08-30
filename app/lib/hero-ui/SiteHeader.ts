@@ -10,7 +10,8 @@ export type MenuToggleListener = () => void;
 export type HeaderSelectListener = (itemId: string) => void;
 
 /**
- * Site header: LOGO + slide progress (home) or route links (off-home desktop/tablet) + NODE; mobile MENU (home + off-home).
+ * Site header: LOGO + route links (desktop/tablet) + NODE; mobile MENU (home + off-home).
+ * Home desktop slide progress is positioned at bottom center via CSS.
  * Off-home routes navigate immediately — no atom commit step.
  */
 export class SiteHeader {
