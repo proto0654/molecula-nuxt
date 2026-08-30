@@ -113,6 +113,7 @@ export class SpatialController {
     this.commitNonHome(state);
 
     if (snap) {
+      this.controller.setCompositionFramingOverride(null);
       this.focusNonHome(state);
       this.controller.holdApproach({ immediate: true });
     } else if (live) {
@@ -123,7 +124,7 @@ export class SpatialController {
     } else if (atApproach && !atomChanged) {
       // Live Navigator handoff: same atom already in approach pose.
     } else if (nextAtomId) {
-      this.focusNonHome(state);
+      // Same verb as a rest/partial hop off-home: Navigator owns focus → approach.
       this.approachTo(nextAtomId);
     } else {
       this.focusNonHome(state);

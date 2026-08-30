@@ -3,6 +3,7 @@ import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { navigationConfig } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
 import type { NavSelectListener } from './Navigation';
+import { createSiteLogoMark } from './siteLogoMark';
 import { attachTapGuard } from './tapGuard';
 
 /**
@@ -29,6 +30,8 @@ export class MobileNavOverlay {
     parent: HTMLElement,
     state: NavigationState,
     options?: {
+      assetBaseURL?: string;
+      onHome?: () => void;
       onSelect?: NavSelectListener;
       onClose?: () => void;
     },
@@ -51,14 +54,24 @@ export class MobileNavOverlay {
 
     const header = document.createElement('div');
     header.className = 'mobile-nav-overlay__header';
-    const kicker = document.createElement('span');
-    kicker.textContent = '/ ИНДЕКС NAV';
+
+    const logoBtn = document.createElement('button');
+    logoBtn.type = 'button';
+    logoBtn.className = 'mobile-nav-overlay__logo';
+    logoBtn.append(createSiteLogoMark(options?.assetBaseURL));
+    logoBtn.setAttribute('aria-label', 'WebLaba, на главную');
+    if (options?.onHome) {
+      attachTapGuard(logoBtn, () => options.onHome?.());
+    } else {
+      logoBtn.disabled = true;
+    }
+
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'mobile-nav-overlay__close';
     closeBtn.textContent = '[ ЗАКРЫТЬ ]';
-    closeBtn.addEventListener('click', () => this.requestClose());
-    header.append(kicker, closeBtn);
+    attachTapGuard(closeBtn, () => this.requestClose());
+    header.append(logoBtn, closeBtn);
 
     this.listEl = document.createElement('div');
     this.listEl.className = 'mobile-nav-overlay__list';
@@ -156,7 +169,13 @@ export class MobileNavOverlay {
   }
 
   private requestClose(): void {
-    this.onCloseRequest?.();
+    if (!this.open) return;
+    // Defer until after the synthesized `click` so it does not fall through to
+    // `.site-header__menu` in the same screen corner once the overlay unmounts.
+    window.setTimeout(() => {
+      if (!this.open) return;
+      this.onCloseRequest?.();
+    }, 0);
   }
 
   private playEnter(onReady?: () => void): void {

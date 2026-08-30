@@ -4,6 +4,7 @@ import {
 } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
 import { HeroSlideProgress } from './HeroSlideProgress';
+import { createSiteLogoMark } from './siteLogoMark';
 import { attachTapGuard } from './tapGuard';
 
 export type MenuToggleListener = () => void;
@@ -12,7 +13,7 @@ export type HeaderSelectListener = (itemId: string) => void;
 /**
  * Site header: LOGO + route links (desktop/tablet) + NODE; mobile MENU (home + off-home).
  * Home desktop slide progress is positioned at bottom center via CSS.
- * Off-home routes navigate immediately — no atom commit step.
+ * Route links: one-shot leave from home (orbit+zoom then route); off-home hops immediately.
  */
 export type SiteHeaderOptions = {
   /** Public asset base (Nuxt `app.baseURL`), e.g. `/` or `/molecula-nuxt/`. */
@@ -38,7 +39,6 @@ export class SiteHeader {
     options: SiteHeaderOptions = {},
   ) {
     const assetBase = options.assetBaseURL ?? '/';
-    const logoSrc = `${assetBase}sign-weblaba.svg`;
 
     this.root = document.createElement('header');
     this.root.className = 'site-header';
@@ -46,14 +46,7 @@ export class SiteHeader {
     this.logoBtn = document.createElement('button');
     this.logoBtn.type = 'button';
     this.logoBtn.className = 'site-header__logo';
-    const logoImg = document.createElement('img');
-    logoImg.className = 'site-header__logo-img';
-    logoImg.src = logoSrc;
-    logoImg.alt = 'WebLaba';
-    logoImg.width = 154;
-    logoImg.height = 154;
-    logoImg.decoding = 'async';
-    this.logoBtn.append(logoImg);
+    this.logoBtn.append(createSiteLogoMark(assetBase));
     this.logoBtn.setAttribute('aria-label', 'WebLaba, на главную');
     attachTapGuard(this.logoBtn, () => {
       this.onSelect?.('home');

@@ -89,15 +89,16 @@ focusItemId   = committed               ← click only; hover never centers
 | `navHoverItemId` | `setNavHover` (nav `pointerenter`) | Same preview from the overlay |
 | `committedItemId` | commit (`selectItem` / spatial home / restore); starts as `home` | Sticky focus + frozen selection reticle + typewriter readout + USP |
 
-Two-step gesture on **home** (app layer in `mountHeroApp.ts`, not inside Three.js):
+Two-step gesture on **home** (app layer in `mountHeroApp.ts`, not inside Three.js). **Header route links and mobile MENU** bypass this — they call `selectFromMenu` → `navigateTo` in one shot (see below).
 
 While committed, hover of another item shows **dual-state preview** on the hovered atom (pulsing reticle, bright title, static wireframe shell) without stealing focus or zoom. Committed atom keeps frozen reticle, blurb, and its own wireframe.
 
 1. **Hover** (atom raycast or nav): emissive highlight + pulsing selection reticle + bright title + static accent wireframe on the preview atom. **No** `focusAtom`, blurb, or USP.
-2. **First click** (atom or nav): `setCommitted` + `activateCommittedItem` (`focusAtom` + typewriter blurb via `buildAtomBlurb` + arm USP; scramble after `isFocusSettled`). Blurb part 2 prompts a **second click** to navigate (contextual `{кликай|тапай}{blurbCta}`). Cold load, spatial return to `/`, empty-canvas restore, and header logo on home all commit hub `C` with the **same full readout** — there is no intermediate “deselected” home state.
-3. **Second click on the same item**: `navigator.navigateTo(atomId)` (single approach: zoom+fill together). Second click on Home is a no-op.
-4. **Click another item**: retarget commit + focus (not a page transition).
-5. **Empty canvas click / logo on home**: `restoreOverview()` (hub `C`) + re-activate hub blurb/USP; `cancel()` if a transition is busy.
+2. **First click** (atom or **nav rail**): `setCommitted` + `activateCommittedItem` (`focusAtom` + typewriter blurb via `buildAtomBlurb` + arm USP; scramble after `isFocusSettled`). Blurb part 2 prompts a **second click** to navigate (contextual `{кликай|тапай}{blurbCta}`). Cold load, spatial return to `/`, empty-canvas restore, and header logo on home all commit hub `C` with the **same full readout** — there is no intermediate “deselected” home state.
+3. **Second click on the same item** (atom or rail): `navigator.navigateTo(atomId)` (single approach: orbit + zoom/fill + framing in parallel). Second click on Home is a no-op.
+4. **Header / mobile MENU on home** (one shot): `selectFromMenu` → `navigateTo(atomId)` — no commit step; route fires at the navigate label after the approach pose settles; page stays hidden until idle (`is-awaiting-pose`).
+5. **Click another item** (rail / atom): retarget commit + focus (not a page transition).
+6. **Empty canvas click / logo on home**: `restoreOverview()` (hub `C`) + re-activate hub blurb/USP; `cancel()` if a transition is busy.
 
 Off-home the molecule is frozen; nav clicks call `transitionTo` immediately. Spatial mapping: [`SPATIAL.md`](SPATIAL.md).
 
@@ -322,7 +323,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 
 - Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`. Home locks document scroll via `html.hero-lock`.
 - Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) — see [`DESIGN.md`](DESIGN.md). `NavigationItem.route` drives Nuxt when wired (`/portfolio`); other items still use DestinationView stub.
-- Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav on home; off-home header with centered route links), mobile ≤767 (home: header + bottom rail + slide progress + MENU overlay with two-step nav; off-home: header LOGO + MENU + overlay with direct route hops; mobile framing, full captions, touch drag/tap + calibrated gyro tilt).
+- Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav on home; off-home header with centered route links), mobile ≤767 (home: header + bottom rail + slide progress + MENU overlay with one-shot leave; off-home: header LOGO + MENU + overlay with direct route hops; mobile framing, full captions, touch drag/tap + calibrated gyro tilt).
 - No postprocessing, bloom, particle systems, physics, realtime shadows, or environment maps. Scene uses a matching `Fog` for slight depth only.
 - Pixel ratio capped by the locked quality preset (`maxPixelRatio` 1.75 / 1.5 / 1), refreshed on every resize (monitor / OS DPR changes). Mobile starts MEDIUM (DPR ≤1.5, no ghosts/ticks); sampler may lock LOW (DPR 1, no wireframe). Never disable rotation, touch, raycast, focus, labels, zoom, or navigation.
 - GSAP drives the page-transition timeline; idle spin is unused.
@@ -380,7 +381,7 @@ Live site: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molec
 - Focus uses **rest-frame** atom position (ignore current group rotation) so the focus quaternion stays absolute and independent of the mouse layer.
 - `setCompositionProfile` must use FOV/aspect only — never `getBoundingClientRect` on the sidebar. Atom locals stay fixed. Prefer profiles over ad-hoc `setCompositionBias`.
 - `NavigationConnector` consumes screen pixels only (`projectAtom` + DOM anchors). Do not import scene graph objects into UI modules. Tip + tiny marker stop short of the atom.
-- Desktop rail / header / connector are CSS ≥1024; tablet keeps bottom nav on home; mobile home uses header + compact rail + MENU overlay (two-step); mobile off-home uses header LOGO + MENU overlay (direct hops) and hides the connector.
+- Desktop rail / header / connector are CSS ≥1024; tablet keeps bottom nav on home; mobile home uses header + compact rail + MENU overlay (one-shot leave); mobile off-home uses header LOGO + MENU overlay (direct hops) and hides the connector.
 - `clearFocus` only lowers `focusStrength`; do not slerp focus orientation to identity on leave (avoids a long unused arc).
 - Central / Home atom (zero offset): no unique focus forward — on enter, apply a π flip about a random axis from the current focus pose (idempotent while already focused on hub). Peripheral focus uses `getStableFocusQuaternion`. **Hero leave approach** (peripherals only): one full revolution (2π) about the atom's orbit normal **in parallel with** zoom+fill (separate GSAP tweens) — ends back on the settled facing pose. `focusAtom` also clears residual pointer/touch/gyro tilt so the atom faces the camera.
 - Do not write `moleculeGroup.rotation.x/y += …`; apply composed absolute layers each frame (no rotation accumulation).

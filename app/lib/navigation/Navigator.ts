@@ -108,9 +108,9 @@ export class Navigator {
     if (!this.controller.scene.getAtom(atomId)) return;
 
     const item = getItemByAtomId(atomId);
-    this.navigationState.setCommitted(item?.id ?? null);
     this.controller.freeze();
     this.transitionState.patch({ busy: true });
+    this.navigationState.setCommitted(item?.id ?? null);
 
     if (prefersReducedMotion()) {
       this.killTimeline();
@@ -141,7 +141,7 @@ export class Navigator {
       return;
     }
 
-    const atomChanged = this.transitionState.atomId !== atomId;
+    const atomChanged = this.controller.getFocusedAtomId() !== atomId;
     const framing = this.controller.getActiveCompositionFraming();
 
     // Capture live visuals before killing the previous tween (no hard reset).
@@ -250,10 +250,15 @@ export class Navigator {
    * Does not rewind zoom/fill or dispose the veil.
    */
   completeHandoff(): void {
+    const hadTimeline = this.timeline !== null;
     this.killTimeline();
     this.navigatedAtomId = null;
     this.overlay.setOpacity(0);
-    this.controller.setCompositionFramingOverride(null);
+    // Idle hops (leave-home from rest) must keep current framing so approachTo
+    // can tween it. An aborted timeline already owns the override — drop it.
+    if (hadTimeline) {
+      this.controller.setCompositionFramingOverride(null);
+    }
     this.controller.setTransitionDriven(false);
     this.transitionState.patch({
       busy: false,
@@ -546,11 +551,14 @@ export class Navigator {
       !atomChanged &&
       this.controller.getFocusedAtomId() === atomId &&
       this.controller.isFocusSettled();
-    const focusDur = alreadyOnTarget
-      ? 0
-      : atomChanged
-        ? FOCUS_DURATION
-        : FOCUS_DURATION * 0.25;
+    // Leave-home (orbit sweep): no focus-only beat — facing + zoom + 2π start together.
+    // Two-step atom click already has focus settled (`alreadyOnTarget` → 0).
+    const focusDur =
+      options.orbitSweep !== false || alreadyOnTarget
+        ? 0
+        : atomChanged
+          ? FOCUS_DURATION
+          : FOCUS_DURATION * 0.25;
     const approachGap = Math.max(1 - from.zoom, 1 - from.fill);
     const framingGap = Math.max(
       Math.abs(from.screenX - CENTER_FRAMING.screenX),
@@ -600,7 +608,7 @@ export class Navigator {
       },
     });
 
-    // 1. Focus (skipped when the atom is already settled from the first click)
+    // 1. Face the atom. Leave-home skips the wait so zoom/orbit start in the same beat.
     tl.addLabel('focus', 0);
     tl.call(
       () => {
@@ -617,7 +625,7 @@ export class Navigator {
     }
 
     // 2. Approach — zoom + fill + framing → center + orbit sweep (hero leave)
-    tl.addLabel('approach');
+    tl.addLabel('approach', focusDur > 0.001 ? focusDur : 0);
     tl.call(
       () => {
         if (tl.reversed()) return;

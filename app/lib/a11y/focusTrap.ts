@@ -60,11 +60,23 @@ export function createFocusTrap(
 
 /** Toggle inert on background roots while a modal is open. */
 export function setPageInert(inert: boolean): void {
-  const main = document.getElementById('main');
-  const chrome = document.querySelector('.molecular-chrome');
-  for (const el of [main, chrome]) {
+  for (const el of [
+    document.getElementById('main'),
+    document.getElementById('hero-stage'),
+  ]) {
     if (!el) continue;
     if (inert) el.setAttribute('inert', '');
     else el.removeAttribute('inert');
+  }
+
+  const chrome = document.querySelector('.molecular-chrome');
+  if (!chrome) return;
+
+  // Do not set inert on `.molecular-chrome` itself — the mobile overlay lives
+  // inside it and must stay interactive while open.
+  for (const child of Array.from(chrome.children)) {
+    if (child.id === 'mobile-nav-overlay') continue;
+    if (inert) child.setAttribute('inert', '');
+    else child.removeAttribute('inert');
   }
 }

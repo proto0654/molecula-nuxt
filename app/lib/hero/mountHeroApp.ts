@@ -311,8 +311,11 @@ export function mountHeroApp(
     activateCommittedItem(itemId);
   }
 
-  /** Mobile overlay: route first — SpatialController runs a single approachTo. */
-  function selectFromMobileMenu(itemId: string): void {
+  /**
+   * Header + burger. Home: one-shot leave (`navigateTo` — orbit+zoom, then route).
+   * Off-home: route first, SpatialController retargets / unwinds.
+   */
+  function selectFromMenu(itemId: string): void {
     if (navigator.busy) return;
     const item = getItemById(itemId);
     if (!item) return;
@@ -326,17 +329,19 @@ export function mountHeroApp(
       return;
     }
 
-    if (item.route && item.route !== '/') {
+    if (isHome && item.route && item.route !== '/') {
       options.prefetchRoute?.(item.route);
       autoplay.pause();
       uspHeadline.hide();
-      void options.onNavigateRoute?.(item.route);
+      controller.setAtomBlurb(null, null);
+      navigator.navigateTo(item.atomId);
       return;
     }
 
-    if (isHome) {
-      selectItem(itemId);
-    } else if (item.route) {
+    if (item.route) {
+      if (item.route !== '/') options.prefetchRoute?.(item.route);
+      autoplay.pause();
+      uspHeadline.hide();
       void options.onNavigateRoute?.(item.route);
     }
   }
@@ -373,39 +378,38 @@ export function mountHeroApp(
   });
 
   const mobileNav = new MobileNavOverlay(chromeRoot, navigationState, {
+    assetBaseURL: options.assetBaseURL,
+    onHome: () => {
+      setMenuOpen(false);
+      selectFromMenu(HOME_ITEM_ID);
+    },
     onSelect: (itemId) => {
       setMenuOpen(false);
-      selectFromMobileMenu(itemId);
+      selectFromMenu(itemId);
     },
     onClose: () => setMenuOpen(false),
   });
 
+  let suppressMenuToggleUntil = 0;
+
   function setMenuOpen(open: boolean): void {
     mobileNav.setOpen(open);
     siteHeader.setMenuOpen(open);
-    if (open) autoplay.pause();
+    if (open) {
+      autoplay.pause();
+      return;
+    }
+    suppressMenuToggleUntil = performance.now() + 400;
   }
 
   siteHeader.onToggleMenu(() => {
+    if (performance.now() < suppressMenuToggleUntil) return;
     setMenuOpen(!mobileNav.isOpen);
   });
 
-  /** Header logo / off-home route menu — direct hops, no atom commit. */
+  /** Header logo + route links — same direct hop as off-home / mobile menu. */
   siteHeader.onSelectItem((itemId) => {
-    const item = getItemById(itemId);
-    if (!item?.route) return;
-
-    if (!isHome) {
-      void options.onNavigateRoute?.(item.route);
-      return;
-    }
-
-    if (itemId === HOME_ITEM_ID) {
-      restoreHomeSelection();
-      return;
-    }
-
-    selectItem(itemId);
+    selectFromMenu(itemId);
   });
 
   const unsubscribeTransition = navigator.transitionState.subscribe((snap) => {
@@ -481,10 +485,12 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     controller.setCompositionProfile(profile);
     // Home desktop only: stage bias. Elsewhere profile is already centered.
     // Skip while Navigator owns framing (approach / retarget center override).
+    // Leaving rest toward an off-home approach: keep the current override so
+    // approachTo can tween it — same capture as retarget from a settled pose.
     if (!navigator.busy) {
       if (isHome && mode === 'desktop') {
         controller.setCompositionFramingOverride(HOME_DESKTOP_FRAMING);
-      } else {
+      } else if (isHome || controller.isAtApproach()) {
         controller.setCompositionFramingOverride(null);
       }
     }
