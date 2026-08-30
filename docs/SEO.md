@@ -19,6 +19,8 @@ Env:
 | `NUXT_PUBLIC_SITE_URL` | Absolute origin for canonical, OG URL, sitemap (default `https://weblaba.ru`; GitHub Pages: `https://proto0654.github.io/molecula-nuxt`) |
 | `NUXT_APP_BASE_URL` | Path prefix (Pages: `/molecula-nuxt/`) |
 
+Global favicon / apple-touch: `public/sign-weblaba.svg` + `public/sign-weblaba.png` via `nuxt.config.ts` `app.head.link` (not per-page).
+
 ## Homepage copy
 
 [`app/domain/seo/homeSeo.ts`](../app/domain/seo/homeSeo.ts) — title + description synced from production [weblaba.ru](https://weblaba.ru/) Yoast meta (not from WP REST). Used in [`app/pages/index.vue`](../app/pages/index.vue) and the visually hidden `.home-page__seo` block for crawlers / screen readers.

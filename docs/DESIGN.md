@@ -181,8 +181,9 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 ### 3. Site header
 
 - [`SiteHeader`](../app/lib/hero-ui/SiteHeader.ts):
-  - **Desktop (≥1024):** `[ МАРК ] ЛОГО` · slide progress track (viewport center, replaces former `⟨ SYS · МОЛЕКУЛА ⟩`) · `УЗЕЛ 04 / РАБОТЫ`. Inset from corner ticks via `--hud-header-inset`. Pointer-events none; no background blocks.
-  - **Mobile (≤767):** shared 3-col grid (`--mobile-header-grid`: side · center · side) — col 1 `[ МАРК ] ЛОГО`, col 3 `МЕНЮ / NAV` (home + off-home). Off-home col 2: SiteChrome meta (`CASE / NN`, `ARCHIVE`, section label) at ~0.469rem, muted `--ink-32` / `--ink-28`. Safe-area top padding. No hamburger glyph, no card.
+  - **Logo:** `public/sign-weblaba.svg` (mint `#6EC99F`); PNG twin for favicon / apple-touch. Loaded with Nuxt `app.baseURL` via `MountHeroAppOptions.assetBaseURL` (`.site-header__logo-img`, height `1.65rem`). Home tap → hub restore.
+  - **Desktop (≥1024):** logo · slide progress track (viewport center, replaces former `⟨ SYS · МОЛЕКУЛА ⟩`) · `УЗЕЛ 04 / РАБОТЫ`. Inset from corner ticks via `--hud-header-inset`. Pointer-events none; no background blocks.
+  - **Mobile (≤767):** shared 3-col grid (`--mobile-header-grid`: side · center · side) — col 1 logo, col 3 `МЕНЮ / NAV` (home + off-home). Off-home col 2: SiteChrome meta (`CASE / NN`, `ARCHIVE`, section label) at ~0.469rem, muted `--ink-32` / `--ink-28`. Safe-area top padding. No hamburger glyph, no card.
   - **Off-home desktop/tablet (≥768):** centered indexed route links (direct `transitionTo`); NODE hidden; SiteChrome meta stays top-right.
   - **Tablet home:** header hidden; `.hud__meta` keeps `⟨ SYS · МОЛЕКУЛА ⟩`.
 

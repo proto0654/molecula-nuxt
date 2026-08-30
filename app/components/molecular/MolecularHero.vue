@@ -52,6 +52,7 @@ onMounted(() => {
 
   hero = mountHeroApp(stage, {
     chromeRoot: chrome,
+    assetBaseURL: baseURL,
     onNavigateRoute: (route) => transitionTo(route),
     prefetchRoute: (route) => {
       void preloadRouteComponents(route);

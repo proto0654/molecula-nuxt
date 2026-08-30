@@ -68,20 +68,17 @@ export default defineNuxtConfig({
       link: [
         {
           rel: 'icon',
-          type: 'image/png',
-          sizes: '32x32',
-          href: '/favicon-32x32.png',
+          type: 'image/svg+xml',
+          href: '/sign-weblaba.svg',
         },
         {
           rel: 'icon',
           type: 'image/png',
-          sizes: '192x192',
-          href: '/favicon-192x192.png',
+          href: '/sign-weblaba.png',
         },
         {
           rel: 'apple-touch-icon',
-          sizes: '180x180',
-          href: '/apple-touch-icon.png',
+          href: '/sign-weblaba.png',
         },
       ],
     },

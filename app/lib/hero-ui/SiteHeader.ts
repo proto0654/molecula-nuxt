@@ -14,6 +14,11 @@ export type HeaderSelectListener = (itemId: string) => void;
  * Home desktop slide progress is positioned at bottom center via CSS.
  * Off-home routes navigate immediately — no atom commit step.
  */
+export type SiteHeaderOptions = {
+  /** Public asset base (Nuxt `app.baseURL`), e.g. `/` or `/molecula-nuxt/`. */
+  assetBaseURL?: string;
+};
+
 export class SiteHeader {
   readonly root: HTMLElement;
   private readonly logoBtn: HTMLButtonElement;
@@ -27,14 +32,28 @@ export class SiteHeader {
   private onMenuToggle: MenuToggleListener | undefined;
   private onSelect: HeaderSelectListener | undefined;
 
-  constructor(parent: HTMLElement, state: NavigationState) {
+  constructor(
+    parent: HTMLElement,
+    state: NavigationState,
+    options: SiteHeaderOptions = {},
+  ) {
+    const assetBase = options.assetBaseURL ?? '/';
+    const logoSrc = `${assetBase}sign-weblaba.svg`;
+
     this.root = document.createElement('header');
     this.root.className = 'site-header';
 
     this.logoBtn = document.createElement('button');
     this.logoBtn.type = 'button';
     this.logoBtn.className = 'site-header__logo';
-    this.logoBtn.textContent = '[ WEB-LABA ]';
+    const logoImg = document.createElement('img');
+    logoImg.className = 'site-header__logo-img';
+    logoImg.src = logoSrc;
+    logoImg.alt = 'WebLaba';
+    logoImg.width = 154;
+    logoImg.height = 154;
+    logoImg.decoding = 'async';
+    this.logoBtn.append(logoImg);
     this.logoBtn.setAttribute('aria-label', 'WebLaba, на главную');
     attachTapGuard(this.logoBtn, () => {
       this.onSelect?.('home');

@@ -648,6 +648,13 @@ html.hero-lock #__nuxt {
 
 .site-header__logo {
   text-align: left;
+  line-height: 0;
+}
+
+.site-header__logo-img {
+  display: block;
+  width: auto;
+  height: 1.65rem;
 }
 
 .site-header__logo:hover,

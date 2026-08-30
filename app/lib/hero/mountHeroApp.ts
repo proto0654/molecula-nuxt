@@ -47,6 +47,8 @@ const IDLE_RESUME_MS = 2000;
 export type MountHeroAppOptions = {
   /** Persistent chrome host (header, nav, USP, connectors, mobile overlay). */
   chromeRoot: HTMLElement;
+  /** Public asset base (Nuxt `app.baseURL`). */
+  assetBaseURL?: string;
   /**
    * Called when Navigator finishes the approach and the nav item has a real route.
    * Home `/` still uses the destination stub.
@@ -99,7 +101,9 @@ export function mountHeroApp(
   navigationState.setCommitted(HOME_ITEM_ID);
 
   const hud = new HudFrame(stage);
-  const siteHeader = new SiteHeader(chromeRoot, navigationState);
+  const siteHeader = new SiteHeader(chromeRoot, navigationState, {
+    assetBaseURL: options.assetBaseURL,
+  });
   const uspHeadline = new UspHeadline(chromeRoot);
 
   const mobileMq = window.matchMedia(MOBILE_MQ);
