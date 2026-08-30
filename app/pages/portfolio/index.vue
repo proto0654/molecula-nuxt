@@ -11,7 +11,10 @@ const page = computed(() => {
   return Number.isFinite(n) && n > 0 ? n : 1;
 });
 
-const { entries, pagination, pending, error } = usePortfolio({ page, perPage: 12 });
+const { entries, pagination, pending, transitioning, error } = usePortfolio({
+  page,
+  perPage: 12,
+});
 const { data: categories } = usePortfolioCategories();
 
 const categoryById = computed(() => categoryNameMap(categories.value));
@@ -24,10 +27,7 @@ onMounted(() => {
   restoreScroll();
 });
 
-watch(page, (_next, prev) => {
-  if (!import.meta.client || prev == null) return;
-  window.scrollTo(0, 0);
-});
+useArchivePaginationScroll(page, pending);
 
 const { revealing } = usePageContentReveal();
 const { washesReady } = usePortfolioWashGate();
@@ -49,7 +49,9 @@ usePageSeo({
       <SiteScrambleTitle class="archive-heading__title" text="Портфолио" />
     </header>
 
-    <p v-if="pending && !entries.length" class="archive-status">Loading…</p>
+    <p v-if="(pending || transitioning) && !entries.length" class="archive-status">
+      Loading…
+    </p>
 
     <p v-else-if="error && !entries.length" class="archive-status">
       Portfolio unavailable.<br />
@@ -72,6 +74,7 @@ usePageSeo({
     </ul>
 
     <ArchivePagination
+      v-if="entries.length"
       :page="page"
       :total-pages="pagination.totalPages"
     />

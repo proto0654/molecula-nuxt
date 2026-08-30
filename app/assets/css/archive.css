@@ -995,9 +995,9 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.85rem 1.15rem;
+  gap: 1rem 1.35rem;
   margin-top: var(--case-space-section);
-  font-size: var(--text-index);
+  font-size: var(--text-nav);
   letter-spacing: var(--track-mark);
   font-variant-numeric: tabular-nums;
 }

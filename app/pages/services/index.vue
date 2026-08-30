@@ -10,7 +10,10 @@ const page = computed(() => {
   return Number.isFinite(n) && n > 0 ? n : 1;
 });
 
-const { entries, pagination, pending, error } = useServices({ page, perPage: 12 });
+const { entries, pagination, pending, transitioning, error } = useServices({
+  page,
+  perPage: 12,
+});
 
 function restoreScroll() {
   restoreArchiveScroll('services');
@@ -20,10 +23,7 @@ onMounted(() => {
   restoreScroll();
 });
 
-watch(page, (_next, prev) => {
-  if (!import.meta.client || prev == null) return;
-  window.scrollTo(0, 0);
-});
+useArchivePaginationScroll(page, pending);
 
 const { revealing } = usePageContentReveal();
 
@@ -44,7 +44,9 @@ usePageSeo({
       <SiteScrambleTitle class="archive-heading__title" text="Услуги" />
     </header>
 
-    <p v-if="pending && !entries.length" class="archive-status">Loading…</p>
+    <p v-if="(pending || transitioning) && !entries.length" class="archive-status">
+      Loading…
+    </p>
 
     <p v-else-if="error && !entries.length" class="archive-status">
       Services unavailable.<br />
@@ -66,6 +68,7 @@ usePageSeo({
     </ul>
 
     <ArchivePagination
+      v-if="entries.length"
       :page="page"
       :total-pages="pagination.totalPages"
       base-path="/services"

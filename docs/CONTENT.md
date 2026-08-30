@@ -58,9 +58,9 @@ Rules:
 | Route | Source |
 |-------|--------|
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
-| `/portfolio` | `usePortfolio(page)` — slim-index pagination (`include` ids), editorial rows |
+| `/portfolio` | `usePortfolio(page)` — slim-index pagination (`include` ids), editorial rows; [`useArchivePaginationScroll`](../app/composables/useArchivePaginationScroll.ts) + `dataPage` gate on page change |
 | `/portfolio/[slug]` | `CaseShell` + video hero + layout featured wash / accent overlay + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT |
-| `/services` | `useServices(page)` — slim-index pagination, editorial rows **without** featured wash |
+| `/services` | `useServices(page)` — slim-index pagination, editorial rows **without** featured wash; same archive pagination scroll gate |
 | `/services/[slug]` | `ArchiveShell` (`SERVICE / NN`) + Index kicker + title/tags + intro + offer repeater (`archive-list` rows: index, price meta, hover line/arrow, body + order CTA) + [`ArchiveDetailNav`](../app/components/archive/DetailNav.vue) |
 | `/about` | `ArchiveShell` + Index kicker + title/tags + optional photo + intro + skills repeater (`archive-list`) + CTA → `/contact` |
 | `/contact` | `ArchiveShell` + Index kicker «Контакты» + intro (`contact_popup_text`) + optional H2 (`contact_popup_title`) + contacts (`ContactArchiveRow` / `archive-list`) |

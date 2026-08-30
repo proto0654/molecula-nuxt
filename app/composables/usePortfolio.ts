@@ -62,27 +62,44 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
   );
 
   const held = shallowRef<ArchivePagePayload | null>(null);
+  const heldPage = shallowRef<number | null>(null);
+  const dataPage = shallowRef<number | null>(null);
   watch(
     data,
     (value) => {
-      if (value) held.value = value;
+      if (value) {
+        held.value = value;
+        heldPage.value = pageRef.value;
+        dataPage.value = pageRef.value;
+      }
     },
     { immediate: true },
   );
 
-  const entries = computed(
-    () => data.value?.entries ?? held.value?.entries ?? [],
-  );
-  const pagination = computed(
-    (): WpPaginationMeta =>
-      data.value?.pagination ??
-      held.value?.pagination ?? { total: 0, totalPages: 0 },
-  );
+  const transitioning = computed(() => dataPage.value !== pageRef.value);
+
+  const entries = computed(() => {
+    if (data.value?.entries && dataPage.value === pageRef.value) {
+      return data.value.entries;
+    }
+    if (heldPage.value === pageRef.value) return held.value?.entries ?? [];
+    return [];
+  });
+  const pagination = computed((): WpPaginationMeta => {
+    if (data.value?.pagination && dataPage.value === pageRef.value) {
+      return data.value.pagination;
+    }
+    if (heldPage.value === pageRef.value) {
+      return held.value?.pagination ?? { total: 0, totalPages: 0 };
+    }
+    return held.value?.pagination ?? { total: 0, totalPages: 0 };
+  });
 
   return {
     entries,
     pagination,
     pending,
+    transitioning,
     error,
     refresh,
   };

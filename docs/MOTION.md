@@ -66,7 +66,7 @@ Same motif on case section markers, CMS list rows, and footer nav. **Footer nav*
 ### Archive return and pagination
 
 - [`archiveReturn`](../app/lib/navigation/archiveReturn.ts) restore jumps instantly, then measure. Chain only rows actually in view after the jump — not from page index 0 at scroll 0.
-- Pagination replaces rows → conductor classifies **new** nodes only.
+- Page change: [`useArchivePaginationScroll`](../app/composables/useArchivePaginationScroll.ts) gates listing measure (`beginArchivePagination` / `endArchivePagination`); scroll runs after `nextTick` so stale rows are not visible at scroll 0. [`usePortfolio`](../app/composables/usePortfolio.ts) / [`useServices`](../app/composables/useServices.ts) track `dataPage` — entries from `useAsyncData` are shown only when they match the current `?page=`; during fetch the list and pagination are empty (`transitioning`), then new rows mount and the conductor classifies **new** nodes only.
 - Empty / pending list: no-op.
 - `prefers-reduced-motion`: everything visible, no IO, no delays.
 

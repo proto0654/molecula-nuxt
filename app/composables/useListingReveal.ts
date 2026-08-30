@@ -1,6 +1,9 @@
 import type { MaybeRefOrGetter } from 'vue';
 import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
-import { whenArchiveRestoreIdle } from '~/lib/navigation/archiveReturn';
+import {
+  whenArchivePaginationIdle,
+  whenArchiveRestoreIdle,
+} from '~/lib/navigation/archiveReturn';
 
 const CASE_PROSE_BLOCK_SELECTOR =
   '.case-page .case-content__prose > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading), ' +
@@ -162,8 +165,11 @@ export function useListingReveal(
     if (classifyQueued) return;
     classifyQueued = true;
     requestAnimationFrame(() => {
-      classifyQueued = false;
-      classify();
+      void (async () => {
+        classifyQueued = false;
+        await whenArchivePaginationIdle();
+        classify();
+      })();
     });
   }
 
@@ -177,6 +183,7 @@ export function useListingReveal(
     if (!import.meta.client) return;
     await nextTick();
     await whenArchiveRestoreIdle();
+    await whenArchivePaginationIdle();
     await doubleRaf();
     if (gen !== generation) return;
     const scope = toValue(root);

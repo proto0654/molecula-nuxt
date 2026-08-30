@@ -10,6 +10,10 @@ export type ArchiveReturnState = {
 let restoring = false;
 const restoreIdle = new Set<() => void>();
 
+/** True while archive pagination is scrolling before new rows are measured. */
+let paginating = false;
+const paginationIdle = new Set<() => void>();
+
 export function beginArchiveRestore(): void {
   restoring = true;
 }
@@ -30,6 +34,29 @@ export function whenArchiveRestoreIdle(): Promise<void> {
   if (!restoring) return Promise.resolve();
   return new Promise((resolve) => {
     restoreIdle.add(() => resolve());
+  });
+}
+
+export function beginArchivePagination(): void {
+  paginating = true;
+}
+
+export function endArchivePagination(): void {
+  if (!paginating) return;
+  paginating = false;
+  for (const fn of paginationIdle) fn();
+  paginationIdle.clear();
+}
+
+export function isArchivePaginating(): boolean {
+  return paginating;
+}
+
+/** Resolves after pagination scroll (or immediately if none). */
+export function whenArchivePaginationIdle(): Promise<void> {
+  if (!paginating) return Promise.resolve();
+  return new Promise((resolve) => {
+    paginationIdle.add(() => resolve());
   });
 }
 
