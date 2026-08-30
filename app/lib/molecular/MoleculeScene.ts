@@ -15,6 +15,7 @@ import {
 import { Atom } from './Atom';
 import { Bond } from './Bond';
 import { DecorativeNodes } from './DecorativeNodes';
+import { TagCloud, type TagCloudItem } from './TagCloud';
 import type { QualityManager } from './quality/QualityManager';
 import type { QualitySettings } from './quality/types';
 import { GeometryCache } from './resources/GeometryCache';
@@ -125,6 +126,7 @@ export class MoleculeScene {
   private readonly accentWireframeMaterial: LineBasicMaterial;
   private readonly accentWireframe: LineSegments;
   private readonly decorativeNodes: DecorativeNodes;
+  private readonly tagCloud: TagCloud;
   private wireframeAtomId: string | null = null;
   private accentWireframeAtomId: string | null = null;
   private accentWireframeMode: AccentWireframeMode | null = null;
@@ -165,6 +167,9 @@ export class MoleculeScene {
     this.labelsGroup = new Group();
     this.labelsGroup.name = 'atom-labels';
     this.scene.add(this.labelsGroup);
+
+    this.tagCloud = new TagCloud();
+    this.scene.add(this.tagCloud.object);
 
     const ambient = new AmbientLight(0xffffff, 0.38);
     const key = new DirectionalLight(0xffffff, 0.9);
@@ -298,6 +303,8 @@ export class MoleculeScene {
       );
     }
     this.decorativeNodes.setOrbitScale(orbitScale);
+    this.tagCloud.setLayoutScale(orbitScale);
+    this.tagCloud.update(this.camera, this.moleculeGroup);
     this.syncBondEndpoints();
     this.syncWireframe();
     this.syncAccentWireframe();
@@ -408,6 +415,12 @@ export class MoleculeScene {
 
   setDecorativeZoomFade(zoomProgress: number, fillProgress: number): void {
     this.decorativeNodes.setZoomFade(zoomProgress, fillProgress);
+    this.tagCloud.setZoomFade(zoomProgress, fillProgress);
+  }
+
+  setTagCloud(tags: readonly TagCloudItem[]): void {
+    this.tagCloud.setTags(tags);
+    this.tagCloud.update(this.camera, this.moleculeGroup);
   }
 
   /** Atom meshes for picking; never includes bonds. */
@@ -455,6 +468,7 @@ export class MoleculeScene {
       atom.tickLabelTypewriter(deltaSeconds);
       atom.updateSelection(this.camera, deltaSeconds, elapsed);
     }
+    this.tagCloud.update(this.camera, this.moleculeGroup);
   }
 
   private updateWireframeDim(deltaSeconds: number): void {
@@ -562,6 +576,7 @@ export class MoleculeScene {
   dispose(): void {
     this.clearMolecule();
     this.decorativeNodes.dispose();
+    this.tagCloud.dispose();
     this.wireframeMaterial.dispose();
     this.accentWireframeMaterial.dispose();
     this.bondMaterial.dispose();

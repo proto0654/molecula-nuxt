@@ -13,6 +13,7 @@ import {
 
 const spatial = useSpatialState();
 const router = useRouter();
+const { tags } = useHeroTagCloud();
 
 const stageRef = ref<HTMLElement | null>(null);
 const chromeRef = ref<HTMLElement | null>(null);
@@ -59,12 +60,18 @@ onMounted(() => {
     },
   });
 
+  hero.setTagCloud(tags.value);
+
   stopTransition = hero.onTransition((snap) => {
     if (!snap.busy) revealWhenSettled();
   });
 
   hero.applySpatial(spatial.value, { immediate: true });
   setAwaitingPose(false);
+});
+
+watch(tags, (list) => {
+  hero?.setTagCloud(list);
 });
 
 watch(spatial, (state) => {

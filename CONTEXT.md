@@ -8,7 +8,7 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 - Tailwind CSS 4 (`@tailwindcss/vite`) + CSS variables (`--wl-*`, `--case-*`)
 - Three.js (separate 3D layer — not R3F / React)
 - GSAP (page-transition timeline in `Navigator`)
-- troika-three-text (screen-flat atom captions via `AtomLabel`)
+- troika-three-text (screen-flat atom captions via `AtomLabel`; decorative hero tag cloud via `TagCloud`)
 - WordPress REST: `NUXT_PUBLIC_WP_API_BASE` → `runtimeConfig.public.wpApiBase`
 
 ## Live preview

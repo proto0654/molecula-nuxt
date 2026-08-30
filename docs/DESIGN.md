@@ -158,6 +158,7 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Selection chrome (settled freeze) | `0x000000` | Lerp after approach settle; opacity unchanged |
 | Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell (base); same black lerp when settled |
 | Decorative orbits / nodes | black @ ~0.42 / active `#3a3e44` @ ~0.55; nodes `0x6a737c` | `DecorativeNodes` (HIGH only) |
+| Tag cloud | `0x585f67` primary / `0x424950` secondary (`fillOpacity` 1) | `TagCloud` — muted, all quality levels |
 | Highlight emissive | `0x4a525a` @ 0.1 | `Atom.ts` |
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
 

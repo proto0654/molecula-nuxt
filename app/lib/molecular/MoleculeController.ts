@@ -15,6 +15,7 @@ import { projectToScreenInto } from './math/projection';
 import { moleculeConfig } from './moleculeConfig';
 import { getOrbitNormalForAtom } from './moleculeOrbits';
 import { MoleculeScene } from './MoleculeScene';
+import type { TagCloudItem } from './TagCloud';
 import {
   calibrateGyro,
   needsOrientationPermission,
@@ -1130,6 +1131,10 @@ export class MoleculeController {
     for (const atom of this.scene.getAtoms()) {
       atom.setBlurb(atom.id === atomId ? blurb : null);
     }
+  }
+
+  setTagCloud(tags: readonly TagCloudItem[]): void {
+    this.scene.setTagCloud(tags);
   }
 
   /** Bright title for committed and/or hover-preview atoms (no blurb required). */

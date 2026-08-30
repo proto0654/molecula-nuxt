@@ -202,6 +202,11 @@ export type ContactAcfRow = {
   show_in_socialbar?: boolean;
 };
 
+export type HeroTagCloudRow = {
+  label?: string | false;
+  tier?: string | false;
+};
+
 export type ThemeOptionsAcf = {
   services_section_heading?: string | false;
   services_section_heading_en?: string | false;
@@ -209,6 +214,7 @@ export type ThemeOptionsAcf = {
   services_price_from_en?: string | false;
   hero_order_label?: string | false;
   hero_order_label_en?: string | false;
+  hero_tag_cloud?: HeroTagCloudRow[] | false;
   weblaba_contacts?: ContactAcfRow[] | false;
   contact_popup_title?: string | false;
   contact_popup_title_en?: string | false;

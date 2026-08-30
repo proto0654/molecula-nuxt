@@ -21,6 +21,10 @@ export function setLabelFontUrl(url: string): void {
   labelFontUrl = url;
 }
 
+export function getLabelFontUrl(): string {
+  return labelFontUrl;
+}
+
 function splitCaption(caption: string): { letter: string; rest: string } {
   const trimmed = caption.trim();
   if (trimmed.length <= 1) {

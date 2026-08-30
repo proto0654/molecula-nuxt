@@ -1,0 +1,1 @@
+export { normalizeHeroTagCloud } from './normalizeHeroTagCloud';

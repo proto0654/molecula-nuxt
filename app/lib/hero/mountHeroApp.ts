@@ -31,6 +31,7 @@ import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { SpatialController, type SpatialApplyOptions } from '../spatial/SpatialController';
 import type { SpatialState } from '../spatial/types';
 import type { TransitionListener } from '../navigation/TransitionState';
+import type { TagCloudItem } from '../molecular/TagCloud';
 
 const MOBILE_MQ = '(max-width: 767px)';
 const TABLET_MQ = '(min-width: 768px) and (max-width: 1023px)';
@@ -63,6 +64,7 @@ export type MountedHeroApp = {
   applySpatial: (state: SpatialState, options?: SpatialApplyOptions) => void;
   isBusy: () => boolean;
   onTransition: (listener: TransitionListener) => () => void;
+  setTagCloud: (tags: readonly TagCloudItem[]) => void;
 };
 
 export function mountHeroApp(
@@ -585,6 +587,9 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     },
     isBusy: () => navigator.busy,
     onTransition: (listener) => navigator.transitionState.subscribe(listener),
+    setTagCloud(tags) {
+      controller.setTagCloud(tags);
+    },
     dispose() {
       autoplay.stop();
       mobileMq.removeEventListener('change', onViewportChange);

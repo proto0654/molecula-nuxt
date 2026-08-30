@@ -152,6 +152,14 @@ export type ContactPage = {
   contacts: Contact[];
 };
 
+/** Hero tag-cloud row from ACF options. Empty repeater → []. */
+export type HeroTagTier = 'primary' | 'secondary';
+
+export type HeroTag = {
+  label: string;
+  tier: HeroTagTier;
+};
+
 export type NavigationMenuItem = {
   id: number;
   title: string;

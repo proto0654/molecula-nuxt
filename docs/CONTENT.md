@@ -7,7 +7,7 @@ Headless consumption of production WordPress REST. WP remains source of truth; t
 ```
 pages / composables
   → app/api/*          (ofetch; no REST URLs in components)
-  → app/domain/*       (normalize raw → Case / Service / AboutPage / ContactPage / NavigationMenu)
+  → app/domain/*       (normalize raw → Case / Service / AboutPage / ContactPage / HeroTag[] / NavigationMenu)
   → app/types/wp/*     (raw + domain types)
   → components/archive/* + components/service/*  (editorial listing + detail repeaters)
   → components/case/*     (conditional case blocks)
@@ -24,7 +24,7 @@ Live response notes: [`api-real-response.md`](api-real-response.md).
 | `client.ts` | `wpFetch` / `wpFetchPaginated` + `X-WP-Total` / `X-WP-TotalPages` |
 | `portfolio.ts` | list page, posts by ids, case by slug, categories, slim index, slugs |
 | `services.ts` | posts by ids, service by slug, slim index, slugs |
-| `options.ts` | ACF theme options (`/acf/v3/options/options`) — RU chrome for services + contacts |
+| `options.ts` | ACF theme options (`/acf/v3/options/options`) — RU chrome for services + contacts + hero tag cloud |
 | `menus.ts` | `menus/v1` only (core `/wp/v2/menus` is 401) |
 | `pages.ts` / `media.ts` | page by slug (`_embed=wp:term` for about tags) / media |
 
@@ -41,6 +41,8 @@ Shared media/text helpers live in [`app/domain/wp/`](../app/domain/wp/normalizeM
 [`normalizeAboutPage`](../app/domain/about/normalizeAbout.ts) maps page `about` → `AboutPage`. Empty `about-repeater` → `[]` (hide skills) — **no PHP demo-skill fallback**. Empty photo → no placeholder image.
 
 [`normalizeContactPage`](../app/domain/contacts/normalizeContacts.ts) maps ACF options → `ContactPage`. Empty / false `weblaba_contacts` → `[]` (no PHP Telegram+phone fallback). Rows without `label` or `url` are dropped; unknown `icon` → `link`. RU only.
+
+[`normalizeHeroTagCloud`](../app/domain/hero/normalizeHeroTagCloud.ts) maps ACF `hero_tag_cloud` → `HeroTag[]`. Empty / false repeater → `[]`. Rows without `label` are dropped; unknown `tier` → `secondary`. Rendered as a decorative Troika cloud around the molecule ([`TagCloud.ts`](../app/lib/molecular/TagCloud.ts)).
 
 **EN fields are typed on raw ACF and documented below; normalizers and UI do not read them yet.**
 
@@ -78,6 +80,8 @@ SEO: [`usePageSeo`](../app/composables/usePageSeo.ts) on all routes — title (`
 ## Hero navigation copy
 
 Molecular hero nav labels, atom captions, typewriter blurbs, and USP headlines are authored in [`navigationConfig.ts`](../app/lib/navigation/navigationConfig.ts) (hardcoded RU). `moleculeConfig` atom captions resolve from `navigationConfig.label` via `getItemByAtomId` — do not duplicate label strings elsewhere.
+
+Decorative tag cloud around the molecule: ACF options `hero_tag_cloud` via [`useHeroTagCloud`](../app/composables/useHeroTagCloud.ts) → [`TagCloud`](../app/lib/molecular/TagCloud.ts). Not interactive.
 
 | Field | Rendered as | Current source | Target source (WP) |
 |-------|-------------|------------------|---------------------|

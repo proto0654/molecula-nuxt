@@ -7,6 +7,7 @@ declare module 'troika-three-text' {
     font: string | null;
     fontSize: number;
     color: Color | string | number;
+    fillOpacity: number;
     anchorX: string | number;
     anchorY: string | number;
     maxWidth: number;
