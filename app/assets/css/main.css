@@ -296,6 +296,7 @@ html {
   width: 100%;
   min-height: 100%;
   min-height: 100dvh;
+  scrollbar-gutter: stable both-edges;
   overflow-x: clip;
   overflow-y: auto;
   background: var(--wl-bg, var(--color-bg));

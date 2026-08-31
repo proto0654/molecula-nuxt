@@ -23,7 +23,7 @@ app.vue
 | Page content | `<NuxtPage />` | Archive / case / section content over the frozen molecule (no page scrim). |
 | SiteChrome | page | Meta only (`ARCHIVE`, `CASE / NN`, Index). No duplicate grid / frame / logo. |
 
-`html.hero-lock` (no document scroll) is applied only while spatial mode is `home`.
+`html.hero-lock` (no document scroll) is applied only while spatial mode is `home`. `scrollbar-gutter: stable both-edges` on `html` keeps viewport width stable across home ↔ off-home hops.
 
 ## State machine
 

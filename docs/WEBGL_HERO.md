@@ -327,7 +327,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `debug/PerfOverlay.ts` | Dev-only throttled FPS / quality HUD |
 ## Scene constraints (current stage)
 
-- Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`. Home locks document scroll via `html.hero-lock`.
+- Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`. Home locks document scroll via `html.hero-lock`. `html` uses `scrollbar-gutter: stable both-edges` so route transitions do not shift layout when the scrollbar toggles (see [`DESIGN.md`](DESIGN.md) § Document scroll).
 - Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) — see [`DESIGN.md`](DESIGN.md). `NavigationItem.route` drives Nuxt when wired (`/portfolio`); other items still use DestinationView stub.
 - Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav on home; off-home header with centered route links), mobile ≤767 (home: header + bottom rail + slide progress + MENU overlay with one-shot leave; off-home: header LOGO + MENU + overlay with direct route hops; mobile framing, full captions, touch trackball/tap + calibrated gyro tilt).
 - No postprocessing, bloom, particle systems, physics, realtime shadows, or environment maps. Scene uses a matching `Fog` for slight depth only.

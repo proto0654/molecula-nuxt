@@ -241,6 +241,6 @@ Leaving `/portfolio*`: wash clears with a short opacity fade.
 - Do not put Three.js on case pages.
 - `case_dark_bg_color` is a **subtle accent**, not a full-page wash. Use for UI chrome (`--case-accent-ink`) and a solid low-opacity overlay on the persistent featured wash (`--backdrop-accent`) — never as `--wl-bg`. Do not nest the overlay under the wash’s `0.22` opacity.
 - Slim index `_fields` include `title` for prev/next labels (`getCasePosition`).
-- Case pages must not set `html.hero-lock`. Document scroll is on `html` only (`main.css`) — avoid `overflow-y: auto` on `body` / `#__nuxt` (double scrollbar with 3D overflow).
+- Case pages must not set `html.hero-lock`. Document scroll is on `html` only (`main.css`) — `scrollbar-gutter: stable both-edges` prevents layout shift on route change; avoid `overflow-y: auto` on `body` / `#__nuxt` (double scrollbar with 3D overflow).
 - Legacy mapping: `screenshot_image` = composite mockup; `screen-mobile` = slice source — do not swap.
 - Do not add mandatory ACF fields. Composition must work on existing data.

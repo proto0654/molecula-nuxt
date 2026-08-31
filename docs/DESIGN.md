@@ -6,9 +6,11 @@ Principles: the molecule is primary; HUD is secondary. No cards, no filled butto
 
 ## Document scroll
 
-- Default: `html` / `body` / `#__nuxt` scroll (`overflow-y: auto`).
-- Home only: `html.hero-lock` (set from [`app/pages/index.vue`](../app/pages/index.vue)) restores fullscreen `overflow: hidden` for the molecular hero.
+- `html`: `scrollbar-gutter: stable both-edges` — reserves symmetric inline gutters so layout width stays stable when the scrollbar appears or disappears (home ↔ scrollable routes, short ↔ tall pages). Prevents horizontal jump during molecular route transitions.
+- Default: `html` scrolls (`overflow-y: auto`); `body` / `#__nuxt` stay `overflow: visible` (do not set `overflow-y` there — double scrollbar with 3D overflow).
+- Home only: `html.hero-lock` (from [`app/layouts/default.vue`](../app/layouts/default.vue) when spatial mode is `home`) sets `overflow: hidden` — document scroll locked for the fullscreen hero.
 - Portfolio / case pages must **not** set `hero-lock`.
+- Full-bleed breakout: use `--content-bleed-width` (`calc(100% + 2 * var(--content-bleed-x))`) instead of `100vw` where horizontal scrollbar gutter matters.
 
 Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-accent` (map onto the HUD palette).
 

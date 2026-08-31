@@ -123,7 +123,7 @@ Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `
 ## Gotchas
 
 - Components must not call WordPress URLs directly.
-- Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally ([`main.css`](../app/assets/css/main.css)).
+- Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally. `html` uses `scrollbar-gutter: stable both-edges` ([`main.css`](../app/assets/css/main.css)) so scrollbar appearance does not shift layout on route change.
 - Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing + detail repeaters: [`archive.css`](../app/assets/css/archive.css). Services + about editorial tokens: [`services.css`](../app/assets/css/services.css). About photo: [`about.css`](../app/assets/css/about.css). Shared footer nav: [`DetailNav.vue`](../app/components/archive/DetailNav.vue) auto-imports as **`ArchiveDetailNav`**. Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive, case, service, about, or contact pages.
 - Service archive return uses session key `wl:archive-return:services` (portfolio keeps `wl:archive-return`).
 - `wpFetch` must not call `useRuntimeConfig()` after `await` inside `useAsyncData` (NUXT_E1001). Resolve base via `tryUseNuxtApp()?.$config` with env fallback ([`client.ts`](../app/api/client.ts)).
