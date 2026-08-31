@@ -162,16 +162,22 @@
   --grid-origin: calc(var(--grid-size) * 0.5);
   --corner-size: 18px;
   --corner-size-mobile: 12px;
-  --hud-inset: 1.15rem 1.35rem 4.75rem;
-  --hud-inset-tablet: 1rem 1.1rem 4.5rem;
-  --hud-inset-mobile: 2.75rem 0.75rem 5.5rem;
-  --hud-inset-mobile-off-home: 2.75rem 0.75rem 0.75rem;
+  --hud-edge-x: max(0px, calc(1.35rem - var(--scrollbar-gutter-x, 0px)));
+  --hud-inset: 1.15rem var(--hud-edge-x) 4.75rem;
+  --hud-edge-x-tablet: max(0px, calc(1.1rem - var(--scrollbar-gutter-x, 0px)));
+  --hud-inset-tablet: 1rem var(--hud-edge-x-tablet) 4.5rem;
+  --hud-edge-x-mobile: max(0px, calc(0.75rem - var(--scrollbar-gutter-x, 0px)));
+  --hud-inset-mobile: 2.75rem var(--hud-edge-x-mobile) 5.5rem;
+  --hud-inset-mobile-off-home: 2.75rem var(--hud-edge-x-mobile) 0.75rem;
   --hud-inset-mobile-bottom: 5.5rem;
   --nav-mobile-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
   /* Equal edges — corner ticks sit on this frame; header/nav pad inward from ticks */
-  --hud-inset-desktop: 1.5rem 1.5rem 1.5rem 1.5rem;
+  --hud-edge-y-desktop: 1.5rem;
+  --hud-edge-x-desktop: max(0px, calc(var(--hud-edge-y-desktop) - var(--scrollbar-gutter-x, 0px)));
+  --hud-inset-desktop: var(--hud-edge-y-desktop) var(--hud-edge-x-desktop) var(--hud-edge-y-desktop)
+    var(--hud-edge-x-desktop);
   --hud-chrome-pad: 0.6rem;
-  --hud-header-inset: calc(1.5rem + var(--corner-size) + var(--hud-chrome-pad));
+  --hud-header-inset: calc(var(--hud-edge-x-desktop) + var(--corner-size) + var(--hud-chrome-pad));
   --hud-meta-inset: 1.35rem 1.85rem;
   --sidebar-width: clamp(220px, 20vw, 280px);
   --glyph-angle-open: '⟨ ';
@@ -299,6 +305,8 @@ html {
   min-height: 100%;
   min-height: 100dvh;
   scrollbar-gutter: stable both-edges;
+  /* Per-edge gutter with both-edges — frame corners extend outward into it. */
+  --scrollbar-gutter-x: calc((100vw - 100%) / 2);
   overflow-x: clip;
   overflow-y: auto;
   background: var(--wl-bg, var(--color-bg));
