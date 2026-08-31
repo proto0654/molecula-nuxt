@@ -158,6 +158,8 @@
   --grid-size: 56px;
   --grid-size-tablet: 44px;
   --grid-size-mobile: 36px;
+  /* Half-cell origin: strokes sit off viewport edges (symmetric partial cells). */
+  --grid-origin: calc(var(--grid-size) * 0.5);
   --corner-size: 18px;
   --corner-size-mobile: 12px;
   --hud-inset: 1.15rem 1.35rem 4.75rem;
@@ -572,6 +574,7 @@ html.hero-lock #__nuxt {
     linear-gradient(rgb(214 219 224 / var(--grid-opacity)) 1px, transparent 1px),
     linear-gradient(90deg, rgb(214 219 224 / var(--grid-opacity)) 1px, transparent 1px);
   background-size: var(--grid-size) var(--grid-size);
+  background-position: var(--grid-origin) var(--grid-origin);
   mask-image: radial-gradient(ellipse 55% 50% at 50% 46%, transparent 42%, #000 100%);
 }
 
@@ -1594,6 +1597,10 @@ html.nav-overlay-open body {
 /* --- Tablet --- */
 
 @media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --grid-origin: calc(var(--grid-size-tablet) * 0.5);
+  }
+
   .hud__grid {
     background-size: var(--grid-size-tablet) var(--grid-size-tablet);
   }
@@ -1665,6 +1672,7 @@ html.nav-overlay-open body {
 
 @media (max-width: 767px) {
   :root {
+    --grid-origin: calc(var(--grid-size-mobile) * 0.5);
     --mobile-header-pad-x: 1rem;
     --mobile-header-pad-top: calc(0.85rem + env(safe-area-inset-top, 0px));
     --mobile-header-side-col: 6.35rem;

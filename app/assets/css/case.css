@@ -137,6 +137,7 @@
     linear-gradient(rgb(214 219 224 / var(--grid-opacity)) 1px, transparent 1px),
     linear-gradient(90deg, rgb(214 219 224 / var(--grid-opacity)) 1px, transparent 1px);
   background-size: var(--grid-size) var(--grid-size);
+  background-position: var(--grid-origin) var(--grid-origin);
   mask-image: radial-gradient(ellipse 58% 52% at 50% 42%, transparent 44%, #000 100%);
   opacity: 0.85;
 }
