@@ -20,8 +20,8 @@ import type { QualityManager } from './quality/QualityManager';
 import type { QualitySettings } from './quality/types';
 import { GeometryCache } from './resources/GeometryCache';
 import type { MoleculeConfig } from './types';
+import { SCENE_BG } from './sceneColors';
 
-const SCENE_BG = 0x14161c;
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
 const WIREFRAME_DIM_COLOR = 0x4a4f54;
@@ -139,6 +139,7 @@ export class MoleculeScene {
   private compactLayout = false;
   private readonly wireframeBaseColor = new Color(WIREFRAME_COLOR);
   private readonly wireframeDimColor = new Color(WIREFRAME_DIM_COLOR);
+  private readonly bondBaseColor = new Color(BOND_COLOR);
   private readonly scratchWireframeColor = new Color();
 
   constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
@@ -498,6 +499,20 @@ export class MoleculeScene {
     );
     this.wireframeMaterial.color.copy(this.scratchWireframeColor);
     this.accentWireframeMaterial.color.copy(this.scratchWireframeColor);
+
+    const shellMix = this.wireframeColorMix;
+    this.scratchWireframeColor.lerpColors(
+      this.bondBaseColor,
+      this.wireframeDimColor,
+      shellMix,
+    );
+    this.bondMaterial.color.copy(this.scratchWireframeColor);
+    this.bondFlowMaterial.color.copy(this.scratchWireframeColor);
+
+    this.decorativeNodes.setChromeColorMix(shellMix);
+    for (const atom of this.atoms) {
+      atom.setShellColorMix(shellMix);
+    }
   }
 
   private updateAccentWireframePulse(deltaSeconds: number, elapsed: number): void {

@@ -733,52 +733,6 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
   }
 }
 
-/* CSS-only featured wash — hover/focus, gated by .is-washes-ready. */
-.archive-row__backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 1.15s cubic-bezier(0.33, 0.1, 0.25, 1),
-    visibility 1.15s cubic-bezier(0.33, 0.1, 0.25, 1);
-}
-
-.archive-row__backdrop-wash,
-.archive-row__backdrop-tint {
-  position: absolute;
-  inset: 0;
-  mask-image: var(--portfolio-backdrop-mask);
-}
-
-.archive-row__backdrop-wash {
-  opacity: 0.22;
-  background-image: var(--archive-wash-image);
-  background-position: center top;
-  background-size: cover;
-  background-repeat: no-repeat;
-}
-
-.archive-row__backdrop-tint {
-  background-color: var(--archive-wash-accent, transparent);
-  opacity: 0.18;
-}
-
-@media (hover: hover) {
-  .archive-page.is-washes-ready .archive-row:hover .archive-row__backdrop,
-  .archive-page.is-washes-ready .archive-row:focus-within .archive-row__backdrop {
-    opacity: 1;
-    visibility: visible;
-  }
-}
-
-@media (hover: hover) and (prefers-reduced-motion: reduce) {
-  .archive-row__backdrop {
-    transition: none;
-  }
-}
 
 .archive-row__link {
   display: grid;

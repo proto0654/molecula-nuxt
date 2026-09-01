@@ -1,4 +1,5 @@
 import {
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -18,10 +19,13 @@ const NODE_COLOR = 0x6a737c;
 const ORBIT_COLOR = 0x000000;
 /** Active orbit — dark gray, just above black idle. */
 const ORBIT_ACTIVE_COLOR = 0x3a3e44;
+/** Settled off-home chrome — matches wireframe / reticle dim. */
+const ORBIT_DIM_COLOR = 0x4a4f54;
 
 const NODE_OPACITY = 0.18;
 const ORBIT_OPACITY = 0.42;
 const ORBIT_ACTIVE_OPACITY = 0.55;
+const ORBIT_DIM_OPACITY = 0.42;
 
 /** Extra ghost fragments that ride with the molecule (not pick targets). */
 const EXTRA_NODES: readonly {
@@ -56,6 +60,10 @@ export class DecorativeNodes {
   private zoomFade = 1;
   private orbitScale = 1;
   private activeAtomId: string | null = null;
+  private chromeColorMix = 0;
+  private readonly scratchOrbitBase = new Color();
+  private readonly scratchOrbitDim = new Color(ORBIT_DIM_COLOR);
+  private readonly scratchOrbitOut = new Color();
   private readonly scratchQ = new Quaternion();
 
   constructor(cache: GeometryCache) {
@@ -134,6 +142,14 @@ export class DecorativeNodes {
     this.syncOrbitColors();
   }
 
+  /** Lerp all orbit rings toward settled dim chrome (0 = home palette). */
+  setChromeColorMix(mix: number): void {
+    const next = Math.max(0, Math.min(1, mix));
+    if (Math.abs(next - this.chromeColorMix) < 1e-5) return;
+    this.chromeColorMix = next;
+    this.syncOrbitColors();
+  }
+
   applyQuality(options: {
     orbits: boolean;
     ghostNodes: boolean;
@@ -160,9 +176,26 @@ export class DecorativeNodes {
   private syncOrbitColors(): void {
     for (let i = 0; i < this.orbitMaterials.length; i += 1) {
       const material = this.orbitMaterials[i]!;
-      const active = this.orbitAtomIds[i] === this.activeAtomId;
-      material.color.setHex(active ? ORBIT_ACTIVE_COLOR : ORBIT_COLOR);
-      this.baseOpacities[i] = active ? ORBIT_ACTIVE_OPACITY : ORBIT_OPACITY;
+      const active =
+        this.chromeColorMix < 0.001 &&
+        this.orbitAtomIds[i] === this.activeAtomId;
+      const baseHex = active ? ORBIT_ACTIVE_COLOR : ORBIT_COLOR;
+      const baseOp = active ? ORBIT_ACTIVE_OPACITY : ORBIT_OPACITY;
+
+      if (this.chromeColorMix < 0.001) {
+        material.color.setHex(baseHex);
+        this.baseOpacities[i] = baseOp;
+      } else {
+        this.scratchOrbitBase.setHex(baseHex);
+        this.scratchOrbitOut.lerpColors(
+          this.scratchOrbitBase,
+          this.scratchOrbitDim,
+          this.chromeColorMix,
+        );
+        material.color.copy(this.scratchOrbitOut);
+        this.baseOpacities[i] =
+          baseOp + (ORBIT_DIM_OPACITY - baseOp) * this.chromeColorMix;
+      }
       material.opacity = this.baseOpacities[i]! * this.zoomFade;
     }
   }
@@ -170,10 +203,7 @@ export class DecorativeNodes {
   private syncOpacity(): void {
     for (let i = 0; i < this.orbitMaterials.length; i += 1) {
       const material = this.orbitMaterials[i]!;
-      const active = this.orbitAtomIds[i] === this.activeAtomId;
-      const base = active ? ORBIT_ACTIVE_OPACITY : ORBIT_OPACITY;
-      this.baseOpacities[i] = base;
-      material.opacity = base * this.zoomFade;
+      material.opacity = this.baseOpacities[i]! * this.zoomFade;
     }
     const nodeMat = this.materials[this.nodeMaterialIndex] as LineBasicMaterial;
     nodeMat.opacity =

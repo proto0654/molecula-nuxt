@@ -6,10 +6,7 @@ import {
   archiveSpecimenUrl,
   archiveTitlePlain,
 } from '~/domain/portfolio/archive';
-import {
-  caseFeaturedBackdropUrl,
-  padCaseIndex,
-} from '~/domain/portfolio/presentation';
+import { padCaseIndex } from '~/domain/portfolio/presentation';
 import { saveArchiveReturn } from '~/lib/navigation/archiveReturn';
 
 const props = defineProps<{
@@ -24,19 +21,7 @@ const title = computed(() => archiveTitlePlain(item.value));
 const meta = computed(() => archiveMetaLabel(item.value, props.categoryById));
 const specimen = computed(() => archiveSpecimenImage(item.value));
 const specimenUrl = computed(() => archiveSpecimenUrl(item.value));
-const featuredUrl = computed(() => caseFeaturedBackdropUrl(item.value));
 const href = computed(() => `/portfolio/${item.value.slug}`);
-
-const { commit } = usePortfolioBackdrop();
-
-const washVars = computed(() => {
-  const url = featuredUrl.value;
-  if (!url) return undefined;
-  return {
-    '--archive-wash-image': `url(${url})`,
-    '--archive-wash-accent': item.value.accentColor || 'transparent',
-  };
-});
 
 function onNavigate() {
   saveArchiveReturn({
@@ -44,21 +29,11 @@ function onNavigate() {
     slug: item.value.slug,
     y: window.scrollY,
   });
-  const url = featuredUrl.value;
-  if (url) commit(url, item.value.slug, item.value.accentColor);
 }
 </script>
 
 <template>
-  <li class="archive-row" :data-slug="item.slug" :style="washVars">
-    <div
-      v-if="featuredUrl"
-      class="archive-row__backdrop"
-      aria-hidden="true"
-    >
-      <div class="archive-row__backdrop-wash" />
-      <div class="archive-row__backdrop-tint" />
-    </div>
+  <li class="archive-row" :data-slug="item.slug">
     <NuxtLink :to="href" class="archive-row__link" @click="onNavigate">
       <span class="archive-row__index">{{ padCaseIndex(entry.index) }}</span>
       <span class="archive-row__copy">

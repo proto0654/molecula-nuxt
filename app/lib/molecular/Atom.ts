@@ -1,5 +1,6 @@
 import {
   type Camera,
+  Color,
   Group,
   Mesh,
   MeshLambertMaterial,
@@ -13,6 +14,7 @@ import {
 import { AtomLabel } from './AtomLabel';
 import type { QualityMaterialKind, QualitySettings } from './quality/types';
 import type { GeometryCache } from './resources/GeometryCache';
+import { SCENE_BG } from './sceneColors';
 import type { AtomConfig } from './types';
 
 const COLOR_BY_LABEL: Record<string, number> = {
@@ -40,6 +42,11 @@ export class Atom {
   private readonly basePosition: [number, number, number];
   private material: MeshStandardMaterial | MeshLambertMaterial;
   private highlighted = false;
+  private shellColorMix = 0;
+  private readonly baseShellColor = new Color();
+  private readonly dimShellColor = new Color(SCENE_BG);
+  private readonly shellBlack = new Color(0x000000);
+  private readonly scratchShellColor = new Color();
 
   constructor(config: AtomConfig, cache: GeometryCache, settings: QualitySettings) {
     this.id = config.id;
@@ -48,6 +55,7 @@ export class Atom {
     this.radius = config.radius;
     this.basePosition = [...config.position];
     this.color = COLOR_BY_LABEL[config.label] ?? 0x2c3036;
+    this.baseShellColor.setHex(this.color);
 
     this.group = new Group();
     this.group.name = `atom-${config.id}`;
@@ -135,6 +143,14 @@ export class Atom {
     this.selection.setDimmed(dimmed);
   }
 
+  /** Lerp shell toward scene background; at full mix emissive carries bg + lighting. */
+  setShellColorMix(mix: number): void {
+    const next = Math.max(0, Math.min(1, mix));
+    if (Math.abs(next - this.shellColorMix) < 1e-5) return;
+    this.shellColorMix = next;
+    this.applyShellColor();
+  }
+
   setBlurb(blurb: string | null): void {
     this.atomLabel.setBlurb(blurb);
   }
@@ -177,9 +193,11 @@ export class Atom {
     this.material = createAtomMaterial(kind, this.color);
     this.mesh.material = this.material;
     this.applyHighlight();
+    this.applyShellColor();
   }
 
   private applyHighlight(): void {
+    if (this.shellColorMix > 0.001) return;
     if (this.highlighted) {
       this.material.emissive.setHex(HIGHLIGHT_EMISSIVE);
       this.material.emissiveIntensity = HIGHLIGHT_INTENSITY;
@@ -187,6 +205,26 @@ export class Atom {
     }
     this.material.emissive.setHex(0x000000);
     this.material.emissiveIntensity = 0;
+  }
+
+  private applyShellColor(): void {
+    const t = this.shellColorMix;
+    if (t <= 0.001) {
+      this.material.color.copy(this.baseShellColor);
+      if (!this.highlighted) {
+        this.material.emissive.setHex(0x000000);
+        this.material.emissiveIntensity = 0;
+      }
+      this.material.fog = true;
+      return;
+    }
+
+    this.scratchShellColor.lerpColors(this.baseShellColor, this.shellBlack, t);
+    this.material.color.copy(this.scratchShellColor);
+    this.scratchShellColor.lerpColors(this.shellBlack, this.dimShellColor, t);
+    this.material.emissive.copy(this.scratchShellColor);
+    this.material.emissiveIntensity = t;
+    this.material.fog = t < 0.98;
   }
 }
 

@@ -4,7 +4,6 @@ import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
 const props = withDefaults(
   defineProps<{
     revealing?: boolean;
-    washesReady?: boolean;
     detailIndex?: number | null;
     detailVariant?: 'service' | 'case';
     archiveScope?: 'services' | 'portfolio';
@@ -38,10 +37,7 @@ const chromeVariant = computed(() =>
   <div
     ref="root"
     class="archive-page"
-    :class="{
-      'is-revealing': revealing,
-      'is-washes-ready': washesReady,
-    }"
+    :class="{ 'is-revealing': revealing }"
   >
     <SiteChrome
       :variant="chromeVariant"

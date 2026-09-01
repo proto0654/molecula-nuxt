@@ -287,12 +287,6 @@ export function caseImageUrl(
   return image.url;
 }
 
-/** Featured image URL for fixed page backdrop (under chrome grid). */
-export function caseFeaturedBackdropUrl(c: Case): string | null {
-  if (!c.featuredImage) return null;
-  return caseImageUrl(c.featuredImage, SCREEN_SIZES);
-}
-
 export function stripTags(html: string): string {
   return htmlToPlainText(html);
 }

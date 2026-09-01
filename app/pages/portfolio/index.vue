@@ -30,7 +30,6 @@ onMounted(() => {
 useArchivePaginationScroll(page, pending);
 
 const { revealing } = usePageContentReveal();
-const { washesReady } = usePortfolioWashGate();
 
 const pageTitle = computed(() =>
   page.value > 1 ? `Портфолио — страница ${page.value}` : 'Портфолио',
@@ -43,7 +42,7 @@ usePageSeo({
 </script>
 
 <template>
-  <ArchiveShell :revealing="revealing" :washes-ready="washesReady">
+  <ArchiveShell :revealing="revealing">
     <header class="archive-heading">
       <p class="archive-heading__kicker">Index</p>
       <SiteScrambleTitle class="archive-heading__title" text="Портфолио" />

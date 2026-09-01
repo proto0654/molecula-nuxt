@@ -794,6 +794,15 @@ export class MoleculeController {
     return this.frozen;
   }
 
+  getApproachBusy(): boolean {
+    return this.approachBusy;
+  }
+
+  /** Settled off-home pose: frozen route with approach timeline idle. */
+  isSettledOffHome(): boolean {
+    return this.frozen && !this.approachBusy && this.spatialMode !== 'home';
+  }
+
   getSpatialMode(): SpatialMode {
     return this.spatialMode;
   }

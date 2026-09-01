@@ -14,7 +14,9 @@ import {
 
 import {
 
-  caseFeaturedBackdropUrl,
+  caseImageUrl,
+
+  CASE_SCREEN_SIZES,
 
   getCaseComposition,
 
@@ -99,12 +101,6 @@ const heroMedia = computed(() =>
 
 );
 
-const backdropUrl = computed(() =>
-
-  caseData.value ? caseFeaturedBackdropUrl(caseData.value) : null,
-
-);
-
 const composition = computed(() =>
 
   caseData.value ? getCaseComposition(caseData.value) : null,
@@ -138,38 +134,6 @@ const sections = computed(
 const ready = computed(
 
   () => Boolean(data.value?.caseData) && data.value?.caseData?.slug === slug.value,
-
-);
-
-
-
-const { commit: commitBackdrop } = usePortfolioBackdrop();
-
-watch(
-
-  () =>
-
-    ({
-
-      ready: ready.value,
-
-      url: backdropUrl.value,
-
-      slug: slug.value,
-
-      accent: caseData.value?.accentColor ?? null,
-
-    }) as const,
-
-  ({ ready: isReady, url, slug: caseSlug, accent }) => {
-
-    if (!isReady) return;
-
-    commitBackdrop(url, caseSlug, accent);
-
-  },
-
-  { immediate: true },
 
 );
 
@@ -233,9 +197,11 @@ const pageDescription = computed(() => {
   );
 });
 
-const ogImage = computed(() =>
-  backdropUrl.value ? absoluteMediaUrl(backdropUrl.value) : undefined,
-);
+const ogImage = computed(() => {
+  const image = caseData.value?.featuredImage;
+  if (!image) return undefined;
+  return absoluteMediaUrl(caseImageUrl(image, CASE_SCREEN_SIZES));
+});
 
 usePageSeo({
   title: pageTitle,

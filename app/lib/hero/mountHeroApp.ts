@@ -224,6 +224,13 @@ export function mountHeroApp(
     controller.setBondFlowAtom(null);
   }
 
+  function syncSettledRouteClass(): void {
+    chromeRoot.classList.toggle(
+      'is-settled-route',
+      controller.isSettledOffHome(),
+    );
+  }
+
   function applyVisuals(): void {
     const committedId = navigationState.committedItemId;
     const previewId = navigationState.previewItemId;
@@ -237,14 +244,25 @@ export function mountHeroApp(
     const highlightAtomId = hasDistinctPreview
       ? previewItem?.atomId
       : committedItem?.atomId ?? previewItem?.atomId ?? null;
-    controller.setHighlightedAtom(highlightAtomId ?? null);
-    controller.setActiveOrbitAtom(highlightAtomId ?? null);
-
-    controller.setHaloStates(
-      committedItem?.atomId ?? null,
-      hasDistinctPreview ? previewItem?.atomId ?? null : null,
+    const settledOffHome = controller.isSettledOffHome();
+    controller.setHighlightedAtom(
+      settledOffHome ? null : highlightAtomId ?? null,
     );
-    controller.setWireframeAtom(committedItem?.atomId ?? null);
+    controller.setActiveOrbitAtom(
+      settledOffHome ? null : highlightAtomId ?? null,
+    );
+
+    if (!isHome) {
+      const focusAtomId = controller.getFocusedAtomId();
+      controller.setHaloStates(focusAtomId, null);
+      controller.setWireframeAtom(focusAtomId);
+    } else {
+      controller.setHaloStates(
+        committedItem?.atomId ?? null,
+        hasDistinctPreview ? previewItem?.atomId ?? null : null,
+      );
+      controller.setWireframeAtom(committedItem?.atomId ?? null);
+    }
     applyAccentWireframe();
     applyBondFlow();
 
@@ -284,6 +302,7 @@ export function mountHeroApp(
     if (!isHome) {
       controller.setAtomBlurb(null, null);
       uspHeadline.hide();
+      syncSettledRouteClass();
       return;
     }
 
@@ -433,6 +452,10 @@ export function mountHeroApp(
 
   const unsubscribeTransition = navigator.transitionState.subscribe((snap) => {
     controller.setApproachBusy(snap.busy);
+    if (!snap.busy) {
+      applyVisuals();
+    }
+    syncSettledRouteClass();
     if (snap.phase === 'idle') {
       destination.hide();
     }
