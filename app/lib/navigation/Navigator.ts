@@ -1,6 +1,6 @@
 import gsap from 'gsap';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
-import { CENTER_FRAMING } from '../molecular/composition/profiles';
+import { approachFramingForAtom, isCenterApproachFraming } from '../molecular/composition/approachFraming';
 import type { MoleculeController } from '../molecular/MoleculeController';
 import { getItemByAtomId } from './navigationConfig';
 import type { NavigationState } from './NavigationState';
@@ -40,12 +40,10 @@ const FOCUS_DURATION = 0.45;
 /** Single pull-in: zoom + fill run together (was sequential ≈1.4s). */
 const APPROACH_DURATION = 1.05;
 const OVERLAY_DURATION = 0.45;
-/** Off-home atom change: leave the old approach pose. */
-const RETARGET_PULLBACK_DURATION = 0.45;
-/** Off-home atom change: focus settle before re-approach. */
-const RETARGET_FOCUS_DURATION = 0.6;
-/** Off-home atom change: re-approach the new atom. */
-const RETARGET_APPROACH_DURATION = 0.7;
+/** Off-home atom change: parallel pullback + focus + re-approach (matches leave-home feel). */
+const RETARGET_DURATION = APPROACH_DURATION;
+/** Mid-retarget zoom/fill — enough room to rotate without a full rest unwind. */
+const RETARGET_ZOOM_DIP = 0.34;
 
 /**
  * Page-transition coordinator: owns the GSAP timeline and `TransitionState`.
@@ -114,7 +112,8 @@ export class Navigator {
 
     if (prefersReducedMotion()) {
       this.killTimeline();
-      this.controller.setCompositionFramingOverride(CENTER_FRAMING);
+      this.controller.setApproachFraming(approachFramingForAtom(atomId));
+      this.controller.setCompositionFramingOverride(null);
       this.controller.holdApproach({ immediate: true });
       this.overlay.setOpacity(0);
       this.transitionState.patch({
@@ -142,7 +141,7 @@ export class Navigator {
     }
 
     const atomChanged = this.controller.getFocusedAtomId() !== atomId;
-    const framing = this.controller.getActiveCompositionFraming();
+    const framing = this.controller.getZoomTargetFraming();
 
     // Capture live visuals before killing the previous tween (no hard reset).
     this.proxy = {
@@ -194,11 +193,11 @@ export class Navigator {
     this.controller.freeze();
 
     if (prefersReducedMotion()) {
-      this.controller.setCompositionFramingOverride(CENTER_FRAMING);
+      this.controller.setApproachFraming(approachFramingForAtom(atomId));
+      this.controller.setCompositionFramingOverride(null);
       this.controller.focusAtom(atomId);
       this.controller.setHighlightedAtom(atomId);
       this.controller.holdApproach({ immediate: true });
-      this.controller.setCompositionFramingOverride(null);
       this.controller.setTransitionDriven(false);
       this.transitionState.patch({
         atomId,
@@ -212,7 +211,7 @@ export class Navigator {
       return;
     }
 
-    const framing = this.controller.getActiveCompositionFraming();
+    const framing = this.controller.getZoomTargetFraming();
     this.proxy = {
       zoom: this.controller.zoomProgress,
       fill: this.controller.fillProgress,
@@ -267,7 +266,7 @@ export class Navigator {
   }
 
   /**
-   * Off-home hop between different framed atoms: pullback → focus → approach.
+   * Off-home hop between different framed atoms: parallel focus + zoom dip + framing.
    * Does not navigate — the route already changed before SpatialController.apply.
    */
   retargetApproach(atomId: string): void {
@@ -279,6 +278,7 @@ export class Navigator {
     this.controller.freeze();
 
     if (prefersReducedMotion()) {
+      this.controller.setApproachFraming(approachFramingForAtom(atomId));
       this.controller.setCompositionFramingOverride(null);
       this.controller.focusAtom(atomId);
       this.controller.setHighlightedAtom(atomId);
@@ -296,7 +296,7 @@ export class Navigator {
       return;
     }
 
-    const framing = this.controller.getActiveCompositionFraming();
+    const framing = this.controller.getZoomTargetFraming();
     const from: TransitionProxy = {
       zoom: this.controller.zoomProgress,
       fill: this.controller.fillProgress,
@@ -308,21 +308,34 @@ export class Navigator {
     };
     this.proxy = { ...from };
     const proxy = this.proxy;
+    const targetFraming = approachFramingForAtom(atomId);
 
-    // Pullback: ease rest framing to screen center while zoom/fill unwind.
+    const zoomGap = Math.max(from.zoom, from.fill);
+    const needsZoomDip = zoomGap > 0.02;
+    const framingGap = Math.max(
+      Math.abs(from.screenX - targetFraming.screenX),
+      Math.abs(from.screenY - targetFraming.screenY),
+      Math.abs(from.approach - targetFraming.approach),
+    );
+    const needsFraming = framingGap > 0.001;
+    const framingDur = needsFraming ? RETARGET_DURATION : 0;
+
+    this.controller.beginRetargetBlend({
+      screenX: from.screenX,
+      screenY: from.screenY,
+      approach: from.approach,
+    });
     this.controller.setTransitionDriven(true);
+    this.controller.setUniformScreenDrift(!isCenterApproachFraming(targetFraming));
     this.transitionState.patch({
       atomId,
       busy: true,
-      phase: 'overlay',
+      phase: 'focus',
       zoom: from.zoom,
       fill: from.fill,
       overlay: 0,
       progress: 0,
     });
-
-    const pullGap = Math.max(from.zoom, from.fill);
-    const pullDur = RETARGET_PULLBACK_DURATION * Math.max(pullGap, 0.001);
 
     const tl = gsap.timeline({
       onUpdate: () => {
@@ -343,8 +356,8 @@ export class Navigator {
         });
       },
       onComplete: () => {
-        // No holdApproach({ immediate }) — that refocus+snap causes a late twist jerk.
         this.controller.settleApproachProgress();
+        this.controller.setApproachFraming(targetFraming);
         this.controller.setCompositionFramingOverride(null);
         this.controller.setTransitionDriven(false);
         this.timeline = null;
@@ -360,38 +373,8 @@ export class Navigator {
       },
     });
 
-    // 1. Pull back from the old atom toward screen-centered rest.
-    tl.addLabel('pullback', 0);
-    tl.call(
-      () => {
-        this.transitionState.patch({ phase: 'overlay', atomId });
-      },
-      [],
-      'pullback',
-    );
-    if (pullGap > 0.001) {
-      tl.to(
-        proxy,
-        {
-          zoom: 0,
-          fill: 0,
-          screenX: CENTER_FRAMING.screenX,
-          screenY: CENTER_FRAMING.screenY,
-          approach: CENTER_FRAMING.approach,
-          duration: pullDur,
-          ease: 'power2.inOut',
-        },
-        'pullback',
-      );
-    } else {
-      proxy.screenX = CENTER_FRAMING.screenX;
-      proxy.screenY = CENTER_FRAMING.screenY;
-      proxy.approach = CENTER_FRAMING.approach;
-      this.controller.setCompositionFramingOverride(CENTER_FRAMING);
-    }
-
-    // 2. Face the new atom (wait for focus slerp), then re-approach.
-    tl.addLabel('focus');
+    // Face the new atom immediately — one zoom atom for the whole retarget (no mid-timeline switch).
+    tl.addLabel('retarget', 0);
     tl.call(
       () => {
         this.transitionState.patch({ phase: 'focus', atomId });
@@ -400,30 +383,54 @@ export class Navigator {
         this.controller.prepareTransitionTarget(atomId);
       },
       [],
-      'focus',
+      'retarget',
     );
-    tl.to({}, { duration: RETARGET_FOCUS_DURATION }, 'focus');
-
-    tl.addLabel('approach');
     tl.call(
       () => {
         this.transitionState.patch({ phase: 'approach', atomId });
-        // Keep zoom atom id; prepareTransitionTarget no-ops focus when already set.
-        this.controller.prepareTransitionTarget(atomId);
       },
       [],
-      'approach',
+      'retarget',
     );
-    tl.to(
-      proxy,
-      {
-        zoom: 1,
-        fill: 1,
-        duration: RETARGET_APPROACH_DURATION,
-        ease: 'power2.inOut',
-      },
-      'approach',
-    );
+
+    if (needsFraming) {
+      tl.to(
+        proxy,
+        {
+          screenX: targetFraming.screenX,
+          screenY: targetFraming.screenY,
+          approach: targetFraming.approach,
+          duration: framingDur,
+          ease: 'none',
+        },
+        'retarget',
+      );
+    }
+
+    if (needsZoomDip) {
+      const zoomCurve = { t: 0 };
+      tl.to(
+        zoomCurve,
+        {
+          t: 1,
+          duration: RETARGET_DURATION,
+          ease: 'none',
+          onUpdate: () => {
+            const u = zoomCurve.t;
+            // Smooth 1 → dip → 1; zero velocity at u=0 and u=1.
+            const dip =
+              RETARGET_ZOOM_DIP +
+              (1 - RETARGET_ZOOM_DIP) * 0.5 * (1 + Math.cos(Math.PI * 2 * u));
+            proxy.zoom = dip;
+            proxy.fill = dip;
+          },
+        },
+        'retarget',
+      );
+    } else {
+      proxy.zoom = 1;
+      proxy.fill = 1;
+    }
 
     this.timeline = tl;
   }
@@ -434,11 +441,13 @@ export class Navigator {
    */
   cancel(): void {
     this.controller.setCompositionFramingOverride(null);
+    this.controller.clearApproachFraming();
+    this.controller.setUniformScreenDrift(false);
     this.navigationState.setCommitted('home');
     this.navigatedAtomId = null;
     this.controller.unfreeze();
 
-    const framing = this.controller.getActiveCompositionFraming();
+    const framing = this.controller.getZoomTargetFraming();
     const from: TransitionProxy = {
       zoom: this.controller.zoomProgress,
       fill: this.controller.fillProgress,
@@ -546,6 +555,14 @@ export class Navigator {
     const proxy: TransitionProxy = { ...from };
     this.proxy = proxy;
 
+    const targetFraming = approachFramingForAtom(atomId);
+
+    this.controller.beginRetargetBlend({
+      screenX: from.screenX,
+      screenY: from.screenY,
+      approach: from.approach,
+    });
+
     // Scale remaining work from current visuals so retargets do not rewind.
     const alreadyOnTarget =
       !atomChanged &&
@@ -561,9 +578,9 @@ export class Navigator {
           : FOCUS_DURATION * 0.25;
     const approachGap = Math.max(1 - from.zoom, 1 - from.fill);
     const framingGap = Math.max(
-      Math.abs(from.screenX - CENTER_FRAMING.screenX),
-      Math.abs(from.screenY - CENTER_FRAMING.screenY),
-      Math.abs(from.approach - CENTER_FRAMING.approach),
+      Math.abs(from.screenX - targetFraming.screenX),
+      Math.abs(from.screenY - targetFraming.screenY),
+      Math.abs(from.approach - targetFraming.approach),
     );
     const needsZoom = approachGap > 0.02;
     const needsFraming = framingGap > 0.001;
@@ -583,6 +600,7 @@ export class Navigator {
       onComplete: () => {
         if (options.settleOnComplete) {
           this.controller.settleApproachProgress();
+          this.controller.setApproachFraming(approachFramingForAtom(atomId));
           this.controller.setCompositionFramingOverride(null);
           this.controller.setTransitionDriven(false);
           this.timeline = null;
@@ -624,7 +642,7 @@ export class Navigator {
       tl.to({}, { duration: focusDur }, 'focus');
     }
 
-    // 2. Approach — zoom + fill + framing → center + orbit sweep (hero leave)
+    // 2. Approach — zoom + fill + framing → planet target + orbit sweep (hero leave)
     tl.addLabel('approach', focusDur > 0.001 ? focusDur : 0);
     tl.call(
       () => {
@@ -654,11 +672,11 @@ export class Navigator {
       tl.to(
         proxy,
         {
-          screenX: CENTER_FRAMING.screenX,
-          screenY: CENTER_FRAMING.screenY,
-          approach: CENTER_FRAMING.approach,
+          screenX: targetFraming.screenX,
+          screenY: targetFraming.screenY,
+          approach: targetFraming.approach,
           duration: framingDur,
-          ease: 'power2.inOut',
+          ease: isCenterApproachFraming(targetFraming) ? 'power2.inOut' : 'none',
         },
         'approach',
       );
@@ -728,6 +746,7 @@ export class Navigator {
     this.controller.setZoomProgress(0);
     this.controller.setFillProgress(0);
     this.controller.clearZoom();
+    this.controller.clearApproachFraming();
     this.controller.restoreOverview();
     this.controller.unfreeze();
     this.overlay.setOpacity(0);

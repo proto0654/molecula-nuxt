@@ -2,15 +2,21 @@ import { Quaternion, Vector2, Vector3 } from 'three';
 import { AtomHover, type AtomHoverListener } from './AtomHover';
 import type { HaloMode } from './AtomSelectionIndicator';
 import {
+  approachFillScaleForFraming,
+  approachFocusDistanceOptions,
+  approachFramingForAtom,
+  retargetFillScale,
+  retargetFocusDistance,
+  type ApproachFraming,
+} from './composition/approachFraming';
+import {
+  CENTER_FRAMING,
   COMPOSITION_PROFILES,
   type CompositionProfile,
   type ViewportMode,
 } from './composition/profiles';
 import { getStableFocusQuaternion } from './math/focusAtom';
-import {
-  getAtomFocusDistance,
-  type AtomFocusDistanceOptions,
-} from './math/getAtomFocusDistance';
+import { getAtomFocusDistance } from './math/getAtomFocusDistance';
 import { projectToScreenInto } from './math/projection';
 import { moleculeConfig } from './moleculeConfig';
 import { getOrbitNormalForAtom } from './moleculeOrbits';
@@ -118,8 +124,6 @@ function fillViewportTargetForMode(mode: ViewportMode): number {
   }
 }
 
-/** Keep the mesh shell in front of the camera near plane at full fill. */
-const NEAR_SHELL_MARGIN = 0.02;
 const AXIS_Y = new Vector3(0, 1, 0);
 const AXIS_X = new Vector3(1, 0, 0);
 
@@ -204,6 +208,15 @@ export class MoleculeController {
    */
   private transitionDriven = false;
 
+  /**
+   * Off-home retarget only: screen drift stays linear while zoomProgress
+   * modulates depth only (leave-home / approachTo unchanged).
+   */
+  private uniformScreenDrift = false;
+
+  /** Framing at retarget / leave-home start — stable lerp endpoints. */
+  private retargetFromFraming: ApproachFraming | null = null;
+
   /** Rest translation of `moleculeGroup` (zoom offset is applied on top). */
   private readonly baseMoleculePosition = new Vector3();
 
@@ -222,6 +235,12 @@ export class MoleculeController {
     screenY: number;
     approach: number;
   } | null = null;
+
+  /**
+   * Settled off-home approach framing (planet-in-frame). Used by zoom translation
+   * when GSAP is not driving `compositionFramingOverride`.
+   */
+  private approachFraming: ApproachFraming | null = null;
 
   /** Look-at used for composition distance (matches MoleculeScene camera). */
   private readonly compositionLookAt = new Vector3(0, 0.2, 0);
@@ -281,11 +300,6 @@ export class MoleculeController {
 
   private lastLabelZoomProgress = Number.NaN;
   private lastLabelFillProgress = Number.NaN;
-
-  /** Reused options bag for `getAtomFocusDistance` (no per-frame alloc). */
-  private readonly focusDistanceOptions: AtomFocusDistanceOptions = {
-    viewportFill: ZOOM_VIEWPORT_FILL,
-  };
 
   private readonly scratchYaw = new Quaternion();
   private readonly scratchPitch = new Quaternion();
@@ -834,6 +848,7 @@ export class MoleculeController {
    * Focus the hub atom (Home). No random π-flip on initial / already-hub.
    */
   restoreOverview(options: { immediate?: boolean } = {}): void {
+    this.clearApproachFraming();
     const hubId = this.getHubAtomId();
     this.focusAtom(hubId);
     this.targetZoom = 0;
@@ -926,6 +941,34 @@ export class MoleculeController {
       screenY: framing.screenY,
       approach: framing.approach,
     };
+  }
+
+  /** Framing that drives zoom focus (GSAP override → settled approach → center). */
+  getZoomTargetFraming(): ApproachFraming {
+    if (this.compositionFramingOverride) {
+      return this.compositionFramingOverride;
+    }
+    if (this.approachFraming) {
+      return this.approachFraming;
+    }
+    return CENTER_FRAMING;
+  }
+
+  /** Persisted planet framing for settled off-home approach pose. */
+  setApproachFraming(framing: ApproachFraming | null): void {
+    this.approachFraming = framing;
+  }
+
+  clearApproachFraming(): void {
+    this.approachFraming = null;
+  }
+
+  /** Ensure settled approach framing matches the focused atom (resize / orientation). */
+  syncApproachFramingForFocusedAtom(): void {
+    if (!this.isAtApproach()) return;
+    const atomId = this.focusedAtomId;
+    if (!atomId) return;
+    this.approachFraming = approachFramingForAtom(atomId);
   }
 
   /** True when zoom+fill are already at the approach destination. */
@@ -1065,8 +1108,24 @@ export class MoleculeController {
   setTransitionDriven(active: boolean): void {
     this.transitionDriven = active;
     if (!active) {
+      this.uniformScreenDrift = false;
+      this.retargetFromFraming = null;
       this.finishOrbitSweep();
     }
+  }
+
+  /** Record framing at transition start for stable fill / focus-distance lerp. */
+  beginRetargetBlend(from: ApproachFraming): void {
+    this.retargetFromFraming = {
+      screenX: from.screenX,
+      screenY: from.screenY,
+      approach: from.approach,
+    };
+  }
+
+  /** Peripheral retarget: linear screen drift, zoom dip affects depth only. */
+  setUniformScreenDrift(active: boolean): void {
+    this.uniformScreenDrift = active;
   }
 
   /**
@@ -1562,16 +1621,20 @@ export class MoleculeController {
     const vFov = (camera.fov * Math.PI) / 180;
     const halfH = Math.tan(vFov / 2) * dist;
     const halfW = halfH * camera.aspect;
-    const framing = this.compositionFramingOverride ?? this.compositionProfile;
-    const ndcX = (framing.screenX - 0.5) * 2;
-    const ndcY = (0.5 - framing.screenY) * 2;
+    const activeFraming = this.compositionFramingOverride ?? this.compositionProfile;
+    const restFraming =
+      this.uniformScreenDrift && this.zoomProgress > 0
+        ? CENTER_FRAMING
+        : activeFraming;
+    const ndcX = (restFraming.screenX - 0.5) * 2;
+    const ndcY = (0.5 - restFraming.screenY) * 2;
 
     // Positive approach pulls toward the camera (larger on-screen presence).
     this.baseMoleculePosition
       .set(0, 0, 0)
       .addScaledVector(this.scratchCameraRight, ndcX * halfW)
       .addScaledVector(this.scratchCameraUp, ndcY * halfH)
-      .addScaledVector(this.scratchLookDir, -framing.approach);
+      .addScaledVector(this.scratchLookDir, -restFraming.approach);
 
     // Apply immediately when not mid-zoom; zoom path recomposes each frame.
     if (!this.zoomAtomId || this.zoomProgress <= 0) {
@@ -1581,7 +1644,8 @@ export class MoleculeController {
 
   /**
    * Translates `moleculeGroup` so the zoom atom approaches the camera look axis
-   * at `getAtomFocusDistance`. Camera FOV / position stay fixed.
+   * at `getAtomFocusDistance`, offset to the active zoom-target framing.
+   * Camera FOV / position stay fixed.
    */
   private applyZoomTranslation(): void {
     const group = this.scene.moleculeGroup;
@@ -1602,25 +1666,86 @@ export class MoleculeController {
     group.updateMatrixWorld(true);
     atom.mesh.getWorldPosition(this.scratchAtomPos);
 
-    this.scene.camera.getWorldPosition(this.scratchCameraPos);
-    this.scene.camera.getWorldDirection(this.scratchLookDir);
+    const camera = this.scene.camera;
+    camera.updateMatrixWorld(true);
+    camera.getWorldPosition(this.scratchCameraPos);
+    camera.getWorldDirection(this.scratchLookDir);
+    this.scratchCameraRight.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+    this.scratchCameraUp.setFromMatrixColumn(camera.matrixWorld, 1).normalize();
 
+    const zoomFraming = this.getZoomTargetFraming();
+    const mode = this.compositionProfile.mode;
+    let fillScale = approachFillScaleForFraming(zoomFraming, mode);
     const fillTarget = fillViewportTargetForMode(this.compositionProfile.mode);
-    this.focusDistanceOptions.viewportFill =
-      ZOOM_VIEWPORT_FILL +
-      (fillTarget - ZOOM_VIEWPORT_FILL) * this.fillProgress;
-    this.focusDistanceOptions.minCenterDistance =
-      this.scene.camera.near + atom.radius + NEAR_SHELL_MARGIN;
-    const focusDistance = getAtomFocusDistance(
-      atom.radius,
-      this.scene.camera,
-      this.focusDistanceOptions,
-    );
-    // Desired: atom centered on the look axis at the framing distance.
-    this.scratchZoomOffset
+    const viewportFill =
+      (ZOOM_VIEWPORT_FILL +
+        (fillTarget - ZOOM_VIEWPORT_FILL) * this.fillProgress) *
+      fillScale;
+
+    let focusDistance: number;
+    if (
+      this.transitionDriven &&
+      this.retargetFromFraming &&
+      this.focusedAtomId
+    ) {
+      const targetFraming = approachFramingForAtom(this.focusedAtomId);
+      fillScale = retargetFillScale(
+        this.retargetFromFraming,
+        targetFraming,
+        zoomFraming,
+        mode,
+      );
+      const blendedFill =
+        (ZOOM_VIEWPORT_FILL +
+          (fillTarget - ZOOM_VIEWPORT_FILL) * this.fillProgress) *
+        fillScale;
+      focusDistance = retargetFocusDistance(
+        atom.radius,
+        camera,
+        this.retargetFromFraming,
+        targetFraming,
+        zoomFraming,
+        blendedFill,
+      );
+    } else {
+      focusDistance = getAtomFocusDistance(
+        atom.radius,
+        camera,
+        approachFocusDistanceOptions(
+          atom.radius,
+          camera,
+          zoomFraming,
+          viewportFill,
+        ),
+      );
+    }
+
+    const vFov = (camera.fov * Math.PI) / 180;
+    const halfH = Math.tan(vFov / 2) * focusDistance;
+    const halfW = halfH * camera.aspect;
+    const ndcX = (zoomFraming.screenX - 0.5) * 2;
+    const ndcY = (0.5 - zoomFraming.screenY) * 2;
+
+    // Desired: atom center at viewport fraction on the focus plane.
+    this.scratchMoleculePos
       .copy(this.scratchCameraPos)
       .addScaledVector(this.scratchLookDir, focusDistance)
-      .sub(this.scratchAtomPos);
+      .addScaledVector(this.scratchCameraRight, ndcX * halfW)
+      .addScaledVector(this.scratchCameraUp, ndcY * halfH)
+      .addScaledVector(this.scratchLookDir, -zoomFraming.approach);
+
+    this.scratchZoomOffset.copy(this.scratchMoleculePos).sub(this.scratchAtomPos);
+
+    if (this.uniformScreenDrift && this.zoomProgress > 0) {
+      // Screen XY follows framing at full weight; zoomProgress scales depth only.
+      const depthAlong = this.scratchZoomOffset.dot(this.scratchLookDir);
+      this.scratchZoomOffset.addScaledVector(
+        this.scratchLookDir,
+        -depthAlong * (1 - this.zoomProgress),
+      );
+      group.position.copy(this.baseMoleculePosition).add(this.scratchZoomOffset);
+      return;
+    }
 
     group.position
       .copy(this.baseMoleculePosition)

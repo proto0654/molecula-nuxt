@@ -1,4 +1,5 @@
 import { prefersReducedMotion } from '../a11y/reducedMotion';
+import { approachFramingForAtom } from '../molecular/composition/approachFraming';
 import type { MoleculeController } from '../molecular/MoleculeController';
 import type { NavigationState } from '../navigation/NavigationState';
 import {
@@ -113,6 +114,10 @@ export class SpatialController {
     this.commitNonHome(state);
 
     if (snap) {
+      const atomId = atomIdForSpatialState(state);
+      if (atomId) {
+        this.controller.setApproachFraming(approachFramingForAtom(atomId));
+      }
       this.controller.setCompositionFramingOverride(null);
       this.focusNonHome(state);
       this.controller.holdApproach({ immediate: true });

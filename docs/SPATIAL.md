@@ -79,19 +79,19 @@ MoleculeController         setMode / restoreOverview / focus* / freeze
 | Mode | Molecule | Pointer |
 |---|---|---|
 | `home` | Hub atom `C` focused (`restoreOverview`) with full readout (blurb + USP via `onHomeActivated`). Always committed — no unselected / empty rest. Zoom/fill at rest. | Unfrozen: mouse/touch tilt. |
-| `section` | `focusSection(sectionId)` → matching nav atom, **held at approach** (zoom+fill = 1) | Frozen |
-| `portfolio-archive` / `case` | `focusContext('portfolio')` → work atom `H3`, held at approach (atom fills the viewport) | Frozen |
-| `service-archive` / `service` | `focusContext('services')` → `H2`, held at approach | Frozen |
+| `section` | `focusSection(sectionId)` → matching nav atom, **held at approach** (zoom+fill = 1, planet framing per atom) | Frozen |
+| `portfolio-archive` / `case` | `focusContext('portfolio')` → work atom `H3`, held at approach (planet from bottom) | Frozen |
+| `service-archive` / `service` | `focusContext('services')` → `H2`, held at approach (planet from top) | Frozen |
 
 `focusEntity` is reserved: entity id is stored on spatial state / debug; 3D framing stays on the context atom.
 
 Home empty-canvas click / logo restore overview (`C`) and re-activate hub blurb + USP; it does not `clearFocus` into an empty rest. Hub π-flip runs only when retargeting onto `C` from another atom, not on initial home.
 
-Off-home, header route menu commits the URL immediately (`transitionTo`); the page overlay stays hidden (`is-awaiting-pose`) until the molecule pose settles. On **home**, **header route links and mobile MENU** call `Navigator.navigateTo` in one shot (parallel orbit sweep + zoom/fill + framing → `CENTER_FRAMING`, then `transitionTo` at the navigate label — no atom commit step). The **nav rail** and **canvas atom clicks** keep the two-step gesture (first click commit+focus+prefetch, second click `navigateTo`). Second click on already-committed Home is a no-op. Leave-home `navigateTo` has **no separate focus-only beat** — facing, zoom/fill, framing, and orbit sweep start in the same GSAP beat.
+Off-home, header route menu commits the URL immediately (`transitionTo`); the page overlay stays hidden (`is-awaiting-pose`) until the molecule pose settles. On **home**, **header route links and mobile MENU** call `Navigator.navigateTo` in one shot (parallel orbit sweep + zoom/fill + framing → route-specific **planet framing**, then `transitionTo` at the navigate label — no atom commit step). The **nav rail** and **canvas atom clicks** keep the two-step gesture (first click commit+focus+prefetch, second click `navigateTo`). Second click on already-committed Home is a no-op. Leave-home `navigateTo` has **no separate focus-only beat** — facing, zoom/fill, framing, and orbit sweep start in the same GSAP beat.
 
-**Composition:** rest profiles are screen-centered. Hero desktop offset (`HOME_DESKTOP_FRAMING`, ~62% X) is a **home-only** framing override. Off-home and leave-home approach tween toward `CENTER_FRAMING`.
+**Composition:** rest profiles are screen-centered. Hero desktop offset (`HOME_DESKTOP_FRAMING`, ~62% X) is a **home-only** framing override. Off-home settled approach uses **planet-in-frame** framing per atom ([`approachFraming.ts`](../app/lib/molecular/composition/approachFraming.ts)): Services `H2` top, Portfolio `H3` bottom; About `H1` and Contact `H4` use **screen center** (classic full approach). Leave-home and `approachTo` tween framing toward that target in parallel with zoom/fill. Off-home retargets use the same parallel choreography (planet → planet or planet → center, partial zoom dip).
 
-Off-home hops that **change the framed atom** (e.g. `/about` → `/contact`) run `Navigator.retargetApproach`: pullback (zoom+fill → 0, rest eases to **screen center**) → focus → re-approach (no end `holdApproach` snap — avoids a late twist jerk). Same-atom hops (Navigator handoff, archive↔case on the work atom) keep the live approach pose. Leaving rest / partial approach (`!isAtApproach`) runs `Navigator.approachTo` (animated focus → zoom+fill + orbit sweep on peripherals). Cold load / `immediate` / reduced motion snap `holdApproach`. Settled approach size follows sphere `atom.radius` (not orbit radius); peripherals share one radius so framed size matches across sections.
+Off-home hops that **change the framed atom** (e.g. `/about` → `/contact`) run `Navigator.retargetApproach`: parallel focus + zoom dip + framing tween (planet → planet, no idle focus beat — same unified feel as leave-home). Same-atom hops (Navigator handoff, archive↔case on the work atom) keep the live approach pose. Leaving rest / partial approach (`!isAtApproach`) runs `Navigator.approachTo` (animated focus → zoom+fill + orbit sweep on peripherals). Cold load / `immediate` / reduced motion snap `holdApproach`. Settled approach size follows sphere `atom.radius` (not orbit radius); peripherals share one radius so framed size matches across sections.
 
 ## Three.js lifecycle
 

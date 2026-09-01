@@ -181,7 +181,7 @@ Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation
 
 [`composition/profiles.ts`](../app/lib/molecular/composition/profiles.ts) defines `desktop` / `tablet` / `mobile` rest framing — **screen-centered by default**. `setCompositionProfile` writes `baseMoleculePosition` from viewport fractions `screenX` / `screenY` (camera right / up) plus `approach` (pull toward camera along look). Derived from FOV + aspect + look-at distance — **never** from measuring CSS chrome. Atom locals stay unchanged. Recomputed on resize. Zoom still layers on top of this rest translation.
 
-`HOME_DESKTOP_FRAMING` (`screenX: 0.62`) is applied only on **home × desktop** via `setCompositionFramingOverride` from `mountHeroApp`. Leave-home `navigateTo` / `approachTo` tween `screenX` / `screenY` / `approach` toward `CENTER_FRAMING` in the approach GSAP pass (same duration as zoom+fill). `retargetApproach` pullback eases framing to center while zoom/fill unwind.
+`HOME_DESKTOP_FRAMING` (`screenX: 0.62`) is applied only on **home × desktop** via `setCompositionFramingOverride` from `mountHeroApp`. Leave-home `navigateTo` / `approachTo` tween `screenX` / `screenY` / `approach` toward the destination atom's **approach framing** ([`approachFraming.ts`](../app/lib/molecular/composition/approachFraming.ts)) in the approach GSAP pass (same duration as zoom+fill). `applyZoomTranslation` offsets the zoom focus target to that viewport fraction so the atom reads as a half-sphere at the frame edge. Edge framing uses a reduced fill scale (~0.55–0.65 per viewport mode). `retargetApproach` runs focus, a partial zoom dip, and planet→planet framing **in parallel** (no idle focus beat, no full rest unwind).
 
 | Mode | screenX | screenY | approach |
 |------|---------|---------|----------|
@@ -233,7 +233,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 |-----|------|
 | `navigateTo(atomId)` | Interruptible: focus → parallel approach tweens (zoom+fill `power1.inOut`, framing `power2.inOut`, orbit `none`) → navigate |
 | `approachTo(atomId)` | Route already changed, not yet at approach: same parallel approach tweens; no navigate |
-| `retargetApproach(atomId)` | Off-home atom change after the route already swapped: pullback (screen-centered rest) → focus → re-approach; no second navigate |
+| `retargetApproach(atomId)` | Off-home atom change after the route already swapped: parallel focus + zoom dip + planet framing; no second navigate |
 | `onNavigate(atomId)` | Forward-only cue at the timeline navigate label |
 | `transitionTo(route)` | Nuxt `navigateTo` (handler set in `MolecularHero`); after `handoffRouteVeil()` for real routes |
 | `cancel()` | Unwind overlay → approach rewind → clear focus (soft reset; no hard state tear-down) |
@@ -291,6 +291,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `MoleculeScene.ts` | Scene, camera, renderer, lights, fog, `buildMolecule`, `applyQuality`, dirty-gated labels, selection tick |
 | `MoleculeController.ts` | rAF, pointer / touch / gyro / viewport resize, orientation layers, zoom/fill, composition profile, pick, `projectAtom`, selection/caption/wireframe APIs, sampler |
 | `composition/profiles.ts` | desktop / tablet / mobile framing (`screenX` / `screenY` / `approach`) + home desktop / center overrides |
+| `composition/approachFraming.ts` | Per-atom approach targets: top / bottom / center + edge fill scale |
 | `quality/QualityManager.ts` | Lock-once quality presets; `?quality=` / coarse-pointer start heuristic |
 | `quality/PerformanceSampler.ts` | Startup sample → lock + one emergency downgrade |
 | `resources/GeometryCache.ts` | Shared unit icosahedron / edges / circle / ticks / cross |

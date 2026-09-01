@@ -509,8 +509,11 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     if (!navigator.busy) {
       if (isHome && mode === 'desktop') {
         controller.setCompositionFramingOverride(HOME_DESKTOP_FRAMING);
-      } else if (isHome || controller.isAtApproach()) {
+      } else if (isHome) {
         controller.setCompositionFramingOverride(null);
+      } else if (controller.isAtApproach()) {
+        controller.setCompositionFramingOverride(null);
+        controller.syncApproachFramingForFocusedAtom();
       }
     }
     document.documentElement.style.setProperty(
