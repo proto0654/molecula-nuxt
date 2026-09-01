@@ -8,6 +8,7 @@ import {
   type BufferGeometry,
   type Camera,
 } from 'three';
+import { CHROME_DIM_COLOR } from './sceneColors';
 
 export type HaloMode = 'idle' | 'hover' | 'committed';
 
@@ -18,7 +19,7 @@ export type SelectionGeometries = {
 };
 
 const RING_COLOR = 0xb8c0c8;
-const DIM_COLOR = 0x000000;
+const DIM_COLOR = CHROME_DIM_COLOR;
 const RING_SCALES = [1.28, 1.62, 2.02];
 const FOLLOW = 10;
 /** Softer than opacity follow — settled freeze chrome fade. */

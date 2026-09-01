@@ -14,13 +14,14 @@ import {
   type OrbitDef,
 } from './moleculeOrbits';
 import type { GeometryCache } from './resources/GeometryCache';
+import { CHROME_DIM_COLOR } from './sceneColors';
 
 const NODE_COLOR = 0x6a737c;
 const ORBIT_COLOR = 0x000000;
 /** Active orbit — dark gray, just above black idle. */
 const ORBIT_ACTIVE_COLOR = 0x3a3e44;
 /** Settled off-home chrome — matches wireframe / reticle dim. */
-const ORBIT_DIM_COLOR = 0x4a4f54;
+const ORBIT_DIM_COLOR = CHROME_DIM_COLOR;
 
 const NODE_OPACITY = 0.18;
 const ORBIT_OPACITY = 0.42;
@@ -176,13 +177,11 @@ export class DecorativeNodes {
   private syncOrbitColors(): void {
     for (let i = 0; i < this.orbitMaterials.length; i += 1) {
       const material = this.orbitMaterials[i]!;
-      const active =
-        this.chromeColorMix < 0.001 &&
-        this.orbitAtomIds[i] === this.activeAtomId;
-      const baseHex = active ? ORBIT_ACTIVE_COLOR : ORBIT_COLOR;
-      const baseOp = active ? ORBIT_ACTIVE_OPACITY : ORBIT_OPACITY;
+      const isActiveOrbit = this.orbitAtomIds[i] === this.activeAtomId;
+      const baseHex = isActiveOrbit ? ORBIT_ACTIVE_COLOR : ORBIT_COLOR;
+      const baseOp = isActiveOrbit ? ORBIT_ACTIVE_OPACITY : ORBIT_OPACITY;
 
-      if (this.chromeColorMix < 0.001) {
+      if (this.chromeColorMix < 0.001 || !isActiveOrbit) {
         material.color.setHex(baseHex);
         this.baseOpacities[i] = baseOp;
       } else {

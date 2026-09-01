@@ -22,11 +22,11 @@ import type { QualityManager } from './quality/QualityManager';
 import type { QualitySettings } from './quality/types';
 import { GeometryCache } from './resources/GeometryCache';
 import type { MoleculeConfig } from './types';
-import { SCENE_BG } from './sceneColors';
+import { CHROME_DIM_COLOR, SCENE_BG } from './sceneColors';
 
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
-const WIREFRAME_DIM_COLOR = 0x000000;
+const WIREFRAME_DIM_COLOR = CHROME_DIM_COLOR;
 const WIREFRAME_OPACITY = 0.22;
 /** Autoplay-next pulse: peak matches committed shell; trough nearly off. */
 const PULSE_OPACITY_MIN = 0.035;
@@ -658,6 +658,8 @@ export class MoleculeScene {
     );
     this.bondMaterial.color.copy(this.scratchWireframeColor);
     this.bondFlowMaterial.color.copy(this.scratchWireframeColor);
+
+    this.decorativeNodes.setChromeColorMix(chromeMix);
   }
 
   private updateAccentWireframePulse(deltaSeconds: number, elapsed: number): void {

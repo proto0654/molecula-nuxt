@@ -44,6 +44,7 @@ const chromeVariant = computed(() =>
       :variant="chromeVariant"
       :case-index="detailIndex"
       :archive-href="archiveHref"
+      :archive-scope="archiveScope"
     />
     <div class="archive-page__body" :class="bodyClass">
       <slot />

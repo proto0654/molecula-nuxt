@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { padCaseIndex } from '~/domain/portfolio/presentation';
+import { routeChromeLabel } from '~/lib/navigation/routeChromeLabel';
 
 const props = withDefaults(
   defineProps<{
@@ -7,16 +8,25 @@ const props = withDefaults(
     caseIndex?: number | null;
     archiveHref?: string;
     sectionLabel?: string;
+    archiveScope?: 'portfolio' | 'services';
   }>(),
   {
     variant: 'archive',
     caseIndex: null,
     archiveHref: '/portfolio',
     sectionLabel: 'SECTION',
+    archiveScope: 'portfolio',
   },
 );
 
+const route = useRoute();
+
 const entityLabel = computed(() => (props.variant === 'service' ? 'SERVICE' : 'CASE'));
+
+const routeLabel = computed(() => {
+  const label = routeChromeLabel(route.path, props.archiveScope);
+  return label ?? `ARCHIVE / ${props.archiveScope}`;
+});
 </script>
 
 <template>
@@ -27,7 +37,7 @@ const entityLabel = computed(() => (props.variant === 'service' ? 'SERVICE' : 'C
           v-if="variant === 'archive'"
           class="case-chrome__index"
         >
-          ARCHIVE
+          {{ routeLabel }}
         </p>
         <p
           v-else-if="variant === 'section'"
