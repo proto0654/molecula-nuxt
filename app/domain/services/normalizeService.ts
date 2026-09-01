@@ -5,6 +5,7 @@ import {
   stripHtmlToPlain,
   normalizeFeaturedFromEmbed,
   embeddedTagNames,
+  unwrapHtmlLinks,
 } from '~/domain/wp';
 
 function slugifyOfferTitle(title: string): string {
@@ -37,7 +38,8 @@ function normalizeOffers(post: WpServicePost): ServiceOffer[] {
   for (let i = 0; i < repeater.length; i += 1) {
     const row = repeater[i]!;
     const title = emptyToNull(row.cf_title);
-    const textHtml = emptyToNull(row.cf_text);
+    const rawText = emptyToNull(row.cf_text);
+    const textHtml = rawText ? unwrapHtmlLinks(rawText) : null;
     const price = emptyToNull(row.cf_price);
     if (!title && !textHtml && !price) continue;
 

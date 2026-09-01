@@ -45,3 +45,14 @@ export function demoteCmsH1(html: string): string {
   return html
     .replace(/<\/?h1\b/gi, (tag) => tag.replace(/h1/i, 'h2'));
 }
+
+/** Unwrap anchor tags, preserving inner HTML. Repeated passes handle nested anchors. */
+export function unwrapHtmlLinks(html: string): string {
+  let result = html;
+  let prev = '';
+  while (prev !== result) {
+    prev = result;
+    result = result.replace(/<a\b[^>]*>([\s\S]*?)<\/a>/gi, '$1');
+  }
+  return result;
+}

@@ -2,6 +2,7 @@ export {
   decodeHtmlEntities,
   demoteCmsH1,
   htmlToPlainText,
+  unwrapHtmlLinks,
 } from './htmlPlain';
 export {
   emptyToNull,

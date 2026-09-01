@@ -28,11 +28,7 @@ const metaLabel = computed(() => {
     <div class="archive-row__link">
       <span class="archive-row__index">{{ padCaseIndex(index) }}</span>
       <span class="archive-row__copy">
-        <span v-if="offer.title" class="archive-row__title">
-          <h3 class="archive-row__title-heading">
-            <a class="archive-row__title-link" :href="`#${offer.anchor}`">{{ offer.title }}</a>
-          </h3>
-        </span>
+        <h3 v-if="offer.title" class="archive-row__title">{{ offer.title }}</h3>
         <span class="archive-row__meta">
           <span class="archive-row__category service-offer__price">{{ metaLabel }}</span>
           <span class="archive-row__line" aria-hidden="true" />
