@@ -1457,7 +1457,10 @@ export class MoleculeController {
     this.scene.moleculeGroup.quaternion.copy(this.scratchCompose);
 
     this.applyZoomTranslation();
-    this.scene.setDecorativeZoomFade(this.zoomProgress, this.fillProgress);
+    this.scene.setDecorativeZoomFade(this.zoomProgress, this.fillProgress, {
+      keepOrbitsVisible:
+        this.frozen && this.isAtApproach() && !this.approachBusy,
+    });
 
     // One forced matrix pass after all transforms — labels + hover consume it.
     this.scene.moleculeGroup.updateMatrixWorld(true);

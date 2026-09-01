@@ -421,8 +421,16 @@ export class MoleculeScene {
     }
   }
 
-  setDecorativeZoomFade(zoomProgress: number, fillProgress: number): void {
-    this.decorativeNodes.setZoomFade(zoomProgress, fillProgress);
+  setDecorativeZoomFade(
+    zoomProgress: number,
+    fillProgress: number,
+    options?: { keepOrbitsVisible?: boolean },
+  ): void {
+    const keepOrbits = options?.keepOrbitsVisible ?? false;
+    this.decorativeNodes.setZoomFade(
+      keepOrbits ? 0 : zoomProgress,
+      keepOrbits ? 0 : fillProgress,
+    );
     this.tagCloud.setZoomFade(zoomProgress, fillProgress);
   }
 
