@@ -3,6 +3,7 @@
 import { getPortfolioCase, getPortfolioSlimIndex } from '~/api/portfolio';
 
 import { getCasePosition } from '~/domain/portfolio/adjacent';
+import { resolveAdjacentFlipDirection, useCasePageTransition } from '~/composables/useCasePageTransition';
 
 import {
 
@@ -30,6 +31,10 @@ import { stripTags } from '~/domain/portfolio/presentation';
 const route = useRoute();
 
 const slug = computed(() => String(route.params.slug || ''));
+
+
+
+const { data: slimIndex } = useAsyncData('portfolio-slim-index', getPortfolioSlimIndex);
 
 
 
@@ -139,11 +144,16 @@ const ready = computed(
 
 
 
-const { appliedAccent, bodyClass, phase } = useCasePageTransition({
+const { appliedAccent, bodyClass, contentRevealReady } = useCasePageTransition({
 
   accentColor: () => caseData.value?.accentColor,
 
   ready,
+
+  resolveFlipDirection: (fromSlug, toSlug) =>
+    resolveAdjacentFlipDirection(fromSlug, toSlug, (from) =>
+      getCasePosition(from, slimIndex.value ?? []),
+    ),
 
 });
 
@@ -155,7 +165,7 @@ provideCaseMotionGate(
 
   computed(
 
-    () => phase.value === 'idle' && ready.value && !awaitingPose.value,
+    () => contentRevealReady.value && !awaitingPose.value,
 
   ),
 
@@ -167,17 +177,17 @@ const { revealing } = usePageContentReveal();
 
 
 
-/** Title scramble after pose settle and case body idle (not under exit veil). */
+/** Title scramble — as soon as payload is ready (parallel to exit veil / light sweep). */
 
 const titleReady = computed(
 
-  () => ready.value && phase.value === 'idle',
+  () => contentRevealReady.value && !awaitingPose.value,
 
 );
 
 
 
-const pageRevealing = computed(() => revealing.value && ready.value);
+const pageRevealing = computed(() => revealing.value && contentRevealReady.value);
 
 
 

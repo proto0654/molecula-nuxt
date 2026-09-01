@@ -26,6 +26,8 @@ const COLOR_BY_LABEL: Record<string, number> = {
 
 const HIGHLIGHT_INTENSITY = 0.1;
 const HIGHLIGHT_EMISSIVE = 0x4a525a;
+/** Ease chrome dim during entity sweep so flat-shaded facets catch the point light. */
+const SWEEP_SHELL_RELIEF = 0.35;
 
 export class Atom {
   readonly id: string;
@@ -43,6 +45,7 @@ export class Atom {
   private material: MeshStandardMaterial | MeshLambertMaterial;
   private highlighted = false;
   private shellColorMix = 0;
+  private sweepLightingRelief = 0;
   private readonly baseShellColor = new Color();
   private readonly dimShellColor = new Color(SCENE_BG);
   private readonly shellBlack = new Color(0x000000);
@@ -151,6 +154,14 @@ export class Atom {
     this.applyShellColor();
   }
 
+  /** Temporarily ease chrome dim so sweep point light reads on flat facets. */
+  setSweepLightingRelief(relief: number): void {
+    const next = Math.max(0, Math.min(1, relief));
+    if (Math.abs(next - this.sweepLightingRelief) < 1e-5) return;
+    this.sweepLightingRelief = next;
+    this.applyShellColor();
+  }
+
   setBlurb(blurb: string | null): void {
     this.atomLabel.setBlurb(blurb);
   }
@@ -169,6 +180,10 @@ export class Atom {
 
   updateSelection(camera: Camera, delta: number, elapsed: number): void {
     this.selection.update(camera, delta, elapsed);
+  }
+
+  triggerSelectionPing(): void {
+    this.selection.triggerPing();
   }
 
   dispose(): void {
@@ -208,7 +223,8 @@ export class Atom {
   }
 
   private applyShellColor(): void {
-    const t = this.shellColorMix;
+    const t =
+      this.shellColorMix * (1 - this.sweepLightingRelief * SWEEP_SHELL_RELIEF);
     if (t <= 0.001) {
       this.material.color.copy(this.baseShellColor);
       if (!this.highlighted) {

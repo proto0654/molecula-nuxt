@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getServiceBySlug, getServiceSlimIndex, getThemeOptions } from '~/api';
 import { getServicePosition } from '~/domain/services/adjacent';
+import { resolveAdjacentFlipDirection } from '~/composables/useCasePageTransition';
 import {
   normalizeServiceChrome,
   normalizeServicePost,
@@ -12,6 +13,11 @@ import { padCaseIndex, stripTags } from '~/domain/portfolio/presentation';
 
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
+
+const { data: serviceSlimIndex } = useAsyncData(
+  'service-slim-index',
+  getServiceSlimIndex,
+);
 
 const { data, pending, error } = useAsyncData(
   () => `service-${slug.value}`,
@@ -59,6 +65,23 @@ const ready = computed(
   () => Boolean(data.value?.service) && data.value?.service?.slug === slug.value,
 );
 
+const { bodyClass, contentRevealReady } = useCasePageTransition({
+  accentColor: () => null,
+  ready,
+  resolveFlipDirection: (fromSlug, toSlug) =>
+    resolveAdjacentFlipDirection(fromSlug, toSlug, (from) =>
+      getServicePosition(from, serviceSlimIndex.value ?? []),
+    ),
+});
+
+const awaitingPose = useAwaitingPose();
+
+provideCaseMotionGate(
+  computed(
+    () => contentRevealReady.value && !awaitingPose.value,
+  ),
+);
+
 const { revealing } = usePageContentReveal();
 
 const titlePlain = computed(() => {
@@ -104,10 +127,11 @@ usePageSeo({
 
 <template>
   <ArchiveShell
-    :revealing="revealing && ready"
+    :revealing="revealing && contentRevealReady"
     :detail-index="position?.index"
     detail-variant="service"
     archive-scope="services"
+    :body-class="bodyClass"
   >
     <p v-if="!service && pending" class="archive-status">Loading…</p>
 

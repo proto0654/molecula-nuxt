@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { setLabelFontUrl } from '~/lib/molecular/AtomLabel';
 import { mountHeroApp, type MountedHeroApp } from '~/lib/hero/mountHeroApp';
+import { provideMoleculeCue } from '~/composables/useMoleculeCue';
 import {
   setTransitionHandler,
   transitionTo,
@@ -58,6 +59,10 @@ onMounted(() => {
     prefetchRoute: (route) => {
       void preloadRouteComponents(route);
     },
+  });
+
+  provideMoleculeCue({
+    playEntityLightSweep: (direction) => hero?.playEntityLightSweep(direction),
   });
 
   hero.setTagCloud(tags.value);

@@ -26,6 +26,10 @@ import { NavigationConnector } from '../hero-ui/NavigationConnector';
 import { SiteHeader } from '../hero-ui/SiteHeader';
 import { UspHeadline } from '../hero-ui/UspHeadline';
 import { HeroAutoplay } from './HeroAutoplay';
+import {
+  registerMoleculeCue,
+  type EntityLightSweepDirection,
+} from '../../composables/useMoleculeCue';
 import { HOME_ITEM_ID, hubAtomId } from '../spatial/spatialAtoms';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { SpatialController, type SpatialApplyOptions } from '../spatial/SpatialController';
@@ -65,6 +69,7 @@ export type MountedHeroApp = {
   isBusy: () => boolean;
   onTransition: (listener: TransitionListener) => () => void;
   setTagCloud: (tags: readonly TagCloudItem[]) => void;
+  playEntityLightSweep: (direction?: EntityLightSweepDirection) => void;
 };
 
 export function mountHeroApp(
@@ -624,6 +629,12 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     if (item) controller.setAtomBlurb(item.atomId, buildAtomBlurb(item));
   });
 
+  const cueApi = {
+    playEntityLightSweep: (direction?: EntityLightSweepDirection) =>
+      controller.playEntityLightSweep(direction ?? 1),
+  };
+  registerMoleculeCue(cueApi);
+
   return {
     applySpatial(state, applyOptions) {
       spatial.apply(state, applyOptions);
@@ -634,7 +645,9 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     setTagCloud(tags) {
       controller.setTagCloud(tags);
     },
+    playEntityLightSweep: cueApi.playEntityLightSweep,
     dispose() {
+      registerMoleculeCue(null);
       autoplay.stop();
       mobileMq.removeEventListener('change', onViewportChange);
       tabletMq.removeEventListener('change', onViewportChange);

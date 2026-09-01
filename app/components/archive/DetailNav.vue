@@ -2,6 +2,8 @@
 import type { ArchiveReturnScope } from '~/lib/navigation/archiveReturn';
 import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
 import { stripTags } from '~/domain/portfolio/presentation';
+import type { EntityLightSweepDirection } from '~/composables/useMoleculeCue';
+import { armFlipSweepDirection } from '~/lib/molecular/moleculeFlipIntent';
 
 const props = withDefaults(
   defineProps<{
@@ -29,8 +31,15 @@ onMounted(() => {
 
 const isCase = computed(() => props.sectionIndex != null && props.sectionIndex > 0);
 
-function itemHref(slug: string) {
-  return `${props.basePath}/${slug}`;
+function navTo(slug: string, flipSweep: EntityLightSweepDirection) {
+  return {
+    path: `${props.basePath}/${slug}`,
+    state: { flipSweep },
+  };
+}
+
+function armSweep(direction: EntityLightSweepDirection) {
+  armFlipSweepDirection(direction);
 }
 
 function plainTitle(title: string | null | undefined): string {
@@ -69,8 +78,9 @@ function plainTitle(title: string | null | undefined): string {
           <div class="case-nav__item case-nav__next">
             <NuxtLink
               v-if="nextSlug"
-              :to="itemHref(nextSlug)"
+              :to="navTo(nextSlug, 1)"
               class="case-nav__link"
+              @pointerdown.capture="armSweep(1)"
             >
               <span class="case-nav__dir">Следующий</span>
               <span>{{ plainTitle(nextTitle) || nextSlug }}</span>
@@ -84,8 +94,9 @@ function plainTitle(title: string | null | undefined): string {
           <div class="case-nav__item case-nav__prev">
             <NuxtLink
               v-if="prevSlug"
-              :to="itemHref(prevSlug)"
+              :to="navTo(prevSlug, -1)"
               class="case-nav__link"
+              @pointerdown.capture="armSweep(-1)"
             >
               <span class="case-nav__dir">Предыдущий</span>
               <span>{{ plainTitle(prevTitle) || prevSlug }}</span>

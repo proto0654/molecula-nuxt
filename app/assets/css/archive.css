@@ -12,6 +12,25 @@
   position: relative;
   z-index: 1;
   padding: var(--case-pad-y) var(--case-pad-x) var(--case-space-footer);
+  transition: opacity 0.42s ease, transform 0.42s ease;
+}
+
+.archive-page__body.is-exiting,
+.archive-page__body.is-hidden,
+.archive-page__body.is-entering {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  pointer-events: none;
+}
+
+.archive-page__body.is-entering {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-page__body {
+    transition: none;
+  }
 }
 
 @media (min-width: 1024px) {

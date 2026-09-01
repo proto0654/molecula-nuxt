@@ -173,7 +173,7 @@ Zoom writes **`moleculeGroup.position` only** — not mixed into quaternion laye
 
 Framing distance: [`getAtomFocusDistance`](../app/lib/molecular/math/getAtomFocusDistance.ts) from atom radius + camera FOV (`viewportFill` lerps from base `0.9` toward `1.35` as `fillProgress` → 1). The controller mutates a persistent `focusDistanceOptions` bag each zoom frame (no options-object allocation).
 
-Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `setApproachBusy`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloStates`, `setWireframeAtom`, `setAccentWireframeAtom`, `setBondFlowAtom`, `setAtomTitleHighlight`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `onAfterUpdate`.
+Public scene API (no routes): `focusAtom`, `clearFocus`, `restoreOverview`, `holdApproach`, `settleApproachProgress`, `beginOrbitSweep`, `setOrbitSweepProgress`, `finishOrbitSweep`, `freeze` / `unfreeze` / `setMode`, `setApproachBusy`, `focusSection`, `focusContext`, `focusEntity`, `snapFocus`, `isFocusSettled`, `zoomToAtom`, `clearZoom`, `prepareTransitionTarget`, `setZoomProgress`, `setFillProgress`, `setTransitionDriven`, `setCompositionFramingOverride`, `getActiveCompositionFraming`, `setHighlightedAtom`, `setHaloStates`, `setWireframeAtom`, `setAccentWireframeAtom`, `setBondFlowAtom`, `setAtomTitleHighlight`, `setCaptionsCompact`, `setCaptionRemainderScale`, `setCompositionProfile`, `setCompositionBias`, `projectAtom`, `playEntityLightSweep`, `playArchiveTransitionCue`, `onAfterUpdate`.
 
 Zoom-in waits until `isFocusSettled()` (`focusStrength ≥ 0.92` and orientation within `0.08` rad of target). The same gate starts the HUD USP scramble after commit.
 
@@ -253,6 +253,15 @@ Orbit sweep is applied each frame as `stableFocus * axisAngle(progress * 2π)` o
 Highlight is separate from focus orientation: `setHighlightedAtom` toggles a light emissive. Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloStates` (dual committed + preview). Committed wireframe shell: `setWireframeAtom` (static). Hover preview and autoplay-next hint: `setAccentWireframeAtom` (static on hover, pulse while autoplay dwelling). Hub bond dash flow: `setBondFlowAtom` (animated `dashOffset` on the hub→target bond; autoplay phase-locks to accent wireframe pulse; hover uses the same rate). Title brightness: `setAtomTitleHighlight` (committed with blurb + distinct preview). Nav `.is-active` follows `activeItemId`; `.is-committed` follows `committedItemId`.
 
 **Settled freeze chrome dim:** labels hide instantly in `freeze()`. After the approach timeline settles (`frozen && !approachBusy`), rings / ticks / center cross and both wireframe shells **lerp color** to black (`0x000000`, exp-follow ~6). While `Navigator` is `busy` (live approach / retarget), chrome stays at base colors. `unfreeze` / home cancels the dim. `mountHeroApp` mirrors `transitionState.busy` → `MoleculeController.setApproachBusy`; scene applies via `setChromeDimmed`. Atom mesh fill colors are unchanged.
+
+**Frozen entity cues (no molecule spin):**
+
+| Cue | Trigger | Scene |
+|-----|---------|-------|
+| Facet light sweep | Case/service **slug change** on the same atom (`useCasePageTransition` → [`useMoleculeCue`](../app/composables/useMoleculeCue.ts)) | Subtle `PointLight` sweeps screen-horizontal across flat-shaded facets (~1–1.45s by viewport); direction from prev/next (`moleculeFlipIntent` on `DetailNav` pointerdown, slim-index fallback). Brief `setSweepLightingRelief` on the focused atom so chrome dim does not swallow the sweep. |
+| Archive ping + wireframe flash | `portfolio-archive` ↔ `case` or `service-archive` ↔ `service` (`SpatialController.maybeCueArchiveTransition`) | Selection ring one-shot pulse + wireframe re-index flash on the focused atom. |
+
+Pages call `playEntityLightSweep` via a module bridge (`registerMoleculeCue` in `mountHeroApp`; `MolecularHero` must forward the `direction` argument). `prefers-reduced-motion`: cues no-op.
 
 ## Quality and performance
 

@@ -269,6 +269,8 @@ export class MoleculeController {
 
   /** Atom id last passed to `focusAtom` while focus is active. */
   private focusedAtomId: string | null = null;
+  /** Spatial entity slug (case/service) — pose stays on the context atom. */
+  private lastEntityId: string | null = null;
 
   /**
    * Hero approach: full orbit sweep around the active atom's ring (0→1 = 0→2π).
@@ -308,6 +310,7 @@ export class MoleculeController {
   private readonly scratchCompose = new Quaternion();
   private readonly scratchMoleculePos = new Vector3();
   private readonly scratchAtomPos = new Vector3();
+  private readonly scratchAtomWorldCenter = new Vector3();
   private readonly scratchCameraPos = new Vector3();
   private readonly scratchLookDir = new Vector3();
   private readonly scratchZoomOffset = new Vector3();
@@ -879,10 +882,36 @@ export class MoleculeController {
   }
 
   /**
-   * Entity id is spatial-state only this iteration — pose stays on the context atom.
+   * Entity id is spatial-state only — pose stays on the context atom.
    */
-  focusEntity(_entityId: string): void {
-    // Reserved for a later case/service framing pass.
+  focusEntity(entityId: string): void {
+    this.lastEntityId = entityId;
+  }
+
+  getLastEntityId(): string | null {
+    return this.lastEntityId;
+  }
+
+  /**
+   * Frozen entity flip: point light sweeps R→L across the focused atom facets.
+   */
+  playEntityLightSweep(direction: 1 | -1 = 1): void {
+    if (!this.frozen || this.reducedMotion || !this.focusedAtomId) return;
+    const atom = this.scene.getAtom(this.focusedAtomId);
+    if (!atom) return;
+    this.scene.moleculeGroup.updateMatrixWorld(true);
+    atom.mesh.getWorldPosition(this.scratchAtomWorldCenter);
+    this.scene.startEntityLightSweep(
+      this.focusedAtomId,
+      this.scratchAtomWorldCenter,
+      direction,
+    );
+  }
+
+  /** Archive ↔ detail: ring ping + wireframe re-index flash on the focused atom. */
+  playArchiveTransitionCue(): void {
+    if (this.reducedMotion || !this.focusedAtomId) return;
+    this.scene.startArchiveCue(this.focusedAtomId);
   }
 
   /**

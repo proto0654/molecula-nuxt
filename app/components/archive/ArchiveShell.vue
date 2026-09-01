@@ -7,6 +7,7 @@ const props = withDefaults(
     detailIndex?: number | null;
     detailVariant?: 'service' | 'case';
     archiveScope?: 'services' | 'portfolio';
+    bodyClass?: string;
   }>(),
   {
     detailIndex: null,
@@ -44,7 +45,7 @@ const chromeVariant = computed(() =>
       :case-index="detailIndex"
       :archive-href="archiveHref"
     />
-    <div class="archive-page__body">
+    <div class="archive-page__body" :class="bodyClass">
       <slot />
     </div>
   </div>

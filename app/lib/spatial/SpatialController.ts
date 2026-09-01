@@ -73,10 +73,16 @@ export class SpatialController {
 
   apply(state: SpatialState, options: SpatialApplyOptions = {}): void {
     const key = spatialStateKey(state);
-    const modeChanged = this.state.mode !== state.mode;
+    const prev = this.state;
+    const modeChanged = prev.mode !== state.mode;
     if (key === this.lastKey && !options.immediate) {
       return;
     }
+
+    if (!options.immediate && !prefersReducedMotion()) {
+      this.maybeCueArchiveTransition(prev, state);
+    }
+
     this.lastKey = key;
     this.state = state;
 
@@ -208,5 +214,21 @@ export class SpatialController {
     }
     this.controller.clearZoom();
     this.controller.setFillProgress(0);
+  }
+
+  private maybeCueArchiveTransition(
+    prev: SpatialState,
+    next: SpatialState,
+  ): void {
+    const prevArchive =
+      prev.mode === 'portfolio-archive' || prev.mode === 'service-archive';
+    const nextArchive =
+      next.mode === 'portfolio-archive' || next.mode === 'service-archive';
+    const prevDetail = prev.mode === 'case' || prev.mode === 'service';
+    const nextDetail = next.mode === 'case' || next.mode === 'service';
+
+    if ((prevArchive && nextDetail) || (prevDetail && nextArchive)) {
+      this.controller.playArchiveTransitionCue();
+    }
   }
 }

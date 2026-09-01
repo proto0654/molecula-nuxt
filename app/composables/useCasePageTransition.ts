@@ -1,6 +1,10 @@
 import type { MaybeRefOrGetter } from 'vue';
+import {
+  playEntityLightSweep,
+  type EntityLightSweepDirection,
+} from '~/composables/useMoleculeCue';
+import { takeFlipSweepDirection } from '~/lib/molecular/moleculeFlipIntent';
 import { prefersReducedMotion } from '~/lib/a11y/reducedMotion';
-
 export type CaseBodyPhase = 'idle' | 'exiting' | 'hidden' | 'entering';
 
 const EXIT_MS = 280;
@@ -12,19 +16,57 @@ function sleep(ms: number): Promise<void> {
   });
 }
 
+function normalizeRouteSlug(slug: string): string {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
+function readRouteFlipSweep(
+  to: { state?: unknown },
+): EntityLightSweepDirection | null {
+  const raw = (to.state as { flipSweep?: unknown } | undefined)?.flipSweep;
+  return raw === -1 || raw === 1 ? raw : null;
+}
+
+/** Prev = L→R (−1), next = R→L (1). Uses production order from slim index. */
+export function resolveAdjacentFlipDirection(
+  fromSlug: string,
+  toSlug: string,
+  positionFor: (from: string) => {
+    prev: { slug: string } | null;
+    next: { slug: string } | null;
+  },
+): EntityLightSweepDirection {
+  const from = normalizeRouteSlug(fromSlug);
+  const to = normalizeRouteSlug(toSlug);
+  const pos = positionFor(from);
+  if (pos.prev && normalizeRouteSlug(pos.prev.slug) === to) return -1;
+  if (pos.next && normalizeRouteSlug(pos.next.slug) === to) return 1;
+  return 1;
+}
+
 /**
  * In-page case → case (and case leave) choreography.
- * Same [slug] component: delay the route until exit finishes, then reveal.
- * Accent of the new case is applied after reveal — not during exit.
+ * Exit veil runs in parallel with the route swap + data fetch — navigation is not
+ * blocked. Enter/reveal starts as soon as `ready`; body fade only gates visibility.
  */
 export function useCasePageTransition(options: {
   accentColor: MaybeRefOrGetter<string | null | undefined>;
   ready: MaybeRefOrGetter<boolean>;
+  /** Map prev/next slug flip to sweep direction (default: next = R→L). */
+  resolveFlipDirection?: (
+    fromSlug: string,
+    toSlug: string,
+  ) => EntityLightSweepDirection;
 }) {
   const phase = ref<CaseBodyPhase>('idle');
   const appliedAccent = ref<string | null>(null);
   let accentTimer: ReturnType<typeof setTimeout> | null = null;
   let exitPromise: Promise<void> | null = null;
+  let pendingEnter = false;
 
   function clearAccentTimer() {
     if (accentTimer == null) return;
@@ -35,7 +77,6 @@ export function useCasePageTransition(options: {
   function scheduleAccent() {
     clearAccentTimer();
     const color = toValue(options.accentColor) ?? null;
-    // SSR and first client paint stay un-accented so hydration matches.
     if (!import.meta.client) return;
     if (prefersReducedMotion()) {
       appliedAccent.value = color;
@@ -47,31 +88,69 @@ export function useCasePageTransition(options: {
     }, ACCENT_MS);
   }
 
-  function runExit(): Promise<void> {
-    if (exitPromise) return exitPromise;
+  function beginEnter(): void {
+    pendingEnter = false;
+    if (phase.value === 'idle') {
+      scheduleAccent();
+      return;
+    }
+    phase.value = 'entering';
+    if (import.meta.client) {
+      window.scrollTo(0, 0);
+    }
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        phase.value = 'idle';
+        scheduleAccent();
+      });
+    });
+  }
+
+  function tryFinishEnter(): void {
+    if (!toValue(options.ready)) {
+      pendingEnter = true;
+      return;
+    }
+    if (phase.value === 'hidden') {
+      beginEnter();
+    }
+  }
+
+  function runExit(options: { lightSweep?: boolean; sweepDirection?: EntityLightSweepDirection } = {}): void {
+    if (options.lightSweep) {
+      playEntityLightSweep(options.sweepDirection ?? 1);
+    }
+    if (exitPromise) return;
 
     exitPromise = (async () => {
       if (!import.meta.client || prefersReducedMotion()) {
         phase.value = 'hidden';
+        tryFinishEnter();
         return;
       }
       phase.value = 'exiting';
       await sleep(EXIT_MS);
       phase.value = 'hidden';
+      tryFinishEnter();
     })().finally(() => {
       exitPromise = null;
     });
-
-    return exitPromise;
   }
 
-  onBeforeRouteUpdate(async (to, from) => {
-    if (String(to.params.slug || '') === String(from.params.slug || '')) return;
-    await runExit();
+  onBeforeRouteUpdate((to, from) => {
+    const fromSlug = String(from.params.slug || '');
+    const toSlug = String(to.params.slug || '');
+    if (fromSlug === toSlug) return;
+    const sweepDirection =
+      takeFlipSweepDirection() ??
+      readRouteFlipSweep(to) ??
+      options.resolveFlipDirection?.(fromSlug, toSlug) ??
+      1;
+    runExit({ lightSweep: true, sweepDirection });
   });
 
-  onBeforeRouteLeave(async () => {
-    await runExit();
+  onBeforeRouteLeave(() => {
+    runExit();
   });
 
   watch(
@@ -79,17 +158,13 @@ export function useCasePageTransition(options: {
     (isReady) => {
       if (!isReady) return;
 
+      if (phase.value === 'exiting') {
+        pendingEnter = true;
+        return;
+      }
+
       if (phase.value === 'hidden' || phase.value === 'entering') {
-        phase.value = 'entering';
-        if (import.meta.client) {
-          window.scrollTo(0, 0);
-        }
-        nextTick(() => {
-          requestAnimationFrame(() => {
-            phase.value = 'idle';
-            scheduleAccent();
-          });
-        });
+        beginEnter();
         return;
       }
 
@@ -100,6 +175,12 @@ export function useCasePageTransition(options: {
     { immediate: true },
   );
 
+  watch(phase, (next) => {
+    if (next === 'hidden' && pendingEnter && toValue(options.ready)) {
+      beginEnter();
+    }
+  });
+
   onBeforeUnmount(() => {
     clearAccentTimer();
   });
@@ -108,5 +189,8 @@ export function useCasePageTransition(options: {
     phase.value === 'idle' ? undefined : `is-${phase.value}`,
   );
 
-  return { phase, appliedAccent, bodyClass };
+  /** Content reveal / motion may start while the exit veil is still up. */
+  const contentRevealReady = computed(() => toValue(options.ready));
+
+  return { phase, appliedAccent, bodyClass, contentRevealReady };
 }

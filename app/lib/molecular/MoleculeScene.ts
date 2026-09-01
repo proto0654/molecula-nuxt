@@ -9,7 +9,9 @@ import {
   LineSegments,
   Mesh,
   PerspectiveCamera,
+  PointLight,
   Scene,
+  Vector3,
   WebGLRenderer,
 } from 'three';
 import { Atom } from './Atom';
@@ -42,6 +44,22 @@ const BOND_FLOW_SPEED =
 const ACCENT_ENTER_FOLLOW = 3.8;
 /** Match AtomSelectionIndicator color follow for settled freeze chrome. */
 const CHROME_COLOR_FOLLOW = 6;
+
+const SWEEP_DURATION_DESKTOP = 1.05;
+const SWEEP_DURATION_TABLET = 1.2;
+const SWEEP_DURATION_MOBILE = 1.45;
+/** Fraction along each sight ray (camera → atom plane): higher = more facet sweep. */
+const SWEEP_VIEWER_PULL = 0.52;
+const SWEEP_NDC_SPAN = 1.38;
+/** Counter-shift sweep Y vs atom screen Y (low atom → higher path, high atom → lower). */
+const SWEEP_VERTICAL_MIRROR = 0.38;
+const SWEEP_PEAK_INTENSITY = 0.26;
+const AMBIENT_BASE = 0.38;
+const CUE_RELIEF_STRENGTH = 0.45;
+const FLASH_DURATION = 0.32;
+const FLASH_DIM_RELIEF = 0.9;
+const FLASH_OPACITY_BOOST = 0.55;
+const WIREFRAME_DIM_OPACITY = 0.08;
 
 function smoothstep01(t: number): number {
   const x = Math.max(0, Math.min(1, t));
@@ -141,6 +159,19 @@ export class MoleculeScene {
   private readonly wireframeDimColor = new Color(WIREFRAME_DIM_COLOR);
   private readonly bondBaseColor = new Color(BOND_COLOR);
   private readonly scratchWireframeColor = new Color();
+  private readonly ambientLight: AmbientLight;
+  private readonly entityPointLight: PointLight;
+  private readonly scratchNdc = new Vector3();
+  private readonly scratchCameraPos = new Vector3();
+  private readonly scratchLightRay = new Vector3();
+  private sweepElapsed = SWEEP_DURATION_DESKTOP;
+  private sweepDuration = SWEEP_DURATION_DESKTOP;
+  private sweepDirection: 1 | -1 = 1;
+  private sweepCenter = new Vector3();
+  private sweepAtomId: string | null = null;
+  private flashElapsed = FLASH_DURATION;
+  private archiveCueAtomId: string | null = null;
+  private wireframeFlashBoost = 0;
 
   constructor(canvas: HTMLCanvasElement, quality: QualityManager) {
     this.quality = quality;
@@ -172,7 +203,8 @@ export class MoleculeScene {
     this.tagCloud = new TagCloud();
     this.scene.add(this.tagCloud.object);
 
-    const ambient = new AmbientLight(0xffffff, 0.38);
+    const ambient = new AmbientLight(0xffffff, AMBIENT_BASE);
+    this.ambientLight = ambient;
     const key = new DirectionalLight(0xffffff, 0.9);
     key.position.set(3, 4, 5);
     key.castShadow = false;
@@ -180,6 +212,9 @@ export class MoleculeScene {
     fill.position.set(-2.5, 1.2, -2);
     fill.castShadow = false;
     this.scene.add(ambient, key, fill);
+    this.entityPointLight = new PointLight(0xffffff, 0, 0, 1);
+    this.entityPointLight.castShadow = false;
+    this.scene.add(this.entityPointLight);
 
     this.bondMaterial = new LineDashedMaterial({
       color: BOND_COLOR,
@@ -422,6 +457,47 @@ export class MoleculeScene {
     }
   }
 
+  /** Point light sweep on flat-shaded facets (`direction` 1 = R→L, −1 = L→R). */
+  startEntityLightSweep(
+    atomId: string,
+    focusedAtomWorldCenter: Vector3,
+    direction: 1 | -1 = 1,
+  ): void {
+    if (this.sweepAtomId && this.sweepAtomId !== atomId) {
+      this.getAtom(this.sweepAtomId)?.setSweepLightingRelief(0);
+    }
+    this.sweepAtomId = atomId;
+    this.sweepCenter.copy(focusedAtomWorldCenter);
+    this.sweepDirection = direction;
+    this.sweepDuration = this.resolveSweepDuration();
+    this.sweepElapsed = 0;
+    this.entityPointLight.intensity = 0;
+  }
+
+  private resolveSweepDuration(): number {
+    if (this.lastWidth <= 767) return SWEEP_DURATION_MOBILE;
+    if (this.lastWidth <= 1023) return SWEEP_DURATION_TABLET;
+    return SWEEP_DURATION_DESKTOP;
+  }
+
+  /** Ring ping + wireframe re-index flash (archive ↔ detail cue). */
+  startArchiveCue(focusedAtomId: string | null): void {
+    this.archiveCueAtomId = focusedAtomId;
+    this.flashElapsed = 0;
+    this.wireframeFlashBoost = 0;
+    if (focusedAtomId) {
+      const atom = this.getAtom(focusedAtomId);
+      atom?.triggerSelectionPing();
+    }
+  }
+
+  get isEntityCueActive(): boolean {
+    return (
+      this.sweepElapsed < this.sweepDuration ||
+      this.flashElapsed < FLASH_DURATION
+    );
+  }
+
   setDecorativeZoomFade(
     zoomProgress: number,
     fillProgress: number,
@@ -475,6 +551,8 @@ export class MoleculeScene {
    * Caller must have already refreshed `moleculeGroup` world matrices.
    */
   update(deltaSeconds: number, updateLabels = true, elapsed = 0): void {
+    this.updateEntityLightSweep(deltaSeconds);
+    this.updateWireframeFlash(deltaSeconds);
     this.updateWireframeDim(deltaSeconds);
     this.updateAccentWireframePulse(deltaSeconds, elapsed);
     this.updateBondFlow(deltaSeconds, elapsed);
@@ -488,19 +566,108 @@ export class MoleculeScene {
     this.tagCloud.update(this.camera, this.moleculeGroup);
   }
 
+  private getCueReliefEnvelope(): number {
+    let relief = 0;
+    if (this.sweepElapsed < this.sweepDuration) {
+      const t = this.sweepElapsed / this.sweepDuration;
+      relief = Math.max(relief, Math.sin(Math.PI * t));
+    }
+    if (this.flashElapsed < FLASH_DURATION) {
+      const t = this.flashElapsed / FLASH_DURATION;
+      relief = Math.max(relief, Math.sin(Math.PI * t));
+    }
+    return relief;
+  }
+
+  private endEntityLightSweep(): void {
+    if (this.sweepAtomId) {
+      this.getAtom(this.sweepAtomId)?.setSweepLightingRelief(0);
+      this.sweepAtomId = null;
+    }
+    this.entityPointLight.intensity = 0;
+    if (this.ambientLight.intensity !== AMBIENT_BASE) {
+      this.ambientLight.intensity = AMBIENT_BASE;
+    }
+  }
+
+  private updateEntityLightSweep(deltaSeconds: number): void {
+    if (this.sweepElapsed >= this.sweepDuration) {
+      this.endEntityLightSweep();
+      return;
+    }
+
+    this.sweepElapsed = Math.min(
+      this.sweepDuration,
+      this.sweepElapsed + deltaSeconds,
+    );
+    const progress = this.sweepElapsed / this.sweepDuration;
+    const envelope = Math.sin(Math.PI * progress);
+
+    this.ambientLight.intensity = AMBIENT_BASE;
+
+    this.camera.updateMatrixWorld();
+    const ndcX = this.sweepDirection * SWEEP_NDC_SPAN * (1 - 2 * progress);
+    this.scratchNdc.copy(this.sweepCenter).project(this.camera);
+    const sweepNdcY = this.scratchNdc.y * (1 - 2 * SWEEP_VERTICAL_MIRROR);
+    this.scratchNdc.set(ndcX, sweepNdcY, this.scratchNdc.z);
+    this.scratchNdc.unproject(this.camera);
+    this.camera.getWorldPosition(this.scratchCameraPos);
+    this.scratchLightRay.subVectors(this.scratchNdc, this.scratchCameraPos);
+    this.scratchNdc
+      .copy(this.scratchCameraPos)
+      .addScaledVector(this.scratchLightRay, SWEEP_VIEWER_PULL);
+    this.entityPointLight.position.copy(this.scratchNdc);
+    this.entityPointLight.intensity = SWEEP_PEAK_INTENSITY * envelope;
+
+    const atom =
+      this.sweepAtomId != null ? this.getAtom(this.sweepAtomId) : undefined;
+    atom?.setSweepLightingRelief(envelope);
+  }
+
+  private updateWireframeFlash(deltaSeconds: number): void {
+    if (this.flashElapsed >= FLASH_DURATION) {
+      this.wireframeFlashBoost = 0;
+      this.archiveCueAtomId = null;
+      return;
+    }
+
+    this.flashElapsed = Math.min(
+      FLASH_DURATION,
+      this.flashElapsed + deltaSeconds,
+    );
+    const progress = this.flashElapsed / FLASH_DURATION;
+    this.wireframeFlashBoost = Math.sin(Math.PI * progress);
+  }
+
   private updateWireframeDim(deltaSeconds: number): void {
     const t = 1 - Math.exp(-CHROME_COLOR_FOLLOW * deltaSeconds);
     this.wireframeColorMix +=
       (this.targetWireframeColorMix - this.wireframeColorMix) * t;
+
+    const cueRelief = this.getCueReliefEnvelope() * CUE_RELIEF_STRENGTH;
+    const flashRelief = this.wireframeFlashBoost * FLASH_DIM_RELIEF;
+    const effectiveMix =
+      this.wireframeColorMix * (1 - cueRelief) * (1 - flashRelief);
+
     this.scratchWireframeColor.lerpColors(
       this.wireframeBaseColor,
       this.wireframeDimColor,
-      this.wireframeColorMix,
+      effectiveMix,
     );
     this.wireframeMaterial.color.copy(this.scratchWireframeColor);
     this.accentWireframeMaterial.color.copy(this.scratchWireframeColor);
 
-    const shellMix = this.wireframeColorMix;
+    const flashOpacity =
+      WIREFRAME_OPACITY +
+      (WIREFRAME_OPACITY - WIREFRAME_DIM_OPACITY) *
+        this.wireframeFlashBoost *
+        FLASH_OPACITY_BOOST;
+    if (this.wireframe.visible) {
+      this.wireframeMaterial.opacity =
+        this.wireframeFlashBoost > 0.001 ? flashOpacity : WIREFRAME_OPACITY;
+    }
+
+    const shellMix = effectiveMix;
     this.scratchWireframeColor.lerpColors(
       this.bondBaseColor,
       this.wireframeDimColor,
