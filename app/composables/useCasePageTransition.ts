@@ -67,6 +67,7 @@ export function useCasePageTransition(options: {
   let accentTimer: ReturnType<typeof setTimeout> | null = null;
   let exitPromise: Promise<void> | null = null;
   let pendingEnter = false;
+  let leavingPage = false;
 
   function clearAccentTimer() {
     if (accentTimer == null) return;
@@ -89,6 +90,7 @@ export function useCasePageTransition(options: {
   }
 
   function beginEnter(): void {
+    if (leavingPage) return;
     pendingEnter = false;
     if (phase.value === 'idle') {
       scheduleAccent();
@@ -107,6 +109,7 @@ export function useCasePageTransition(options: {
   }
 
   function tryFinishEnter(): void {
+    if (leavingPage) return;
     if (!toValue(options.ready)) {
       pendingEnter = true;
       return;
@@ -116,7 +119,14 @@ export function useCasePageTransition(options: {
     }
   }
 
-  function runExit(options: { lightSweep?: boolean; sweepDirection?: EntityLightSweepDirection } = {}): void {
+  function runExit(
+    options: {
+      lightSweep?: boolean;
+      sweepDirection?: EntityLightSweepDirection;
+      allowEnter?: boolean;
+    } = {},
+  ): void {
+    const allowEnter = options.allowEnter ?? true;
     if (options.lightSweep) {
       playEntityLightSweep(options.sweepDirection ?? 1);
     }
@@ -125,13 +135,13 @@ export function useCasePageTransition(options: {
     exitPromise = (async () => {
       if (!import.meta.client || prefersReducedMotion()) {
         phase.value = 'hidden';
-        tryFinishEnter();
+        if (allowEnter) tryFinishEnter();
         return;
       }
       phase.value = 'exiting';
       await sleep(EXIT_MS);
       phase.value = 'hidden';
-      tryFinishEnter();
+      if (allowEnter) tryFinishEnter();
     })().finally(() => {
       exitPromise = null;
     });
@@ -150,13 +160,15 @@ export function useCasePageTransition(options: {
   });
 
   onBeforeRouteLeave(() => {
-    runExit();
+    leavingPage = true;
+    pendingEnter = false;
+    runExit({ allowEnter: false });
   });
 
   watch(
     () => toValue(options.ready),
     (isReady) => {
-      if (!isReady) return;
+      if (!isReady || leavingPage) return;
 
       if (phase.value === 'exiting') {
         pendingEnter = true;
@@ -176,6 +188,7 @@ export function useCasePageTransition(options: {
   );
 
   watch(phase, (next) => {
+    if (leavingPage) return;
     if (next === 'hidden' && pendingEnter && toValue(options.ready)) {
       beginEnter();
     }

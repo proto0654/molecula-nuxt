@@ -161,10 +161,11 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell (base); same black lerp when settled |
 | Decorative orbits / nodes | black @ ~0.42 / active `#3a3e44` @ ~0.55; nodes `0x6a737c` | `DecorativeNodes` (HIGH only) |
 | Tag cloud | `0x585f67` primary / `0x424950` secondary (`fillOpacity` 1) | `TagCloud` — muted, all quality levels |
-| Highlight emissive | `0x4a525a` @ 0.1 | `Atom.ts` |
+| Atom shell (settled) | emissive → `0x14161c` @ ~0.62; shadow facets `0x020306` | Fixed fill — bg-adjacent mean tone, facet contrast from scene lights |
+| Highlight emissive | *(unused)* | `setHighlighted` no-op; hover does not change mesh fill |
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
 
-Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — no Fresnel / gloss). Stay darker than captions so troika type does not melt into the mesh.
+Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — no Fresnel / gloss). Shell fill is fixed near scene background with boosted key/fill contrast (ambient ~0.24, key ~1.28). Stay darker than captions so troika type does not melt into the mesh.
 
 ## Decorative patterns (copy these, do not invent new chrome)
 
@@ -213,7 +214,7 @@ Part of the site-wide [hairline language](#hairline-language). Tablet/mobile nav
 
 - [`NavigationConnector`](../app/lib/hero-ui/NavigationConnector.ts): elbow polyline from rail item → projected atom; tiny tip marker; stops short of the mesh.
 - States: idle hidden · **hover** (distinct preview while committed) routes to preview item · **active** tracks committed · zoom fades with `zoomProgress`/`fillProgress`.
-- CSS: `.is-hover` softer stroke/fill than `.is-active` (`main.css`).
+- CSS: `.is-hover` softer stroke/fill than `.is-active` (`main.css`); stroke/fill use **black** RGB with the same opacity tokens as before.
 - Endpoint tracks `projectAtom` 1:1. Soft distance fade when the span is extreme.
 - 1px stroke; short opacity pulse on section change. No glow, no looping dash.
 - Desktop-only (`≥1024`).

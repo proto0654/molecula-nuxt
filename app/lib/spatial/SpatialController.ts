@@ -117,29 +117,34 @@ export class SpatialController {
     const snap =
       options.immediate || prefersReducedMotion() || !this.approachTo;
 
-    this.commitNonHome(state);
-
     if (snap) {
       const atomId = atomIdForSpatialState(state);
       if (atomId) {
         this.controller.setApproachFraming(approachFramingForAtom(atomId));
       }
       this.controller.setCompositionFramingOverride(null);
+      // Focus before nav commit so applyVisuals sees the route atom, not hub.
       this.focusNonHome(state);
       this.controller.holdApproach({ immediate: true });
+      this.commitNonHome(state);
     } else if (live) {
       // Navigator still owns zoom/fill/orbit — do not retarget or snap.
+      this.commitNonHome(state);
     } else if (atApproach && atomChanged && nextAtomId && this.retargetApproach) {
       // Defer focusAtom until after pullback — retarget owns the choreography.
+      this.commitNonHome(state);
       this.retargetApproach(nextAtomId);
     } else if (atApproach && !atomChanged) {
       // Live Navigator handoff: same atom already in approach pose.
+      this.commitNonHome(state);
     } else if (nextAtomId) {
       // Same verb as a rest/partial hop off-home: Navigator owns focus → approach.
+      this.commitNonHome(state);
       this.approachTo(nextAtomId);
     } else {
       this.focusNonHome(state);
       this.controller.holdApproach({ immediate: true });
+      this.commitNonHome(state);
     }
 
     this.controller.freeze();
@@ -220,14 +225,18 @@ export class SpatialController {
     prev: SpatialState,
     next: SpatialState,
   ): void {
-    const prevArchive =
-      prev.mode === 'portfolio-archive' || prev.mode === 'service-archive';
-    const nextArchive =
-      next.mode === 'portfolio-archive' || next.mode === 'service-archive';
-    const prevDetail = prev.mode === 'case' || prev.mode === 'service';
-    const nextDetail = next.mode === 'case' || next.mode === 'service';
+    const portfolioHop =
+      prev.context === 'portfolio' &&
+      next.context === 'portfolio' &&
+      ((prev.mode === 'portfolio-archive' && next.mode === 'case') ||
+        (prev.mode === 'case' && next.mode === 'portfolio-archive'));
+    const servicesHop =
+      prev.context === 'services' &&
+      next.context === 'services' &&
+      ((prev.mode === 'service-archive' && next.mode === 'service') ||
+        (prev.mode === 'service' && next.mode === 'service-archive'));
 
-    if ((prevArchive && nextDetail) || (prevDetail && nextArchive)) {
+    if (portfolioHop || servicesHop) {
       this.controller.playArchiveTransitionCue();
     }
   }

@@ -18,16 +18,13 @@ export type SelectionGeometries = {
 };
 
 const RING_COLOR = 0xb8c0c8;
-const DIM_COLOR = 0x4a4f54;
+const DIM_COLOR = 0x000000;
 const RING_SCALES = [1.28, 1.62, 2.02];
 const FOLLOW = 10;
 /** Softer than opacity follow — settled freeze chrome fade. */
 const COLOR_FOLLOW = 6;
 const HOVER_OPACITY = 0.4;
 const COMMITTED_OPACITY = 0.32;
-const PING_DURATION = 0.4;
-const PING_SCALE_AMP = 0.06;
-const PING_OPACITY_BOOST = 0.45;
 
 /**
  * Screen-flat measurement reticle around an atom (camera billboard).
@@ -55,8 +52,6 @@ export class AtomSelectionIndicator {
   private centerEnabled = true;
   private colorMix = 0;
   private targetColorMix = 0;
-  private pingElapsed = PING_DURATION;
-  private pingDimHold = 0;
 
   private readonly scratchParentQ = new Quaternion();
   private readonly scratchBillboard = new Quaternion();
@@ -169,20 +164,6 @@ export class AtomSelectionIndicator {
     this.targetColorMix = dimmed ? 1 : 0;
   }
 
-  /** One-shot radial measurement ping (archive / detail transition cue). */
-  triggerPing(): void {
-    this.pingElapsed = 0;
-    this.pingDimHold = 1;
-    if (this.mode === 'idle') {
-      this.targetOpacity = COMMITTED_OPACITY;
-      this.opacity = COMMITTED_OPACITY * 0.4;
-    }
-  }
-
-  get isPingActive(): boolean {
-    return this.pingElapsed < PING_DURATION;
-  }
-
   /** Keep rings / ticks sized to the live atom radius (hub compact layout). */
   setRadius(radius: number): void {
     this.radius = Math.max(radius, 1e-6);
@@ -202,26 +183,11 @@ export class AtomSelectionIndicator {
     this.opacity += (this.targetOpacity - this.opacity) * t;
     this.pulse += (this.targetPulse - this.pulse) * t;
 
-    if (this.pingElapsed < PING_DURATION) {
-      this.pingElapsed = Math.min(PING_DURATION, this.pingElapsed + delta);
-    }
-    const pingProgress = this.pingElapsed / PING_DURATION;
-    const pingWave =
-      pingProgress < 1 ? Math.sin(Math.PI * pingProgress) : 0;
-    if (this.pingDimHold > 0) {
-      this.pingDimHold = Math.max(0, this.pingDimHold - delta * 4);
-    }
-    const effectiveTargetColorMix =
-      this.targetColorMix * (1 - this.pingDimHold);
     this.colorMix +=
-      (effectiveTargetColorMix - this.colorMix) * colorT;
+      (this.targetColorMix - this.colorMix) * colorT;
     this.applyColorMix();
 
-    if (
-      this.opacity < 0.01 &&
-      this.targetOpacity < 0.01 &&
-      !this.isPingActive
-    ) {
+    if (this.opacity < 0.01 && this.targetOpacity < 0.01) {
       this.object.visible = false;
       return;
     }
@@ -245,37 +211,33 @@ export class AtomSelectionIndicator {
     this.ticks.visible = showTicks;
     this.cross.visible = showCenter;
 
-    const pingScale = 1 + pingWave * PING_SCALE_AMP;
-    const pingOpacityMul = 1 + pingWave * PING_OPACITY_BOOST;
-
     for (let i = 0; i < this.ringCount; i += 1) {
       const ring = this.rings[i]!;
       const material = this.ringMaterials[i]!;
       const ringOpacityBase = this.opacity * (0.72 - i * 0.16);
       if (this.simple) {
-        ring.scale.setScalar(this.radius * RING_SCALES[i]! * pingScale);
-        material.opacity = ringOpacityBase * pingOpacityMul;
+        ring.scale.setScalar(this.radius * RING_SCALES[i]!);
+        material.opacity = ringOpacityBase;
         continue;
       }
       const localWave = this.pulse * Math.sin(elapsed * 2.2 + i * 0.85);
       ring.scale.setScalar(
         this.radius *
           RING_SCALES[i]! *
-          (1 + localWave * 0.03) *
-          pingScale,
+          (1 + localWave * 0.03),
       );
       material.opacity =
-        ringOpacityBase * (1 + localWave * 0.08) * pingOpacityMul;
+        ringOpacityBase * (1 + localWave * 0.08);
     }
 
     const innerWave = this.simple
       ? 0
       : this.pulse * Math.sin(elapsed * 2.2);
     const innerScale =
-      this.radius * RING_SCALES[0]! * (1 + innerWave * 0.03) * pingScale;
+      this.radius * RING_SCALES[0]! * (1 + innerWave * 0.03);
     this.ticks.scale.setScalar(innerScale);
-    this.ticksMaterial.opacity = this.opacity * 0.55 * pingOpacityMul;
-    this.crossMaterial.opacity = this.opacity * 0.7 * pingOpacityMul;
+    this.ticksMaterial.opacity = this.opacity * 0.55;
+    this.crossMaterial.opacity = this.opacity * 0.7;
   }
 
   private applyColorMix(): void {

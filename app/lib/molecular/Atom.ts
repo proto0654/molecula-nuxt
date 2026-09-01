@@ -24,10 +24,13 @@ const COLOR_BY_LABEL: Record<string, number> = {
   N: 0x2f6fed,
 };
 
-const HIGHLIGHT_INTENSITY = 0.1;
-const HIGHLIGHT_EMISSIVE = 0x4a525a;
-/** Ease chrome dim during entity sweep so flat-shaded facets catch the point light. */
 const SWEEP_SHELL_RELIEF = 0.35;
+/** Shell always uses settled off-home dim — no hover/freeze fill changes. */
+const FIXED_SHELL_COLOR_MIX = 1;
+/** Shadow facets — deeper than scene bg so directional light reads on faces. */
+const SHELL_SHADOW_COLOR = 0x020306;
+/** Below 1 so lit facets pop; mean tone still tracks scene background. */
+const SHELL_EMISSIVE_INTENSITY = 0.62;
 
 export class Atom {
   readonly id: string;
@@ -43,12 +46,11 @@ export class Atom {
   readonly baseRadius: number;
   private readonly basePosition: [number, number, number];
   private material: MeshStandardMaterial | MeshLambertMaterial;
-  private highlighted = false;
-  private shellColorMix = 0;
+  private shellColorMix = FIXED_SHELL_COLOR_MIX;
   private sweepLightingRelief = 0;
   private readonly baseShellColor = new Color();
   private readonly dimShellColor = new Color(SCENE_BG);
-  private readonly shellBlack = new Color(0x000000);
+  private readonly shellShadow = new Color(SHELL_SHADOW_COLOR);
   private readonly scratchShellColor = new Color();
 
   constructor(config: AtomConfig, cache: GeometryCache, settings: QualitySettings) {
@@ -87,6 +89,7 @@ export class Atom {
     this.applySelectionQuality(settings);
 
     this.group.add(this.mesh, this.selection.object);
+    this.applyShellColor();
   }
 
   get object(): Object3D {
@@ -132,10 +135,8 @@ export class Atom {
     this.applySelectionQuality(settings);
   }
 
-  setHighlighted(highlighted: boolean): void {
-    if (this.highlighted === highlighted) return;
-    this.highlighted = highlighted;
-    this.applyHighlight();
+  setHighlighted(_highlighted: boolean): void {
+    // Fixed shell color — hover highlight does not change mesh fill.
   }
 
   setHaloMode(mode: HaloMode): void {
@@ -146,13 +147,8 @@ export class Atom {
     this.selection.setDimmed(dimmed);
   }
 
-  /** Lerp shell toward scene background; at full mix emissive carries bg + lighting. */
-  setShellColorMix(mix: number): void {
-    const next = Math.max(0, Math.min(1, mix));
-    if (Math.abs(next - this.shellColorMix) < 1e-5) return;
-    this.shellColorMix = next;
-    this.applyShellColor();
-  }
+  /** No-op — atom fill uses a fixed settled shell color. */
+  setShellColorMix(_mix: number): void {}
 
   /** Temporarily ease chrome dim so sweep point light reads on flat facets. */
   setSweepLightingRelief(relief: number): void {
@@ -182,10 +178,6 @@ export class Atom {
     this.selection.update(camera, delta, elapsed);
   }
 
-  triggerSelectionPing(): void {
-    this.selection.triggerPing();
-  }
-
   dispose(): void {
     this.atomLabel.dispose();
     this.selection.dispose();
@@ -207,19 +199,7 @@ export class Atom {
     this.material.dispose();
     this.material = createAtomMaterial(kind, this.color);
     this.mesh.material = this.material;
-    this.applyHighlight();
     this.applyShellColor();
-  }
-
-  private applyHighlight(): void {
-    if (this.shellColorMix > 0.001) return;
-    if (this.highlighted) {
-      this.material.emissive.setHex(HIGHLIGHT_EMISSIVE);
-      this.material.emissiveIntensity = HIGHLIGHT_INTENSITY;
-      return;
-    }
-    this.material.emissive.setHex(0x000000);
-    this.material.emissiveIntensity = 0;
   }
 
   private applyShellColor(): void {
@@ -227,19 +207,17 @@ export class Atom {
       this.shellColorMix * (1 - this.sweepLightingRelief * SWEEP_SHELL_RELIEF);
     if (t <= 0.001) {
       this.material.color.copy(this.baseShellColor);
-      if (!this.highlighted) {
-        this.material.emissive.setHex(0x000000);
-        this.material.emissiveIntensity = 0;
-      }
+      this.material.emissive.setHex(0x000000);
+      this.material.emissiveIntensity = 0;
       this.material.fog = true;
       return;
     }
 
-    this.scratchShellColor.lerpColors(this.baseShellColor, this.shellBlack, t);
+    this.scratchShellColor.lerpColors(this.baseShellColor, this.shellShadow, t);
     this.material.color.copy(this.scratchShellColor);
-    this.scratchShellColor.lerpColors(this.shellBlack, this.dimShellColor, t);
+    this.scratchShellColor.lerpColors(this.shellShadow, this.dimShellColor, t);
     this.material.emissive.copy(this.scratchShellColor);
-    this.material.emissiveIntensity = t;
+    this.material.emissiveIntensity = t * SHELL_EMISSIVE_INTENSITY;
     this.material.fog = t < 0.98;
   }
 }

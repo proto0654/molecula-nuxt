@@ -250,12 +250,14 @@ export function mountHeroApp(
       ? previewItem?.atomId
       : committedItem?.atomId ?? previewItem?.atomId ?? null;
     const settledOffHome = controller.isSettledOffHome();
+    // Orbits: black idle + one light active — tied to commit/focus, not hover preview.
+    const orbitAtomId = isHome
+      ? committedItem?.atomId ?? null
+      : controller.getFocusedAtomId();
     controller.setHighlightedAtom(
       settledOffHome ? null : highlightAtomId ?? null,
     );
-    controller.setActiveOrbitAtom(
-      settledOffHome ? null : highlightAtomId ?? null,
-    );
+    controller.setActiveOrbitAtom(orbitAtomId);
 
     if (!isHome) {
       const focusAtomId = controller.getFocusedAtomId();
@@ -615,9 +617,6 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
   }
 
   applyViewportMode();
-  applyVisuals();
-  activateCommittedItem(HOME_ITEM_ID);
-  autoplay.start(HOME_ITEM_ID);
   mobileMq.addEventListener('change', onViewportChange);
   tabletMq.addEventListener('change', onViewportChange);
   desktopMq.addEventListener('change', onViewportChange);
@@ -639,6 +638,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     applySpatial(state, applyOptions) {
       spatial.apply(state, applyOptions);
       syncSpatialDebug(state);
+      applyVisuals();
     },
     isBusy: () => navigator.busy,
     onTransition: (listener) => navigator.transitionState.subscribe(listener),

@@ -26,7 +26,7 @@ import { SCENE_BG } from './sceneColors';
 
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
-const WIREFRAME_DIM_COLOR = 0x4a4f54;
+const WIREFRAME_DIM_COLOR = 0x000000;
 const WIREFRAME_OPACITY = 0.22;
 /** Autoplay-next pulse: peak matches committed shell; trough nearly off. */
 const PULSE_OPACITY_MIN = 0.035;
@@ -54,11 +54,10 @@ const SWEEP_NDC_SPAN = 1.38;
 /** Counter-shift sweep Y vs atom screen Y (low atom → higher path, high atom → lower). */
 const SWEEP_VERTICAL_MIRROR = 0.38;
 const SWEEP_PEAK_INTENSITY = 0.26;
-const AMBIENT_BASE = 0.38;
-const CUE_RELIEF_STRENGTH = 0.45;
-const FLASH_DURATION = 0.32;
+const AMBIENT_BASE = 0.24;
+const FLASH_DURATION = 0.6;
 const FLASH_DIM_RELIEF = 0.9;
-const FLASH_OPACITY_BOOST = 0.55;
+const FLASH_OPACITY_BOOST = 0.35;
 const WIREFRAME_DIM_OPACITY = 0.08;
 
 function smoothstep01(t: number): number {
@@ -205,10 +204,10 @@ export class MoleculeScene {
 
     const ambient = new AmbientLight(0xffffff, AMBIENT_BASE);
     this.ambientLight = ambient;
-    const key = new DirectionalLight(0xffffff, 0.9);
+    const key = new DirectionalLight(0xffffff, 1.28);
     key.position.set(3, 4, 5);
     key.castShadow = false;
-    const fill = new DirectionalLight(0xd8dde4, 0.28);
+    const fill = new DirectionalLight(0xd8dde4, 0.14);
     fill.position.set(-2.5, 1.2, -2);
     fill.castShadow = false;
     this.scene.add(ambient, key, fill);
@@ -480,15 +479,11 @@ export class MoleculeScene {
     return SWEEP_DURATION_DESKTOP;
   }
 
-  /** Ring ping + wireframe re-index flash (archive ↔ detail cue). */
+  /** Wireframe re-index flash (archive ↔ detail cue). */
   startArchiveCue(focusedAtomId: string | null): void {
     this.archiveCueAtomId = focusedAtomId;
     this.flashElapsed = 0;
     this.wireframeFlashBoost = 0;
-    if (focusedAtomId) {
-      const atom = this.getAtom(focusedAtomId);
-      atom?.triggerSelectionPing();
-    }
   }
 
   get isEntityCueActive(): boolean {
@@ -566,19 +561,6 @@ export class MoleculeScene {
     this.tagCloud.update(this.camera, this.moleculeGroup);
   }
 
-  private getCueReliefEnvelope(): number {
-    let relief = 0;
-    if (this.sweepElapsed < this.sweepDuration) {
-      const t = this.sweepElapsed / this.sweepDuration;
-      relief = Math.max(relief, Math.sin(Math.PI * t));
-    }
-    if (this.flashElapsed < FLASH_DURATION) {
-      const t = this.flashElapsed / FLASH_DURATION;
-      relief = Math.max(relief, Math.sin(Math.PI * t));
-    }
-    return relief;
-  }
-
   private endEntityLightSweep(): void {
     if (this.sweepAtomId) {
       this.getAtom(this.sweepAtomId)?.setSweepLightingRelief(0);
@@ -636,7 +618,9 @@ export class MoleculeScene {
       this.flashElapsed + deltaSeconds,
     );
     const progress = this.flashElapsed / FLASH_DURATION;
-    this.wireframeFlashBoost = Math.sin(Math.PI * progress);
+    this.wireframeFlashBoost = smoothstep01(
+      Math.sin(Math.PI * progress),
+    );
   }
 
   private updateWireframeDim(deltaSeconds: number): void {
@@ -644,15 +628,15 @@ export class MoleculeScene {
     this.wireframeColorMix +=
       (this.targetWireframeColorMix - this.wireframeColorMix) * t;
 
-    const cueRelief = this.getCueReliefEnvelope() * CUE_RELIEF_STRENGTH;
     const flashRelief = this.wireframeFlashBoost * FLASH_DIM_RELIEF;
-    const effectiveMix =
-      this.wireframeColorMix * (1 - cueRelief) * (1 - flashRelief);
+    const chromeMix = this.wireframeColorMix;
+    // Wireframe blink: archive ↔ post flash only — not entity light sweep (case flip).
+    const wireframeMix = this.wireframeColorMix * (1 - flashRelief);
 
     this.scratchWireframeColor.lerpColors(
       this.wireframeBaseColor,
       this.wireframeDimColor,
-      effectiveMix,
+      wireframeMix,
     );
     this.wireframeMaterial.color.copy(this.scratchWireframeColor);
     this.accentWireframeMaterial.color.copy(this.scratchWireframeColor);
@@ -667,19 +651,13 @@ export class MoleculeScene {
         this.wireframeFlashBoost > 0.001 ? flashOpacity : WIREFRAME_OPACITY;
     }
 
-    const shellMix = effectiveMix;
     this.scratchWireframeColor.lerpColors(
       this.bondBaseColor,
       this.wireframeDimColor,
-      shellMix,
+      chromeMix,
     );
     this.bondMaterial.color.copy(this.scratchWireframeColor);
     this.bondFlowMaterial.color.copy(this.scratchWireframeColor);
-
-    this.decorativeNodes.setChromeColorMix(shellMix);
-    for (const atom of this.atoms) {
-      atom.setShellColorMix(shellMix);
-    }
   }
 
   private updateAccentWireframePulse(deltaSeconds: number, elapsed: number): void {
