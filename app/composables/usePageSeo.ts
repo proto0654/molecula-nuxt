@@ -34,6 +34,7 @@ export function usePageSeo(options: PageSeoOptions): void {
   const config = useRuntimeConfig();
   const siteUrl = String(config.public.siteUrl || '').replace(/\/$/, '');
   const baseURL = config.app.baseURL || '/';
+  const indexable = config.public.indexable !== false;
 
   const resolvedTitle = computed(() => {
     const raw = toValue(options.title);
@@ -58,13 +59,14 @@ export function usePageSeo(options: PageSeoOptions): void {
   });
 
   const canonicalUrl = computed(() => {
-    if (!siteUrl) return undefined;
+    if (!indexable || !siteUrl) return undefined;
     return joinSiteUrl(siteUrl, baseURL, canonicalPath(route.fullPath));
   });
 
   useSeoMeta({
     title: documentTitle,
     description: resolvedDescription,
+    robots: indexable ? undefined : 'noindex, nofollow',
     ogTitle: documentTitle,
     ogDescription: resolvedDescription,
     ogType: options.ogType ?? 'website',

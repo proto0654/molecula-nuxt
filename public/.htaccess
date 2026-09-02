@@ -1,0 +1,13 @@
+# REG.RU / Apache — copied to .output/public on generate
+
+RewriteEngine On
+
+# Legacy WordPress paths → api subdomain
+RewriteRule ^wp-admin(.*)$ https://api.weblaba.ru/wp-admin$1 [R=301,L]
+RewriteRule ^wp-json(.*)$ https://api.weblaba.ru/wp-json$1 [R=301,L]
+RewriteRule ^wp-content/(.*)$ https://api.weblaba.ru/wp-content/$1 [R=301,L]
+
+# Nuxt SPA fallback (prerendered routes are served as files first)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]

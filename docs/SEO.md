@@ -18,8 +18,20 @@ Env:
 |----------|------|
 | `NUXT_PUBLIC_SITE_URL` | Absolute origin for canonical, OG URL, sitemap (default `https://weblaba.ru`; GitHub Pages: `https://proto0654.github.io/molecula-nuxt`) |
 | `NUXT_APP_BASE_URL` | Path prefix (Pages: `/molecula-nuxt/`) |
+| `NUXT_PUBLIC_INDEXABLE` | `false` on preview — `robots.txt` Disallow, meta `noindex`, empty sitemap; default indexable on production |
 
 Global favicon / apple-touch: `public/sign-weblaba.svg` + `public/sign-weblaba.png` via `nuxt.config.ts` `app.head.link` (`publicAsset()` prefixes `NUXT_APP_BASE_URL` for GitHub Pages).
+
+## Preview vs production indexing
+
+[`lib/seo-static.ts`](../lib/seo-static.ts) `isIndexable()` reads `NUXT_PUBLIC_INDEXABLE`:
+
+| Build | `INDEXABLE` | `robots.txt` | `sitemap.xml` | Canonical / meta |
+|-------|-------------|--------------|---------------|------------------|
+| Production | `true` (default) | `Allow: /` + Sitemap | all prerender routes | canonical + normal OG |
+| GitHub Pages preview | `false` | `Disallow: /` | empty urlset | no canonical; `noindex, nofollow` |
+
+See [DEPLOY.md](DEPLOY.md) for workflow env and verification steps.
 
 ## Homepage copy
 
@@ -38,8 +50,8 @@ Used by `stripTags`, `stripHtmlToPlain`, archive rows, DetailNav labels, SEO tit
 
 [`lib/seo-static.ts`](../lib/seo-static.ts) + [`nuxt.config.ts`](../nuxt.config.ts) `nitro:build:public-assets` hook writes:
 
-- `/robots.txt` — `Allow: /`, `Sitemap: {siteUrl}/sitemap.xml`
-- `/sitemap.xml` — all prerender routes (static pages + portfolio/service slugs from WP)
+- `/robots.txt` — production: `Allow: /`, `Sitemap: {siteUrl}/sitemap.xml`; preview: `Disallow: /`
+- `/sitemap.xml` — all prerender routes on production; empty on preview (`NUXT_PUBLIC_INDEXABLE=false`)
 
 Route list is the same set queued in the `nitro:config` hook.
 
@@ -62,6 +74,7 @@ Not in scope yet: JSON-LD, Yoast fields from WP, contrast token audit, keyboard 
 
 ## Gotchas
 
-- Set **`NUXT_PUBLIC_SITE_URL`** on GitHub Pages deploy so canonical/sitemap URLs match the preview host (see [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)).
+- Set **`NUXT_PUBLIC_SITE_URL`** per deploy target (see [DEPLOY.md](DEPLOY.md)).
+- Preview builds must set **`NUXT_PUBLIC_INDEXABLE=false`** so GitHub Pages is not indexed.
 - Home tab title is the full `HOME_SEO_TITLE` string — intentionally longer than brand-only «WebLaba».
 - Scramble animation paint layers stay `aria-hidden`; stable name is in `aria-label` (same pattern as USP headline after this pass).

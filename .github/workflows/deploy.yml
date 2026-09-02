@@ -32,8 +32,9 @@ jobs:
       - run: npm run generate
         env:
           NUXT_APP_BASE_URL: /molecula-nuxt/
-          NUXT_PUBLIC_WP_API_BASE: https://weblaba.ru/wp-json
+          NUXT_PUBLIC_WP_API_BASE: https://api.weblaba.ru/wp-json
           NUXT_PUBLIC_SITE_URL: https://proto0654.github.io/molecula-nuxt
+          NUXT_PUBLIC_INDEXABLE: false
 
       - uses: actions/upload-pages-artifact@v3
         with:

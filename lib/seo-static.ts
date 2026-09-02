@@ -6,6 +6,11 @@ export function setPrerenderRoutes(routes: string[]): void {
   prerenderRoutes = [...routes];
 }
 
+/** `NUXT_PUBLIC_INDEXABLE=false` blocks crawlers (GitHub Pages preview). */
+export function isIndexable(): boolean {
+  return process.env.NUXT_PUBLIC_INDEXABLE !== 'false';
+}
+
 function siteUrl(): string {
   return (process.env.NUXT_PUBLIC_SITE_URL || 'https://weblaba.ru').replace(
     /\/$/,
@@ -26,6 +31,9 @@ function absoluteRoute(route: string): string {
 }
 
 export function buildRobotsTxt(): string {
+  if (!isIndexable()) {
+    return 'User-agent: *\nDisallow: /\n';
+  }
   const sitemapUrl = `${absoluteRoute('/').replace(/\/$/, '')}/sitemap.xml`.replace(
     /([^:]\/)\/+/g,
     '$1',
@@ -34,7 +42,9 @@ export function buildRobotsTxt(): string {
 }
 
 export function buildSitemapXml(routes: string[] = prerenderRoutes): string {
-  const unique = [...new Set(routes)].sort((a, b) => a.localeCompare(b));
+  const unique = isIndexable()
+    ? [...new Set(routes)].sort((a, b) => a.localeCompare(b))
+    : [];
   const body = unique
     .map((route) => `  <url><loc>${absoluteRoute(route)}</loc></url>`)
     .join('\n');

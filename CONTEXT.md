@@ -11,12 +11,15 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 - troika-three-text (screen-flat atom captions via `AtomLabel`; decorative hero tag cloud via `TagCloud`)
 - WordPress REST: `NUXT_PUBLIC_WP_API_BASE` → `runtimeConfig.public.wpApiBase`
 
-## Live preview
+## Live sites
 
+- **Production:** [weblaba.ru](https://weblaba.ru) — [deploy-production.yml](.github/workflows/deploy-production.yml) (rsync to REG.RU on push to `main`)
+- **Preview:** [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/) — [deploy.yml](.github/workflows/deploy.yml) (`NUXT_APP_BASE_URL=/molecula-nuxt/`, `NUXT_PUBLIC_INDEXABLE=false`)
+- **WordPress CMS:** [api.weblaba.ru/wp-json](https://api.weblaba.ru/wp-json) — `NUXT_PUBLIC_WP_API_BASE`
 - Repository: [github.com/proto0654/molecula-nuxt](https://github.com/proto0654/molecula-nuxt) (`origin`; legacy Vite/prototype remote: `molecule` → [proto0654/molecule](https://github.com/proto0654/molecule))
-- GitHub Pages (push to `main`): [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/) (`NUXT_APP_BASE_URL=/molecula-nuxt/`)
 - Local: `npm run dev` / `npm run build` / `npm run generate` / `npm run preview`
 - Node: `^22.19.0` (see `package.json` engines)
+- Deploy setup: [docs/DEPLOY.md](docs/DEPLOY.md)
 
 ## Entry points
 

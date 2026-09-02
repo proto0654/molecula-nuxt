@@ -22,7 +22,7 @@ Before editing docs, ensure the codebase matches what we document:
 3. If not on **`main`** and the **branch work is done** — remind: merge to `main` when ready (Pages deploys on push to `main`).
 4. Note in output: **«Snapshot: `<git log -1 --oneline>` on `<branch>`»**.
 
-Deploy already exists: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) runs `npm run generate` with `NUXT_APP_BASE_URL=/molecula-nuxt/` and `NUXT_PUBLIC_WP_API_BASE`. Primary remote: `origin` → [proto0654/molecula-nuxt](https://github.com/proto0654/molecula-nuxt). Do **not** invent a second pipeline. Only document workflow / env / `baseURL` changes if they actually changed.
+Deploy already exists: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) (Pages preview, `NUXT_PUBLIC_INDEXABLE=false`) and [`.github/workflows/deploy-production.yml`](../../.github/workflows/deploy-production.yml) (weblaba.ru rsync). `NUXT_PUBLIC_WP_API_BASE=https://api.weblaba.ru/wp-json`. Primary remote: `origin` → [proto0654/molecula-nuxt](https://github.com/proto0654/molecula-nuxt). See [docs/DEPLOY.md](../../docs/DEPLOY.md).
 
 Node: `^22.19.0` (see `package.json` engines). Scripts: `npm run dev` / `build` / `generate` / `preview`.
 

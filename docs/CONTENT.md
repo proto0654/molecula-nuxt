@@ -118,7 +118,7 @@ Mobile field mapping (cases): slices from `screen-mobile` (`block_ratio` default
 
 [`nuxt.config.ts`](../nuxt.config.ts) `nitro:config` hook fetches publish slugs and queues `/portfolio/{slug}` and `/services/{slug}`. GitHub Pages uses `npm run generate` (static); no Nitro runtime.
 
-Deploy: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) with `NUXT_APP_BASE_URL=/molecula-nuxt/` and `NUXT_PUBLIC_WP_API_BASE`. Preview: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/).
+Deploy: [DEPLOY.md](DEPLOY.md) — production [weblaba.ru](https://weblaba.ru) via [deploy-production.yml](../.github/workflows/deploy-production.yml); preview [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/) via [deploy.yml](../.github/workflows/deploy.yml) (`NUXT_PUBLIC_INDEXABLE=false`). WP API: `https://api.weblaba.ru/wp-json`.
 
 ## Gotchas
 

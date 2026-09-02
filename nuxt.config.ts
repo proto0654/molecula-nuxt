@@ -5,13 +5,14 @@ import tailwindcss from '@tailwindcss/vite';
 import {
   buildRobotsTxt,
   buildSitemapXml,
+  isIndexable,
   setPrerenderRoutes,
 } from './lib/seo-static';
 
 function wpApiBase(): string {
   return (
     process.env.NUXT_PUBLIC_WP_API_BASE ||
-    'https://weblaba.ru/wp-json'
+    'https://api.weblaba.ru/wp-json'
   ).replace(/\/$/, '');
 }
 
@@ -23,6 +24,8 @@ function appBaseURL(): string {
 function publicAsset(path: string): string {
   return `${appBaseURL()}${path.replace(/^\//, '')}`;
 }
+
+const indexable = isIndexable();
 
 type SlimPost = { slug: string };
 
@@ -73,6 +76,9 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        ...(indexable
+          ? []
+          : [{ name: 'robots', content: 'noindex, nofollow' }]),
       ],
       link: [
         {
@@ -95,9 +101,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       /** WordPress REST base. Override with NUXT_PUBLIC_WP_API_BASE. */
-      wpApiBase: 'https://weblaba.ru/wp-json',
+      wpApiBase: 'https://api.weblaba.ru/wp-json',
       /** Public site origin for canonical/OG/sitemap. Override with NUXT_PUBLIC_SITE_URL. */
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://weblaba.ru',
+      /** false on preview builds — robots.txt Disallow + meta noindex. */
+      indexable,
     },
   },
   typescript: {

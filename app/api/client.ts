@@ -16,7 +16,7 @@ export function getWpApiBaseFromEnv(): string {
   const base =
     process.env.NUXT_PUBLIC_WP_API_BASE ||
     process.env.NUXT_PUBLIC_WP_API_BASE_URL ||
-    'https://weblaba.ru/wp-json';
+    'https://api.weblaba.ru/wp-json';
   return base.replace(/\/$/, '');
 }
 
