@@ -1,9 +1,11 @@
-name: Deploy to GitHub Pages
+name: Preview · GitHub Pages
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+run-name: Preview — GitHub Pages (${{ github.sha }})
 
 permissions:
   contents: read

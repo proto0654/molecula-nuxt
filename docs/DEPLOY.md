@@ -57,7 +57,7 @@ Repository → **Settings** → **Secrets and variables** → **Actions** → **
 |--------|--------|
 | `DEPLOY_HOST` | SSH hostname from REG.RU panel |
 | `DEPLOY_USER` | `u1396397` (your hosting user) |
-| `DEPLOY_SSH_KEY` | Full private key file (`-----BEGIN OPENSSH PRIVATE KEY-----` … `-----END …`) |
+| `DEPLOY_SSH_KEY` | Full **private** key file (`-----BEGIN OPENSSH PRIVATE KEY-----` … `-----END OPENSSH PRIVATE KEY-----`). Not the `.pub` file. Copy from VS Code / Notepad — all lines, no extra spaces. |
 | `DEPLOY_PATH` | `www/weblaba.ru/` (relative to home; confirm with `pwd` in shell inside `~/www/weblaba.ru`) |
 
 `DEPLOY_PATH` must end with `/`. The workflow rsyncs **contents** of `.output/public/` into this directory with `--delete`.
@@ -67,7 +67,7 @@ Repository → **Settings** → **Secrets and variables** → **Actions** → **
 ## Part C — First production deploy
 
 1. Commit and push workflows to `main` (or merge PR).
-2. GitHub → **Actions** → **Deploy production** — wait for green check.
+2. GitHub → **Actions** → **Production · weblaba.ru** — wait for green check.
 3. Open [https://weblaba.ru](https://weblaba.ru):
    - Home + WebGL hero
    - `/portfolio` — archive loads
@@ -84,8 +84,10 @@ Every push to `main` runs **both**:
 
 | Workflow | Destination | Purpose |
 |----------|-------------|---------|
-| Deploy to GitHub Pages | `proto0654.github.io/molecula-nuxt` | QA / share preview link |
-| Deploy production | `weblaba.ru` | Live site |
+| Preview · GitHub Pages | `proto0654.github.io/molecula-nuxt` | QA / share preview link |
+| Production · weblaba.ru | `weblaba.ru` | Live site |
+
+In the Actions list, runs are titled **Preview — GitHub Pages** vs **Production — weblaba.ru** (via `run-name`).
 
 They build with different env vars; production does not affect Pages base path.
 
@@ -154,7 +156,7 @@ npm run generate
 
 | Symptom | Fix |
 |---------|-----|
-| rsync `Permission denied` | Check `DEPLOY_SSH_KEY`, key in `authorized_keys`, folder permissions on `~/www/weblaba.ru` |
+| `Error loading key "(stdin)": error in libcrypto` | Re-create `DEPLOY_SSH_KEY` secret: paste private key again (entire file, Unix newlines). Verify locally: `ssh -i C:\Users\proto\.ssh\weblaba_deploy u1396397@HOST "echo ok"` |
 | rsync `No such file or directory` | Fix `DEPLOY_PATH`; create folder in shell: `mkdir -p ~/www/weblaba.ru` |
 | Build fails fetching slugs | `api.weblaba.ru/wp-json` must be reachable from GitHub runners (public HTTPS) |
 | Images 404 on weblaba.ru | WP still serving old `weblaba.ru/wp-content` URLs — run `wp search-replace` on api |

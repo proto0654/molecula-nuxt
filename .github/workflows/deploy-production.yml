@@ -1,9 +1,11 @@
-name: Deploy production
+name: Production · weblaba.ru
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+run-name: Production — weblaba.ru (${{ github.sha }})
 
 concurrency:
   group: production
@@ -30,12 +32,14 @@ jobs:
           NUXT_PUBLIC_WP_API_BASE: https://api.weblaba.ru/wp-json
           NUXT_PUBLIC_INDEXABLE: true
 
-      - name: Deploy via rsync
-        uses: burnett01/rsync-deployments@7.0.1
+      - name: Load SSH deploy key
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          switches: -avzr --delete
-          path: .output/public/
-          remote_path: ${{ secrets.DEPLOY_PATH }}
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avzr --delete \
+            -e "ssh -o StrictHostKeyChecking=accept-new" \
+            .output/public/ \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}"
