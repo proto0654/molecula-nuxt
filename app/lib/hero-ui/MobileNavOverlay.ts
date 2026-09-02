@@ -1,6 +1,7 @@
+import type { HeroChromeCopy } from '../../domain/options/heroChromeCopy';
 import { createFocusTrap, setPageInert } from '../a11y/focusTrap';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
-import { navigationConfig } from '../navigation/navigationConfig';
+import { getItemById, navigationConfig } from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
 import type { NavSelectListener } from './Navigation';
 import { createSiteLogoMark } from './siteLogoMark';
@@ -23,6 +24,7 @@ export class MobileNavOverlay {
   private readonly onKeyDownBound: (event: KeyboardEvent) => void;
   private focusTrap: ReturnType<typeof createFocusTrap> | null = null;
   private open = false;
+  private chromeCopy: HeroChromeCopy | null = null;
   private enterGeneration = 0;
   private static readonly REVEAL_CAP = 6;
 
@@ -259,6 +261,23 @@ export class MobileNavOverlay {
     this.statusSignal.textContent = committed
       ? 'СТАТУС АКТИВЕН'
       : 'СТАТУС ГОТОВ';
+  }
+
+  setChromeCopy(copy: HeroChromeCopy): void {
+    this.chromeCopy = copy;
+    this.root.setAttribute('aria-label', copy.mobileNavAriaLabel);
+    const logoBtn = this.root.querySelector<HTMLButtonElement>('.mobile-nav-overlay__logo');
+    logoBtn?.setAttribute('aria-label', copy.logoAriaLabel);
+  }
+
+  syncNavigationCopy(): void {
+    for (const [id, el] of this.itemElements) {
+      const item = getItemById(id);
+      if (!item) continue;
+      const label = el.querySelector('.mobile-nav-overlay__label');
+      if (label) label.textContent = item.label;
+    }
+    this.sync();
   }
 
   dispose(): void {

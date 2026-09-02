@@ -62,6 +62,10 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
+  /** Dev has no `_payload.json`; disabling extraction avoids 404 on archive → detail nav. */
+  experimental: {
+    payloadExtraction: process.env.NODE_ENV === 'production',
+  },
   css: ['~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],

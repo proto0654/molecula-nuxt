@@ -3,6 +3,8 @@
  * Absence stays null / empty — never fake placeholders for conditional UI.
  */
 
+import type { UiStrings } from './uiStrings';
+
 export type CaseImage = {
   id: number;
   url: string;
@@ -178,4 +180,48 @@ export type NavigationMenu = {
   name: string;
   count: number;
   items: NavigationMenuItem[];
+};
+
+/** Normalized hero nav row from ACF options repeater. */
+export type HeroNavItemRow = {
+  navId: string;
+  label: string | null;
+  blurb: string | null;
+  blurbCta: string | null;
+  usp: string | null;
+};
+
+export type ScrollToTopSettings = {
+  enabled: boolean;
+  triggerPx: number;
+  bgColor: string;
+  iconColor: string;
+  sizePx: number;
+  offsetBottomPx: number;
+  offsetRightPx: number | null;
+};
+
+export type ThemeOptionsFooter = {
+  disclaimer: string | null;
+  cookieNotice: string | null;
+  copyright: string | null;
+};
+
+export type ThemeOptionsSchemaOrg = {
+  enabled: boolean;
+  name: string | null;
+  url: string | null;
+  description: string | null;
+  telephone: string | null;
+  sameAs: string[];
+};
+
+/** Normalized theme options (RU). */
+export type ThemeOptions = {
+  ui: UiStrings;
+  heroNavItems: HeroNavItemRow[];
+  scrollToTop: ScrollToTopSettings;
+  footer: ThemeOptionsFooter;
+  schemaOrg: ThemeOptionsSchemaOrg;
+  gtmContainerId: string | null;
 };

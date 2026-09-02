@@ -1,3 +1,4 @@
+import type { HeroChromeCopy } from '../../domain/options/heroChromeCopy';
 import {
   getItemById,
   navigationConfig,
@@ -28,8 +29,10 @@ export class SiteHeader {
   private readonly linkElements = new Map<string, HTMLElement>();
   private readonly nodeEl: HTMLElement;
   private readonly menuBtn: HTMLButtonElement;
+  private readonly navState: NavigationState;
   private readonly unsubscribe: () => void;
   private menuOpen = false;
+  private chromeCopy: HeroChromeCopy | null = null;
   private onMenuToggle: MenuToggleListener | undefined;
   private onSelect: HeaderSelectListener | undefined;
 
@@ -38,6 +41,7 @@ export class SiteHeader {
     state: NavigationState,
     options: SiteHeaderOptions = {},
   ) {
+    this.navState = state;
     const assetBase = options.assetBaseURL ?? '/';
 
     this.root = document.createElement('header');
@@ -122,7 +126,30 @@ export class SiteHeader {
     this.menuOpen = open;
     this.menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     this.menuBtn.textContent = open ? 'ЗАКРЫТЬ / NAV' : 'МЕНЮ / NAV';
+    this.syncMenuAria();
     this.root.classList.toggle('is-menu-open', open);
+  }
+
+  setChromeCopy(copy: HeroChromeCopy): void {
+    this.chromeCopy = copy;
+    this.syncChromeCopy();
+  }
+
+  private syncChromeCopy(): void {
+    const copy = this.chromeCopy;
+    if (!copy) return;
+    this.logoBtn.setAttribute('aria-label', copy.logoAriaLabel);
+    this.routesEl.setAttribute('aria-label', copy.routesNavAriaLabel);
+    this.syncMenuAria();
+  }
+
+  private syncMenuAria(): void {
+    const copy = this.chromeCopy;
+    if (!copy) return;
+    this.menuBtn.setAttribute(
+      'aria-label',
+      this.menuOpen ? copy.menuCloseAriaLabel : copy.menuOpenAriaLabel,
+    );
   }
 
   get isMenuOpen(): boolean {
@@ -131,6 +158,16 @@ export class SiteHeader {
 
   setSlideProgress(ratio: number): void {
     this.slideProgress.setProgress(ratio);
+  }
+
+  syncNavigationCopy(): void {
+    for (const [id, el] of this.linkElements) {
+      const item = getItemById(id);
+      if (!item) continue;
+      const label = el.querySelector('.site-header__link-label');
+      if (label) label.textContent = item.label;
+    }
+    this.syncNode(this.navState);
   }
 
   private syncLinks(state: NavigationState): void {

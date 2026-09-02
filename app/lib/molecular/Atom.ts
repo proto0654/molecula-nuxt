@@ -166,6 +166,10 @@ export class Atom {
     this.atomLabel.setVisible(visible);
   }
 
+  setCaption(caption: string): void {
+    this.atomLabel.setCaption(caption);
+  }
+
   updateLabel(camera: Camera): void {
     this.atomLabel.update(camera, this.mesh);
   }

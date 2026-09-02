@@ -122,7 +122,7 @@ export async function getPortfolioSlimIndex(
   let page = 1;
   let totalPages = 1;
   const items: PortfolioSlimItem[] = [];
-  const base = baseOverride ?? getWpApiBaseFromEnv();
+  const base = typeof baseOverride === 'string' ? baseOverride : getWpApiBaseFromEnv();
 
   while (page <= totalPages) {
     const result = await wpFetchPaginated<SlimIndexRaw[]>(

@@ -80,3 +80,15 @@ export function getItemById(id: string): NavigationItem | undefined {
 export function getItemByAtomId(atomId: string): NavigationItem | undefined {
   return itemsByAtomId.get(atomId);
 }
+
+/** Replace nav copy in-place (structure id/atomId/route must stay stable). */
+export function applyNavigationItems(items: readonly NavigationItem[]): void {
+  navigationConfig.items.length = 0;
+  navigationConfig.items.push(...items);
+  itemsById.clear();
+  itemsByAtomId.clear();
+  for (const item of navigationConfig.items) {
+    itemsById.set(item.id, item);
+    itemsByAtomId.set(item.atomId, item);
+  }
+}

@@ -1,4 +1,7 @@
-import { navigationConfig } from '../navigation/navigationConfig';
+import {
+  getItemById,
+  navigationConfig,
+} from '../navigation/navigationConfig';
 import { NavigationState } from '../navigation/NavigationState';
 import { HeroSlideProgress } from './HeroSlideProgress';
 import { attachTapGuard } from './tapGuard';
@@ -140,6 +143,17 @@ export class Navigation {
 
   setSlideProgress(ratio: number): void {
     this.slideProgress.setProgress(ratio);
+  }
+
+  syncNavigationCopy(): void {
+    for (const [id, el] of this.itemElements) {
+      const item = getItemById(id);
+      if (!item) continue;
+      const label = el.querySelector('.nav__label');
+      if (label) label.textContent = item.label;
+      const indexText = el.querySelector('.nav__index')?.textContent ?? '';
+      el.setAttribute('aria-label', `${indexText} ${item.label}`.trim());
+    }
   }
 
   /**

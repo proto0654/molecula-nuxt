@@ -7,13 +7,17 @@ const { revealing } = usePageContentReveal();
 
 const heroMedia = contactHeroMedia();
 
+const pageHeading = computed(() => 'Контакты');
+
+const seoTitle = computed(() => page.value?.title ?? pageHeading.value);
+
 const pageDescription = computed(() => {
   if (!page.value) return 'Контакты WebLaba';
   return contactExcerptPlain(page.value) ?? 'Контакты WebLaba';
 });
 
 usePageSeo({
-  title: 'Контакты',
+  title: seoTitle,
   description: pageDescription,
 });
 </script>
@@ -31,7 +35,7 @@ usePageSeo({
       <EditorialHero :media="heroMedia">
         <header class="archive-heading">
           <p class="archive-heading__kicker">Index</p>
-          <SiteScrambleTitle class="archive-heading__title" text="Контакты" />
+          <SiteScrambleTitle class="archive-heading__title" :text="pageHeading" />
         </header>
 
         <p v-if="page.text" class="archive-intro">{{ page.text }}</p>

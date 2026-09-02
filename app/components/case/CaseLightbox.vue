@@ -4,6 +4,13 @@ import { createFocusTrap, setPageInert } from '~/lib/a11y/focusTrap';
 const lightbox = useCaseLightbox();
 const panelRef = ref<HTMLElement | null>(null);
 
+const dialogLabelFallback = useUiString(
+  'screenshot_lightbox_dialog_label',
+  'Просмотр скриншота',
+);
+const closeAria = useUiString('screenshot_lightbox_close_aria', 'Закрыть');
+const navAria = useUiString('screenshot_lightbox_toggle_aria', 'Переключить скриншот');
+
 let trap: ReturnType<typeof createFocusTrap> | null = null;
 let triggerEl: HTMLElement | null = null;
 
@@ -64,12 +71,12 @@ onBeforeUnmount(() => {
       class="case-lightbox"
       role="dialog"
       aria-modal="true"
-      :aria-label="lightbox.current.label"
+      :aria-label="lightbox.current.label || dialogLabelFallback"
     >
       <button
         type="button"
         class="case-lightbox__backdrop"
-        aria-label="Закрыть"
+        :aria-label="closeAria"
         @click="lightbox.close"
       />
       <div ref="panelRef" class="case-lightbox__panel">
@@ -80,7 +87,7 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="case-lightbox__nav"
-                aria-label="Предыдущее"
+                :aria-label="`${navAria}: предыдущее`"
                 @click="lightbox.prev"
               >
                 Назад
@@ -88,7 +95,7 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="case-lightbox__nav"
-                aria-label="Следующее"
+                :aria-label="`${navAria}: следующее`"
                 @click="lightbox.next"
               >
                 Вперёд
@@ -97,7 +104,7 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="case-lightbox__close"
-              aria-label="Закрыть"
+              :aria-label="closeAria"
               @click="lightbox.close"
             >
               Закрыть

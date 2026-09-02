@@ -5,6 +5,8 @@ const awaitingPose = useAwaitingPose();
 
 const pageInert = computed(() => awaitingPose.value && !isHome.value);
 
+useSiteIntegrations();
+
 useHead({
   htmlAttrs: computed(() => ({
     class: isHome.value ? 'hero-lock' : '',
@@ -31,5 +33,7 @@ useHead({
     >
       <slot />
     </main>
+    <SiteFooterLegal />
+    <SiteScrollToTop />
   </div>
 </template>

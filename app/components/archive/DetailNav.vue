@@ -25,6 +25,11 @@ const props = withDefaults(
 
 const archiveHref = ref(props.basePath);
 
+const nextLabel = useUiString('case_nav_next_label', 'Следующий');
+const prevLabel = useUiString('case_nav_prev_label', 'Предыдущий');
+const sectionLabel = useUiString('case_nav_see_also', 'Далее');
+const navNoneLabel = useUiString('case_nav_none', '—');
+
 onMounted(() => {
   archiveHref.value = archiveIndexHref(undefined, props.archiveScope);
 });
@@ -62,7 +67,7 @@ function plainTitle(title: string | null | undefined): string {
       v-if="isCase"
       class="case-zone-label"
       :index="sectionIndex!"
-      label="Далее"
+      :label="sectionLabel"
       tone="editorial"
     />
 
@@ -82,12 +87,12 @@ function plainTitle(title: string | null | undefined): string {
               class="case-nav__link"
               @pointerdown.capture="armSweep(1)"
             >
-              <span class="case-nav__dir">Следующий</span>
+              <span class="case-nav__dir">{{ nextLabel }}</span>
               <span>{{ plainTitle(nextTitle) || nextSlug }}</span>
             </NuxtLink>
             <span v-else class="case-nav__muted">
-              <span class="case-nav__dir">Следующий</span>
-              —
+              <span class="case-nav__dir">{{ nextLabel }}</span>
+              {{ navNoneLabel }}
             </span>
           </div>
 
@@ -98,12 +103,12 @@ function plainTitle(title: string | null | undefined): string {
               class="case-nav__link"
               @pointerdown.capture="armSweep(-1)"
             >
-              <span class="case-nav__dir">Предыдущий</span>
+              <span class="case-nav__dir">{{ prevLabel }}</span>
               <span>{{ plainTitle(prevTitle) || prevSlug }}</span>
             </NuxtLink>
             <span v-else class="case-nav__muted">
-              <span class="case-nav__dir">Предыдущий</span>
-              —
+              <span class="case-nav__dir">{{ prevLabel }}</span>
+              {{ navNoneLabel }}
             </span>
           </div>
         </div>

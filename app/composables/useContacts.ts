@@ -1,17 +1,15 @@
-import { getThemeOptions } from '~/api';
 import { normalizeContactPage } from '~/domain/contacts';
 import type { ContactPage } from '~/types/wp';
 
 export function useContacts() {
-  const { data, pending, error, refresh } = useAsyncData(
-    'theme-contacts',
-    async (): Promise<ContactPage> => {
-      return normalizeContactPage(await getThemeOptions());
-    },
+  const { acf, pending, error, refresh } = useThemeOptionsAcfData();
+
+  const page = computed((): ContactPage | null =>
+    acf.value ? normalizeContactPage(acf.value) : null,
   );
 
   return {
-    page: computed(() => data.value ?? null),
+    page,
     pending,
     error,
     refresh,

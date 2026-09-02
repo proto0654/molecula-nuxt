@@ -3,6 +3,8 @@
  * @see docs/api-real-response.md
  */
 
+import type { UiStringKey } from './uiStrings';
+
 export type WpRendered = {
   rendered: string;
   protected?: boolean;
@@ -207,7 +209,25 @@ export type HeroTagCloudRow = {
   tier?: string | false;
 };
 
-export type ThemeOptionsAcf = {
+export type HeroNavItemAcfRow = {
+  nav_id?: string | false;
+  label?: string | false;
+  blurb?: string | false;
+  blurb_cta?: string | false;
+  usp?: string | false;
+  label_en?: string | false;
+  blurb_en?: string | false;
+  blurb_cta_en?: string | false;
+  usp_en?: string | false;
+};
+
+export type SchemaOrgSameAsRow = {
+  url?: string | false;
+};
+
+type ThemeOptionsUiFields = Partial<Record<UiStringKey, string | false>>;
+
+export type ThemeOptionsAcf = ThemeOptionsUiFields & {
   services_section_heading?: string | false;
   services_section_heading_en?: string | false;
   services_price_from?: string | false;
@@ -215,11 +235,26 @@ export type ThemeOptionsAcf = {
   hero_order_label?: string | false;
   hero_order_label_en?: string | false;
   hero_tag_cloud?: HeroTagCloudRow[] | false;
+  hero_nav_items?: HeroNavItemAcfRow[] | false;
   weblaba_contacts?: ContactAcfRow[] | false;
   contact_popup_title?: string | false;
   contact_popup_title_en?: string | false;
   contact_popup_text?: string | false;
   contact_popup_text_en?: string | false;
+  scroll_to_top_enabled?: boolean | number | string | false;
+  scroll_to_top_trigger_px?: number | false;
+  scroll_to_top_bg_color?: string | false;
+  scroll_to_top_icon_color?: string | false;
+  scroll_to_top_size_px?: number | false;
+  scroll_to_top_offset_bottom_px?: number | false;
+  scroll_to_top_offset_right_px?: number | false;
+  schema_org_enabled?: boolean | number | string | false;
+  schema_org_name?: string | false;
+  schema_org_url?: string | false;
+  schema_org_description?: string | false;
+  schema_org_telephone?: string | false;
+  schema_org_same_as?: SchemaOrgSameAsRow[] | false;
+  gtm_container_id?: string | false;
 };
 
 export type WpAcfOptionsResponse = {

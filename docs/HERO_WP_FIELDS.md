@@ -1,9 +1,11 @@
 # Hero navigation — WordPress fields & seed
 
-Spec for moving molecular hero copy from [`navigationConfig.ts`](../app/lib/navigation/navigationConfig.ts) into WordPress. **Not wired in Nuxt yet** — hardcode remains source of truth until a normalizer + hero bootstrap read options.
+Spec for molecular hero copy in WordPress Options. **Wired in Nuxt** — `mergeHeroNavigation()` merges WP rows into `navigationConfig`; when `hero_nav_items` is empty, hardcoded defaults apply.
 
 Live options endpoint (same payload as contacts / services chrome):  
 `GET /acf/v3/options/options`
+
+Coverage log + full field map: [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
 
 ---
 
@@ -105,7 +107,7 @@ Full JSON: [`seed/hero-navigation-options.seed.json`](seed/hero-navigation-optio
 2. Enter five rows from seed table or JSON.
 3. Save Options.
 4. Verify REST: `hero_nav_items` array with 5 objects.
-5. (Later) Extend `ThemeOptionsAcf`, add `normalizeHeroNavigation()`, merge in `mountHeroApp`.
+5. ~~Extend `ThemeOptionsAcf`, `normalizeHeroNavigation()`, merge in hero bootstrap~~ **Done** — fill repeater in WP; dev console `[theme-options] coverage` confirms `hero_nav_items: ok`.
 
 ---
 

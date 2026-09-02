@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getServiceBySlug, getServiceSlimIndex, getThemeOptions } from '~/api';
+import { getServiceBySlug, getServiceSlimIndex } from '~/api';
 import { getServicePosition } from '~/domain/services/adjacent';
 import { resolveAdjacentFlipDirection } from '~/composables/useCasePageTransition';
 import {
@@ -16,7 +16,7 @@ const slug = computed(() => String(route.params.slug || ''));
 
 const { data: serviceSlimIndex } = useAsyncData(
   'service-slim-index',
-  getServiceSlimIndex,
+  () => getServiceSlimIndex(),
 );
 
 const { data, pending, error } = useAsyncData(
@@ -30,16 +30,14 @@ const { data, pending, error } = useAsyncData(
       throw createError({ statusCode: 404, statusMessage: 'Service not found', fatal: true });
     }
     const service = normalizeServicePost(raw);
-    const slim = await getServiceSlimIndex();
+    const slim = serviceSlimIndex.value ?? (await getServiceSlimIndex());
     const position = getServicePosition(slug.value, slim);
     return { service, position };
   },
   { watch: [slug] },
 );
 
-const { data: chromeData } = useAsyncData('service-chrome', async () => {
-  return normalizeServiceChrome(await getThemeOptions());
-});
+const { acf: themeAcf } = useThemeOptionsAcfData();
 
 const held = shallowRef(data.value ?? null);
 watch(
@@ -51,15 +49,10 @@ watch(
 );
 
 const service = computed(() => held.value?.service ?? null);
+
 const position = computed(() => held.value?.position);
-const chrome = computed(
-  () =>
-    chromeData.value ?? {
-      sectionHeading: null,
-      priceFrom: null,
-      orderLabel: null,
-    },
-);
+const backToArchiveLabel = useUiString('services_back_to_archive', 'К услугам');
+const chrome = computed(() => normalizeServiceChrome(themeAcf.value));
 
 const ready = computed(
   () => Boolean(data.value?.service) && data.value?.service?.slug === slug.value,
@@ -172,7 +165,7 @@ usePageSeo({
         :prev-title="position?.prev?.title ?? null"
         :next-title="position?.next?.title ?? null"
         base-path="/services"
-        index-label="К услугам"
+        :index-label="backToArchiveLabel"
         archive-scope="services"
         aria-label="Навигация по услугам"
       />

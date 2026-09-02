@@ -151,15 +151,19 @@ Theme options chrome (same options payload):
 | `contact_popup_text` | messenger CTA copy | EN pair |
 | `weblaba_contacts` | repeater (see below) | `label_en` per row |
 | `hero_tag_cloud` | repeater: `label` + `tier` (`primary` / `secondary`) | none |
-| `hero_nav_items` | **Not live yet** — planned repeater for molecular hero copy (`nav_id`, `label`, `blurb`, `blurb_cta`, `usp`). Spec + seed: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md) |
+| `hero_nav_items` | repeater wired in Nuxt; **empty on live API** — fill per [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md) |
+| `footer_*`, `scroll_to_top_*`, `schema_org_*` | wired in Nuxt (`SiteFooterLegal`, `SiteScrollToTop`, JSON-LD) |
+| `gtm_container_id` | wired; **empty** on live API |
+| Header/drawer aria, archive headings, case nav, lightbox aria | wired — see [`THEME_OPTIONS.md`](THEME_OPTIONS.md) |
+| `case_thanks_message`, legacy portfolio strings, `lang_switch_aria` | in API; **not wired** in UI yet |
 
 Contacts repeater (`weblaba_contacts`, 2026-08-27): Telegram, `tel:`, VK, mailto. Fields: `label`, `label_en`, `url`, `icon` (Iconify id, e.g. `bx:bxltelegram`, `mdi:vk`), `target` (`_self` / `_blank`), `show_in_header` (legacy), `show_in_socialbar`. No WP page with slug `contact` — options only. Empty repeater is `false` / `[]`; Nuxt does not inject PHP Telegram+phone defaults.
 
 Hero tag cloud (`hero_tag_cloud`, 2026-08-30): `AI` / `SYSTEMS` / `DESIGN` (primary), `MCP` / `RAG` / `AGENTS` / `AUTOMATIONS` (secondary). Empty repeater is `false` / `[]`.
 
-Other options present but unused in Nuxt: footer legal, schema.org (`schema_org_description` empty, `schema_org_telephone` empty, `schema_org_same_as` = `false`), header/drawer strings, scroll-to-top. `gtm_container_id` is **not** in the live payload.
-
 Nuxt archive is compact rows (like portfolio), **not** the WP `all_services` dump of full repeaters on one page. Detail is `/services/:slug`.
+
+Full theme-options wiring + dev coverage log: [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
 
 ## Gaps / non-issues
 

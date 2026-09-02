@@ -27,13 +27,21 @@ useArchivePaginationScroll(page, pending);
 
 const { revealing } = usePageContentReveal();
 
+const archiveTitle = useUiString('services_heading_archive', 'Услуги');
+const archiveDescription = useUiString(
+  'services_archive_description',
+  'Разработка и дизайн цифровых продуктов — услуги студии WebLaba',
+);
+
 const pageTitle = computed(() =>
-  page.value > 1 ? `Услуги — страница ${page.value}` : 'Услуги',
+  page.value > 1
+    ? `${archiveTitle.value} — страница ${page.value}`
+    : archiveTitle.value,
 );
 
 usePageSeo({
   title: pageTitle,
-  description: 'Разработка и дизайн цифровых продуктов — услуги студии WebLaba',
+  description: archiveDescription,
 });
 </script>
 
@@ -41,7 +49,7 @@ usePageSeo({
   <ArchiveShell :revealing="revealing">
     <header class="archive-heading">
       <p class="archive-heading__kicker">Index</p>
-      <SiteScrambleTitle class="archive-heading__title" text="Услуги" />
+      <SiteScrambleTitle class="archive-heading__title" :text="archiveTitle" />
     </header>
 
     <p v-if="(pending || transitioning) && !entries.length" class="archive-status">

@@ -12,6 +12,7 @@
 | [DEPLOY.md](DEPLOY.md) | Production (REG.RU rsync) + GitHub Pages preview + SSH secrets setup |
 | [DESIGN.md](DESIGN.md) | HUD tokens, **hairline language**, decorative patterns, scene palette |
 | [HERO_WP_FIELDS.md](HERO_WP_FIELDS.md) | ACF Options repeater spec + seed for hero nav copy |
+| [THEME_OPTIONS.md](THEME_OPTIONS.md) | Theme options wiring, dev coverage log, field status, next iterations |
 | [api-real-response.md](api-real-response.md) | Live WordPress REST structure (ACF, menus, pagination) |
 | [../CONTEXT.md](../CONTEXT.md) | Short permanent project facts |
 | [../tasks/ROADMAP.md](../tasks/ROADMAP.md) | STEPs 1–19 Done; `/about` `/services` `/contact` live |

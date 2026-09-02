@@ -1,3 +1,4 @@
+import type { HeroChromeCopy } from '../../domain/options/heroChromeCopy';
 import {
   COMPOSITION_PROFILES,
   HOME_DESKTOP_FRAMING,
@@ -12,9 +13,11 @@ import {
   subscribePointerInput,
 } from '../navigation/buildAtomBlurb';
 import {
+  applyNavigationItems,
   getItemByAtomId,
   getItemById,
   navigationConfig,
+  type NavigationItem,
 } from '../navigation/navigationConfig';
 import { Navigator } from '../navigation/Navigator';
 import { NavigationState } from '../navigation/NavigationState';
@@ -69,6 +72,8 @@ export type MountedHeroApp = {
   isBusy: () => boolean;
   onTransition: (listener: TransitionListener) => () => void;
   setTagCloud: (tags: readonly TagCloudItem[]) => void;
+  setNavigationItems: (items: readonly NavigationItem[]) => void;
+  setChromeCopy: (copy: HeroChromeCopy) => void;
   playEntityLightSweep: (direction?: EntityLightSweepDirection) => void;
 };
 
@@ -634,6 +639,26 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
   };
   registerMoleculeCue(cueApi);
 
+  function setNavigationItems(items: readonly NavigationItem[]): void {
+    applyNavigationItems(items);
+    siteHeader.syncNavigationCopy();
+    navigation.syncNavigationCopy();
+    mobileNav.syncNavigationCopy();
+    for (const item of items) {
+      controller.setAtomCaption(item.atomId, item.label);
+    }
+    const committedId = navigationState.committedItemId;
+    if (committedId && isHome) {
+      activateCommittedItem(committedId);
+    }
+    applyVisuals();
+  }
+
+  function setChromeCopy(copy: HeroChromeCopy): void {
+    siteHeader.setChromeCopy(copy);
+    mobileNav.setChromeCopy(copy);
+  }
+
   return {
     applySpatial(state, applyOptions) {
       spatial.apply(state, applyOptions);
@@ -645,6 +670,8 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     setTagCloud(tags) {
       controller.setTagCloud(tags);
     },
+    setNavigationItems,
+    setChromeCopy,
     playEntityLightSweep: cueApi.playEntityLightSweep,
     dispose() {
       registerMoleculeCue(null);

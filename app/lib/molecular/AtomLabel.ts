@@ -166,6 +166,15 @@ export class AtomLabel {
     this.object.visible = visible;
   }
 
+  setCaption(caption: string): void {
+    const { letter, rest } = splitCaption(caption);
+    this.letter.text = letter;
+    this.remainder.text = rest;
+    this.remainder.visible = this.remainderVisible && rest.length > 0;
+    this.letter.sync(() => this.layoutBlock());
+    this.remainder.sync();
+  }
+
   /** Per-atom radius compensation (hub matches peripheral caption size on mobile). */
   setFontScale(scale: number): void {
     const next = Math.max(0.25, scale);

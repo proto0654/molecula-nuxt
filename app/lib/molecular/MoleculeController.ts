@@ -1314,6 +1314,10 @@ export class MoleculeController {
     }
   }
 
+  setAtomCaption(atomId: string, caption: string): void {
+    this.scene.getAtom(atomId)?.setCaption(caption);
+  }
+
   setTagCloud(tags: readonly TagCloudItem[]): void {
     this.scene.setTagCloud(tags);
   }

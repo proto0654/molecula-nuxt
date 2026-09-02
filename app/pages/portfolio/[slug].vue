@@ -34,7 +34,7 @@ const slug = computed(() => String(route.params.slug || ''));
 
 
 
-const { data: slimIndex } = useAsyncData('portfolio-slim-index', getPortfolioSlimIndex);
+const { data: slimIndex } = useAsyncData('portfolio-slim-index', () => getPortfolioSlimIndex());
 
 
 
@@ -64,7 +64,7 @@ const { data, pending, error } = useAsyncData(
 
     const caseData = normalizePortfolioPost(raw);
 
-    const slim = await getPortfolioSlimIndex();
+    const slim = slimIndex.value ?? (await getPortfolioSlimIndex());
 
     const position = getCasePosition(slug.value, slim);
 
@@ -99,6 +99,8 @@ watch(
 const caseData = computed(() => held.value?.caseData ?? null);
 
 const position = computed(() => held.value?.position);
+
+const backToArchiveLabel = useUiString('case_back_to_portfolio', 'К портфолио');
 
 const heroMedia = computed(() =>
 
@@ -383,7 +385,7 @@ onMounted(() => {
 
         base-path="/portfolio"
 
-        index-label="К портфолио"
+        :index-label="backToArchiveLabel"
 
         archive-scope="portfolio"
 

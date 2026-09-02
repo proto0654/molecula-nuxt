@@ -21,7 +21,7 @@ export function getWpApiBaseFromEnv(): string {
 }
 
 function resolveWpApiBase(override?: string): string {
-  if (override) return override.replace(/\/$/, '');
+  if (typeof override === 'string' && override) return override.replace(/\/$/, '');
   // `wpFetch` often runs inside `useAsyncData` after `await` — Nuxt context
   // is gone there. `tryUseNuxtApp` avoids NUXT_E1001; env covers build/prerender.
   const nuxtApp = tryUseNuxtApp();

@@ -90,7 +90,7 @@ export async function getServiceSlimIndex(
   let page = 1;
   let totalPages = 1;
   const items: ServiceSlimItem[] = [];
-  const base = baseOverride ?? getWpApiBaseFromEnv();
+  const base = typeof baseOverride === 'string' ? baseOverride : getWpApiBaseFromEnv();
 
   while (page <= totalPages) {
     const result = await wpFetchPaginated<SlimIndexRaw[]>(
