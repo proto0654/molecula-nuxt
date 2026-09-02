@@ -1,6 +1,6 @@
 # WordPress REST API — real response notes
 
-Inspected against production: `https://weblaba.ru/wp-json/` (2026-08-26).
+Inspected against production: `https://weblaba.ru/wp-json/` (2026-08-26). **Live API host since 2026-09:** `https://api.weblaba.ru/wp-json/` (WordPress moved to subdomain; response shape unchanged).
 
 Source of truth remains WordPress. Local/Nuxt app only consumes.
 

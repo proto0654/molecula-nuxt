@@ -74,7 +74,7 @@ Repository → **Settings** → **Secrets and variables** → **Actions** → **
    - Open a case — images from `api.weblaba.ru/wp-content`
    - `/robots.txt` — `Allow: /` + `Sitemap: https://weblaba.ru/sitemap.xml`
 
-Manual re-run: **Actions** → **Deploy production** → **Run workflow**.
+Manual re-run: **Actions** → **Production · weblaba.ru** → **Run workflow** (no push required; secrets read at runtime).
 
 ---
 

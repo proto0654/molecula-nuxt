@@ -13,7 +13,7 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 
 ## Live sites
 
-- **Production:** [weblaba.ru](https://weblaba.ru) — [deploy-production.yml](.github/workflows/deploy-production.yml) (rsync to REG.RU on push to `main`)
+- **Production:** [weblaba.ru](https://weblaba.ru) — live (REG.RU rsync on push to `main`)
 - **Preview:** [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/) — [deploy.yml](.github/workflows/deploy.yml) (`NUXT_APP_BASE_URL=/molecula-nuxt/`, `NUXT_PUBLIC_INDEXABLE=false`)
 - **WordPress CMS:** [api.weblaba.ru/wp-json](https://api.weblaba.ru/wp-json) — `NUXT_PUBLIC_WP_API_BASE`
 - Repository: [github.com/proto0654/molecula-nuxt](https://github.com/proto0654/molecula-nuxt) (`origin`; legacy Vite/prototype remote: `molecule` → [proto0654/molecule](https://github.com/proto0654/molecule))

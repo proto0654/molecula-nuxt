@@ -371,14 +371,15 @@ Resize sizing prefers `window.visualViewport` when present, else `innerWidth` / 
 
 ## Build & deploy
 
-| Target | Command | `base` |
-|--------|---------|--------|
+| Target | Workflow | `base` |
+|--------|----------|--------|
 | Local dev / preview | `npm run dev`, `npm run build`, `npm run preview` | `/` |
-| GitHub Pages | push to `main` → [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) | `/molecula-nuxt/` |
+| **Production** [weblaba.ru](https://weblaba.ru) | push to `main` → [deploy-production.yml](../.github/workflows/deploy-production.yml) (rsync REG.RU) | `/` |
+| **Preview** [GitHub Pages](https://proto0654.github.io/molecula-nuxt/) | push to `main` → [deploy.yml](../.github/workflows/deploy.yml) (`NUXT_PUBLIC_INDEXABLE=false`) | `/molecula-nuxt/` |
 
-Live site: [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/). Fonts live in `public/fonts/` (copied to dist root).
+WP API: `https://api.weblaba.ru/wp-json`. Full setup: [DEPLOY.md](DEPLOY.md).
 
-**Subpath gotcha:** Vite rewrites CSS `url('/fonts/…')` at build time, but **JS string literals are not**. Troika and any runtime fetch must prefix with `import.meta.env.BASE_URL` (trailing slash included). Hard-coded `/fonts/JetBrainsMono-Regular.ttf` works locally and 404s on GitHub Pages.
+Fonts live in `public/fonts/` (copied to dist root). Troika font URL must use Nuxt `app.baseURL` — see [`MolecularHero.vue`](../app/components/molecular/MolecularHero.vue) `setLabelFontUrl`.
 
 ## Gotchas
 

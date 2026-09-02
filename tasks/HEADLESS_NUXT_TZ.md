@@ -13,7 +13,7 @@
 
 # A. ГДЕ МЫ СЕЙЧАС ОСТАНОВИЛИСЬ
 
-**Дата чекпоинта:** 2026-08-28  
+**Дата чекпоинта:** 2026-09-02  
 **Ветка:** `main` (`origin` = `molecula-nuxt`)  
 **Удалено намеренно:** ветка `feat/headless-api-foundation` (неудачная Vite-API итерация; не переносить)
 
@@ -37,7 +37,8 @@
 | 14 | Basic prev/next | **DONE** → `getAdjacentCases` (menu_order ASC, date DESC) |
 | 15 | Connect menu API if available | **DONE** → `app/api/menus.ts` + `useWpMenu` (`menus/v1`) |
 | 16 | Prerender routes for portfolio slugs | **DONE** → `nitro:config` hook (~59 slugs) |
-| 17 | GitHub Pages deploy config | **DONE** (workflow + baseURL + prerender) |
+| 17 | GitHub Pages deploy config | **DONE** (preview workflow + baseURL + prerender + noindex) |
+| 17b | Production deploy weblaba.ru | **DONE** (REG.RU rsync, `api.weblaba.ru` WP) → [`docs/DEPLOY.md`](../docs/DEPLOY.md) |
 | 18 | Test local dev | **DONE** (build/prerender smoke) |
 | 19 | Test production build | **DONE** (`npm run build`: prerendered 122 routes) |
 
@@ -61,7 +62,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Off-home chrome:** header route menu (direct `transitionTo`); molecule rail / bottom nav / MENU hidden; logo clickable (`pointer-events: auto`)
 - **Approach:** `Navigator` single approach tween (zoom+fill together); `freeze()` + hide labels at start; no forward veil
 - **Prerender:** portfolio **and** service slugs queued at generate/build via live WP (+ `/about` `/services` `/contact`)
-- **Deploy:** `origin` = [proto0654/molecula-nuxt](https://github.com/proto0654/molecula-nuxt); legacy remote `molecule` = [proto0654/molecule](https://github.com/proto0654/molecule) (не трогать). `.github/workflows/deploy.yml` → `nuxt generate` + `NUXT_APP_BASE_URL=/molecula-nuxt/` → [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/)
+- **Deploy:** production [weblaba.ru](https://weblaba.ru) — [deploy-production.yml](../.github/workflows/deploy-production.yml) (rsync REG.RU, push `main`); preview [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/) — [deploy.yml](../.github/workflows/deploy.yml) (`NUXT_APP_BASE_URL=/molecula-nuxt/`, `NUXT_PUBLIC_INDEXABLE=false`); WP `https://api.weblaba.ru/wp-json` — [`docs/DEPLOY.md`](../docs/DEPLOY.md)
 - **Case / archive docs:** [`docs/CASES.md`](../docs/CASES.md), [`docs/CONTENT.md`](../docs/CONTENT.md)
 - **Spatial docs:** [`docs/SPATIAL.md`](../docs/SPATIAL.md)
 

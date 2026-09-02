@@ -33,7 +33,8 @@
 - [x] Hero polish: spherical per-atom orbits, mouse-under-focus attenuation, screen-flat selection, quieter HUD
 - [x] Russian UI copy + JetBrains Mono (CSS + troika); captions from `navigationConfig`
 - [x] HUD USP headline (`UspHeadline` + scramble after `isFocusSettled`); desktop/mobile layout polish; atom hover cursor
-- [x] GitHub Pages deploy (Actions workflow; Vite `base` + troika font via `import.meta.env.BASE_URL`)
+- [x] GitHub Pages preview deploy (Actions; `NUXT_APP_BASE_URL=/molecula-nuxt/`, `NUXT_PUBLIC_INDEXABLE=false`)
+- [x] Production deploy [weblaba.ru](https://weblaba.ru) — REG.RU rsync via [deploy-production.yml](../.github/workflows/deploy-production.yml); WP on `api.weblaba.ru` — [DEPLOY.md](../docs/DEPLOY.md)
 - [x] Nuxt 4 + Vue 3 migration; Tailwind 4; `--wl-*` tokens; WP runtime config; API inspection + raw types (STEP 1–8)
 - [x] API client + normalize Case; `/portfolio` archive + pagination headers (STEP 9–11)
 - [x] `/portfolio/[slug]` + conditional case components; prev/next helper (STEP 12–14)
