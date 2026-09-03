@@ -84,6 +84,19 @@ const MOUSE_UNDER_FOCUS = 0.22;
  */
 const GYRO_UNDER_FOCUS = 0.62;
 
+/**
+ * After `focusAtom`, mute desktop spin + gyro until focus settles, then this
+ * extra quiet window before influence fades back in.
+ * Also used as the brief mute after leaving a spin-pausing atom hover.
+ */
+const POINTER_MUTE_GRACE_MS = 400;
+
+/**
+ * Exp damp for `pointerInfluence` → 1 after mute (~350ms to near-full).
+ * Same form as `MOUSE_FOLLOW` / `FOCUS_*_FOLLOW`.
+ */
+const POINTER_INFLUENCE_FADE = 8;
+
 /** Higher = snappier slerp toward `targetFocusOrientation`. */
 const FOCUS_ORIENT_FOLLOW = 4;
 
@@ -267,6 +280,19 @@ export class MoleculeController {
   /** Coarse / no-hover: gyro eligible, canvas hover skipped (autoplay safety). */
   private touchInput = false;
 
+  /**
+   * Secondary pointer (desktop spin / gyro) gate after focus retarget.
+   * Intentional touch-drag is unaffected.
+   */
+  private pointerMuteUntilSettled = false;
+  private pointerMuteGraceUntil = 0;
+  /** Multiplier on new spin / gyro amplitude; 0 while muted, fades to 1 after grace. */
+  private pointerInfluence = 1;
+  /** One-shot gyro rest recalibration when leaving mute+grace. */
+  private needsGyroRecalibrateAfterMute = false;
+  /** Last hover id that paused desktop spin — used to arm mute on leave. */
+  private lastSpinPauseHoverId: string | null = null;
+
   /** Atom id last passed to `focusAtom` while focus is active. */
   private focusedAtomId: string | null = null;
   /** Spatial entity slug (case/service) — pose stays on the context atom. */
@@ -399,6 +425,10 @@ export class MoleculeController {
       ? 'unknown'
       : 'not-needed';
     this.syncReducedMotionVisuals();
+
+    this.atomHover.onAtomHover((atomId) => {
+      this.onAtomHoverChanged(atomId);
+    });
 
     this.onResizeBound = () => {
       const { width, height } = getViewportSize();
@@ -668,6 +698,9 @@ export class MoleculeController {
     this.lastGyroBeta = beta;
     this.lastGyroGamma = gamma;
 
+    // Keep last samples for unmute recalibration; do not drive tilt while muted.
+    if (this.isPointerSecondaryMuted()) return;
+
     if (!this.gyroCalibrated) {
       calibrateGyro(beta, gamma, this.gyroCal);
       this.gyroCalibrated = true;
@@ -820,6 +853,7 @@ export class MoleculeController {
    */
   freeze(): void {
     this.frozen = true;
+    this.clearPointerMute();
     this.resetPointerTilt();
     this.atomHover.clear();
     this.scene.setLabelsVisible(false);
@@ -1094,7 +1128,8 @@ export class MoleculeController {
     this.targetFocusStrength = 1;
 
     // Drop leftover touch drag / mouse / gyro spin so focus lands on the look axis.
-    // Fine pointers resume velocity on the next `pointermove`. Gyro recalibrates on the next sample.
+    // Mute secondary spin/gyro until settle + grace so focus slerp is not fought.
+    this.armPointerMuteAfterFocus();
     this.resetPointerTilt();
   }
 
@@ -1102,6 +1137,91 @@ export class MoleculeController {
   clearFocus(): void {
     this.targetFocusStrength = 0;
     this.focusedAtomId = null;
+    this.clearPointerMute();
+  }
+
+  /** Arm mute of desktop spin + gyro until focus settles and grace elapses. */
+  private armPointerMuteAfterFocus(): void {
+    this.pointerMuteUntilSettled = true;
+    this.pointerMuteGraceUntil = 0;
+    this.pointerInfluence = 0;
+    this.needsGyroRecalibrateAfterMute = true;
+  }
+
+  /**
+   * Brief mute after leaving a spin-pausing hover so spin does not slam back
+   * from the current cursor offset. Does not interrupt an active focus mute.
+   */
+  private armPointerMuteBrief(): void {
+    if (this.frozen || this.pointerMuteUntilSettled) return;
+    const until = performance.now() + POINTER_MUTE_GRACE_MS;
+    if (until > this.pointerMuteGraceUntil) {
+      this.pointerMuteGraceUntil = until;
+    }
+    this.pointerInfluence = 0;
+  }
+
+  private onAtomHoverChanged(atomId: string | null): void {
+    if (this.frozen) {
+      this.lastSpinPauseHoverId = null;
+      return;
+    }
+    const wasPaused = this.lastSpinPauseHoverId !== null;
+    const nowPaused = this.doesHoverPauseSpin(atomId);
+    if (wasPaused && !nowPaused) {
+      this.armPointerMuteBrief();
+    }
+    this.lastSpinPauseHoverId = nowPaused ? atomId : null;
+  }
+
+  /** Drop mute gate and restore full secondary influence (e.g. clearFocus / freeze). */
+  private clearPointerMute(): void {
+    this.pointerMuteUntilSettled = false;
+    this.pointerMuteGraceUntil = 0;
+    this.pointerInfluence = 1;
+    this.needsGyroRecalibrateAfterMute = false;
+    this.lastSpinPauseHoverId = null;
+  }
+
+  /** True while settle wait or post-settle grace is active (no secondary spin/gyro). */
+  private isPointerSecondaryMuted(): boolean {
+    return (
+      this.pointerMuteUntilSettled ||
+      performance.now() < this.pointerMuteGraceUntil
+    );
+  }
+
+  /**
+   * Advance post-focus mute → grace → fade-in of `pointerInfluence`.
+   * Recalibrates gyro rest once when secondary input resumes.
+   */
+  private updatePointerMute(delta: number): void {
+    if (this.pointerMuteUntilSettled) {
+      if (this.isFocusSettled()) {
+        this.pointerMuteUntilSettled = false;
+        this.pointerMuteGraceUntil =
+          performance.now() + POINTER_MUTE_GRACE_MS;
+      }
+      this.pointerInfluence = 0;
+      return;
+    }
+
+    if (performance.now() < this.pointerMuteGraceUntil) {
+      this.pointerInfluence = 0;
+      return;
+    }
+
+    if (this.needsGyroRecalibrateAfterMute) {
+      this.needsGyroRecalibrateAfterMute = false;
+      this.recalibrateGyroFromLastSample();
+    }
+
+    if (this.pointerInfluence >= 1 - 1e-4) {
+      this.pointerInfluence = 1;
+      return;
+    }
+    const influenceT = 1 - Math.exp(-POINTER_INFLUENCE_FADE * delta);
+    this.pointerInfluence += (1 - this.pointerInfluence) * influenceT;
   }
 
   /** Clears accumulated spin, gyro contribution, and both mouse orientation layers. */
@@ -1413,7 +1533,8 @@ export class MoleculeController {
    * `final = appliedFocus * mouseOrientation * baseOrientation`
    * where `appliedFocus = slerp(I, focusOrientation, focusStrength)`.
    * Under focus, spin / gyro amplitude scales toward `MOUSE_UNDER_FOCUS` /
-   * `GYRO_UNDER_FOCUS` (secondary motion).
+   * `GYRO_UNDER_FOCUS` (secondary motion), then by `pointerInfluence`
+   * (muted after `focusAtom` until settle + grace, then faded in).
    * Zoom writes `moleculeGroup.position` only — not mixed into quaternion layers.
    *
    * Update layers (do not mix):
@@ -1439,10 +1560,13 @@ export class MoleculeController {
       this.targetMouseOrientation.identity();
       this.spinOrientation.identity();
     } else {
+      this.updatePointerMute(delta);
       const mouseScale =
-        1 - this.focusStrength * (1 - MOUSE_UNDER_FOCUS);
+        (1 - this.focusStrength * (1 - MOUSE_UNDER_FOCUS)) *
+        this.pointerInfluence;
       const gyroScale =
-        1 - this.focusStrength * (1 - GYRO_UNDER_FOCUS);
+        (1 - this.focusStrength * (1 - GYRO_UNDER_FOCUS)) *
+        this.pointerInfluence;
 
       if (
         this.hasFinePointer &&
@@ -1816,10 +1940,13 @@ export class MoleculeController {
 
   /** Desktop spin stops on peripheral hover; hub and the focused atom keep spinning. */
   private isSpinPausedByHover(): boolean {
-    const hovered = this.atomHover.getHoveredAtomId();
-    if (!hovered) return false;
-    if (hovered === this.getHubAtomId()) return false;
-    if (hovered === this.focusedAtomId) return false;
+    return this.doesHoverPauseSpin(this.atomHover.getHoveredAtomId());
+  }
+
+  private doesHoverPauseSpin(atomId: string | null): boolean {
+    if (!atomId) return false;
+    if (atomId === this.getHubAtomId()) return false;
+    if (atomId === this.focusedAtomId) return false;
     return true;
   }
 
