@@ -44,14 +44,14 @@ In **development**, after theme options load once per session, the console print
 |--------|---------|
 | `field` | ACF key or UI string key |
 | `wp` | `ok` — non-empty in live API; `empty` — missing or blank |
-| `wired` | `true` — Nuxt reads and renders; `false` — planned, not connected |
+| `wired` | `true` — Nuxt reads and renders; `false` — unused (`skipped` in coverage = intentionally unused) |
 | `consumer` | Component / composable / note |
 
 ### Summary lines (not errors)
 
 1. **Structural fields empty in WP** — repeaters / IDs missing; code defaults apply (`hero_nav_items` → hardcoded nav copy, empty `gtm_container_id` → no GTM script).
 2. **Wired UI strings empty in WP** — field is connected but blank in Options; in-code fallback from `useUiString(key, fallback)`.
-3. **Present in WP but not wired in UI** — value exists in API but no component uses it yet; safe to fill in WP ahead of the next iteration.
+3. **Present in WP but not wired in UI** — value exists in API but no component uses it yet (excludes skipped duplicates).
 
 If **all** fields are empty, a warning suggests checking `.env` / `NUXT_PUBLIC_WP_API_BASE`.
 
@@ -90,13 +90,15 @@ If **all** fields are empty, a warning suggests checking `.env` / `NUXT_PUBLIC_W
 
 | Key | Notes |
 |-----|-------|
-| `header_portfolio_*`, `header_about_*` | Off-home header chips — no UI slot yet |
 | `portfolio_heading_legacy`, `portfolio_link_current` | Legacy category archive (`portfolio_category: legacy`) |
-| `hero_portfolio_label` | Hero portfolio shortcut |
 | `lang_switch_aria` | `/en/` locale switch |
 | `case_thanks_message` | Case page thanks block (value **present** in WP) |
 | `case_mobile_signature_default_*` | `CaseMobileSignature` fallback |
 | `case_content_default_*` | Case body fallback when CMS blocks empty |
+
+### Skipped — duplicate of hero nav
+
+`header_portfolio_*`, `header_about_*`, `hero_portfolio_label` exist in WP (legacy PHP header / shortcut copy). Route labels already come from `hero_nav_items` / `navigationConfig` (`work`, `about`). **Do not wire.** Coverage marks them `skipped`.
 
 ### Empty in WP, wired with code fallback
 
@@ -129,8 +131,7 @@ Runtime: `mergeHeroNavigation(wpRows, navigationConfig.items)` → `mountHeroApp
 
 1. **WP:** Fill `hero_nav_items` (5 rows), `gtm_container_id`, archive UI strings (`services_*`, `portfolio_archive_description`).
 2. **Nuxt:** Wire `case_thanks_message`, case default blocks, legacy portfolio labels.
-3. **Nuxt:** Off-home header chips (`header_portfolio_*`, `header_about_*`).
-4. **i18n:** `lang_switch_aria` + `*_en` fields when `/en/` ships.
+3. **i18n:** `lang_switch_aria` + `*_en` fields when `/en/` ships.
 
 ---
 

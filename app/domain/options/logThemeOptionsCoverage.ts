@@ -6,20 +6,44 @@ type FieldRow = {
   field: string;
   wp: 'ok' | 'empty';
   wired: boolean;
+  skipped?: boolean;
+  consumer: string;
+};
+
+type UiStringConsumer = {
+  wired: boolean;
+  /** Present in WP but intentionally unused — not a next-iteration item. */
+  skipped?: boolean;
   consumer: string;
 };
 
 /** Where each UI string key is consumed (or planned). */
-const UI_STRING_CONSUMERS: Record<UiStringKey, { wired: boolean; consumer: string }> = {
+const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
   footer_disclaimer: { wired: true, consumer: 'SiteFooterLegal ← options.footer' },
   footer_cookie_notice: { wired: true, consumer: 'SiteFooterLegal ← options.footer' },
   footer_copyright: { wired: true, consumer: 'SiteFooterLegal ← options.footer' },
   contact_popup_title: { wired: true, consumer: 'useContacts → contact.vue section h2 + SEO title' },
   contact_popup_text: { wired: true, consumer: 'useContacts → contact.vue intro' },
-  header_portfolio_label: { wired: false, consumer: '(not wired — no off-home portfolio chip in hero chrome)' },
-  header_portfolio_aria: { wired: false, consumer: '(not wired)' },
-  header_about_label: { wired: false, consumer: '(not wired)' },
-  header_about_aria: { wired: false, consumer: '(not wired)' },
+  header_portfolio_label: {
+    wired: false,
+    skipped: true,
+    consumer: '(skipped — duplicate of hero nav `work` label)',
+  },
+  header_portfolio_aria: {
+    wired: false,
+    skipped: true,
+    consumer: '(skipped — duplicate of hero nav `work` label)',
+  },
+  header_about_label: {
+    wired: false,
+    skipped: true,
+    consumer: '(skipped — duplicate of hero nav `about` label)',
+  },
+  header_about_aria: {
+    wired: false,
+    skipped: true,
+    consumer: '(skipped — duplicate of hero nav `about` label)',
+  },
   header_home_aria: { wired: true, consumer: 'SiteHeader / MobileNavOverlay logo aria' },
   drawer_open_aria: { wired: true, consumer: 'SiteHeader menu btn aria (closed)' },
   drawer_close_aria: { wired: true, consumer: 'SiteHeader menu btn aria (open)' },
@@ -35,7 +59,11 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, { wired: boolean; consumer: strin
   seo_hidden_h1: { wired: true, consumer: 'index.vue home SEO' },
   lang_switch_aria: { wired: false, consumer: '(not wired — /en/ locale switch TBD)' },
   hero_order_label: { wired: true, consumer: 'normalizeServiceChrome → service detail CTA' },
-  hero_portfolio_label: { wired: false, consumer: '(not wired — hero portfolio shortcut TBD)' },
+  hero_portfolio_label: {
+    wired: false,
+    skipped: true,
+    consumer: '(skipped — duplicate of hero nav `work` label)',
+  },
   hero_logo_alt: { wired: true, consumer: 'SiteHeader / MobileNavOverlay logo aria fallback' },
   services_section_heading: { wired: true, consumer: 'normalizeServiceChrome' },
   services_price_from: { wired: true, consumer: 'normalizeServiceChrome' },
@@ -122,6 +150,7 @@ export function logThemeOptionsCoverage(acf: ThemeOptionsAcf | undefined): void 
     field: key,
     wp: wpUiPresent(acf, key) ? 'ok' : 'empty',
     wired: UI_STRING_CONSUMERS[key].wired,
+    skipped: UI_STRING_CONSUMERS[key].skipped,
     consumer: UI_STRING_CONSUMERS[key].consumer,
   }));
 
@@ -134,7 +163,9 @@ export function logThemeOptionsCoverage(acf: ThemeOptionsAcf | undefined): void 
 
   const missingInWp = uiRows.filter((r) => r.wp === 'empty');
   const wiredButEmpty = uiRows.filter((r) => r.wired && r.wp === 'empty');
-  const notWiredButPresent = uiRows.filter((r) => !r.wired && r.wp === 'ok');
+  const notWiredButPresent = uiRows.filter(
+    (r) => !r.wired && !r.skipped && r.wp === 'ok',
+  );
   const structuralEmpty = structuralRows.filter((r) => r.wired && r.wp === 'empty');
 
   console.group('[theme-options] coverage');
