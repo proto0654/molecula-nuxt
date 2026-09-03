@@ -178,7 +178,18 @@ export type AboutRepeaterRowEn = {
   cf_text_en?: string;
 };
 
-export type AboutAcf = {
+/** Molecule HUD copy on the five navigation pages. */
+export type MoleculeHeroPageAcf = {
+  hero_usp?: string | false;
+  hero_blurb?: string | false;
+  hero_blurb_cta?: string | false;
+  /** Typed for future /en/; UI currently RU-only. */
+  hero_usp_en?: string | false;
+  hero_blurb_en?: string | false;
+  hero_blurb_cta_en?: string | false;
+};
+
+export type AboutAcf = MoleculeHeroPageAcf & {
   about_photo?: AcfImage | false;
   about_section_title?: string | false;
   about_section_title_en?: string | false;
@@ -209,18 +220,6 @@ export type HeroTagCloudRow = {
   tier?: string | false;
 };
 
-export type HeroNavItemAcfRow = {
-  nav_id?: string | false;
-  label?: string | false;
-  blurb?: string | false;
-  blurb_cta?: string | false;
-  usp?: string | false;
-  label_en?: string | false;
-  blurb_en?: string | false;
-  blurb_cta_en?: string | false;
-  usp_en?: string | false;
-};
-
 export type SchemaOrgSameAsRow = {
   url?: string | false;
 };
@@ -235,7 +234,8 @@ export type ThemeOptionsAcf = ThemeOptionsUiFields & {
   hero_order_label?: string | false;
   hero_order_label_en?: string | false;
   hero_tag_cloud?: HeroTagCloudRow[] | false;
-  hero_nav_items?: HeroNavItemAcfRow[] | false;
+  /** @deprecated Removed from WP Options — molecule copy lives on pages (`hero_*`). */
+  hero_nav_items?: false | unknown;
   weblaba_contacts?: ContactAcfRow[] | false;
   contact_popup_title?: string | false;
   contact_popup_title_en?: string | false;
@@ -298,7 +298,7 @@ export type WpPage = {
   parent: number;
   template: string;
   tags?: number[];
-  acf?: AboutAcf | Record<string, unknown>;
+  acf?: AboutAcf | MoleculeHeroPageAcf | Record<string, unknown>;
   _embedded?: {
     'wp:featuredmedia'?: WpEmbeddedFeaturedMedia[];
     'wp:term'?: WpEmbeddedTerms;

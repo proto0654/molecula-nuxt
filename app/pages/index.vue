@@ -1,7 +1,7 @@
-<script setup lang="ts">
-import { HOME_SEO_DESCRIPTION, HOME_SEO_TITLE } from '~/domain/seo/homeSeo';
+﻿<script setup lang="ts">
+import { HOME_SEO_DESCRIPTION } from '~/domain/seo/homeSeo';
 
-const homeTitle = useUiString('seo_hidden_h1', HOME_SEO_TITLE);
+const homeTitle = useUiString('seo_hidden_h1');
 const homeDescription = computed(() => HOME_SEO_DESCRIPTION);
 
 usePageSeo({

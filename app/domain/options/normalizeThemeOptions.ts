@@ -16,25 +16,6 @@ function normalizeUiStrings(acf: ThemeOptionsAcf | undefined): UiStrings {
   return strings;
 }
 
-function normalizeHeroNavItems(
-  rows: ThemeOptionsAcf['hero_nav_items'],
-): HeroNavItemRow[] {
-  if (!rows || rows === false || !Array.isArray(rows)) return [];
-  const items: HeroNavItemRow[] = [];
-  for (const row of rows) {
-    const navId = emptyToNull(row.nav_id);
-    if (!navId) continue;
-    items.push({
-      navId,
-      label: emptyToNull(row.label),
-      blurb: emptyToNull(row.blurb),
-      blurbCta: emptyToNull(row.blurb_cta),
-      usp: emptyToNull(row.usp),
-    });
-  }
-  return items;
-}
-
 function normalizeScrollToTop(acf: ThemeOptionsAcf | undefined): ScrollToTopSettings {
   const enabled = acf?.scroll_to_top_enabled;
   const triggerRaw = acf?.scroll_to_top_trigger_px;
@@ -83,7 +64,6 @@ function normalizeSchemaOrg(acf: ThemeOptionsAcf | undefined) {
 export function normalizeThemeOptions(acf: ThemeOptionsAcf | undefined): ThemeOptions {
   return {
     ui: normalizeUiStrings(acf),
-    heroNavItems: normalizeHeroNavItems(acf?.hero_nav_items),
     scrollToTop: normalizeScrollToTop(acf),
     footer: {
       disclaimer: emptyToNull(acf?.footer_disclaimer),

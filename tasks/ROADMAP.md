@@ -72,4 +72,6 @@ STEPs 1–19 остаются Done. Мелкий долг foundation:
 - [x] Case / section typography: Exo 2 body + Mono titles; `SiteScrambleTitle` chained to pose settle / case body idle
 - [x] Реальный контент `/about` `/services` (WP CPT + ACF)
 - [x] Реальный `/contact` (WP / ACF)
+- [x] Theme Options wiring + HUD/chrome UI strings (`nav_verb_*`, `hud_*`, `chrome_*`, `case_section_*`); empty → `[key]`; WP seed migration
+- [x] Molecule hero copy from five WP pages (`hero_*` + titles); Options `hero_nav_items` removed
 - [ ] EN i18n (`*_en` typed, UI still RU)

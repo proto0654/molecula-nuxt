@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
 import {
   CASE_LANDING_SIZES,
@@ -77,13 +77,15 @@ function labelFor(index: number): string {
 function mobileColFor(index: number): number {
   return index % 2;
 }
+
+const interfaceLabel = useUiString('case_section_interface');
 </script>
 
 <template>
   <CaseSection
     v-if="items.length"
     :index="sectionIndex"
-    label="Interface"
+    :label="interfaceLabel"
     tone="visual"
     center
   >

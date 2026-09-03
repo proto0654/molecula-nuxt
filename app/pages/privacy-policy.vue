@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { getPage } from '~/api';
 import { demoteCmsH1, htmlToPlainText } from '~/domain/wp';
 import { stripTags } from '~/domain/portfolio/presentation';
@@ -28,6 +28,8 @@ usePageSeo({
   description: pageDescription,
   deferTitle: true,
 });
+
+const indexKicker = useUiString('chrome_index_kicker');
 </script>
 
 <template>
@@ -41,7 +43,7 @@ usePageSeo({
 
     <template v-else-if="page && titlePlain">
       <header class="archive-heading">
-        <p class="archive-heading__kicker">Index</p>
+        <p class="archive-heading__kicker">{{ indexKicker }}</p>
         <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
       </header>
 

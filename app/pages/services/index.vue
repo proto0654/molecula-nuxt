@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { restoreArchiveScroll } from '~/lib/navigation/archiveReturn';
 
 const route = useRoute();
@@ -27,11 +27,8 @@ useArchivePaginationScroll(page, pending);
 
 const { revealing } = usePageContentReveal();
 
-const archiveTitle = useUiString('services_heading_archive', 'Услуги');
-const archiveDescription = useUiString(
-  'services_archive_description',
-  'Разработка и дизайн цифровых продуктов — услуги студии WebLaba',
-);
+const archiveTitle = useUiString('services_heading_archive');
+const archiveDescription = useUiString('services_archive_description');
 
 const pageTitle = computed(() =>
   page.value > 1
@@ -43,12 +40,14 @@ usePageSeo({
   title: pageTitle,
   description: archiveDescription,
 });
+
+const indexKicker = useUiString('chrome_index_kicker');
 </script>
 
 <template>
   <ArchiveShell :revealing="revealing">
     <header class="archive-heading">
-      <p class="archive-heading__kicker">Index</p>
+      <p class="archive-heading__kicker">{{ indexKicker }}</p>
       <SiteScrambleTitle class="archive-heading__title" :text="archiveTitle" />
     </header>
 

@@ -1,7 +1,10 @@
 import type { UiStringKey } from '~/types/wp/uiStrings';
+import { missingUiString } from '~/domain/options/missingUiString';
 
-/** Theme UI string with in-code fallback when WP field is empty. */
-export function useUiString(key: UiStringKey, fallback: string) {
+/**
+ * Theme UI string. Empty Options → visible `[key]` (no silent RU hardcode).
+ */
+export function useUiString(key: UiStringKey) {
   const { t } = useThemeOptions();
-  return computed(() => t(key) || fallback);
+  return computed(() => t(key) || missingUiString(key));
 }

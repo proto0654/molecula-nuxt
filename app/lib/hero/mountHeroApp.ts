@@ -10,6 +10,7 @@ import { PerfOverlay } from '../debug/PerfOverlay';
 import { SpatialOverlay } from '../debug/SpatialOverlay';
 import {
   buildAtomBlurb,
+  setNavVerbCopy,
   subscribePointerInput,
 } from '../navigation/buildAtomBlurb';
 import {
@@ -655,8 +656,14 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
   }
 
   function setChromeCopy(copy: HeroChromeCopy): void {
+    setNavVerbCopy({ click: copy.verbClick, tap: copy.verbTap });
     siteHeader.setChromeCopy(copy);
+    navigation.setChromeCopy(copy);
     mobileNav.setChromeCopy(copy);
+    hud.setChromeCopy(copy);
+    for (const item of navigationConfig.items) {
+      controller.setAtomBlurb(item.atomId, buildAtomBlurb(item));
+    }
   }
 
   return {

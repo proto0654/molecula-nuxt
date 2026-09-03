@@ -31,6 +31,8 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 - Molecule data: [`app/lib/molecular/moleculeConfig.ts`](app/lib/molecular/moleculeConfig.ts)
 - Navigation / transition: [`navigationConfig`](app/lib/navigation/navigationConfig.ts) → [`NavigationState`](app/lib/navigation/NavigationState.ts) → [`Navigator`](app/lib/navigation/Navigator.ts) + [`TransitionController`](app/lib/navigation/TransitionController.ts) + [`poseReveal`](app/lib/navigation/poseReveal.ts) + [`app/lib/hero-ui/`](app/lib/hero-ui/)
 - WP API: [`app/api/`](app/api/) → normalize [`app/domain/`](app/domain/) → types [`app/types/wp/`](app/types/wp/)
+- Theme Options (footer, scroll-top, GTM/schema, HUD chrome UI strings): [`useThemeOptions`](app/composables/useThemeOptions.ts) — [`docs/THEME_OPTIONS.md`](docs/THEME_OPTIONS.md)
+- Molecule hero copy (page `hero_*` + titles): [`useMoleculeHeroNav`](app/composables/useMoleculeHeroNav.ts) — [`docs/HERO_WP_FIELDS.md`](docs/HERO_WP_FIELDS.md)
 - Portfolio: [`app/pages/portfolio/`](app/pages/portfolio/) + [`app/components/archive/`](app/components/archive/) + [`app/components/case/`](app/components/case/) + [`usePortfolio`](app/composables/usePortfolio.ts)
 - Persistent featured wash: archive = CSS row layers; case = [`PortfolioBackdrop`](app/components/portfolio/PortfolioBackdrop.vue) + [`usePortfolioBackdrop`](app/composables/usePortfolioBackdrop.ts); entrance gate [`usePortfolioWashGate`](app/composables/usePortfolioWashGate.ts) (outside → portfolio soft fade)
 - Shared page meta: [`SiteChrome`](app/components/site/SiteChrome.vue) (`ARCHIVE` / `CASE / NN` / `SERVICE / NN` / section; no duplicate HUD frame)
@@ -50,4 +52,4 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 
 ## Docs hub
 
-See [`docs/README.md`](docs/README.md). Spatial shell: [`docs/SPATIAL.md`](docs/SPATIAL.md). Case / archive visual: [`docs/CASES.md`](docs/CASES.md). Page entrance: [`docs/MOTION.md`](docs/MOTION.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). SEO / a11y: [`docs/SEO.md`](docs/SEO.md). Hero WP fields: [`docs/HERO_WP_FIELDS.md`](docs/HERO_WP_FIELDS.md). Hero math: [`docs/WEBGL_HERO.md`](docs/WEBGL_HERO.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).
+See [`docs/README.md`](docs/README.md). Spatial shell: [`docs/SPATIAL.md`](docs/SPATIAL.md). Case / archive visual: [`docs/CASES.md`](docs/CASES.md). Page entrance: [`docs/MOTION.md`](docs/MOTION.md). Content pipeline: [`docs/CONTENT.md`](docs/CONTENT.md). SEO / a11y: [`docs/SEO.md`](docs/SEO.md). Theme Options: [`docs/THEME_OPTIONS.md`](docs/THEME_OPTIONS.md). Hero WP fields: [`docs/HERO_WP_FIELDS.md`](docs/HERO_WP_FIELDS.md). Hero math: [`docs/WEBGL_HERO.md`](docs/WEBGL_HERO.md). API shape: [`docs/api-real-response.md`](docs/api-real-response.md). Full TZ: [`tasks/HEADLESS_NUXT_TZ.md`](tasks/HEADLESS_NUXT_TZ.md).

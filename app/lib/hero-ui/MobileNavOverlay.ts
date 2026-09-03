@@ -1,4 +1,6 @@
 import type { HeroChromeCopy } from '../../domain/options/heroChromeCopy';
+import { formatHudTemplate } from '../../domain/options/heroChromeCopy';
+import { missingUiString } from '../../domain/options/missingUiString';
 import { createFocusTrap, setPageInert } from '../a11y/focusTrap';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { getItemById, navigationConfig } from '../navigation/navigationConfig';
@@ -17,6 +19,8 @@ export class MobileNavOverlay {
   private readonly statusEl: HTMLElement;
   private readonly statusNode: HTMLElement;
   private readonly statusSignal: HTMLElement;
+  private readonly closeBtn: HTMLButtonElement;
+  private readonly logoBtn: HTMLButtonElement;
   private readonly itemElements = new Map<string, HTMLElement>();
   private readonly unsubscribe: () => void;
   private readonly onSelect: NavSelectListener | undefined;
@@ -47,7 +51,7 @@ export class MobileNavOverlay {
     this.root.className = 'mobile-nav-overlay';
     this.root.setAttribute('role', 'dialog');
     this.root.setAttribute('aria-modal', 'true');
-    this.root.setAttribute('aria-label', 'Навигация');
+    this.root.setAttribute('aria-label', missingUiString('drawer_menu_aria'));
     this.root.setAttribute('aria-hidden', 'true');
     this.root.hidden = true;
 
@@ -57,23 +61,23 @@ export class MobileNavOverlay {
     const header = document.createElement('div');
     header.className = 'mobile-nav-overlay__header';
 
-    const logoBtn = document.createElement('button');
-    logoBtn.type = 'button';
-    logoBtn.className = 'mobile-nav-overlay__logo';
-    logoBtn.append(createSiteLogoMark(options?.assetBaseURL));
-    logoBtn.setAttribute('aria-label', 'WebLaba, на главную');
+    this.logoBtn = document.createElement('button');
+    this.logoBtn.type = 'button';
+    this.logoBtn.className = 'mobile-nav-overlay__logo';
+    this.logoBtn.append(createSiteLogoMark(options?.assetBaseURL));
+    this.logoBtn.setAttribute('aria-label', missingUiString('hero_logo_alt'));
     if (options?.onHome) {
-      attachTapGuard(logoBtn, () => options.onHome?.());
+      attachTapGuard(this.logoBtn, () => options.onHome?.());
     } else {
-      logoBtn.disabled = true;
+      this.logoBtn.disabled = true;
     }
 
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'mobile-nav-overlay__close';
-    closeBtn.textContent = '[ ЗАКРЫТЬ ]';
-    attachTapGuard(closeBtn, () => this.requestClose());
-    header.append(logoBtn, closeBtn);
+    this.closeBtn = document.createElement('button');
+    this.closeBtn.type = 'button';
+    this.closeBtn.className = 'mobile-nav-overlay__close';
+    this.closeBtn.textContent = missingUiString('hud_mobile_close');
+    attachTapGuard(this.closeBtn, () => this.requestClose());
+    header.append(this.logoBtn, this.closeBtn);
 
     this.listEl = document.createElement('div');
     this.listEl.className = 'mobile-nav-overlay__list';
@@ -239,6 +243,7 @@ export class MobileNavOverlay {
   }
 
   private sync(): void {
+    const copy = this.chromeCopy;
     const active = this.state.activeItemId;
     const committed = this.state.committedItemId;
     for (const [id, el] of this.itemElements) {
@@ -252,22 +257,28 @@ export class MobileNavOverlay {
     }
     const id = committed ?? active;
     if (!id) {
-      this.statusNode.textContent = 'УЗЕЛ --';
-      this.statusSignal.textContent = 'СТАТУС ПРОСТОЙ';
+      this.statusNode.textContent =
+        copy?.statusNodeIdle ?? missingUiString('hud_status_node_idle');
+      this.statusSignal.textContent =
+        copy?.statusIdle ?? missingUiString('hud_status_idle');
       return;
     }
     const index = navigationConfig.items.findIndex((entry) => entry.id === id);
-    this.statusNode.textContent = `УЗЕЛ ${String(index + 1).padStart(2, '0')}`;
+    const nn = String(index + 1).padStart(2, '0');
+    const nodeTemplate =
+      copy?.statusNodeFormat ?? missingUiString('hud_status_node_format');
+    this.statusNode.textContent = formatHudTemplate(nodeTemplate, { nn });
     this.statusSignal.textContent = committed
-      ? 'СТАТУС АКТИВЕН'
-      : 'СТАТУС ГОТОВ';
+      ? (copy?.statusActive ?? missingUiString('hud_status_active'))
+      : (copy?.statusReady ?? missingUiString('hud_status_ready'));
   }
 
   setChromeCopy(copy: HeroChromeCopy): void {
     this.chromeCopy = copy;
     this.root.setAttribute('aria-label', copy.mobileNavAriaLabel);
-    const logoBtn = this.root.querySelector<HTMLButtonElement>('.mobile-nav-overlay__logo');
-    logoBtn?.setAttribute('aria-label', copy.logoAriaLabel);
+    this.logoBtn.setAttribute('aria-label', copy.logoAriaLabel);
+    this.closeBtn.textContent = copy.mobileCloseLabel;
+    this.sync();
   }
 
   syncNavigationCopy(): void {

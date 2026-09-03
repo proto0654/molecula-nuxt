@@ -1,25 +1,26 @@
-# Hero navigation — WordPress fields & seed
+# Hero navigation — WordPress page fields & seed
 
-Spec for molecular hero copy in WordPress Options. **Wired in Nuxt** — `mergeHeroNavigation()` merges WP rows into `navigationConfig`; when `hero_nav_items` is empty, hardcoded defaults apply.
+Spec for molecular hero copy on the **five navigation pages**. Nuxt merges page `post_title` + ACF `hero_*` into `navigationConfig` via `mergeHeroNavigation()` / `useMoleculeHeroNav`. Structure (`id` / `atomId` / `route`) stays in code with empty copy until pages resolve — hero never blocks on fetch.
 
-Live options endpoint (same payload as contacts / services chrome):  
-`GET /acf/v3/options/options`
+**Not** Theme Options. The Options repeater `hero_nav_items` is **deprecated / removed**. HUD verbs / menu labels / Index·CASE chrome: [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
 
-Coverage log + full field map: [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
+Live pages: one request per slug (`getMoleculeHeroPages`) — multi-`slug=` returns only one page on this WP.
+
+Coverage: browser `[molecule-hero-nav] coverage`. Options chrome: [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
 
 ---
 
-## Where to create fields
+## Where fields live
 
 | What | Where in WP |
 |------|-------------|
-| Field group | **ACF → Field Groups** (new or extend existing Options group) |
-| Location rule | **Options Page** is equal to **Options** |
-| Storage | Theme options — **not** per-page ACF |
+| Field group | **Molecule Hero** (`group_weblaba_molecule_hero_page_fields`) |
+| Location | Front page **or** pages `about`, `services`, `portfolio`, `contact` |
+| Storage | Per-page ACF — **not** Options |
 
-**Do not** put hero blurbs on the About page — hero copy is global nav chrome, like `contact_popup_text`.
+Atom label = page **title** (`post_title` / `post_title_en` for future `/en/`). No separate label field.
 
-**Structural mapping stays in Nuxt** until a later iteration:
+Structural mapping stays in Nuxt:
 
 | Stays in code | Why |
 |---------------|-----|
@@ -27,72 +28,49 @@ Coverage log + full field map: [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
 | `atomId` (`C`, `H1`–`H4`) | Molecule graph / focus / bonds |
 | `route` | Router + spatial mapping |
 
-Copy merges from WP repeater rows matched by `nav_id`.
+| Page slug (prod) | `nav_id` | `atomId` | Route |
+|------------------|----------|----------|-------|
+| `home-2` (front) | `home` | `C` | `/` |
+| `about` | `about` | `H1` | `/about` |
+| `services` | `services` | `H2` | `/services` |
+| `portfolio` | `work` | `H3` | `/portfolio` |
+| `contact` | `contact` | `H4` | `/contact` |
 
 ---
 
-## ACF field group: Hero navigation
+## ACF fields (per page)
 
-### Repeater: `hero_nav_items`
+| Label | Name | Type | Notes |
+|-------|------|------|-------|
+| Molecule USP headline | `hero_usp` | text | HUD scramble after focus |
+| Molecule blurb | `hero_blurb` | textarea | Typewriter part 1 |
+| Molecule blurb CTA tail | `hero_blurb_cta` | text | Glued after blurb + `{кликай\|тапай}` |
 
-| Setting | Value |
-|---------|--------|
-| Type | Repeater |
-| Name | `hero_nav_items` |
-| Min / Max rows | 5 / 5 |
-| Layout | Row |
+EN stubs (schema only until `/en/`): `hero_usp_en`, `hero_blurb_en`, `hero_blurb_cta_en`.
 
-### Sub fields
-
-| Label | Name | Type | Required | Notes |
-|-------|------|------|----------|-------|
-| Nav ID | `nav_id` | Text | yes | `home`, `about`, `services`, `work`, `contact` |
-| Label | `label` | Text | yes | Nav rail + 3D atom caption |
-| Blurb (part 1) | `blurb` | Textarea | yes | Hub may use ` / ` between two descriptive parts |
-| Blurb CTA tail | `blurb_cta` | Text | no | Glued to `{кликай\|тапай}`. Include leading space or comma. Empty for hub |
-| USP headline | `usp` | Text | yes | HUD scramble after focus settle |
-
-### Optional EN (when `/en/` is wired)
-
-`label_en`, `blurb_en`, `blurb_cta_en`, `usp_en` on the same repeater — same pattern as `services_section_heading_en`.
+**Defaults / import:** theme `inc/page-molecule-hero-defaults.php` + **Tools → Molecule Hero Import** (or WebLaba Migrations → Run Molecule Hero Import). Import also clears deprecated Options `hero_nav_items`.
 
 ---
 
-## Main menu alignment
+## Nuxt runtime
 
-Menu: **`menus/v1`**, slug **`main`**.
-
-| Menu title (RU) | Path | `nav_id` |
-|-----------------|------|----------|
-| Главная | `/` | `home` |
-| О нас | `/about` | `about` |
-| Услуги | `/services` | `services` |
-| Портфолио | `/portfolio` | `work` |
-| Контакты | `/contact` | `contact` |
-
-No WP Page with slug `contact` — contact body is options-only (`contact_popup_*`, `weblaba_contacts`).
-
----
-
-## Runtime assembly (Nuxt, future)
-
-[`buildAtomBlurb.ts`](../app/lib/navigation/buildAtomBlurb.ts) already assembles part 2:
+1. `getMoleculeHeroPages()` — slim `_fields=id,slug,title,acf`
+2. `normalizeMoleculeHeroPages()` → `HeroNavItemRow[]`
+3. `mergeHeroNavigation(rows, navigationConfig.items)` in `useMoleculeHeroNav()` (**lazy** — hero never waits on WP)
+4. `MolecularHero` watches `navItems` and calls `setNavigationItems`
 
 ```
-row = hero_nav_items.find(nav_id)
-displayBlurb = buildAtomBlurb({ ...structFromCode, blurb: row.blurb, blurbCta: row.blurb_cta })
+displayBlurb = buildAtomBlurb({ blurb, blurbCta })
 ```
 
-Verb `{кликай|тапай}` from [`pointerInput.ts`](../app/lib/a11y/pointerInput.ts) (`pointer: coarse`, `hover: none`).
+Verb from [`pointerInput.ts`](../app/lib/a11y/pointerInput.ts).
 
 ---
 
-## Seed data
+## Seed values (RU)
 
-Full JSON: [`seed/hero-navigation-options.seed.json`](seed/hero-navigation-options.seed.json).
-
-| nav_id | label | blurb | blurb_cta | usp |
-|--------|-------|-------|-----------|-----|
+| nav_id | label (title) | blurb | blurb_cta | usp |
+|--------|---------------|-------|-----------|-----|
 | `home` | Главная | `weblaba / студия веб-продуктов` | *(empty)* | Цифровые продукты из одного узла |
 | `about` | О нас | `студия weblaba` | `, будем знакомиться` | Команда, процесс, подход |
 | `services` | Услуги | `разработка и дизайн` | `, чтобы выбрать услуги` | От идеи до релиза |
@@ -101,18 +79,19 @@ Full JSON: [`seed/hero-navigation-options.seed.json`](seed/hero-navigation-optio
 
 ---
 
-## Checklist
+## Deploy checklist (WP)
 
-1. Add repeater + sub fields on Options.
-2. Enter five rows from seed table or JSON.
-3. Save Options.
-4. Verify REST: `hero_nav_items` array with 5 objects.
-5. ~~Extend `ThemeOptionsAcf`, `normalizeHeroNavigation()`, merge in hero bootstrap~~ **Done** — fill repeater in WP; dev console `[theme-options] coverage` confirms `hero_nav_items: ok`.
+1. Deploy `weblaba-rework` with `group_weblaba_molecule_hero_page_fields` registered.
+2. Open each molecule page — **Molecule Hero** meta box should appear.
+3. Run **Molecule Hero Import** (or fill fields manually from the table).
+4. Verify REST: `acf.hero_usp` / `hero_blurb` / `hero_blurb_cta` on each of the five pages.
+5. Nuxt: focus an atom — blurb/USP match WP; until import, hardcoded `navigationConfig` shows.
 
 ---
 
 ## Related
 
-- [`CONTENT.md`](CONTENT.md) § Hero navigation copy
+- WP canon: `weblaba-rework/docs/headless-field-map.md` § Molecule navigation pages
+- [`THEME_OPTIONS.md`](THEME_OPTIONS.md) — Options chrome only (not hero copy)
+- [`CONTENT.md`](CONTENT.md) § Hero navigation
 - [`WEBGL_HERO.md`](WEBGL_HERO.md) § Navigation
-- [`api-real-response.md`](api-real-response.md) § Theme options

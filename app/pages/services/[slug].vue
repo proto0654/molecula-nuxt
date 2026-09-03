@@ -51,7 +51,8 @@ watch(
 const service = computed(() => held.value?.service ?? null);
 
 const position = computed(() => held.value?.position);
-const backToArchiveLabel = useUiString('services_back_to_archive', 'К услугам');
+const backToArchiveLabel = useUiString('services_back_to_archive');
+const serviceLabel = useUiString('chrome_service_label');
 const chrome = computed(() => normalizeServiceChrome(themeAcf.value));
 
 const ready = computed(
@@ -140,7 +141,7 @@ usePageSeo({
       <EditorialHero :media="heroMedia">
         <header class="archive-heading">
           <p v-if="position?.index" class="archive-heading__kicker">
-            Service / {{ padCaseIndex(position.index) }}
+            {{ serviceLabel }} / {{ padCaseIndex(position.index) }}
           </p>
           <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
           <ul v-if="service.tags.length" class="editorial-header__tags">

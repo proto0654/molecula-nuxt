@@ -9,31 +9,25 @@ function rowForNavId(
   return rows.find((row) => row.navId === navId);
 }
 
-function pickCopy(
-  wp: string | null | undefined,
-  fallback: string | undefined,
-): string {
-  const trimmed = wp?.trim();
-  if (trimmed) return trimmed;
-  return fallback ?? '';
+function pick(wp: string | null | undefined): string {
+  return wp?.trim() || '';
 }
 
-/** Merge fixed nav structure with WP options copy; fall back to in-code defaults. */
+/** Merge fixed nav structure with page hero copy (WP only — no string fallbacks). */
 export function mergeHeroNavigation(
   rows: readonly HeroNavItemRow[],
-  defaults: readonly NavigationItem[],
 ): NavigationItem[] {
   return NAV_STRUCTURE.map((struct) => {
     const row = rowForNavId(rows, struct.id);
-    const base = defaults.find((item) => item.id === struct.id);
+    const blurbCta = pick(row?.blurbCta);
     return {
       id: struct.id,
       atomId: struct.atomId,
       route: struct.route,
-      label: pickCopy(row?.label, base?.label),
-      blurb: pickCopy(row?.blurb, base?.blurb),
-      blurbCta: row?.blurbCta?.trim() || base?.blurbCta,
-      usp: pickCopy(row?.usp, base?.usp),
+      label: pick(row?.label),
+      blurb: pick(row?.blurb),
+      blurbCta: blurbCta || undefined,
+      usp: pick(row?.usp),
     };
   });
 }

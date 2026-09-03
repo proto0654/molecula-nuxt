@@ -1,3 +1,5 @@
+import type { HeroChromeCopy } from '../../domain/options/heroChromeCopy';
+import { missingUiString } from '../../domain/options/missingUiString';
 import {
   getItemById,
   navigationConfig,
@@ -19,6 +21,7 @@ export class Navigation {
   private readonly itemElements = new Map<string, HTMLElement>();
   private readonly listEl: HTMLElement;
   private readonly rowEl: HTMLElement;
+  private readonly markEl: HTMLElement;
   private readonly slideProgress: HeroSlideProgress;
   private readonly unsubscribe: () => void;
   private readonly onSelect: NavSelectListener | undefined;
@@ -43,11 +46,11 @@ export class Navigation {
     this.rowEl = document.createElement('div');
     this.rowEl.className = 'nav__row';
 
-    const mark = document.createElement('span');
-    mark.className = 'nav__mark';
-    mark.setAttribute('aria-hidden', 'true');
-    mark.textContent = '/ NAV';
-    this.rowEl.append(mark);
+    this.markEl = document.createElement('span');
+    this.markEl.className = 'nav__mark';
+    this.markEl.setAttribute('aria-hidden', 'true');
+    this.markEl.textContent = missingUiString('hud_nav_mark');
+    this.rowEl.append(this.markEl);
 
     this.listEl = document.createElement('div');
     this.listEl.className = 'nav__list';
@@ -143,6 +146,10 @@ export class Navigation {
 
   setSlideProgress(ratio: number): void {
     this.slideProgress.setProgress(ratio);
+  }
+
+  setChromeCopy(copy: HeroChromeCopy): void {
+    this.markEl.textContent = copy.navMark;
   }
 
   syncNavigationCopy(): void {

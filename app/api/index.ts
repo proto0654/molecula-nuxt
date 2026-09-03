@@ -28,5 +28,5 @@ export {
 export { getThemeOptions } from './options';
 
 export { getMenus, getMenu, getMenuLocations } from './menus';
-export { getPage } from './pages';
+export { getPage, getMoleculeHeroPages } from './pages';
 export { getMedia } from './media';

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { mergeHeroNavigation } from '~/domain/hero';
 import { resolveHeroChromeCopy } from '~/domain/options/heroChromeCopy';
 import { setLabelFontUrl } from '~/lib/molecular/AtomLabel';
 import { mountHeroApp, type MountedHeroApp } from '~/lib/hero/mountHeroApp';
@@ -12,16 +11,12 @@ import {
   armPoseWaitForRoute,
   setAwaitingPose,
 } from '~/lib/navigation/poseReveal';
-import { navigationConfig } from '~/lib/navigation/navigationConfig';
 
 const spatial = useSpatialState();
 const router = useRouter();
 const { tags } = useHeroTagCloud();
 const { options } = useThemeOptions();
-
-const navItems = computed(() =>
-  mergeHeroNavigation(options.value.heroNavItems, navigationConfig.items),
-);
+const { navItems, refresh: refreshHeroNav } = useMoleculeHeroNav();
 
 const heroChromeCopy = computed(() => resolveHeroChromeCopy(options.value.ui));
 
@@ -82,6 +77,10 @@ onMounted(() => {
   applyNavCopy();
   applyChromeCopy();
 
+  void refreshHeroNav().then(() => {
+    applyNavCopy();
+  });
+
   stopTransition = hero.onTransition((snap) => {
     if (!snap.busy) revealWhenSettled();
   });
@@ -94,9 +93,13 @@ watch(tags, (list) => {
   hero?.setTagCloud(list);
 });
 
-watch(navItems, () => {
-  applyNavCopy();
-});
+watch(
+  navItems,
+  () => {
+    applyNavCopy();
+  },
+  { deep: true },
+);
 
 watch(heroChromeCopy, () => {
   applyChromeCopy();

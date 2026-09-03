@@ -1,9 +1,13 @@
+import type { HeroChromeCopy } from '../../domain/options/heroChromeCopy';
+import { missingUiString } from '../../domain/options/missingUiString';
+
 /**
  * Techno HUD chrome: edge grid, corner ticks.
  * Pointer-events none.
  */
 export class HudFrame {
   readonly root: HTMLElement;
+  private readonly metaEl: HTMLElement;
 
   constructor(parent: HTMLElement) {
     this.root = document.createElement('div');
@@ -21,12 +25,16 @@ export class HudFrame {
       frame.append(tick);
     }
 
-    const meta = document.createElement('p');
-    meta.className = 'hud__meta';
-    meta.textContent = '⟨ SYS · МОЛЕКУЛА ⟩';
+    this.metaEl = document.createElement('p');
+    this.metaEl.className = 'hud__meta';
+    this.metaEl.textContent = missingUiString('hud_sys_meta');
 
-    this.root.append(grid, frame, meta);
+    this.root.append(grid, frame, this.metaEl);
     parent.append(this.root);
+  }
+
+  setChromeCopy(copy: HeroChromeCopy): void {
+    this.metaEl.textContent = copy.sysMeta;
   }
 
   dispose(): void {

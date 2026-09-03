@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { aboutExcerptPlain } from '~/domain/about';
 import { resolveAboutHeroMedia } from '~/domain/editorialHero';
 import { demoteCmsH1 } from '~/domain/wp';
@@ -34,6 +34,8 @@ usePageSeo({
   description: pageDescription,
   ogImage,
 });
+
+const indexKicker = useUiString('chrome_index_kicker');
 </script>
 
 <template>
@@ -51,7 +53,7 @@ usePageSeo({
     <template v-else-if="page">
       <EditorialHero :media="heroMedia" variant="about" image-variant="about">
         <header class="archive-heading">
-          <p class="archive-heading__kicker">Index</p>
+          <p class="archive-heading__kicker">{{ indexKicker }}</p>
           <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
           <ul v-if="page.tags.length" class="editorial-header__tags">
             <li v-for="tag in page.tags" :key="tag" class="editorial-header__tag">

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
 import {
   caseImageUrl,
@@ -77,13 +77,15 @@ function openFull() {
     0,
   );
 }
+
+const slicesLabel = useUiString('case_section_slices');
 </script>
 
 <template>
   <CaseSection
     v-if="caseData.mobileSlices && layout"
     :index="sectionIndex"
-    label="Slices"
+    :label="slicesLabel"
     tone="visual"
     center
   >

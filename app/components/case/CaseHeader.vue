@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
 import { padCaseIndex, stripTags } from '~/domain/portfolio/presentation';
 
@@ -14,12 +14,13 @@ const props = withDefaults(
 );
 
 const titlePlain = computed(() => stripTags(props.caseData.title));
+const caseLabel = useUiString('chrome_case_label');
 </script>
 
 <template>
   <header class="case-header">
     <p v-if="caseIndex" class="case-header__index">
-      CASE / {{ padCaseIndex(caseIndex) }}
+      {{ caseLabel }} / {{ padCaseIndex(caseIndex) }}
     </p>
     <SiteScrambleTitle
       class="case-header__title"

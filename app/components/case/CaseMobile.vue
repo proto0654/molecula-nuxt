@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
 import { caseImageUrl, stripTags } from '~/domain/portfolio/presentation';
 
@@ -33,13 +33,15 @@ function openMockup() {
     0,
   );
 }
+
+const mobileLabel = useUiString('case_section_mobile');
 </script>
 
 <template>
   <CaseSection
     v-if="caseData.mobile"
     :index="sectionIndex"
-    label="Mobile"
+    :label="mobileLabel"
     tone="visual"
   >
     <div ref="root" class="case-mobile case-scroll-field case-interactive case-interactive--device">

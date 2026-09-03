@@ -13,7 +13,7 @@
 
 # A. ГДЕ МЫ СЕЙЧАС ОСТАНОВИЛИСЬ
 
-**Дата чекпоинта:** 2026-09-02  
+**Дата чекпоинта:** 2026-09-03  
 **Ветка:** `main` (`origin` = `molecula-nuxt`)  
 **Удалено намеренно:** ветка `feat/headless-api-foundation` (неудачная Vite-API итерация; не переносить)
 
@@ -53,6 +53,8 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Spatial:** `/` home (hub `C` always focused, pointer live); other routes frozen + page overlay
 - **API:** `app/api/client.ts` + portfolio/services/options/menus/pages/media; components не знают REST URL
 - **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw, unused in UI.
+- **Theme Options:** [`useThemeOptions`](../app/composables/useThemeOptions.ts) — footer, scroll-top, GTM/schema, HUD chrome UI strings (`nav_verb_*`, `hud_*`, `chrome_*`, `case_section_*`); empty → visible `[key]`; coverage `[theme-options]`; docs [`THEME_OPTIONS.md`](../docs/THEME_OPTIONS.md). WP: Tools → **Seed empty UI string Options**.
+- **Molecule hero copy:** five pages `post_title` + `hero_*` via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts); structure in `navStructure`; Options `hero_nav_items` removed — [`HERO_WP_FIELDS.md`](../docs/HERO_WP_FIELDS.md)
 - **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); paginate slim then `include` ids; SiteChrome meta `ARCHIVE`; transparent page over frozen molecule; featured wash on hover is CSS-only (`.archive-row__backdrop`), gated by `is-washes-ready` / [`usePortfolioWashGate`](../app/composables/usePortfolioWashGate.ts)
 - **Case page:** editorial inspection (12-col grid, SiteChrome `CASE / NN`); Interface = `landing_screen` + repeater; sequential `getCaseComposition` markers including NEXT; lightbox + `useCaseScrollEntry`; in-page case→case via `useCasePageTransition` (hold previous payload, no generic loader); Index restores `?page=` + scroll (`wl:archive-return`); featured wash is layout-owned (not remounted in CaseShell); same wash entrance gate from outside portfolio
 - **Typography:** `--font-ui` JetBrains Mono (HUD / all-caps titles / troika); `--font-body` Exo 2 300 (case prose / intro / captions). Titles via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue) — absolute paint layer, pose-gated (+ case `revealReady`); archive/section body fade via [`usePageContentReveal`](../app/composables/usePageContentReveal.ts)
@@ -68,10 +70,10 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 
 ## Следующая итерация
 
-**Выбранный scope:** EN i18n (`*_en` / `service-repeater_en` / contact `label_en` уже типизированы, UI RU-only). Опционально: footer-legal + `/privacy-policy`, schema.org / GTM, socialbar из `show_in_socialbar`.
+**Выбранный scope:** EN i18n (`*_en` / `service-repeater_en` / contact `label_en` уже типизированы, UI RU-only). Опционально: case thanks / defaults, GTM id, `lang_switch_aria`.
 
-Мелкий долг: unused menu composable, SEO canonical — [`ROADMAP.md`](ROADMAP.md) → Foundation gaps.  
-Не ломать content pipeline, conditional rendering, case visual / wash, services archive (no wash), persistent shell, `/contact` options normalize.
+Мелкий долг: unused menu composable — [`ROADMAP.md`](ROADMAP.md) → Foundation gaps.  
+Не ломать content pipeline, conditional rendering, case visual / wash, services archive (no wash), persistent shell, Theme Options / molecule page hero wiring.
 
 ---
 

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { padCaseIndex } from '~/domain/portfolio/presentation';
 import { routeChromeLabel } from '~/lib/navigation/routeChromeLabel';
 
@@ -21,7 +21,13 @@ const props = withDefaults(
 
 const route = useRoute();
 
-const entityLabel = computed(() => (props.variant === 'service' ? 'SERVICE' : 'CASE'));
+const indexKicker = useUiString('chrome_index_kicker');
+const caseLabel = useUiString('chrome_case_label');
+const serviceLabel = useUiString('chrome_service_label');
+
+const entityLabel = computed(() =>
+  props.variant === 'service' ? serviceLabel.value : caseLabel.value,
+);
 
 const routeLabel = computed(() => {
   const label = routeChromeLabel(route.path, props.archiveScope);
@@ -49,7 +55,7 @@ const routeLabel = computed(() => {
           <p v-if="caseIndex" class="case-chrome__index">
             {{ entityLabel }} / {{ padCaseIndex(caseIndex) }}
           </p>
-          <NuxtLink :to="archiveHref" class="case-chrome__archive">Index</NuxtLink>
+          <NuxtLink :to="archiveHref" class="case-chrome__archive">{{ indexKicker }}</NuxtLink>
         </template>
       </slot>
     </div>

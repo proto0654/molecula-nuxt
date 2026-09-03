@@ -11,7 +11,7 @@
 | [SEO.md](SEO.md) | `usePageSeo`, canonical/OG, sitemap/robots, `NUXT_PUBLIC_INDEXABLE`, WP plain text, a11y landmarks |
 | [DEPLOY.md](DEPLOY.md) | Production (REG.RU rsync) + GitHub Pages preview + SSH secrets setup |
 | [DESIGN.md](DESIGN.md) | HUD tokens, **hairline language**, decorative patterns, scene palette |
-| [HERO_WP_FIELDS.md](HERO_WP_FIELDS.md) | ACF Options repeater spec + seed for hero nav copy |
+| [HERO_WP_FIELDS.md](HERO_WP_FIELDS.md) | Page ACF molecule hero (`hero_*`) + import checklist |
 | [THEME_OPTIONS.md](THEME_OPTIONS.md) | Theme options wiring, dev coverage log, field status, next iterations |
 | [api-real-response.md](api-real-response.md) | Live WordPress REST structure (ACF, menus, pagination) |
 | [../CONTEXT.md](../CONTEXT.md) | Short permanent project facts |

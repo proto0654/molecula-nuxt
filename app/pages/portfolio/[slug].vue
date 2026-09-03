@@ -100,7 +100,7 @@ const caseData = computed(() => held.value?.caseData ?? null);
 
 const position = computed(() => held.value?.position);
 
-const backToArchiveLabel = useUiString('case_back_to_portfolio', 'К портфолио');
+const backToArchiveLabel = useUiString('case_back_to_portfolio');
 
 const heroMedia = computed(() =>
 

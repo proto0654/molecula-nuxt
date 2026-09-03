@@ -1,15 +1,12 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { createFocusTrap, setPageInert } from '~/lib/a11y/focusTrap';
 
 const lightbox = useCaseLightbox();
 const panelRef = ref<HTMLElement | null>(null);
 
-const dialogLabelFallback = useUiString(
-  'screenshot_lightbox_dialog_label',
-  'Просмотр скриншота',
-);
-const closeAria = useUiString('screenshot_lightbox_close_aria', 'Закрыть');
-const navAria = useUiString('screenshot_lightbox_toggle_aria', 'Переключить скриншот');
+const dialogLabelFallback = useUiString('screenshot_lightbox_dialog_label');
+const closeAria = useUiString('screenshot_lightbox_close_aria');
+const navAria = useUiString('screenshot_lightbox_toggle_aria');
 
 let trap: ReturnType<typeof createFocusTrap> | null = null;
 let triggerEl: HTMLElement | null = null;

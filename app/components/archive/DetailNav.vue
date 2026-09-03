@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { ArchiveReturnScope } from '~/lib/navigation/archiveReturn';
 import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
 import { stripTags } from '~/domain/portfolio/presentation';
@@ -25,10 +25,10 @@ const props = withDefaults(
 
 const archiveHref = ref(props.basePath);
 
-const nextLabel = useUiString('case_nav_next_label', 'Следующий');
-const prevLabel = useUiString('case_nav_prev_label', 'Предыдущий');
-const sectionLabel = useUiString('case_nav_see_also', 'Далее');
-const navNoneLabel = useUiString('case_nav_none', '—');
+const nextLabel = useUiString('case_nav_next_label');
+const prevLabel = useUiString('case_nav_prev_label');
+const sectionLabel = useUiString('case_nav_see_also');
+const navNoneLabel = useUiString('case_nav_none');
 
 onMounted(() => {
   archiveHref.value = archiveIndexHref(undefined, props.archiveScope);

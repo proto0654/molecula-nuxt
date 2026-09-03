@@ -1,4 +1,6 @@
 import type { HeroChromeCopy } from '../../domain/options/heroChromeCopy';
+import { formatHudTemplate } from '../../domain/options/heroChromeCopy';
+import { missingUiString } from '../../domain/options/missingUiString';
 import {
   getItemById,
   navigationConfig,
@@ -51,7 +53,7 @@ export class SiteHeader {
     this.logoBtn.type = 'button';
     this.logoBtn.className = 'site-header__logo';
     this.logoBtn.append(createSiteLogoMark(assetBase));
-    this.logoBtn.setAttribute('aria-label', 'WebLaba, на главную');
+    this.logoBtn.setAttribute('aria-label', missingUiString('hero_logo_alt'));
     attachTapGuard(this.logoBtn, () => {
       this.onSelect?.('home');
     });
@@ -60,7 +62,7 @@ export class SiteHeader {
 
     this.routesEl = document.createElement('nav');
     this.routesEl.className = 'site-header__routes';
-    this.routesEl.setAttribute('aria-label', 'Разделы сайта');
+    this.routesEl.setAttribute('aria-label', '');
 
     navigationConfig.items.forEach((item, index) => {
       const button = document.createElement('button');
@@ -93,7 +95,7 @@ export class SiteHeader {
     this.menuBtn.className = 'site-header__menu';
     this.menuBtn.setAttribute('aria-expanded', 'false');
     this.menuBtn.setAttribute('aria-controls', 'mobile-nav-overlay');
-    this.menuBtn.textContent = 'МЕНЮ / NAV';
+    this.menuBtn.textContent = missingUiString('hud_menu_open');
     this.menuBtn.addEventListener('click', () => {
       this.onMenuToggle?.();
     });
@@ -125,7 +127,7 @@ export class SiteHeader {
   setMenuOpen(open: boolean): void {
     this.menuOpen = open;
     this.menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    this.menuBtn.textContent = open ? 'ЗАКРЫТЬ / NAV' : 'МЕНЮ / NAV';
+    this.syncMenuLabel();
     this.syncMenuAria();
     this.root.classList.toggle('is-menu-open', open);
   }
@@ -139,8 +141,21 @@ export class SiteHeader {
     const copy = this.chromeCopy;
     if (!copy) return;
     this.logoBtn.setAttribute('aria-label', copy.logoAriaLabel);
-    this.routesEl.setAttribute('aria-label', copy.routesNavAriaLabel);
+    if (copy.routesNavAriaLabel) {
+      this.routesEl.setAttribute('aria-label', copy.routesNavAriaLabel);
+    } else {
+      this.routesEl.removeAttribute('aria-label');
+    }
+    this.syncMenuLabel();
     this.syncMenuAria();
+    this.syncNode(this.navState);
+  }
+
+  private syncMenuLabel(): void {
+    const copy = this.chromeCopy;
+    this.menuBtn.textContent = this.menuOpen
+      ? (copy?.menuCloseLabel ?? missingUiString('hud_menu_close'))
+      : (copy?.menuOpenLabel ?? missingUiString('hud_menu_open'));
   }
 
   private syncMenuAria(): void {
@@ -185,16 +200,20 @@ export class SiteHeader {
   }
 
   private syncNode(state: NavigationState): void {
+    const copy = this.chromeCopy;
     const id = state.committedItemId ?? state.activeItemId;
     if (!id) {
-      this.nodeEl.textContent = 'УЗЕЛ -- / ПРОСТОЙ';
+      this.nodeEl.textContent =
+        copy?.nodeIdle ?? missingUiString('hud_node_idle');
       return;
     }
     const item = getItemById(id);
     const index = navigationConfig.items.findIndex((entry) => entry.id === id);
-    const node = String(index + 1).padStart(2, '0');
+    const nn = String(index + 1).padStart(2, '0');
     const label = (item?.label ?? id).toUpperCase();
-    this.nodeEl.textContent = `УЗЕЛ ${node} / ${label}`;
+    const template =
+      copy?.nodeFormat ?? missingUiString('hud_node_format');
+    this.nodeEl.textContent = formatHudTemplate(template, { nn, label });
   }
 
   dispose(): void {

@@ -1,17 +1,19 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
 
 defineProps<{
   caseData: Case;
   sectionIndex: number;
 }>();
+
+const mobileLabel = useUiString('case_section_mobile');
 </script>
 
 <template>
   <CaseSection
     v-if="caseData.mobileSignatureHtml"
     :index="sectionIndex"
-    label="Mobile"
+    :label="mobileLabel"
     tone="editorial"
   >
     <div class="case-mobile-signature">

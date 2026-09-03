@@ -27,22 +27,22 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
   header_portfolio_label: {
     wired: false,
     skipped: true,
-    consumer: '(skipped — duplicate of hero nav `work` label)',
+    consumer: '(skipped — duplicate of page title / hero nav `work` label)',
   },
   header_portfolio_aria: {
     wired: false,
     skipped: true,
-    consumer: '(skipped — duplicate of hero nav `work` label)',
+    consumer: '(skipped — duplicate of page title / hero nav `work` label)',
   },
   header_about_label: {
     wired: false,
     skipped: true,
-    consumer: '(skipped — duplicate of hero nav `about` label)',
+    consumer: '(skipped — duplicate of page title / hero nav `about` label)',
   },
   header_about_aria: {
     wired: false,
     skipped: true,
-    consumer: '(skipped — duplicate of hero nav `about` label)',
+    consumer: '(skipped — duplicate of page title / hero nav `about` label)',
   },
   header_home_aria: { wired: true, consumer: 'SiteHeader / MobileNavOverlay logo aria' },
   drawer_open_aria: { wired: true, consumer: 'SiteHeader menu btn aria (closed)' },
@@ -62,7 +62,7 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
   hero_portfolio_label: {
     wired: false,
     skipped: true,
-    consumer: '(skipped — duplicate of hero nav `work` label)',
+    consumer: '(skipped — duplicate of page title / hero nav `work` label)',
   },
   hero_logo_alt: { wired: true, consumer: 'SiteHeader / MobileNavOverlay logo aria fallback' },
   services_section_heading: { wired: true, consumer: 'normalizeServiceChrome' },
@@ -85,6 +85,30 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
   screenshot_lightbox_dialog_label: { wired: true, consumer: 'CaseLightbox role=dialog aria-label fallback' },
   screenshot_lightbox_close_aria: { wired: true, consumer: 'CaseLightbox close/backdrop' },
   screenshot_lightbox_toggle_aria: { wired: true, consumer: 'CaseLightbox prev/next nav' },
+  nav_verb_click: { wired: true, consumer: 'buildAtomBlurb ← setNavVerbCopy' },
+  nav_verb_tap: { wired: true, consumer: 'buildAtomBlurb ← setNavVerbCopy' },
+  hud_menu_open: { wired: true, consumer: 'SiteHeader menu label (closed)' },
+  hud_menu_close: { wired: true, consumer: 'SiteHeader menu label (open)' },
+  hud_nav_mark: { wired: true, consumer: 'Navigation rail mark' },
+  hud_mobile_close: { wired: true, consumer: 'MobileNavOverlay close btn' },
+  hud_sys_meta: { wired: true, consumer: 'HudFrame meta' },
+  hud_node_idle: { wired: true, consumer: 'SiteHeader node idle' },
+  hud_node_format: { wired: true, consumer: 'SiteHeader node format ({nn}/{label})' },
+  hud_status_node_idle: { wired: true, consumer: 'MobileNavOverlay status node idle' },
+  hud_status_node_format: { wired: true, consumer: 'MobileNavOverlay status node format' },
+  hud_status_idle: { wired: true, consumer: 'MobileNavOverlay status idle' },
+  hud_status_ready: { wired: true, consumer: 'MobileNavOverlay status ready' },
+  hud_status_active: { wired: true, consumer: 'MobileNavOverlay status active' },
+  chrome_index_kicker: {
+    wired: true,
+    consumer: 'SiteChrome + archive/about/contact/privacy kickers',
+  },
+  chrome_case_label: { wired: true, consumer: 'SiteChrome / CaseHeader' },
+  chrome_service_label: { wired: true, consumer: 'SiteChrome / services/[slug]' },
+  case_section_overview: { wired: true, consumer: 'CaseContent' },
+  case_section_interface: { wired: true, consumer: 'CaseGallery' },
+  case_section_mobile: { wired: true, consumer: 'CaseMobile / CaseMobileSignature' },
+  case_section_slices: { wired: true, consumer: 'CaseSlices' },
 };
 
 const STRUCTURAL_FIELDS: Array<{
@@ -93,12 +117,6 @@ const STRUCTURAL_FIELDS: Array<{
   consumer: string;
   isEmpty: (acf: ThemeOptionsAcf | undefined) => boolean;
 }> = [
-  {
-    field: 'hero_nav_items',
-    wired: true,
-    consumer: 'MolecularHero → mergeHeroNavigation',
-    isEmpty: (acf) => !acf?.hero_nav_items || !Array.isArray(acf.hero_nav_items) || !acf.hero_nav_items.length,
-  },
   {
     field: 'hero_tag_cloud',
     wired: true,
@@ -178,7 +196,7 @@ export function logThemeOptionsCoverage(acf: ThemeOptionsAcf | undefined): void 
   }
   if (wiredButEmpty.length) {
     console.info(
-      'Wired UI strings empty in WP (using fallbacks):',
+      'Wired UI strings empty in WP (UI shows [key]):',
       wiredButEmpty.map((r) => r.field),
     );
   }

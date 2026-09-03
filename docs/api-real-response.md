@@ -151,14 +151,15 @@ Theme options chrome (same options payload):
 | `contact_popup_text` | messenger CTA copy | EN pair |
 | `weblaba_contacts` | repeater (see below) | `label_en` per row |
 | `hero_tag_cloud` | repeater: `label` + `tier` (`primary` / `secondary`) | none |
-| `hero_nav_items` | repeater wired in Nuxt; **empty on live API** — fill per [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md) |
 | `footer_*`, `scroll_to_top_*`, `schema_org_*` | wired in Nuxt (`SiteFooterLegal`, `SiteScrollToTop`, JSON-LD) |
 | `gtm_container_id` | wired; **empty** on live API |
 | Header/drawer aria, archive headings, case nav, lightbox aria | wired — see [`THEME_OPTIONS.md`](THEME_OPTIONS.md) |
-| `header_portfolio_*`, `header_about_*` | in API; **skipped** — duplicate of hero nav labels |
+| `header_portfolio_*`, `header_about_*` | in API; **skipped** — duplicate of page / hero nav titles |
 | `case_thanks_message`, legacy portfolio strings, `lang_switch_aria` | in API; **not wired** in UI yet |
 
-Contacts repeater (`weblaba_contacts`, 2026-08-27): Telegram, `tel:`, VK, mailto. Fields: `label`, `label_en`, `url`, `icon` (Iconify id, e.g. `bx:bxltelegram`, `mdi:vk`), `target` (`_self` / `_blank`), `show_in_header` (legacy), `show_in_socialbar`. No WP page with slug `contact` — options only. Empty repeater is `false` / `[]`; Nuxt does not inject PHP Telegram+phone defaults.
+Molecule hero copy (pages, not Options): `post_title` + `hero_usp` / `hero_blurb` / `hero_blurb_cta` on `home-2`, `about`, `services`, `portfolio`, `contact` — see [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md). Options repeater `hero_nav_items` is deprecated/removed.
+
+Contacts repeater (`weblaba_contacts`, 2026-08-27): Telegram, `tel:`, VK, mailto. Fields: `label`, `label_en`, `url`, `icon` (Iconify id, e.g. `bx:bxltelegram`, `mdi:vk`), `target` (`_self` / `_blank`), `show_in_header` (legacy), `show_in_socialbar`. Contact page slug `contact` exists for molecule hero fields; contact **body** chrome still from options (`contact_popup_*`, `weblaba_contacts`). Empty repeater is `false` / `[]`; Nuxt does not inject PHP Telegram+phone defaults.
 
 Hero tag cloud (`hero_tag_cloud`, 2026-08-30): `AI` / `SYSTEMS` / `DESIGN` (primary), `MCP` / `RAG` / `AGENTS` / `AUTOMATIONS` (secondary). Empty repeater is `false` / `[]`.
 

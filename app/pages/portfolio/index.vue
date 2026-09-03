@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { restoreArchiveScroll } from '~/lib/navigation/archiveReturn';
 import { categoryNameMap } from '~/domain/portfolio/archive';
 
@@ -31,11 +31,8 @@ useArchivePaginationScroll(page, pending);
 
 const { revealing } = usePageContentReveal();
 
-const archiveTitle = useUiString('portfolio_heading_current', 'Портфолио');
-const archiveDescription = useUiString(
-  'portfolio_archive_description',
-  'Кейсы и проекты студии WebLaba — портфолио веб-разработки и дизайна',
-);
+const archiveTitle = useUiString('portfolio_heading_current');
+const archiveDescription = useUiString('portfolio_archive_description');
 
 const pageTitle = computed(() =>
   page.value > 1
@@ -47,12 +44,14 @@ usePageSeo({
   title: pageTitle,
   description: archiveDescription,
 });
+
+const indexKicker = useUiString('chrome_index_kicker');
 </script>
 
 <template>
   <ArchiveShell :revealing="revealing">
     <header class="archive-heading">
-      <p class="archive-heading__kicker">Index</p>
+      <p class="archive-heading__kicker">{{ indexKicker }}</p>
       <SiteScrambleTitle class="archive-heading__title" :text="archiveTitle" />
     </header>
 

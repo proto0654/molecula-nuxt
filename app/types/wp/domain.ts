@@ -182,7 +182,7 @@ export type NavigationMenu = {
   items: NavigationMenuItem[];
 };
 
-/** Normalized hero nav row from ACF options repeater. */
+/** Normalized molecule hero copy from a navigation page (`post_title` + `hero_*`). */
 export type HeroNavItemRow = {
   navId: string;
   label: string | null;
@@ -216,10 +216,9 @@ export type ThemeOptionsSchemaOrg = {
   sameAs: string[];
 };
 
-/** Normalized theme options (RU). */
+/** Normalized theme options (RU). Molecule hero copy is page-based, not options. */
 export type ThemeOptions = {
   ui: UiStrings;
-  heroNavItems: HeroNavItemRow[];
   scrollToTop: ScrollToTopSettings;
   footer: ThemeOptionsFooter;
   schemaOrg: ThemeOptionsSchemaOrg;

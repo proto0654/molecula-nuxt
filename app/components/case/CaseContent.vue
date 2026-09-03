@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
 import { demoteCmsH1 } from '~/domain/wp';
 
@@ -17,6 +17,8 @@ const hasMeta = computed(
 const proseHtml = computed(() =>
   props.caseData.contentHtml ? demoteCmsH1(props.caseData.contentHtml) : null,
 );
+
+const overviewLabel = useUiString('case_section_overview');
 </script>
 
 <template>
@@ -27,7 +29,7 @@ const proseHtml = computed(() =>
     <CaseSectionMarker
       class="case-zone-label"
       :index="sectionIndex"
-      label="Overview"
+      :label="overviewLabel"
       tone="editorial"
     />
     <div class="case-content__body">

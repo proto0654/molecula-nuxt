@@ -79,19 +79,19 @@ SEO: [`usePageSeo`](../app/composables/usePageSeo.ts) on all routes — title (`
 
 ## Hero navigation copy
 
-Molecular hero nav labels, atom captions, typewriter blurbs, and USP headlines are authored in [`navigationConfig.ts`](../app/lib/navigation/navigationConfig.ts) (hardcoded RU). `moleculeConfig` atom captions resolve from `navigationConfig.label` via `getItemByAtomId` — do not duplicate label strings elsewhere.
+Molecular hero nav labels, atom captions, typewriter blurbs, and USP headlines: structure in [`navStructure.ts`](../app/lib/navigation/navStructure.ts) / empty copy in [`navigationConfig.ts`](../app/lib/navigation/navigationConfig.ts); live merge from the five WP navigation pages via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts). Blurb verbs + HUD chrome strings: Theme Options ([`THEME_OPTIONS.md`](THEME_OPTIONS.md)). `moleculeConfig` atom captions resolve from nav `label` via `getItemByAtomId` — do not duplicate label strings elsewhere.
 
 Decorative tag cloud around the molecule: ACF options `hero_tag_cloud` via [`useHeroTagCloud`](../app/composables/useHeroTagCloud.ts) → [`TagCloud`](../app/lib/molecular/TagCloud.ts). Not interactive.
 
-| Field | Rendered as | Current source | Target source (WP) |
+| Field | Rendered as | Fallback | Live WP |
 |-------|-------------|------------------|---------------------|
-| `label` | Nav rail, 3D atom caption | `navigationConfig.items[].label` | `menus/v1` main menu item title, matched by route slug |
-| `blurb` | Typewriter under atom on commit (`// part1 / part2`) | part 1 + `blurbCta` in [`navigationConfig`](../app/lib/navigation/navigationConfig.ts); verb from [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) | ACF Options repeater `hero_nav_items` — see [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md) |
-| `usp` | HUD headline after focus settle | hardcode | same repeater field `usp` |
+| `label` | Nav rail, 3D atom caption | `navigationConfig.items[].label` | Page `post_title` |
+| `blurb` | Typewriter under atom on commit | part 1 + `blurbCta` in config; verb from [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) | Page ACF `hero_blurb` + `hero_blurb_cta` |
+| `usp` | HUD headline after focus settle | hardcode | Page ACF `hero_usp` |
 
-Blurbs: part 1 + `blurbCta` glued to `{кликай|тапай}` (leading space or comma in `blurbCta`). Hub (Главная) is descriptive only.
+Blurbs: part 1 + `blurbCta` glued to Options verb (`nav_verb_click` / `nav_verb_tap`). Hub is descriptive only.
 
-WP field spec + seed JSON: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md).
+WP field spec + import: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md).
 
 Hero wiring: [`WEBGL_HERO.md`](WEBGL_HERO.md) § Navigation.
 

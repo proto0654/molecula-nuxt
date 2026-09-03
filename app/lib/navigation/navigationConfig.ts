@@ -1,14 +1,16 @@
+import { NAV_STRUCTURE } from './navStructure';
+
 export type NavigationItem = {
   id: string;
-  /** Nav rail + 3D atom caption. Hardcoded; target: WP main menu title (see docs/CONTENT.md). */
+  /** Nav rail + 3D atom caption — from WP page `post_title`. */
   label: string;
   atomId: string;
   route?: string;
-  /** Descriptive blurb (part 1). Navigable atoms get a dynamic click/tap CTA appended at runtime. */
+  /** Typewriter part 1 — from WP `hero_blurb`. */
   blurb: string;
-  /** CTA tail glued to «кликай/тапай» — leading space or punctuation included, e.g. « для связи со мной», «, будем знакомиться». */
+  /** CTA tail after click/tap verb — from WP `hero_blurb_cta`. */
   blurbCta?: string;
-  /** Short USP headline in HUD space after focus settles. Hardcoded; target: WP hero_usp. */
+  /** HUD USP after focus — from WP `hero_usp`. */
   usp: string;
 };
 
@@ -16,53 +18,16 @@ export type NavigationConfig = {
   items: NavigationItem[];
 };
 
+/** Structure only — copy comes from WP pages via useMoleculeHeroNav. */
 export const navigationConfig: NavigationConfig = {
-  items: [
-    {
-      id: 'home',
-      label: 'Главная',
-      atomId: 'C',
-      route: '/',
-      blurb: 'weblaba / студия веб-продуктов',
-      usp: 'Цифровые продукты из одного узла',
-    },
-    {
-      id: 'about',
-      label: 'Обо мне',
-      atomId: 'H1',
-      route: '/about',
-      blurb: 'студия weblaba',
-      blurbCta: ', будем знакомится →',
-      usp: 'Команда, процесс, подход',
-    },
-    {
-      id: 'services',
-      label: 'Услуги',
-      atomId: 'H2',
-      route: '/services',
-      blurb: 'разработка и дизайн',
-      blurbCta: ', выбирай предложение →',
-      usp: 'От идеи до релиза',
-    },
-    {
-      id: 'work',
-      label: 'Портфолио',
-      atomId: 'H3',
-      route: '/portfolio',
-      blurb: 'архив проектов',
-      blurbCta: ', переход в портфолио →',
-      usp: 'Кейсы, которые работают',
-    },
-    {
-      id: 'contact',
-      label: 'Контакты',
-      atomId: 'H4',
-      route: '/contact',
-      blurb: 'открытый канал',
-      blurbCta: ' для связи со мной →',
-      usp: 'Прямой канал без шума',
-    },
-  ],
+  items: NAV_STRUCTURE.map((struct) => ({
+    id: struct.id,
+    atomId: struct.atomId,
+    route: struct.route,
+    label: '',
+    blurb: '',
+    usp: '',
+  })),
 };
 
 const itemsById = new Map(

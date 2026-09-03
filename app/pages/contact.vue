@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { contactExcerptPlain } from '~/domain/contacts';
 import { contactHeroMedia } from '~/domain/editorialHero';
 
@@ -20,6 +20,8 @@ usePageSeo({
   title: seoTitle,
   description: pageDescription,
 });
+
+const indexKicker = useUiString('chrome_index_kicker');
 </script>
 
 <template>
@@ -34,7 +36,7 @@ usePageSeo({
     <template v-else-if="page">
       <EditorialHero :media="heroMedia">
         <header class="archive-heading">
-          <p class="archive-heading__kicker">Index</p>
+          <p class="archive-heading__kicker">{{ indexKicker }}</p>
           <SiteScrambleTitle class="archive-heading__title" :text="pageHeading" />
         </header>
 
