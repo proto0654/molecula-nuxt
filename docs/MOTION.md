@@ -39,7 +39,7 @@ Do not fade the whole `.archive-page__body` — chrome sits outside the body and
 | 2 title | `SiteScrambleTitle` | `--enter-beat-title` (80ms) conceptually | existing scramble, pose-gated — **no extra CSS fade** |
 | 3 lead | intro, tags, section titles, case intro/facts, `.editorial-hero-media__fill` (after frame draw) | `--enter-beat-lead` (140ms) for copy; fill delay = `--line-draw-duration` + overlap |
 | 4 list | `.archive-row` | `--enter-beat-list` (180ms) + stagger | hairline `scaleX`, then row content |
-| 5 tail | `[data-enter="tail"]` (pagination, about CTA, archive `DetailNav`) | same split as list | opacity + `--enter-y` |
+| 5 tail | `[data-enter="tail"]` (pagination, about CTA, archive `DetailNav`, case `CaseThanks`) | same split as list | opacity + `--enter-y` |
 
 Case pages share the same listing conductor as archives (numbered sections + NEXT footer rows). Hero beats 0–3 stay separate; gallery / slices / mobile mockup keep ScrollTrigger L2/L3. GSAP remains allowed **only** for case ScrollTrigger L2/L3, case→case, `Navigator`, and pointer lerp (`gsap.quickTo` on nested tilt — landing / device / slice focus; not on the ScrollTrigger node).
 
@@ -60,6 +60,8 @@ After gate + archive-return restore + two rAFs:
 Uprock motif — implementation of [hairline language](DESIGN.md#hairline-language): the **full-width** row hairline (`::before` / last-row `::after`), wiped **left → right** via `clip-path: inset(0 100% 0 0)` → `inset(0 0 0 0)`. Short `.archive-row__line` tick uses `scaleX(0 → 1)` with `transform-origin: left center`. Row content starts after `--reveal-content-delay` so the draw reads first.
 
 Same motif on case section markers, CMS list rows, and footer nav. **Footer nav** (`nav.case-nav`) is one listing unit; when `is-revealed`, an internal chain runs via `--nav-origin` + step offsets: case — marker line → marker label → Next → Previous line → Previous → Index; service — Next → Previous line → Previous → Index.
+
+Layout **social footer** (`SiteFooterMenu`) is outside the page shell: pose-gated (`is-awaiting-pose`) fade-up with `--enter-beat-list`, hidden on `/contact`.
 
 `archive-row--detail:last-child` has no bottom hairline (unchanged).
 

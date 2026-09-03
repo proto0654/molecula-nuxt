@@ -1,5 +1,6 @@
 import type { Case, CaseImage, CaseVideo } from '~/types/wp';
 import {
+  caseImageSrcSet,
   caseImageUrl,
   CASE_LANDING_SIZES,
   CASE_SCREEN_SIZES,
@@ -77,4 +78,15 @@ export function editorialHeroImageSrc(
 
 export function editorialHeroAboutImageSrc(image: CaseImage): string {
   return caseImageUrl(image, CASE_LANDING_SIZES);
+}
+
+export function editorialHeroImageSrcSet(
+  image: CaseImage,
+  sizes: readonly string[] = CASE_SCREEN_SIZES,
+): string | null {
+  return caseImageSrcSet(image, sizes);
+}
+
+export function editorialHeroAboutImageSrcSet(image: CaseImage): string | null {
+  return caseImageSrcSet(image, CASE_LANDING_SIZES);
 }

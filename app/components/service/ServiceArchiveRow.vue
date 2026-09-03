@@ -3,6 +3,7 @@ import type { ServiceArchiveEntry } from '~/domain/services/archive';
 import {
   serviceArchiveMetaLabel,
   serviceArchiveSpecimenImage,
+  serviceArchiveSpecimenSrcSet,
   serviceArchiveSpecimenUrl,
   serviceArchiveTitlePlain,
 } from '~/domain/services/archive';
@@ -20,6 +21,7 @@ const title = computed(() => serviceArchiveTitlePlain(item.value));
 const meta = computed(() => serviceArchiveMetaLabel(item.value));
 const specimen = computed(() => serviceArchiveSpecimenImage(item.value));
 const specimenUrl = computed(() => serviceArchiveSpecimenUrl(item.value));
+const specimenSrcSet = computed(() => serviceArchiveSpecimenSrcSet(item.value));
 const href = computed(() => `/services/${item.value.slug}`);
 
 function onNavigate() {
@@ -50,6 +52,8 @@ function onNavigate() {
         <img
           v-if="specimenUrl && specimen"
           :src="specimenUrl"
+          :srcset="specimenSrcSet ?? undefined"
+          :sizes="specimenSrcSet ? '(min-width: 1024px) 7.5rem, 5rem' : undefined"
           :alt="specimen.alt || title"
           :width="specimen.width ?? undefined"
           :height="specimen.height ?? undefined"

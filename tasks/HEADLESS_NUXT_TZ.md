@@ -7,7 +7,7 @@
 
 - [`api-real-response.md`](../docs/api-real-response.md) — фактическая структура WP API
 - [`../CONTEXT.md`](../CONTEXT.md) — короткий стек / entry points
-- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; `/about` `/services` `/contact` live; EN i18n later
+- [`ROADMAP.md`](ROADMAP.md) — STEPs 1–19 Done; sections live; foundation gaps + srcset Done; EN i18n next
 
 ---
 
@@ -70,9 +70,9 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 
 ## Следующая итерация
 
-**Выбранный scope:** EN i18n (`*_en` / `service-repeater_en` / contact `label_en` уже типизированы, UI RU-only). Опционально: case thanks / defaults, GTM id, `lang_switch_aria`.
+**Выбранный scope:** EN i18n (`*_en` / `service-repeater_en` / contact `label_en` уже типизированы, UI RU-only). Опционально: case defaults, `lang_switch_aria`.
 
-Мелкий долг: unused menu composable — [`ROADMAP.md`](ROADMAP.md) → Foundation gaps.  
+Foundation gaps закрыты: `useWpMenu('social')` → SiteFooterMenu (не на `/contact`); privacy prerender/sitemap; GTM noscript; `caseImageSrcSet`; `case_thanks_message` → CaseThanks. Live `gtm_container_id` still empty in WP (ops).
 Не ломать content pipeline, conditional rendering, case visual / wash, services archive (no wash), persistent shell, Theme Options / molecule page hero wiring.
 
 ---
@@ -1128,6 +1128,6 @@ Do NOT continue automatically into visual case redesign.
 Content: docs/CONTENT.md + docs/api-real-response.md
 Case / archive visual: docs/CASES.md
 
-Scope: EN i18n, если попросят; иначе foundation gaps / footer-legal+privacy / schema+GTM.
+Scope: EN i18n. Optional: case defaults, lang_switch_aria. Fill WP gtm_container_id when ready.
 Не ломать absence-as-null, case wash, services-without-wash, persistent shell, contact options normalize.
 ```

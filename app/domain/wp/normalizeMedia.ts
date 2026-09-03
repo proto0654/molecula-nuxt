@@ -33,6 +33,22 @@ export function normalizeSizes(sizes: AcfImageSizes | undefined): Record<string,
   return out;
 }
 
+/** ACF companions like `weblaba-screen-width` → `{ "weblaba-screen": 1024 }`. */
+export function normalizeSizeWidths(
+  sizes: AcfImageSizes | undefined,
+): Record<string, number> {
+  if (!sizes) return {};
+  const out: Record<string, number> = {};
+  for (const [key, value] of Object.entries(sizes)) {
+    if (!key.endsWith('-width')) continue;
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+      continue;
+    }
+    out[key.slice(0, -'-width'.length)] = value;
+  }
+  return out;
+}
+
 export function normalizeAcfImage(image: AcfImage | false | undefined | null): CaseImage | null {
   if (!image || image === false) return null;
   return {
@@ -42,6 +58,7 @@ export function normalizeAcfImage(image: AcfImage | false | undefined | null): C
     width: typeof image.width === 'number' ? image.width : null,
     height: typeof image.height === 'number' ? image.height : null,
     sizes: normalizeSizes(image.sizes),
+    sizeWidths: normalizeSizeWidths(image.sizes),
   };
 }
 
@@ -63,10 +80,15 @@ export function normalizeFeaturedFromEmbed(
   const media = embedded?.[0];
   if (!media?.source_url) return null;
   const sizes: Record<string, string> = {};
+  const sizeWidths: Record<string, number> = {};
   const rawSizes = media.media_details?.sizes;
   if (rawSizes) {
     for (const [key, entry] of Object.entries(rawSizes)) {
-      if (entry?.source_url) sizes[key] = entry.source_url;
+      if (!entry?.source_url) continue;
+      sizes[key] = entry.source_url;
+      if (typeof entry.width === 'number' && entry.width > 0) {
+        sizeWidths[key] = entry.width;
+      }
     }
   }
   return {
@@ -76,6 +98,7 @@ export function normalizeFeaturedFromEmbed(
     width: media.media_details?.width ?? null,
     height: media.media_details?.height ?? null,
     sizes,
+    sizeWidths,
   };
 }
 

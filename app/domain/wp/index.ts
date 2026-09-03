@@ -8,6 +8,7 @@ export {
   emptyToNull,
   stripHtmlToPlain,
   normalizeSizes,
+  normalizeSizeWidths,
   normalizeAcfImage,
   normalizeAcfVideo,
   normalizeFeaturedFromEmbed,

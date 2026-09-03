@@ -3,6 +3,7 @@ import type { ArchiveEntry } from '~/domain/portfolio/archive';
 import {
   archiveMetaLabel,
   archiveSpecimenImage,
+  archiveSpecimenSrcSet,
   archiveSpecimenUrl,
   archiveTitlePlain,
 } from '~/domain/portfolio/archive';
@@ -21,6 +22,7 @@ const title = computed(() => archiveTitlePlain(item.value));
 const meta = computed(() => archiveMetaLabel(item.value, props.categoryById));
 const specimen = computed(() => archiveSpecimenImage(item.value));
 const specimenUrl = computed(() => archiveSpecimenUrl(item.value));
+const specimenSrcSet = computed(() => archiveSpecimenSrcSet(item.value));
 const href = computed(() => `/portfolio/${item.value.slug}`);
 
 function onNavigate() {
@@ -48,6 +50,8 @@ function onNavigate() {
         <img
           v-if="specimenUrl && specimen"
           :src="specimenUrl"
+          :srcset="specimenSrcSet ?? undefined"
+          :sizes="specimenSrcSet ? '(min-width: 1024px) 7.5rem, 5rem' : undefined"
           :alt="specimen.alt || title"
           :width="specimen.width ?? undefined"
           :height="specimen.height ?? undefined"

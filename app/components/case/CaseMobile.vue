@@ -1,6 +1,10 @@
 ﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
-import { caseImageUrl, stripTags } from '~/domain/portfolio/presentation';
+import {
+  caseImageSrcSet,
+  caseImageUrl,
+  stripTags,
+} from '~/domain/portfolio/presentation';
 
 const props = defineProps<{
   caseData: Case;
@@ -20,6 +24,18 @@ useCaseInteractive({
   mode: 'device',
   revision: computed(() => props.caseData.mobile?.image.id ?? 0),
 });
+
+const mobileSrc = computed(() =>
+  props.caseData.mobile
+    ? caseImageUrl(props.caseData.mobile.image)
+    : null,
+);
+
+const mobileSrcSet = computed(() =>
+  props.caseData.mobile
+    ? caseImageSrcSet(props.caseData.mobile.image)
+    : null,
+);
 
 function openMockup() {
   if (!props.caseData.mobile) return;
@@ -58,7 +74,13 @@ const mobileLabel = useUiString('case_section_mobile');
             <div class="case-interactive__tilt case-mobile__device">
               <img
                 class="case-mobile__img"
-                :src="caseImageUrl(caseData.mobile.image)"
+                :src="mobileSrc!"
+                :srcset="mobileSrcSet ?? undefined"
+                :sizes="
+                  mobileSrcSet
+                    ? '(min-width: 1024px) 18rem, min(60vw, 16rem)'
+                    : undefined
+                "
                 :alt="caseData.mobile.image.alt || stripTags(caseData.title)"
                 loading="lazy"
               />

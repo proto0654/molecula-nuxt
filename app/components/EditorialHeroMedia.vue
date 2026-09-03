@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {
   editorialHeroAboutImageSrc,
+  editorialHeroAboutImageSrcSet,
   editorialHeroImageSrc,
+  editorialHeroImageSrcSet,
   type EditorialHeroMedia,
 } from '~/domain/editorialHero';
 
@@ -18,6 +20,19 @@ const imageSrc = computed(() => {
     ? editorialHeroAboutImageSrc(props.media.image)
     : editorialHeroImageSrc(props.media.image);
 });
+
+const imageSrcSet = computed(() => {
+  if (props.media.kind !== 'image') return null;
+  return props.imageVariant === 'about'
+    ? editorialHeroAboutImageSrcSet(props.media.image)
+    : editorialHeroImageSrcSet(props.media.image);
+});
+
+const imageSizes = computed(() =>
+  props.imageVariant === 'about'
+    ? '(min-width: 1024px) 28rem, 85vw'
+    : '(min-width: 1024px) min(70vw, 56rem), 100vw',
+);
 </script>
 
 <template>
@@ -48,6 +63,8 @@ const imageSrc = computed(() => {
           v-else-if="media.kind === 'image' && imageSrc"
           class="editorial-hero-media__img"
           :src="imageSrc"
+          :srcset="imageSrcSet ?? undefined"
+          :sizes="imageSrcSet ? imageSizes : undefined"
           :alt="media.alt"
           :width="media.image.width ?? undefined"
           :height="media.image.height ?? undefined"

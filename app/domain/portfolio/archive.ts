@@ -1,5 +1,10 @@
 import type { Case, CaseImage, PortfolioCategory } from '~/types/wp';
-import { caseImageUrl, CASE_SCREEN_SIZES, stripTags } from './presentation';
+import {
+  caseImageSrcSet,
+  caseImageUrl,
+  CASE_SCREEN_SIZES,
+  stripTags,
+} from './presentation';
 
 export type ArchiveEntry = {
   item: Case;
@@ -19,6 +24,12 @@ export function archiveSpecimenUrl(item: Case): string | null {
   const image = archiveSpecimenImage(item);
   if (!image) return null;
   return caseImageUrl(image, CASE_SCREEN_SIZES);
+}
+
+export function archiveSpecimenSrcSet(item: Case): string | null {
+  const image = archiveSpecimenImage(item);
+  if (!image) return null;
+  return caseImageSrcSet(image, CASE_SCREEN_SIZES);
 }
 
 export function archiveYear(date: string): string | null {

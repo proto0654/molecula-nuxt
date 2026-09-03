@@ -4,6 +4,7 @@ import {
   CASE_LANDING_SIZES,
   CASE_SCREEN_SIZES,
   balanceCaseScreenColumns,
+  caseImageSrcSet,
   caseImageUrl,
   getCaseScreenItems,
   isCaseScreensLandingOnly,
@@ -50,11 +51,16 @@ function openAt(index: number) {
   lightbox.open(lightboxItems.value, index);
 }
 
+function preferredSizes(item: (typeof items.value)[number]) {
+  return item.source === 'landing' ? CASE_LANDING_SIZES : CASE_SCREEN_SIZES;
+}
+
 function itemSrc(item: (typeof items.value)[number]) {
-  return caseImageUrl(
-    item.image,
-    item.source === 'landing' ? CASE_LANDING_SIZES : CASE_SCREEN_SIZES,
-  );
+  return caseImageUrl(item.image, preferredSizes(item));
+}
+
+function itemSrcSet(item: (typeof items.value)[number]) {
+  return caseImageSrcSet(item.image, preferredSizes(item));
 }
 
 function itemAlt(item: (typeof items.value)[number], index: number) {
@@ -76,6 +82,15 @@ function labelFor(index: number): string {
 
 function mobileColFor(index: number): number {
   return index % 2;
+}
+
+const screenSizesAttr = '(min-width: 1024px) 30vw, 45vw';
+const landingSizesAttr = '(min-width: 1024px) min(70vw, 56rem), 92vw';
+
+function itemSizesAttr(item: (typeof items.value)[number]) {
+  return item.source === 'landing' && landingOnly.value
+    ? landingSizesAttr
+    : screenSizesAttr;
 }
 
 const interfaceLabel = useUiString('case_section_interface');
@@ -119,6 +134,8 @@ const interfaceLabel = useUiString('case_section_interface');
                 <figure class="case-inner-pages__card" :style="aspectStyle(item)">
                   <img
                     :src="itemSrc(item)"
+                    :srcset="itemSrcSet(item) ?? undefined"
+                    :sizes="itemSrcSet(item) ? itemSizesAttr(item) : undefined"
                     :alt="itemAlt(item, index)"
                     :loading="landingOnly || index === 0 ? 'eager' : 'lazy'"
                     :fetchpriority="landingOnly || index === 0 ? 'high' : undefined"
@@ -133,6 +150,8 @@ const interfaceLabel = useUiString('case_section_interface');
               >
                 <img
                   :src="itemSrc(item)"
+                  :srcset="itemSrcSet(item) ?? undefined"
+                  :sizes="itemSrcSet(item) ? itemSizesAttr(item) : undefined"
                   :alt="itemAlt(item, index)"
                   :loading="index === 0 ? 'eager' : 'lazy'"
                   :fetchpriority="index === 0 ? 'high' : undefined"
@@ -181,6 +200,12 @@ const interfaceLabel = useUiString('case_section_interface');
                   >
                     <img
                       :src="itemSrc(placed.item)"
+                      :srcset="itemSrcSet(placed.item) ?? undefined"
+                      :sizes="
+                        itemSrcSet(placed.item)
+                          ? itemSizesAttr(placed.item)
+                          : undefined
+                      "
                       :alt="itemAlt(placed.item, placed.index)"
                       loading="eager"
                       fetchpriority="high"
@@ -195,6 +220,12 @@ const interfaceLabel = useUiString('case_section_interface');
                 >
                   <img
                     :src="itemSrc(placed.item)"
+                    :srcset="itemSrcSet(placed.item) ?? undefined"
+                    :sizes="
+                      itemSrcSet(placed.item)
+                        ? itemSizesAttr(placed.item)
+                        : undefined
+                    "
                     :alt="itemAlt(placed.item, placed.index)"
                     :loading="placed.index === 0 ? 'eager' : 'lazy'"
                     :fetchpriority="placed.index === 0 ? 'high' : undefined"

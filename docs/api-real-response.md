@@ -71,7 +71,7 @@ Keys observed on live posts:
 
 **Important:** fields vary per case. `false` means “no media/repeater”, not an error. Empty string `""` for text should normalize to `null` for conditional UI.
 
-No separate WebP URLs in JSON — only registered size names (below).
+No separate WebP URLs in JSON — only registered size names (below). Nuxt builds `srcset` from named size URLs + widths (`sizeWidths` / fallback map); never invents WebP.
 
 ### ACF image object (compact)
 
@@ -105,6 +105,7 @@ Only one term returned:
 - Locations: `main`, `social`, `main_en`
 - Item fields used: `title`, `url`, `menu_order`, `menu_item_parent`, `classes`, `object`, `type`, optional `slug`
 - Flat list (parent `"0"` for top-level); hierarchy via `menu_item_parent`
+- Nuxt consumer: `useWpMenu('social')` → [`SiteFooterMenu`](../app/components/site/SiteFooterMenu.vue) (hero nav stays hard-coded `NAV_STRUCTURE`)
 
 ## Ordering note (prev/next)
 
@@ -152,10 +153,12 @@ Theme options chrome (same options payload):
 | `weblaba_contacts` | repeater (see below) | `label_en` per row |
 | `hero_tag_cloud` | repeater: `label` + `tier` (`primary` / `secondary`) | none |
 | `footer_*`, `scroll_to_top_*`, `schema_org_*` | wired (`SiteFooterLegal`, `SiteScrollToTop` HUD hairline + `enabled`/`trigger` only, JSON-LD) |
-| `gtm_container_id` | wired; **empty** on live API |
+| `gtm_container_id` | wired (script + noscript); **empty** on live API |
+| Menus `social` | wired → `SiteFooterMenu` (hidden on `/contact`) |
 | Header/drawer aria, archive headings, case nav, lightbox aria | wired — see [`THEME_OPTIONS.md`](THEME_OPTIONS.md) |
 | `header_portfolio_*`, `header_about_*` | in API; **skipped** — duplicate of page / hero nav titles |
-| `case_thanks_message`, legacy portfolio strings, `lang_switch_aria` | in API; **not wired** in UI yet |
+| `case_thanks_message` | wired → `CaseThanks` |
+| legacy portfolio strings, `lang_switch_aria` | in API; **not wired** in UI yet |
 
 Molecule hero copy (pages, not Options): `post_title` + `hero_usp` / `hero_blurb` / `hero_blurb_cta` on `home-2`, `about`, `services`, `portfolio`, `contact` — see [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md). Options repeater `hero_nav_items` is deprecated/removed.
 

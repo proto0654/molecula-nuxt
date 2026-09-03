@@ -1,5 +1,10 @@
 import type { CaseImage, Service } from '~/types/wp';
-import { caseImageUrl, CASE_SCREEN_SIZES, stripTags } from '~/domain/portfolio/presentation';
+import {
+  caseImageSrcSet,
+  caseImageUrl,
+  CASE_SCREEN_SIZES,
+  stripTags,
+} from '~/domain/portfolio/presentation';
 
 export type ServiceArchiveEntry = {
   item: Service;
@@ -19,6 +24,12 @@ export function serviceArchiveSpecimenUrl(item: Service): string | null {
   const image = serviceArchiveSpecimenImage(item);
   if (!image) return null;
   return caseImageUrl(image, CASE_SCREEN_SIZES);
+}
+
+export function serviceArchiveSpecimenSrcSet(item: Service): string | null {
+  const image = serviceArchiveSpecimenImage(item);
+  if (!image) return null;
+  return caseImageSrcSet(image, CASE_SCREEN_SIZES);
 }
 
 /**

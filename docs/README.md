@@ -15,4 +15,4 @@
 | [THEME_OPTIONS.md](THEME_OPTIONS.md) | Theme options wiring, dev coverage log, field status, next iterations |
 | [api-real-response.md](api-real-response.md) | Live WordPress REST structure (ACF, menus, pagination) |
 | [../CONTEXT.md](../CONTEXT.md) | Short permanent project facts |
-| [../tasks/ROADMAP.md](../tasks/ROADMAP.md) | STEPs 1–19 Done; `/about` `/services` `/contact` live |
+| [../tasks/ROADMAP.md](../tasks/ROADMAP.md) | STEPs 1–19 Done; foundation gaps + srcset Done; EN i18n next |

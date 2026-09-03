@@ -2401,6 +2401,10 @@ html.case-lightbox-open {
   margin-top: var(--case-space-footer);
 }
 
+.case-thanks + .case-nav {
+  margin-top: var(--case-space-section);
+}
+
 .editorial-hero--case + .case-nav {
   margin-top: var(--case-space-section);
 }
@@ -2411,6 +2415,54 @@ html.case-lightbox-open {
 
 .case-page--sparse .case-nav {
   margin-top: var(--case-space-section);
+}
+
+/* Closing thanks — Options `case_thanks_message`; listing tail enter (MOTION.md). */
+.case-thanks {
+  margin: var(--case-space-footer) 0 0;
+  padding: 0 var(--case-pad-x);
+}
+
+.case-thanks__text {
+  display: block;
+  grid-column: 1 / -1;
+  margin: 0;
+  font: 300 var(--text-case-intro) / 1.55 var(--font-body);
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--wl-text) 62%, transparent);
+  text-align: left;
+}
+
+@media (min-width: 1024px) {
+  .case-thanks {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+html.js-enabled .case-page:not(.is-revealing) .case-thanks[data-enter='tail'],
+html.js-enabled .case-page.is-revealing .case-thanks[data-enter='tail']:not(.is-revealed) {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .case-page.is-revealing .case-thanks[data-enter='tail'].is-revealed {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger))
+  );
+}
+
+html.js-enabled .case-page.is-revealing .case-thanks[data-enter='tail'].is-revealed[data-reveal='in'] {
+  animation-delay: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .case-page .case-thanks[data-enter='tail'] {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
 }
 
 .case-nav__links {

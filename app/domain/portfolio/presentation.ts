@@ -287,6 +287,61 @@ export function caseImageUrl(
   return image.url;
 }
 
+/**
+ * Fallback widths for registered WP sizes when ACF companions / embed widths
+ * are missing. Matches live weblaba-screen (1024) / weblaba-landing (1920).
+ */
+const FALLBACK_SIZE_WIDTHS: Record<string, number> = {
+  thumbnail: 150,
+  medium: 300,
+  medium_large: 768,
+  large: 1024,
+  '1536x1536': 1536,
+  '2048x2048': 2048,
+  'weblaba-screen': 1024,
+  'weblaba-landing': 1920,
+};
+
+function sizeWidthFor(image: CaseImage, key: string): number | null {
+  const fromImage = image.sizeWidths[key];
+  if (typeof fromImage === 'number' && fromImage > 0) return fromImage;
+  const fallback = FALLBACK_SIZE_WIDTHS[key];
+  return typeof fallback === 'number' && fallback > 0 ? fallback : null;
+}
+
+/**
+ * Build `srcset` from named WP size URLs already on the image.
+ * Returns null when fewer than two candidates (omit attribute; keep single `src`).
+ * Never invents WebP or placeholder URLs.
+ */
+export function caseImageSrcSet(
+  image: CaseImage,
+  preferred: readonly string[] = SCREEN_SIZES,
+): string | null {
+  const candidates: Array<{ url: string; width: number }> = [];
+  const seen = new Set<string>();
+
+  const push = (url: string | undefined, width: number | null) => {
+    if (!url || !width || width <= 0 || seen.has(url)) return;
+    seen.add(url);
+    candidates.push({ url, width });
+  };
+
+  for (const key of preferred) {
+    push(image.sizes[key], sizeWidthFor(image, key));
+  }
+  for (const key of Object.keys(image.sizes)) {
+    if ((preferred as readonly string[]).includes(key)) continue;
+    push(image.sizes[key], sizeWidthFor(image, key));
+  }
+  push(image.url, image.width);
+  push(image.sizes.full, sizeWidthFor(image, 'full') ?? image.width);
+
+  if (candidates.length < 2) return null;
+  candidates.sort((a, b) => a.width - b.width);
+  return candidates.map((c) => `${c.url} ${c.width}w`).join(', ');
+}
+
 export function stripTags(html: string): string {
   return htmlToPlainText(html);
 }

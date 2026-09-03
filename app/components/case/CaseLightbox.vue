@@ -113,6 +113,8 @@ onBeforeUnmount(() => {
             v-if="lightbox.currentUrl"
             class="case-lightbox__img"
             :src="lightbox.currentUrl"
+            :srcset="lightbox.currentSrcSet ?? undefined"
+            :sizes="lightbox.currentSrcSet ? '100vw' : undefined"
             :alt="lightbox.current.image.alt || lightbox.current.label"
           />
         </div>

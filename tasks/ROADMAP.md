@@ -54,14 +54,14 @@
 STEPs 1–19 остаются Done. Мелкий долг foundation:
 
 - [x] §15 Prev/next titles: slim index includes `title`; footer uses real titles
-- [ ] §16 Menu: API `menus/v1` + `useWpMenu` есть, ни одна страница composable не вызывает
+- [x] §16 Menu: `useWpMenu('social')` → [`SiteFooterMenu`](../app/components/site/SiteFooterMenu.vue) (hero nav stays `NAV_STRUCTURE`)
 - [x] §23 SEO: `usePageSeo` (title, description, OG, canonical), `robots.txt` + `sitemap.xml` on generate — [`docs/SEO.md`](../docs/SEO.md)
 
-Смежные (не отдельные STEPs): нет `srcset` (§22). Error states (§21) на foundation-уровне уже есть — отдельный чекбокс не нужен.
+Смежные: §22 `srcset` via `caseImageSrcSet` on hero / gallery / archive / lightbox (no WebP invent). Error states (§21) на foundation-уровне уже есть — отдельный чекбокс не нужен. Footer-legal + privacy page + Organization schema + GTM script/noscript wired; fill live `gtm_container_id` in WP when ready.
 
 ## Next
 
-`/about`, `/services`, `/contact` с живым WP. Не ломать content pipeline и `absence = null`. EN i18n позже.
+EN i18n. Не ломать content pipeline и `absence = null`.
 
 - [x] Case visual redesign (§25 ТЗ)
 - [x] Case composition pass (markers, sparse recipes, case→case reveal)
@@ -74,4 +74,6 @@ STEPs 1–19 остаются Done. Мелкий долг foundation:
 - [x] Реальный `/contact` (WP / ACF)
 - [x] Theme Options wiring + HUD/chrome UI strings (`nav_verb_*`, `hud_*`, `chrome_*`, `case_section_*`); empty → `[key]`; WP seed migration
 - [x] Molecule hero copy from five WP pages (`hero_*` + titles); Options `hero_nav_items` removed
+- [x] Foundation gaps: WP menu footer consumer, privacy prerender/sitemap, GTM noscript, image `srcset`
+- [x] `case_thanks_message` → CaseThanks (before NEXT; left full-bleed; empty → omit)
 - [ ] EN i18n (`*_en` typed, UI still RU)

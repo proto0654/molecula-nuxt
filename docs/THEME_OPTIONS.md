@@ -101,6 +101,7 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 | `nav_verb_*`, `hud_*` | Hero HUD + atom blurb verbs (`setChromeCopy` → SiteHeader / Navigation / MobileNavOverlay / HudFrame / `buildAtomBlurb`). Desktop committed rail CTA: `hud_nav_go` |
 | `chrome_index_kicker`, `chrome_case_label`, `chrome_service_label` | SiteChrome + archive/about/contact/privacy kickers (`chrome_index_kicker` only) |
 | `case_section_*` | CaseContent / Gallery / Mobile / Slices section labels |
+| `case_thanks_message` | `CaseThanks` (before NEXT; empty → omit) |
 | `case_nav_*`, `case_back_to_portfolio` | `DetailNav`, portfolio slug back link |
 | `portfolio_heading_current`, `portfolio_archive_description` | Portfolio archive + SEO |
 | `services_*` (chrome + archive) | Service detail chrome, services archive |
@@ -114,7 +115,6 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 |-----|-------|
 | `portfolio_heading_legacy`, `portfolio_link_current` | Legacy category archive (`portfolio_category: legacy`) |
 | `lang_switch_aria` | `/en/` locale switch |
-| `case_thanks_message` | Case page thanks block (value **present** in WP) |
 | `case_mobile_signature_default_*` | Case mobile signature fallback |
 | `case_content_default_*` | Case body fallback when CMS blocks empty |
 
@@ -133,9 +133,10 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 
 Wired in `app/layouts/default.vue`:
 
-- `SiteFooterLegal` — disclaimer, cookie notice, copyright
+- `SiteFooterMenu` — WP `menus/v1` slug `social` via `useWpMenu` (hidden on `/contact`; pose-gated fade-up enter)
+- `SiteFooterLegal` — disclaimer, cookie notice (links `/privacy-policy/` from WP HTML), copyright
 - `SiteScrollToTop` — scroll-to-top button (Nuxt auto-import name for `components/site/ScrollToTop.vue`); HUD hairline square inset with `--hud-header-inset`; Options `enabled` + `trigger_px` only
-- `useSiteIntegrations()` — GTM + Organization schema
+- `useSiteIntegrations()` — GTM script + noscript + Organization schema
 
 ---
 
@@ -143,7 +144,7 @@ Wired in `app/layouts/default.vue`:
 
 1. **WP:** Deploy `weblaba-rework` (defaults + ACF pair for `hud_nav_go` / `hud_nav_go_en` in `locale.php` / `acf-i18n-helpers.php`), then Tools → WebLaba Migrations → **Seed empty UI string Options**.
 2. Optional: fill `gtm_container_id`, archive SEO strings (empty ones show as `[key]` in UI/meta).
-3. Later: case thanks / defaults / legacy portfolio (design-aware).
+3. Later: case defaults / legacy portfolio (design-aware).
 4. Later: i18n (`lang_switch_aria` + `*_en` / `/en/`).
 5. Later: Options key for desktop routes nav `aria-label` (currently empty when missing).
 

@@ -70,7 +70,7 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
   services_heading_archive: { wired: true, consumer: 'services/index.vue' },
   services_archive_description: { wired: true, consumer: 'services/index.vue SEO' },
   services_back_to_archive: { wired: true, consumer: 'services/[slug].vue' },
-  case_thanks_message: { wired: false, consumer: '(not wired — case page thanks block TBD)' },
+  case_thanks_message: { wired: true, consumer: 'CaseThanks' },
   case_back_to_portfolio: { wired: true, consumer: 'portfolio/[slug].vue' },
   case_mobile_signature_default_heading: {
     wired: false,

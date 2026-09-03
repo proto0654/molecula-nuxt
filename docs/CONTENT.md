@@ -51,7 +51,8 @@ Rules:
 - Absence stays `null` / `[]` — never placeholder objects that break `v-if`
 - ACF media/repeater `false` → `null` / `[]`
 - Empty text `""` → `null`
-- Image `sizes`: string URL keys only (no invented WebP)
+- Image `sizes`: string URL keys only (no invented WebP); `sizeWidths` from ACF `*-width` / embed `media_details` for `srcset`
+- Display: `caseImageUrl` + optional `caseImageSrcSet` (null if &lt;2 candidates) — hero, gallery, archive specimens, lightbox; CaseSlices CSS background unchanged
 - Prev/next: slim index sorted `menu_order ASC`, then `date DESC` ([`getCasePosition`](../app/domain/portfolio/adjacent.ts)) — not archive-page array index. Slim `_fields` include `title` for footer labels.
 - Archive listing uses the same slim sort, then `include` + `orderby=include` for the current page. Row numbers are 1-based positions in that index.
 
@@ -66,6 +67,7 @@ Rules:
 | `/services/[slug]` | `ArchiveShell` (`SERVICE / NN`) + Index kicker + title/tags + intro + offer repeater (`archive-list` rows: index, price meta, hover line/arrow, body + order CTA) + [`ArchiveDetailNav`](../app/components/archive/DetailNav.vue) |
 | `/about` | `ArchiveShell` + Index kicker + title/tags + optional photo + intro + skills repeater (`archive-list`) + CTA → `/contact` |
 | `/contact` | `ArchiveShell` + Index kicker «Контакты» + intro (`contact_popup_text`) + optional H2 (`contact_popup_title`) + contacts (`ContactArchiveRow` / `archive-list`) |
+| `/privacy-policy` | WP page `privacy-policy` on `ArchiveShell`; linked from footer cookie HTML; prerendered + sitemap |
 
 Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
 

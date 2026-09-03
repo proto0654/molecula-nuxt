@@ -13,6 +13,8 @@ export type CaseImage = {
   height: number | null;
   /** Named size URLs only (e.g. weblaba-screen). No invented WebP keys. */
   sizes: Record<string, string>;
+  /** Widths for named sizes (ACF `*-width` or embed `media_details`). */
+  sizeWidths: Record<string, number>;
 };
 
 export type CaseVideo = {

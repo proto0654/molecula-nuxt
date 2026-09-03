@@ -70,8 +70,9 @@ Route list is the same set queued in the `nitro:config` hook.
 - Canvas: `role="img"` + Russian `aria-label` on `#hero-canvas` ([`mountHeroApp.ts`](../app/lib/hero/mountHeroApp.ts)).
 - `:focus-visible` rings in [`main.css`](../app/assets/css/main.css); RU labels on pagination / detail nav / lightbox.
 
-Not in scope yet: JSON-LD, Yoast fields from WP, contrast token audit, keyboard navigation into the 3D molecule.
+Not in scope yet: Yoast fields from WP, contrast token audit, keyboard navigation into the 3D molecule.
 
+Organization JSON-LD (home) + GTM script/noscript: [`useSiteIntegrations`](../app/composables/useSiteIntegrations.ts) from Theme Options.
 ## Gotchas
 
 - Set **`NUXT_PUBLIC_SITE_URL`** per deploy target (see [DEPLOY.md](DEPLOY.md)).

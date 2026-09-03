@@ -33,6 +33,7 @@ useHead({
     >
       <slot />
     </main>
+    <SiteFooterMenu />
     <SiteFooterLegal />
     <SiteScrollToTop />
   </div>

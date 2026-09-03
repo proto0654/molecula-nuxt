@@ -160,7 +160,7 @@ CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, lin
 
 ## Visual media blocks
 
-Page order: Header + Hero → Overview → Interface → Mobile → Signature (slices-only) → Slices → NEXT.
+Page order: Header + Hero → Overview → Interface → Mobile → Signature (slices-only) → Slices → Thanks (`case_thanks_message`, omit if empty) → NEXT.
 
 Optional; missing blocks leave no reserved gap. Numbered sections count **visible** blocks only.
 
@@ -220,7 +220,7 @@ Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, 
 
 ## Footer / NEXT
 
-Numbered editorial section. Desktop (`≥1024px`): **50/50** page grid — marker cols 1–6 (editorial rail + `NN / Next`), links cols 7–12. Service detail uses the same split with a decorative left rail (no index label). Order in the links column: **Next** + case title, **Previous** + case title, **Index / Back to portfolio** — stacked on all breakpoints (no right-floated Index on lg). Desktop case titles use `--text-case-nav-title`. Muted `—` when there is no neighbour. Not a blog footer.
+Optional thanks line ([`CaseThanks`](../app/components/case/CaseThanks.vue) from Options `case_thanks_message`) sits **full-width left** above NEXT — listing `data-enter="tail"`, omit when empty. Numbered editorial NEXT section follows. Desktop (`≥1024px`): **50/50** page grid — marker cols 1–6 (editorial rail + `NN / Next`), links cols 7–12. Service detail uses the same split with a decorative left rail (no index label). Order in the links column: **Next** + case title, **Previous** + case title, **Index / Back to portfolio** — stacked on all breakpoints (no right-floated Index on lg). Desktop case titles use `--text-case-nav-title`. Muted `—` when there is no neighbour. Not a blog footer.
 
 ## Page transitions
 

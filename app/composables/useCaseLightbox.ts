@@ -1,5 +1,5 @@
 import type { CaseImage } from '~/types/wp';
-import { caseImageUrl } from '~/domain/portfolio/presentation';
+import { caseImageSrcSet, caseImageUrl } from '~/domain/portfolio/presentation';
 
 export type CaseLightboxItem = {
   image: CaseImage;
@@ -31,6 +31,12 @@ export function createCaseLightbox() {
     const item = current.value;
     if (!item) return null;
     return caseImageUrl(item.image);
+  });
+
+  const currentSrcSet = computed(() => {
+    const item = current.value;
+    if (!item) return null;
+    return caseImageSrcSet(item.image);
   });
 
   const hasMultiple = computed(() => state.items.length > 1);
@@ -69,6 +75,7 @@ export function createCaseLightbox() {
     state,
     current,
     currentUrl,
+    currentSrcSet,
     hasMultiple,
     open,
     close,

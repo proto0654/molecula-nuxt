@@ -119,7 +119,14 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       crawlLinks: false,
-      routes: ['/', '/portfolio', '/about', '/services', '/contact'],
+      routes: [
+        '/',
+        '/portfolio',
+        '/about',
+        '/services',
+        '/contact',
+        '/privacy-policy',
+      ],
     },
   },
   hooks: {
@@ -135,7 +142,14 @@ export default defineNuxtConfig({
         }
       };
 
-      pushRoutes(['/', '/portfolio', '/about', '/services', '/contact']);
+      pushRoutes([
+        '/',
+        '/portfolio',
+        '/about',
+        '/services',
+        '/contact',
+        '/privacy-policy',
+      ]);
 
       try {
         const slugs = await fetchAllCptSlugs('portfolio');

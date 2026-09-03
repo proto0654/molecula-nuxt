@@ -365,6 +365,8 @@ onMounted(() => {
 
       />
 
+      <CaseThanks />
+
       <ArchiveDetailNav
 
         :section-index="sections.next"
