@@ -469,10 +469,10 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
 
 .archive-heading__title {
   font-family: var(--font-ui);
-  font-size: var(--text-case-title);
+  font-size: var(--text-hero-title);
   font-weight: 400;
   letter-spacing: var(--track-case-title);
-  line-height: 0.95;
+  line-height: var(--editorial-hero-title-leading);
   color: var(--color-ink-title);
   text-transform: uppercase;
 }

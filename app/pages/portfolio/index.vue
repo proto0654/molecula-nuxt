@@ -31,6 +31,7 @@ useArchivePaginationScroll(page, pending);
 
 const { revealing } = usePageContentReveal();
 
+const indexKicker = useUiString('chrome_index_kicker');
 const headingLabel = useUiString('portfolio_heading_current');
 const legacyLinkLabel = useUiString('portfolio_heading_legacy');
 const archiveDescription = useUiString('portfolio_archive_description');
