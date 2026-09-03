@@ -254,7 +254,7 @@ Orbit sweep is applied each frame as `stableFocus * axisAngle(progress * 2π)` o
 
 Highlight is separate from focus orientation: `setHighlightedAtom` is a no-op for mesh fill (atoms use a fixed shell-dim palette). Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloStates` (dual committed + preview). Committed wireframe shell: `setWireframeAtom` (static). Hover preview and autoplay-next hint: `setAccentWireframeAtom` (static on hover, pulse while autoplay dwelling). Hub bond dash flow: `setBondFlowAtom` (animated `dashOffset` on the hub→target bond; autoplay phase-locks to accent wireframe pulse; hover uses the same rate). Title brightness: `setAtomTitleHighlight` (committed with blurb + distinct preview). Active decorative orbit: `setActiveOrbitAtom` follows committed atom on home and focused route atom off-home — not hover preview. Nav `.is-active` follows `activeItemId`; `.is-committed` follows `committedItemId`.
 
-**Atom shell fill:** always settled dim — emissive lifts toward `SCENE_BG` with facet contrast from directional key/fill (ambient ~0.24, key ~1.28). No hover/freeze shell mix. `setSweepLightingRelief` still eases dim briefly during entity facet sweep.
+**Atom shell fill:** always settled dim — emissive lifts toward `SCENE_BG` with facet contrast from directional key/fill (ambient ~0.24, key ~1.28). No hover/freeze shell mix. During light sweeps, `setSweepLightingRelief` eases shell dim/emissive (~0.72 max) so the shared `PointLight` reads on flat facets — focused atom full envelope; secondary atoms ~0.92 of envelope.
 
 **Settled freeze chrome dim:** labels hide instantly in `freeze()`. After the approach timeline settles (`frozen && !approachBusy`), rings / ticks / center cross and both wireframe shells **lerp color** to black (`0x000000`, exp-follow ~6). While `Navigator` is `busy` (live approach / retarget), chrome stays at base colors. `unfreeze` / home cancels the dim. `mountHeroApp` mirrors `transitionState.busy` → `MoleculeController.setApproachBusy`; scene applies via `setChromeDimmed`. Decorative orbits are **not** chrome-dimmed (black idle / dark-gray active palette unchanged).
 
@@ -262,12 +262,14 @@ Highlight is separate from focus orientation: `setHighlightedAtom` is a no-op fo
 
 **Frozen entity cues (no molecule spin):**
 
+Shared scene `PointLight` (`startEntityLightSweep` mode `horizontal` | `depth`): soft ambient dip on the envelope peak, opposite-Y bias vs focused atom screen Y (stronger for depth), mild decay so periphery catches the flyby. Cost is one existing light + brief shell-color updates on all atoms (~1–1.45s). Not quality-tiered; `prefers-reduced-motion` no-ops both cues.
+
 | Cue | Trigger | Scene |
 |-----|---------|-------|
-| Facet light sweep | Case/service **slug change** on the same atom (`useCasePageTransition` → [`useMoleculeCue`](../app/composables/useMoleculeCue.ts)) | Subtle `PointLight` sweeps screen-horizontal across flat-shaded facets (~1–1.45s by viewport); direction from prev/next (`moleculeFlipIntent` on `DetailNav` pointerdown, slim-index fallback). Brief `setSweepLightingRelief` on the focused atom. **Does not** blink wireframe or bonds. |
-| Wireframe flash | Same-context `portfolio-archive` ↔ `case` or `service-archive` ↔ `service` only (`SpatialController.maybeCueArchiveTransition`; skipped on `immediate` / direct load) | Smooth wireframe opacity + color relief on the focused atom (~0.6s). No reticle scale ping. **Does not** affect bonds or nav connector. |
+| Facet light sweep | Case/service **slug change** on the same atom (`useCasePageTransition` → [`useMoleculeCue`](../app/composables/useMoleculeCue.ts)) | `horizontal`: NDC X R→L / L→R from prev/next (`moleculeFlipIntent` / slim-index fallback). **Does not** blink wireframe or bonds. |
+| Depth light sweep | Same-context `portfolio-archive` ↔ `case` or `service-archive` ↔ `service` (`SpatialController.maybeCueArchiveTransition` → `playArchiveTransitionCue`; skipped on `immediate` / direct load) | `depth`: archive→detail toward viewer, detail→archive into screen; X locked to focused atom. Replaces the old wireframe flash. **Does not** blink wireframe or bonds. |
 
-Pages call `playEntityLightSweep` via a module bridge (`registerMoleculeCue` in `mountHeroApp`; `MolecularHero` must forward the `direction` argument). `prefers-reduced-motion`: cues no-op.
+Pages call `playEntityLightSweep` via a module bridge (`registerMoleculeCue` in `mountHeroApp`; `MolecularHero` must forward the `direction` argument).
 
 ## Quality and performance
 

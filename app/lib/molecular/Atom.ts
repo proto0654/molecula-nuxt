@@ -24,7 +24,7 @@ const COLOR_BY_LABEL: Record<string, number> = {
   N: 0x2f6fed,
 };
 
-const SWEEP_SHELL_RELIEF = 0.35;
+const SWEEP_SHELL_RELIEF = 0.72;
 /** Shell always uses settled off-home dim — no hover/freeze fill changes. */
 const FIXED_SHELL_COLOR_MIX = 1;
 /** Shadow facets — deeper than scene bg so directional light reads on faces. */

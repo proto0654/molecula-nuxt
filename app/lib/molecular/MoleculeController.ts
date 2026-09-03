@@ -905,13 +905,25 @@ export class MoleculeController {
       this.focusedAtomId,
       this.scratchAtomWorldCenter,
       direction,
+      'horizontal',
     );
   }
 
-  /** Archive ↔ detail: ring ping + wireframe re-index flash on the focused atom. */
-  playArchiveTransitionCue(): void {
+  /**
+   * Archive ↔ detail: depth light sweep toward viewer (1) or into the screen (−1).
+   */
+  playArchiveTransitionCue(direction: 1 | -1 = 1): void {
     if (this.reducedMotion || !this.focusedAtomId) return;
-    this.scene.startArchiveCue(this.focusedAtomId);
+    const atom = this.scene.getAtom(this.focusedAtomId);
+    if (!atom) return;
+    this.scene.moleculeGroup.updateMatrixWorld(true);
+    atom.mesh.getWorldPosition(this.scratchAtomWorldCenter);
+    this.scene.startEntityLightSweep(
+      this.focusedAtomId,
+      this.scratchAtomWorldCenter,
+      direction,
+      'depth',
+    );
   }
 
   /**

@@ -225,19 +225,33 @@ export class SpatialController {
     prev: SpatialState,
     next: SpatialState,
   ): void {
-    const portfolioHop =
+    const portfolioIntoDetail =
       prev.context === 'portfolio' &&
       next.context === 'portfolio' &&
-      ((prev.mode === 'portfolio-archive' && next.mode === 'case') ||
-        (prev.mode === 'case' && next.mode === 'portfolio-archive'));
-    const servicesHop =
+      prev.mode === 'portfolio-archive' &&
+      next.mode === 'case';
+    const portfolioIntoArchive =
+      prev.context === 'portfolio' &&
+      next.context === 'portfolio' &&
+      prev.mode === 'case' &&
+      next.mode === 'portfolio-archive';
+    const servicesIntoDetail =
       prev.context === 'services' &&
       next.context === 'services' &&
-      ((prev.mode === 'service-archive' && next.mode === 'service') ||
-        (prev.mode === 'service' && next.mode === 'service-archive'));
+      prev.mode === 'service-archive' &&
+      next.mode === 'service';
+    const servicesIntoArchive =
+      prev.context === 'services' &&
+      next.context === 'services' &&
+      prev.mode === 'service' &&
+      next.mode === 'service-archive';
 
-    if (portfolioHop || servicesHop) {
-      this.controller.playArchiveTransitionCue();
+    if (portfolioIntoDetail || servicesIntoDetail) {
+      // Toward viewer: light flies out of the screen into the post.
+      this.controller.playArchiveTransitionCue(1);
+    } else if (portfolioIntoArchive || servicesIntoArchive) {
+      // Into screen: light falls away back to the archive.
+      this.controller.playArchiveTransitionCue(-1);
     }
   }
 }
