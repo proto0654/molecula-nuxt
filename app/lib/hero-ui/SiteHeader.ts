@@ -2,6 +2,11 @@ import type { HeroChromeCopy } from '../../domain/options/heroChromeCopy';
 import { formatHudTemplate } from '../../domain/options/heroChromeCopy';
 import { missingUiString } from '../../domain/options/missingUiString';
 import {
+  localeFromPath,
+  alternateLocalePath,
+  type SiteLocale,
+} from '../../domain/i18n/locale';
+import {
   getItemById,
   navigationConfig,
 } from '../navigation/navigationConfig';
@@ -14,9 +19,9 @@ export type MenuToggleListener = () => void;
 export type HeaderSelectListener = (itemId: string) => void;
 
 /**
- * Site header: LOGO + route links (desktop/tablet) + NODE; mobile MENU (home + off-home).
+ * Site header: LOGO + LOCALE + route links (desktop/tablet) + NODE + MENU.
+ * Locale switch (RU | ENG) lives inline in the header flex row.
  * Home desktop slide progress is positioned at bottom center via CSS.
- * Route links: one-shot leave from home (orbit+zoom then route); off-home hops immediately.
  */
 export type SiteHeaderOptions = {
   /** Public asset base (Nuxt `app.baseURL`), e.g. `/` or `/molecula-nuxt/`. */
@@ -26,6 +31,9 @@ export type SiteHeaderOptions = {
 export class SiteHeader {
   readonly root: HTMLElement;
   private readonly logoBtn: HTMLButtonElement;
+  private readonly localeEl: HTMLElement;
+  private readonly ruLink: HTMLAnchorElement;
+  private readonly enLink: HTMLAnchorElement;
   private readonly slideProgress: HeroSlideProgress;
   private readonly routesEl: HTMLElement;
   private readonly linkElements = new Map<string, HTMLElement>();
@@ -49,6 +57,7 @@ export class SiteHeader {
     this.root = document.createElement('header');
     this.root.className = 'site-header';
 
+    /* --- Logo --- */
     this.logoBtn = document.createElement('button');
     this.logoBtn.type = 'button';
     this.logoBtn.className = 'site-header__logo';
@@ -58,8 +67,30 @@ export class SiteHeader {
       this.onSelect?.('home');
     });
 
+    /* --- Locale switch (RU | ENG) --- */
+    this.localeEl = document.createElement('span');
+    this.localeEl.className = 'site-header__locale';
+
+    this.ruLink = document.createElement('a');
+    this.ruLink.className = 'site-header__locale-link';
+    this.ruLink.textContent = 'RU';
+    this.ruLink.lang = 'ru';
+
+    const sep = document.createElement('span');
+    sep.className = 'site-header__locale-sep';
+    sep.textContent = '|';
+
+    this.enLink = document.createElement('a');
+    this.enLink.className = 'site-header__locale-link';
+    this.enLink.textContent = 'ENG';
+    this.enLink.lang = 'en';
+
+    this.localeEl.append(this.ruLink, sep, this.enLink);
+    this.syncLocale();
+
     this.slideProgress = new HeroSlideProgress(this.root, 'desktop');
 
+    /* --- Route links (desktop/tablet) --- */
     this.routesEl = document.createElement('nav');
     this.routesEl.className = 'site-header__routes';
     this.routesEl.setAttribute('aria-label', '');
@@ -87,21 +118,24 @@ export class SiteHeader {
       this.linkElements.set(item.id, button);
     });
 
+    /* --- Node label (desktop/tablet route indicator) --- */
     this.nodeEl = document.createElement('span');
     this.nodeEl.className = 'site-header__node';
 
+    /* --- Mobile menu button --- */
     this.menuBtn = document.createElement('button');
     this.menuBtn.type = 'button';
     this.menuBtn.className = 'site-header__menu';
     this.menuBtn.setAttribute('aria-expanded', 'false');
     this.menuBtn.setAttribute('aria-controls', 'mobile-nav-overlay');
-    this.menuBtn.textContent = missingUiString('hud_menu_open');
+    this.menuBtn.textContent = '';
     this.menuBtn.addEventListener('click', () => {
       this.onMenuToggle?.();
     });
 
     this.root.append(
       this.logoBtn,
+      this.localeEl,
       this.routesEl,
       this.nodeEl,
       this.menuBtn,
@@ -111,6 +145,7 @@ export class SiteHeader {
     this.unsubscribe = state.subscribe(() => {
       this.syncNode(state);
       this.syncLinks(state);
+      this.syncLocale();
     });
     this.syncNode(state);
     this.syncLinks(state);
@@ -153,9 +188,13 @@ export class SiteHeader {
 
   private syncMenuLabel(): void {
     const copy = this.chromeCopy;
+    if (!copy) {
+      this.menuBtn.textContent = '';
+      return;
+    }
     this.menuBtn.textContent = this.menuOpen
-      ? (copy?.menuCloseLabel ?? missingUiString('hud_menu_close'))
-      : (copy?.menuOpenLabel ?? missingUiString('hud_menu_open'));
+      ? (copy.menuCloseLabel ?? missingUiString('hud_menu_close'))
+      : (copy.menuOpenLabel ?? missingUiString('hud_menu_open'));
   }
 
   private syncMenuAria(): void {
@@ -183,6 +222,24 @@ export class SiteHeader {
       if (label) label.textContent = item.label;
     }
     this.syncNode(this.navState);
+    this.syncLocale();
+  }
+
+  /** Update locale links from current URL. Call after any navigation. */
+  syncLocale(): void {
+    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const current: SiteLocale = localeFromPath(path);
+
+    this.ruLink.classList.toggle('is-active', current === 'ru');
+    this.enLink.classList.toggle('is-active', current === 'en');
+
+    if (current === 'ru') {
+      this.ruLink.removeAttribute('href');
+      this.enLink.href = alternateLocalePath(path, 'en');
+    } else {
+      this.ruLink.href = alternateLocalePath(path, 'ru');
+      this.enLink.removeAttribute('href');
+    }
   }
 
   private syncLinks(state: NavigationState): void {
@@ -202,17 +259,19 @@ export class SiteHeader {
   private syncNode(state: NavigationState): void {
     const copy = this.chromeCopy;
     const id = state.committedItemId ?? state.activeItemId;
+    if (!copy) {
+      this.nodeEl.textContent = '';
+      return;
+    }
     if (!id) {
-      this.nodeEl.textContent =
-        copy?.nodeIdle ?? missingUiString('hud_node_idle');
+      this.nodeEl.textContent = copy.nodeIdle ?? '';
       return;
     }
     const item = getItemById(id);
     const index = navigationConfig.items.findIndex((entry) => entry.id === id);
     const nn = String(index + 1).padStart(2, '0');
     const label = (item?.label ?? id).toUpperCase();
-    const template =
-      copy?.nodeFormat ?? missingUiString('hud_node_format');
+    const template = copy.nodeFormat ?? missingUiString('hud_node_format');
     this.nodeEl.textContent = formatHudTemplate(template, { nn, label });
   }
 

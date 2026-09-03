@@ -682,6 +682,36 @@ html.hero-lock #__nuxt {
   color: var(--accent);
 }
 
+/* --- Locale switch (inline in header) --- */
+
+.site-header__locale {
+  display: none;
+  align-items: center;
+  gap: 0.35em;
+  pointer-events: auto;
+}
+
+.site-header__locale-link {
+  color: var(--ink-38);
+  text-decoration: none;
+  transition: color 0.18s ease;
+  cursor: pointer;
+}
+
+.site-header__locale-link:hover {
+  color: var(--ui-primary);
+}
+
+.site-header__locale-link.is-active {
+  color: var(--accent, var(--ui-primary));
+  cursor: default;
+}
+
+.site-header__locale-sep {
+  color: var(--ink-28);
+  user-select: none;
+}
+
 /* --- USP headline (commit + focus settle) --- */
 
 .usp-headline {
@@ -1310,13 +1340,13 @@ html.nav-overlay-open body {
 
   .site-header {
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
     position: absolute;
     top: var(--hud-header-inset);
     left: var(--hud-header-inset);
     right: var(--hud-header-inset);
     z-index: var(--z-header);
+    gap: 0.75rem;
     padding: 0;
     pointer-events: none;
     font-size: var(--text-meta);
@@ -1328,9 +1358,14 @@ html.nav-overlay-open body {
   .site-header__logo {
     position: relative;
     z-index: 1;
+    flex: 0 0 auto;
     color: var(--ui-primary);
     letter-spacing: 0.2em;
-    flex: 0 1 var(--sidebar-width);
+  }
+
+  .site-header__locale {
+    display: inline-flex;
+    flex: 0 0 auto;
   }
 
   .molecular-chrome.is-home .hero-slide-progress--desktop {
@@ -1362,6 +1397,7 @@ html.nav-overlay-open body {
 
   .site-header__node {
     flex: 0 0 auto;
+    margin-left: auto;
     color: var(--ink-38);
   }
 
@@ -1597,13 +1633,13 @@ html.nav-overlay-open body {
 
   .molecular-chrome:not(.is-home) .site-header {
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
     position: absolute;
     top: var(--hud-header-inset);
     left: var(--hud-header-inset);
     right: var(--hud-header-inset);
     z-index: var(--z-header);
+    gap: 0.75rem;
     padding: 0;
     pointer-events: none;
     font-size: var(--text-meta);
@@ -1615,8 +1651,14 @@ html.nav-overlay-open body {
   .molecular-chrome:not(.is-home) .site-header__logo {
     position: relative;
     z-index: 1;
+    flex: 0 0 auto;
     color: var(--ui-primary);
     letter-spacing: 0.2em;
+  }
+
+  .molecular-chrome:not(.is-home) .site-header__locale {
+    display: inline-flex;
+    flex: 0 0 auto;
   }
 
   .molecular-chrome:not(.is-home) .site-header__routes {
@@ -1713,6 +1755,13 @@ html.nav-overlay-open body {
   .hero-slide-progress--desktop,
   .site-header__node {
     display: none;
+  }
+
+  .site-header__locale {
+    display: inline-flex;
+    grid-column: 2;
+    justify-self: center;
+    margin-top: 0.25rem;
   }
 
   .molecular-chrome.is-home .hero-slide-progress--mobile {
@@ -1897,6 +1946,24 @@ html.nav-overlay-open body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   background: rgb(15 17 21 / 0.55);
+}
+
+/* --- Site-header entrance (off-home settled route) --- */
+
+html.js-enabled .molecular-chrome.is-approaching .site-header {
+  opacity: 0;
+}
+
+html.js-enabled .molecular-chrome.is-settled-route .site-header {
+  animation: wl-enter-fade var(--enter-duration) var(--enter-ease) both;
+  animation-delay: var(--enter-beat-chrome);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .molecular-chrome .site-header {
+    opacity: 1;
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

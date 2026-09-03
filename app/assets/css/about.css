@@ -13,3 +13,35 @@
 .about-cta {
   margin: 0;
 }
+
+/* Entrance — pose-gated fade-up (fallback for late WP data; docs/MOTION.md). */
+html.js-enabled .archive-page:not(.is-revealing) .about-cta {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+  pointer-events: none;
+}
+
+html.js-enabled .archive-page.is-revealing .about-cta:not(.is-revealed) {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .archive-page.is-revealing .about-cta.is-revealed {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger))
+  );
+}
+
+html.js-enabled .archive-page.is-revealing .about-cta.is-revealed[data-reveal='in'] {
+  animation-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .archive-page .about-cta {
+    opacity: 1;
+    transform: none;
+    animation: none;
+    pointer-events: auto;
+  }
+}

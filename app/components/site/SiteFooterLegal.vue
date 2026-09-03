@@ -51,3 +51,27 @@ const hasContent = computed(
   text-underline-offset: 0.15em;
 }
 </style>
+
+<!-- Layout-gated entrance — same pattern as SiteFooterMenu (docs/MOTION.md). -->
+<style>
+html.js-enabled .app-shell.is-awaiting-pose:not(.is-home) .site-footer-legal {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+  pointer-events: none;
+}
+
+html.js-enabled .app-shell:not(.is-home):not(.is-awaiting-pose) .site-footer-legal {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: var(--enter-beat-list);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .app-shell.is-awaiting-pose:not(.is-home) .site-footer-legal,
+  html.js-enabled .app-shell:not(.is-home):not(.is-awaiting-pose) .site-footer-legal {
+    opacity: 1;
+    transform: none;
+    animation: none;
+    pointer-events: auto;
+  }
+}
+</style>
