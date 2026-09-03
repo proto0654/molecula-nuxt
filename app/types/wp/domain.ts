@@ -55,6 +55,8 @@ export type Case = {
   date: string;
   featuredImage: CaseImage | null;
   tagIds: number[];
+  /** Resolved post_tag names from embed. */
+  tags: string[];
   categoryIds: number[];
   accentColor: string | null;
   accentColorLocked: boolean;

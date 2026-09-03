@@ -30,8 +30,8 @@ const imageSrcSet = computed(() => {
 
 const imageSizes = computed(() =>
   props.imageVariant === 'about'
-    ? '(min-width: 1024px) 28rem, 85vw'
-    : '(min-width: 1024px) min(70vw, 56rem), 100vw',
+    ? '(min-width: 1024px) 17.333rem, 85vw'
+    : '(min-width: 1024px) min(50vw, 36rem), 100vw',
 );
 </script>
 

@@ -272,6 +272,15 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
     padding: var(--editorial-hero-media-inset-desktop);
   }
 
+  /* Max-width frame centered in the rubber column (negative space without squeeze). */
+  .editorial-hero:not(.editorial-hero--about) .editorial-hero-media {
+    max-width: var(--editorial-hero-media-max);
+  }
+
+  .editorial-hero--about .editorial-hero-media {
+    max-width: var(--editorial-hero-media-max-about);
+  }
+
   .editorial-hero.editorial-hero--no-media .editorial-hero__aside {
     padding: 0;
   }
@@ -927,6 +936,22 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
   flex-direction: column;
   gap: 0.55rem;
   min-width: 0;
+}
+
+.archive-row__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.archive-row__tag {
+  font-size: var(--text-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--wl-muted);
 }
 
 .archive-row__title {

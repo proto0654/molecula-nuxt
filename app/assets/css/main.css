@@ -209,10 +209,14 @@
   --editorial-hero-min-height: min(58vh, 28rem);
   --editorial-hero-min-height-sparse: min(62vh, 34rem);
   --editorial-hero-pad-top-no-media: min(10vh, 5rem);
+  /* Mobile / stacked inset. Desktop uses max-width + flex center instead. */
   --editorial-hero-media-inset: clamp(1.5rem, 7vw, 3.25rem);
-  --editorial-hero-media-inset-desktop: clamp(4rem, 10vw, 7rem);
+  --editorial-hero-media-inset-desktop: 0;
   --editorial-hero-media-inset-about: clamp(2.75rem, 14vw, 5rem);
-  --editorial-hero-media-inset-about-desktop: clamp(4.5rem, 12vw, 8rem);
+  --editorial-hero-media-inset-about-desktop: 0;
+  /* Cap frame in the rubber column so small desktops keep readable media. */
+  --editorial-hero-media-max: 36rem;
+  --editorial-hero-media-max-about: 17.333rem;
   --editorial-hero-content-gap: clamp(1.25rem, 3vh, 2rem);
   --text-hero-title: var(--text-case-title-split);
   --editorial-hero-title-leading: 1.15;

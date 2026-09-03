@@ -17,6 +17,7 @@ import {
   normalizeAcfImage,
   normalizeAcfVideo,
   normalizeFeaturedFromEmbed,
+  embeddedTagNames,
 } from '~/domain/wp';
 
 function normalizeGallery(acf: WpPortfolioPost['acf']): CaseGalleryItem[] {
@@ -114,6 +115,7 @@ export function normalizePortfolioPost(
     date: post.date,
     featuredImage: normalizeFeaturedFromEmbed(post._embedded?.['wp:featuredmedia']),
     tagIds: post.tags ?? [],
+    tags: embeddedTagNames(post._embedded?.['wp:term']),
     categoryIds: post.portfolio_category ?? [],
     accentColor: emptyToNull(
       acf.case_dark_bg_color === false ? null : acf.case_dark_bg_color,

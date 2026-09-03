@@ -19,6 +19,8 @@ const props = withDefaults(
     page: number;
     eager?: boolean;
     categoryById: Map<number, string>;
+    /** Shelf caption when the case has no portfolio_category (e.g. «Актуальные кейсы»). */
+    metaFallback?: string | null;
     archiveScope?: ArchiveReturnScope;
   }>(),
   { archiveScope: 'portfolio' },
@@ -26,7 +28,9 @@ const props = withDefaults(
 
 const item = computed(() => props.entry.item);
 const title = computed(() => archiveTitlePlain(item.value));
-const meta = computed(() => archiveMetaLabel(item.value, props.categoryById));
+const meta = computed(() =>
+  archiveMetaLabel(item.value, props.categoryById, props.metaFallback),
+);
 const specimen = computed(() => archiveSpecimenImage(item.value));
 const specimenUrl = computed(() => archiveSpecimenUrl(item.value));
 const specimenSrcSet = computed(() => archiveSpecimenSrcSet(item.value));
@@ -50,6 +54,11 @@ function onNavigate() {
     <NuxtLink :to="href" class="archive-row__link" @click="onNavigate">
       <span class="archive-row__index">{{ padCaseIndex(entry.index) }}</span>
       <span class="archive-row__copy">
+        <ul v-if="item.tags.length" class="archive-row__tags">
+          <li v-for="tag in item.tags" :key="tag" class="archive-row__tag">
+            {{ tag }}
+          </li>
+        </ul>
         <span class="archive-row__title">{{ title }}</span>
         <span class="archive-row__meta">
           <span class="archive-row__category">{{ meta }}</span>

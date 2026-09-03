@@ -218,6 +218,7 @@ html.js-enabled .case-page:not(.is-revealing) .case-header__index {
   opacity: 0;
 }
 
+html.js-enabled .case-page:not(.is-revealing) .case-header__tags,
 html.js-enabled .case-page:not(.is-revealing) .case-header__intro,
 html.js-enabled .case-page:not(.is-revealing) .case-header .case-facts,
 html.js-enabled .case-page:not(.is-revealing) .editorial-hero-media__fill {
@@ -230,6 +231,7 @@ html.js-enabled .case-page.is-revealing .case-header__index {
   animation-delay: var(--enter-beat-kicker);
 }
 
+html.js-enabled .case-page.is-revealing .case-header__tags,
 html.js-enabled .case-page.is-revealing .case-header__intro,
 html.js-enabled .case-page.is-revealing .case-header .case-facts {
   animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
@@ -285,6 +287,7 @@ html.js-enabled .case-page.is-revealing .case-header .case-facts {
   html.js-enabled .archive-page .case-chrome__header--meta,
   html.js-enabled .case-page .case-chrome__header--meta,
   html.js-enabled .case-page .case-header__index,
+  html.js-enabled .case-page .case-header__tags,
   html.js-enabled .case-page .case-header__intro,
   html.js-enabled .case-page .case-header .case-facts,
   html.js-enabled .case-page .editorial-hero-media__fill {
@@ -871,6 +874,11 @@ html.js-enabled .case-page.is-revealing
   font-variant-numeric: tabular-nums;
 }
 
+/* Tags sit above the title (unlike about/service headers). */
+.case-header__tags {
+  margin: 0 0 0.85rem;
+}
+
 .case-header__title {
   font-family: var(--font-ui);
   font-weight: 400;
@@ -1110,12 +1118,12 @@ html.js-enabled .case-page.is-revealing
   font-weight: 300;
   font-size: var(--text-case-intro);
   line-height: 1.65;
-  color: var(--wl-text);
+  /* Reading body — same step as hero intro / archive-intro (--ink-70), not full --wl-text */
+  color: var(--ink-70);
 }
 
 .case-page .case-content__prose {
   line-height: 1.6;
-  color: var(--ink-70);
 }
 
 .case-content__prose :is(p, li, .wp-block-paragraph) {

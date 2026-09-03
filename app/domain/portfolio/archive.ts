@@ -1,4 +1,5 @@
 import type { Case, CaseImage, PortfolioCategory } from '~/types/wp';
+import type { SiteLocale } from '~/domain/i18n';
 import {
   caseImageSrcSet,
   caseImageUrl,
@@ -39,12 +40,28 @@ export function archiveYear(date: string): string | null {
 }
 
 /**
- * Category names, else client, else year, else "Project".
+ * Category label for archive meta.
+ * RU: CMS term name. EN: latin slug when present (terms have no name_en).
+ */
+function categoryMetaLabel(
+  cat: { name: string; slug?: string },
+  locale: SiteLocale,
+): string {
+  if (locale === 'en') {
+    const slug = cat.slug?.trim();
+    if (slug) return slug;
+  }
+  return cat.name;
+}
+
+/**
+ * Category names, else shelf caption, else client, else year, else "Project".
  * Never invent a fake CMS category.
  */
 export function archiveMetaLabel(
   item: Case,
   categoryById: Map<number, string>,
+  shelfLabel?: string | null,
 ): string {
   const names: string[] = [];
   for (const id of item.categoryIds) {
@@ -52,16 +69,19 @@ export function archiveMetaLabel(
     if (name) names.push(name);
   }
   if (names.length) return names.join(', ');
+  const shelf = shelfLabel?.trim();
+  if (shelf) return shelf;
   if (item.client) return item.client;
   return archiveYear(item.date) ?? 'Project';
 }
 
 export function categoryNameMap(
   categories: PortfolioCategory[] | null | undefined,
+  locale: SiteLocale = 'ru',
 ): Map<number, string> {
   const map = new Map<number, string>();
   for (const cat of categories ?? []) {
-    map.set(cat.id, cat.name);
+    map.set(cat.id, categoryMetaLabel(cat, locale));
   }
   return map;
 }

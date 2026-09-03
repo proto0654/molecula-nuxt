@@ -7,10 +7,13 @@ import {
   type WpPaginatedResult,
 } from './client';
 
+/** Featured media + post_tag / portfolio_category names for archive + case chrome. */
+const PORTFOLIO_EMBED = 'wp:featuredmedia,wp:term';
+
 export type PortfolioListParams = {
   page?: number;
   perPage?: number;
-  /** Include featured media embed when true (default true). */
+  /** Include featured media (+ terms) embed when true (default true). */
   embed?: boolean;
 };
 
@@ -76,7 +79,7 @@ export async function getPortfolioPage(
       page,
       per_page: perPage,
       status: 'publish',
-      ...(embed ? { _embed: 'wp:featuredmedia' } : {}),
+      ...(embed ? { _embed: PORTFOLIO_EMBED } : {}),
     },
   });
 }
@@ -93,7 +96,7 @@ export async function getPortfolioPostsByIds(
     include: ids.join(','),
     per_page: ids.length,
     status: 'publish',
-    _embed: 'wp:featuredmedia',
+    _embed: PORTFOLIO_EMBED,
   };
   let posts: WpPortfolioPost[];
   try {
@@ -118,7 +121,7 @@ export async function getPortfolioCase(slug: string): Promise<WpPortfolioPost | 
       slug,
       per_page: 1,
       status: 'publish',
-      _embed: 'wp:featuredmedia',
+      _embed: PORTFOLIO_EMBED,
     },
   });
   return posts[0] ?? null;

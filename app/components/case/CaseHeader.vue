@@ -17,6 +17,11 @@ const titlePlain = computed(() => stripTags(props.caseData.title));
 
 <template>
   <header class="case-header">
+    <ul v-if="caseData.tags.length" class="editorial-header__tags case-header__tags">
+      <li v-for="tag in caseData.tags" :key="tag" class="editorial-header__tag">
+        {{ tag }}
+      </li>
+    </ul>
     <SiteScrambleTitle
       class="case-header__title"
       :text="titlePlain"

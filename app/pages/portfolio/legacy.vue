@@ -4,6 +4,7 @@ import { categoryNameMap } from '~/domain/portfolio/archive';
 import { withCountLabel } from '~/domain/portfolio/shelf';
 
 const route = useRoute();
+const { localizedPath, locale } = useLocale();
 
 const page = computed(() => {
   const raw = route.query.page;
@@ -20,7 +21,9 @@ const { entries, pagination, counts, pending, transitioning, error } =
   });
 const { data: categories } = usePortfolioCategories();
 
-const categoryById = computed(() => categoryNameMap(categories.value));
+const categoryById = computed(() =>
+  categoryNameMap(categories.value, locale.value),
+);
 
 onMounted(() => {
   restoreArchiveScroll('portfolio-legacy');
@@ -31,6 +34,7 @@ useArchivePaginationScroll(page, pending);
 const { revealing } = usePageContentReveal();
 
 const headingLabel = useUiString('portfolio_heading_legacy');
+const rowMetaLabel = useUiString('portfolio_heading_legacy');
 const currentLinkLabel = useUiString('portfolio_link_current');
 const archiveDescription = useUiString('portfolio_archive_description');
 
@@ -54,7 +58,6 @@ usePageSeo({
 });
 
 const indexKicker = useUiString('chrome_index_kicker');
-const { localizedPath } = useLocale();
 const portfolioHref = computed(() => localizedPath('/portfolio'));
 const legacyBase = computed(() => localizedPath('/portfolio/legacy'));
 </script>
@@ -92,6 +95,7 @@ const legacyBase = computed(() => localizedPath('/portfolio/legacy'));
         :page="page"
         :eager="i < 2"
         :category-by-id="categoryById"
+        :meta-fallback="rowMetaLabel"
         archive-scope="portfolio-legacy"
       />
     </ul>
