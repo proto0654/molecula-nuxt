@@ -39,6 +39,7 @@ Global site chrome and UI copy from **ACF Options** (`GET /acf/v3/options/option
 - Do **not** seed or wire Options `hero_nav_items` (removed on WP).
 - **WP seed:** Tools → WebLaba Migrations → **Seed empty UI string Options** writes code defaults into empty ACF Options so REST returns real values.
 - **Desktop rail CTA seed:** ACF `hud_nav_go` = `Перейти`, `hud_nav_go_en` = `Go to` (typed on `ThemeOptionsAcf`; UI still RU until `/en/`).
+- **Service detail nav seed:** ACF `services_nav_next_label` / `services_nav_prev_label` (+ `_en`) — see [`docs/seed/services-nav-labels.seed.json`](seed/services-nav-labels.seed.json).
 
 ---
 
@@ -103,7 +104,7 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 | `case_section_*` | CaseContent / Gallery / Mobile / Slices section labels |
 | `case_thanks_message` | `CaseThanks` (before NEXT; empty → omit) |
 | `case_nav_*`, `case_back_to_portfolio` | `DetailNav` (portfolio), portfolio slug back link |
-| `services_nav_next_label`, `services_nav_prev_label`, `services_back_to_archive` | `DetailNav` (services scope; soft RU fallback until Options seeded) |
+| `services_nav_next_label`, `services_nav_prev_label`, `services_back_to_archive` | `DetailNav` (services scope) |
 | `portfolio_heading_current`, `portfolio_archive_description` | Portfolio archive + SEO |
 | `services_*` (chrome + archive) | Service detail chrome, services archive |
 | `seo_hidden_h1` | Home SEO |
@@ -143,8 +144,8 @@ Wired in `app/layouts/default.vue`:
 
 ## Next iterations
 
-1. **WP:** Deploy `weblaba-rework` (defaults + ACF pair for `hud_nav_go` / `hud_nav_go_en` in `locale.php` / `acf-i18n-helpers.php`), then Tools → WebLaba Migrations → **Seed empty UI string Options**.
-2. Optional: fill `gtm_container_id`, archive SEO strings (empty ones show as `[key]` in UI/meta); seed `services_nav_next_label` / `services_nav_prev_label` ([`docs/seed/services-nav-labels.seed.json`](seed/services-nav-labels.seed.json)) — UI has soft RU fallbacks until then.
+1. **WP:** Deploy `weblaba-rework` (incl. `services_nav_next_label` / `services_nav_prev_label` in `locale.php` + ACF UI tab), then Tools → WebLaba Migrations → **Seed empty UI string Options**. Seed payload also in [`docs/seed/services-nav-labels.seed.json`](seed/services-nav-labels.seed.json).
+2. Optional: fill `gtm_container_id`, archive SEO strings (empty ones show as `[key]` in UI/meta).
 3. Later: case defaults / legacy portfolio (design-aware).
 4. Later: i18n (`lang_switch_aria` + `*_en` / `/en/`).
 5. Later: Options key for desktop routes nav `aria-label` (currently empty when missing).
