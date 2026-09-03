@@ -54,7 +54,7 @@ function onNavigate() {
           v-if="specimenUrl && specimen"
           :src="specimenUrl"
           :srcset="specimenSrcSet ?? undefined"
-          :sizes="specimenSrcSet ? '(min-width: 1024px) 7.5rem, 5rem' : undefined"
+          :sizes="specimenSrcSet ? '(min-width: 1280px) 16rem, (min-width: 1024px) 22vw, (min-width: 768px) 28vw, 100vw' : undefined"
           :alt="specimen.alt || title"
           :width="specimen.width ?? undefined"
           :height="specimen.height ?? undefined"
