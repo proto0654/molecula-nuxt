@@ -13,6 +13,7 @@ import {
 import { NavigationState } from '../navigation/NavigationState';
 import { HeroSlideProgress } from './HeroSlideProgress';
 import { createSiteLogoMark } from './siteLogoMark';
+import { transitionTo } from '../navigation/TransitionController';
 import { attachTapGuard } from './tapGuard';
 import { registerChromeInfoSetter } from './chromeInfoBridge';
 
@@ -21,7 +22,7 @@ export type HeaderSelectListener = (itemId: string) => void;
 
 /**
  * Site header: LOGO + LOCALE + route links (desktop/tablet) + NODE + MENU.
- * Locale switch (RU | ENG) lives inline in the header flex row.
+ * Locale switch + chrome INDEX use TransitionController (same SPA hop as menu/burger).
  * Home desktop slide progress is positioned at bottom center via CSS.
  */
 export type SiteHeaderOptions = {
@@ -79,6 +80,7 @@ export class SiteHeader {
     this.ruLink.className = 'site-header__locale-link';
     this.ruLink.textContent = 'RU';
     this.ruLink.lang = 'ru';
+    this.attachSpaLink(this.ruLink);
 
     const sep = document.createElement('span');
     sep.className = 'site-header__locale-sep';
@@ -88,6 +90,7 @@ export class SiteHeader {
     this.enLink.className = 'site-header__locale-link';
     this.enLink.textContent = 'ENG';
     this.enLink.lang = 'en';
+    this.attachSpaLink(this.enLink);
 
     this.localeEl.append(this.ruLink, sep, this.enLink);
     this.syncLocale();
@@ -135,6 +138,7 @@ export class SiteHeader {
 
     this.chromeLinkEl = document.createElement('a');
     this.chromeLinkEl.className = 'site-header__chrome-link';
+    this.attachSpaLink(this.chromeLinkEl);
 
     this.chromeEl.append(this.chromeLabelEl, this.chromeLinkEl);
 
@@ -261,6 +265,21 @@ export class SiteHeader {
       this.chromeLinkEl.textContent = '';
       this.chromeLinkEl.style.display = 'none';
     }
+  }
+
+  /** Left-click → TransitionController; modified clicks keep native browser behavior. */
+  private attachSpaLink(el: HTMLAnchorElement): void {
+    el.addEventListener('click', (event) => {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const href = el.getAttribute('href');
+      if (!href) return;
+      event.preventDefault();
+      void transitionTo(href).then(() => {
+        this.syncLocale();
+      });
+    });
   }
 
   /** Update locale links from current URL. Call after any navigation. */

@@ -44,7 +44,7 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--sidebar-width` | `clamp(220px, 20vw, 280px)` | Desktop rail width |
 | `--hud-inset-desktop` | `1.5rem` all sides — corner ticks on this frame | Frame inset ≥1024 |
 | `--hud-header-inset` | frame inset + corner size + `--hud-chrome-pad` | Desktop header / rail align inside ticks |
-| `--z-hud` / `--z-nav` / `--z-connector` / `--z-header` / `--z-overlay` / `--z-debug` | `1` / `2` / `2` / `2` / `3` / `10` | Inside stage/chrome: HUD → nav → veil |
+| `--z-hud` / `--z-nav` / `--z-connector` / `--z-header` / `--z-overlay` / `--z-debug` | `1` / `2` / `2` / `3` / `5` / `10` | Inside stage/chrome: HUD → nav → header (above full-height rail) → veil |
 | `--z-stage` / `--z-backdrop` / `--z-page` / `--z-chrome` | `0` / `1` / `2` / `4` | Canvas → persistent featured wash (+ accent overlay) → NuxtPage → molecular chrome |
 | `--glyph-angle-open` / `--glyph-angle-close` | `⟨ ` / ` ⟩` | Committed nav wrap (tablet/mobile) |
 | `--bp-mobile-max` | `767px` | Match `mountHeroApp` `MOBILE_MQ` |
@@ -268,7 +268,7 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 | Thin mono, tracking, angle brackets | Cards, shadows, filled nav pills |
 | Grid + L-ticks + hairlines + SVG elbow | Full HUD rectangles / WebGL HUD geometry |
 | Dark matte faceted atoms, light type | Glossy / smooth spheres; light atoms that match caption color |
-| Overlay `pointer-events: none` except nav / return | Capture pointer on the grid, corners, or connector |
+| Overlay `pointer-events: none` except interactive children (`.nav__item`, header logo/locale/INDEX, return) | Full-height `.nav` rail capturing clicks over logo/locale |
 | Desktop rail as light overlay | Application dashboard chrome |
 | Scroll-to-top: 1px `--wl-line` square, `--hud-header-inset` from L-ticks | Mint filled circles / flush-to-viewport FAB |
 | Footer legal: desktop pad `--hud-header-inset` (inside ticks) | Flush to frame corners |
