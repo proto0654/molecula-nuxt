@@ -33,8 +33,8 @@ useHead({
     >
       <slot />
     </main>
-    <SiteFooterMenu />
-    <SiteFooterLegal />
+    <SiteFooterMenu v-if="!isHome" />
+    <SiteFooterLegal v-if="!isHome" />
     <SiteScrollToTop />
   </div>
 </template>

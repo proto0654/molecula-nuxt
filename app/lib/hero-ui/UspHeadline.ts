@@ -9,6 +9,7 @@ export class UspHeadline {
   private readonly textEl: HTMLElement;
   private readonly measureEl: HTMLElement;
   private readonly displayEl: HTMLElement;
+  private readonly accessibleEl: HTMLElement;
   private pending: string | null = null;
   private revealed: string | null = null;
   private handle: ScrambleHandle | null = null;
@@ -32,7 +33,10 @@ export class UspHeadline {
     this.displayEl.className = 'usp-headline__display';
     this.displayEl.setAttribute('aria-hidden', 'true');
 
-    this.textEl.append(this.measureEl, this.displayEl);
+    this.accessibleEl = document.createElement('span');
+    this.accessibleEl.className = 'visually-hidden';
+
+    this.textEl.append(this.accessibleEl, this.measureEl, this.displayEl);
     this.root.append(this.textEl);
     parent.append(this.root);
     this.setZoomFade(0);
@@ -50,7 +54,7 @@ export class UspHeadline {
     if (!text) {
       this.measureEl.textContent = '';
       this.displayEl.textContent = '';
-      this.textEl.removeAttribute('aria-label');
+      this.accessibleEl.textContent = '';
       this.root.classList.remove('is-visible', 'is-scrambling');
       return;
     }
@@ -59,7 +63,7 @@ export class UspHeadline {
     this.root.classList.remove('is-visible', 'is-scrambling');
     this.measureEl.textContent = '';
     this.displayEl.textContent = '';
-    this.textEl.removeAttribute('aria-label');
+    this.accessibleEl.textContent = '';
   }
 
   /** Start scramble if armed and not already showing that string. */
@@ -70,7 +74,7 @@ export class UspHeadline {
     this.cancelScramble();
     this.measureEl.textContent = target;
     this.displayEl.textContent = '';
-    this.textEl.setAttribute('aria-label', target);
+    this.accessibleEl.textContent = target;
     this.root.classList.add('is-visible', 'is-scrambling');
 
     this.handle = scrambleText(target, {

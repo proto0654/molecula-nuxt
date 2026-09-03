@@ -11,3 +11,12 @@ RewriteRule ^wp-content/(.*)$ https://api.weblaba.ru/wp-content/$1 [R=301,L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]
+
+# Hashed Nuxt assets + self-hosted fonts (PageSpeed cache lifetimes)
+<IfModule mod_headers.c>
+  SetEnvIf Request_URI "^/fonts/" CACHE_IMMUTABLE
+  SetEnvIf Request_URI "^/_nuxt/" CACHE_IMMUTABLE
+  <FilesMatch "\.(woff2|ttf|js|css|svg|png)$">
+    Header set Cache-Control "public, max-age=31536000, immutable" env=CACHE_IMMUTABLE
+  </FilesMatch>
+</IfModule>

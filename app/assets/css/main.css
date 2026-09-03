@@ -438,7 +438,8 @@ html.hero-lock #__nuxt {
   min-height: 0;
 }
 
-.home-page__seo {
+.home-page__seo,
+.visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;

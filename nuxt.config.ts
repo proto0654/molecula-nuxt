@@ -91,6 +91,13 @@ export default defineNuxtConfig({
       ],
       link: [
         {
+          rel: 'preload',
+          as: 'font',
+          type: 'font/woff2',
+          href: publicAsset('fonts/JetBrainsMono-Regular.woff2'),
+          crossorigin: 'anonymous',
+        },
+        {
           rel: 'icon',
           type: 'image/svg+xml',
           href: publicAsset('sign-weblaba.svg'),

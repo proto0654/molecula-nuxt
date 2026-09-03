@@ -140,7 +140,7 @@ export class SiteHeader {
     this.chromeLinkEl.className = 'site-header__chrome-link';
     this.attachSpaLink(this.chromeLinkEl);
 
-    this.chromeEl.append(this.chromeLabelEl, this.chromeLinkEl);
+    this.chromeEl.append(this.chromeLabelEl);
 
     registerChromeInfoSetter((label, href, text) => this.setChromeInfo(label, href, text));
 
@@ -259,11 +259,11 @@ export class SiteHeader {
     if (linkHref && linkText) {
       this.chromeLinkEl.href = linkHref;
       this.chromeLinkEl.textContent = linkText;
-      this.chromeLinkEl.style.display = '';
+      if (!this.chromeLinkEl.isConnected) this.chromeEl.append(this.chromeLinkEl);
     } else {
+      this.chromeLinkEl.remove();
       this.chromeLinkEl.removeAttribute('href');
       this.chromeLinkEl.textContent = '';
-      this.chromeLinkEl.style.display = 'none';
     }
   }
 
@@ -289,13 +289,14 @@ export class SiteHeader {
 
     this.ruLink.classList.toggle('is-active', current === 'ru');
     this.enLink.classList.toggle('is-active', current === 'en');
-
+    this.ruLink.href = alternateLocalePath(path, 'ru');
+    this.enLink.href = alternateLocalePath(path, 'en');
     if (current === 'ru') {
-      this.ruLink.removeAttribute('href');
-      this.enLink.href = alternateLocalePath(path, 'en');
+      this.ruLink.setAttribute('aria-current', 'page');
+      this.enLink.removeAttribute('aria-current');
     } else {
-      this.ruLink.href = alternateLocalePath(path, 'ru');
-      this.enLink.removeAttribute('href');
+      this.enLink.setAttribute('aria-current', 'page');
+      this.ruLink.removeAttribute('aria-current');
     }
   }
 
