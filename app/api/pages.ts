@@ -26,7 +26,7 @@ export async function getMoleculeHeroPages(): Promise<WpPage[]> {
           slug,
           per_page: 1,
           status: 'publish',
-          _fields: 'id,slug,title,acf',
+          _fields: 'id,slug,title,acf,meta',
         },
       });
       return rows[0] ?? null;

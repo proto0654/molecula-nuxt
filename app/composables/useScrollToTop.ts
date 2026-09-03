@@ -1,10 +1,11 @@
 import type { ScrollToTopSettings } from '~/types/wp';
+import { stripLocalePrefix } from '~/domain/i18n';
 
 export function useScrollToTopVisibility(settings: Ref<ScrollToTopSettings>) {
   const route = useRoute();
 
   const routeHidden = computed(() => {
-    const path = route.path.replace(/\/+$/, '') || '/';
+    const path = stripLocalePrefix(route.path);
     return path === '/' || path === '/portfolio';
   });
 

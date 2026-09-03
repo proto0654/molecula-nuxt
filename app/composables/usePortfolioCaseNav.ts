@@ -1,5 +1,6 @@
 import type { MaybeRefOrGetter } from 'vue';
 import { getPortfolioSlimIndex } from '~/api/portfolio';
+import { localizedSlimTitle } from '~/domain/i18n';
 import type { CasePosition } from '~/domain/portfolio/adjacent';
 import {
   archiveScopeForShelf,
@@ -23,6 +24,27 @@ import { usePortfolioCategories } from '~/composables/usePortfolio';
  */
 export function usePortfolioCaseNav(slug: MaybeRefOrGetter<string>) {
   const slugRef = computed(() => String(toValue(slug) || ''));
+  const { locale } = useLocale();
+
+  function localizePosition(position: CasePosition): CasePosition {
+    const localize = (item: CasePosition['prev']) =>
+      item
+        ? {
+            ...item,
+            title: localizedSlimTitle(
+              locale.value,
+              item.title,
+              item.slug,
+              item.titleEn,
+            ),
+          }
+        : null;
+    return {
+      ...position,
+      prev: localize(position.prev),
+      next: localize(position.next),
+    };
+  }
 
   const { data: slimIndex } = useAsyncData('portfolio-slim-index', () =>
     getPortfolioSlimIndex(),
@@ -41,10 +63,12 @@ export function usePortfolioCaseNav(slug: MaybeRefOrGetter<string>) {
   );
 
   const position = computed((): CasePosition =>
-    getCasePositionInShelf(
-      slugRef.value,
-      sortedSlim.value,
-      legacyId.value,
+    localizePosition(
+      getCasePositionInShelf(
+        slugRef.value,
+        sortedSlim.value,
+        legacyId.value,
+      ),
     ),
   );
 
@@ -53,10 +77,12 @@ export function usePortfolioCaseNav(slug: MaybeRefOrGetter<string>) {
   );
 
   function positionForSlug(fromSlug: string): CasePosition {
-    return getCasePositionForSlug(
-      fromSlug,
-      sortedSlim.value,
-      legacyId.value,
+    return localizePosition(
+      getCasePositionForSlug(
+        fromSlug,
+        sortedSlim.value,
+        legacyId.value,
+      ),
     );
   }
 

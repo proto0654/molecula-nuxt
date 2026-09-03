@@ -1,8 +1,4 @@
-function normalizePath(path: string): string {
-  if (!path || path === '/') return '/';
-  const trimmed = path.replace(/\/+$/, '');
-  return trimmed || '/';
-}
+import { stripLocalePrefix } from '~/domain/i18n';
 
 export type ArchiveScope = 'portfolio' | 'services';
 
@@ -14,7 +10,7 @@ export function routeChromeLabel(
   path: string,
   archiveScope: ArchiveScope = 'portfolio',
 ): string | null {
-  const segments = normalizePath(path).split('/').filter(Boolean);
+  const segments = stripLocalePrefix(path).split('/').filter(Boolean);
 
   if (segments.length === 0) {
     return null;

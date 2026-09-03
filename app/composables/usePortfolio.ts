@@ -36,6 +36,7 @@ type ArchivePagePayload = {
  * (`menu_order ASC`, then `date DESC`).
  */
 export function usePortfolio(options: UsePortfolioOptions = {}) {
+  const { locale } = useLocale();
   const perPage = options.perPage ?? 12;
   const shelf: PortfolioShelf = options.shelf ?? 'current';
   const pageSource = options.page ?? 1;
@@ -47,7 +48,7 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
   });
 
   const { data, pending, error, refresh } = useAsyncData(
-    () => `portfolio-archive-${shelf}-${pageRef.value}-${perPage}`,
+    () => `portfolio-archive-${locale.value}-${shelf}-${pageRef.value}-${perPage}`,
     async (): Promise<ArchivePagePayload> => {
       const [rawSlim, rawCats] = await Promise.all([
         getPortfolioSlimIndex(),
@@ -70,7 +71,7 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
         const raw = byId.get(slimItem.id);
         if (!raw) continue;
         entries.push({
-          item: normalizePortfolioPost(raw),
+          item: normalizePortfolioPost(raw, locale.value),
           index: start + i + 1,
         });
       }
@@ -80,7 +81,7 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
         counts,
       };
     },
-    { watch: [pageRef] },
+    { watch: [pageRef, locale] },
   );
 
   const held = shallowRef<ArchivePagePayload | null>(null);

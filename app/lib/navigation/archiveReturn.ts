@@ -1,3 +1,5 @@
+import { localizedPath, stripLocalePrefix, type SiteLocale } from '~/domain/i18n';
+
 export type ArchiveReturnScope = 'portfolio' | 'portfolio-legacy' | 'services';
 
 export type ArchiveReturnState = {
@@ -80,15 +82,9 @@ function canUseStorage(): boolean {
   return import.meta.client && typeof sessionStorage !== 'undefined';
 }
 
-function normalizePath(path: string): string {
-  if (!path || path === '/') return '/';
-  const trimmed = path.replace(/\/+$/, '');
-  return trimmed || '/';
-}
-
 /** `/portfolio/:slug` — not archive index or legacy shelf. */
 export function isPortfolioCasePath(path: string): boolean {
-  const segments = normalizePath(path).split('/').filter(Boolean);
+  const segments = stripLocalePrefix(path).split('/').filter(Boolean);
   if (segments.length !== 2) return false;
   const [head, slug] = segments;
   return head === 'portfolio' && slug !== 'legacy';
@@ -202,9 +198,10 @@ export function consumeArchiveReturn(
 export function archiveIndexHref(
   state?: ArchiveReturnState | null,
   scope: ArchiveReturnScope = 'portfolio',
+  locale: SiteLocale = 'ru',
 ): string {
   const page = state?.page ?? peekArchiveReturn(scope)?.page ?? 1;
-  const base = SCOPE_CONFIG[scope].basePath;
+  const base = localizedPath(SCOPE_CONFIG[scope].basePath, locale);
   if (page <= 1) return base;
   return `${base}?page=${page}`;
 }
@@ -215,13 +212,14 @@ export function archiveIndexHref(
  */
 export function resolveCasePortfolioArchiveHref(
   path: string = typeof window !== 'undefined' ? window.location.pathname : '/',
+  locale: SiteLocale = 'ru',
 ): string | null {
   if (!isPortfolioCasePath(path)) return null;
   const pointer = readCasePortfolioReturnPointer();
   if (!pointer) return null;
   const state = peekArchiveReturn(pointer.scope);
   if (!state) return null;
-  return archiveIndexHref(state, pointer.scope);
+  return archiveIndexHref(state, pointer.scope, locale);
 }
 
 /** Jump to the saved row (instant) and release the listing-reveal wait. */

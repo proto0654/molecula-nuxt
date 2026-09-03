@@ -100,12 +100,12 @@ Hero wiring: [`WEBGL_HERO.md`](WEBGL_HERO.md) § Navigation.
 
 Presentation helpers: [`app/domain/portfolio/presentation.ts`](../app/domain/portfolio/presentation.ts) (hero kind/layout, `getCaseComposition`, image URL, slice layout, `balanceCaseScreenColumns`). Archive row helpers: [`archive.ts`](../app/domain/portfolio/archive.ts) (`NN`, specimen, meta fallback). Service archive: [`app/domain/services/archive.ts`](../app/domain/services/archive.ts) (featured specimen, tags meta or chrome «Услуга»). Does not change the `Case` model shape beyond normalize mapping.
 
-## EN fields (typed, unused in UI)
+## EN fields (`/en/` + `useLocale`)
 
-When `/en/` is wired, resolve as follows. Until then the app reads RU only.
+On `/en/*` routes, normalizers read `*_en` ACF pairs with RU fallback (`pickLocalized`). RU routes stay RU-only.
 
-| Surface | RU (rendered now) | EN (raw / later) | Later resolve |
-|---------|-------------------|------------------|---------------|
+| Surface | RU | EN (raw) | Resolve |
+|---------|-----|----------|---------|
 | Service title | `title.rendered` | `acf.post_title_en` / `meta.weblaba_title_en` | `weblaba_title_en \|\| post_title_en`, else RU |
 | Service intro | `content.rendered` | `acf.post_content_en` | EN if non-empty, else RU |
 | Offers | `service-repeater` (`cf_title`, `cf_text`, `cf_price`) | `service-repeater_en` (`cf_*_en`) | localized repeater; **price prefers RU `cf_price`** (₽) |

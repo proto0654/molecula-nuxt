@@ -1,5 +1,14 @@
 import type { WpServicePost, ThemeOptionsAcf } from '~/types/wp';
-import type { Service, ServiceChrome, ServiceOffer } from '~/types/wp';
+import type {
+  Service,
+  ServiceChrome,
+  ServiceOffer,
+  ServiceRepeaterRow,
+  ServiceRepeaterRowEn,
+} from '~/types/wp';
+import type { SiteLocale } from '~/domain/i18n';
+import { pickLocalized, pickLocalizedOption } from '~/domain/i18n';
+import { localizedRenderedTitle, resolveEnContent } from '~/domain/i18n';
 import {
   emptyToNull,
   stripHtmlToPlain,
@@ -28,19 +37,33 @@ function uniqueAnchor(base: string, used: Map<string, number>): string {
   return `${base}-${next}`;
 }
 
-function normalizeOffers(post: WpServicePost): ServiceOffer[] {
-  const repeater = post.acf?.['service-repeater'];
-  if (!repeater || repeater === false || !Array.isArray(repeater)) return [];
+function normalizeOffersFromRows(
+  rows: ServiceRepeaterRow[] | ServiceRepeaterRowEn[] | false | undefined,
+  ruPriceRows: ServiceRepeaterRow[] | false | undefined,
+  enMode: boolean,
+): ServiceOffer[] {
+  if (!rows || rows === false || !Array.isArray(rows)) return [];
 
+  const ruPrices = Array.isArray(ruPriceRows) ? ruPriceRows : [];
   const used = new Map<string, number>();
   const offers: ServiceOffer[] = [];
 
-  for (let i = 0; i < repeater.length; i += 1) {
-    const row = repeater[i]!;
-    const title = emptyToNull(row.cf_title);
-    const rawText = emptyToNull(row.cf_text);
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i]!;
+    const title = emptyToNull(
+      enMode ? (row as ServiceRepeaterRowEn).cf_title_en : (row as ServiceRepeaterRow).cf_title,
+    );
+    const rawText = emptyToNull(
+      enMode ? (row as ServiceRepeaterRowEn).cf_text_en : (row as ServiceRepeaterRow).cf_text,
+    );
     const textHtml = rawText ? unwrapHtmlLinks(rawText) : null;
-    const price = emptyToNull(row.cf_price);
+    const ruPrice = emptyToNull(ruPrices[i]?.cf_price);
+    const enPrice = enMode
+      ? emptyToNull((row as ServiceRepeaterRowEn).cf_price_en)
+      : null;
+    const price = enMode
+      ? (ruPrice ?? enPrice)
+      : emptyToNull((row as ServiceRepeaterRow).cf_price);
     if (!title && !textHtml && !price) continue;
 
     const slugBase = title ? slugifyOfferTitle(title) : '';
@@ -56,31 +79,58 @@ function normalizeOffers(post: WpServicePost): ServiceOffer[] {
   return offers;
 }
 
+function normalizeOffers(post: WpServicePost, locale: SiteLocale): ServiceOffer[] {
+  const ruRepeater = post.acf?.['service-repeater'];
+  if (locale === 'en') {
+    const enRepeater = post.acf?.['service-repeater_en'];
+    if (enRepeater && enRepeater !== false && Array.isArray(enRepeater) && enRepeater.length > 0) {
+      return normalizeOffersFromRows(enRepeater, ruRepeater, true);
+    }
+  }
+  return normalizeOffersFromRows(ruRepeater, undefined, false);
+}
+
 /**
- * Raw WP service post → Service. RU fields only; EN keys stay on the raw type.
+ * Raw WP service post → Service.
  * Empty repeater → []. Featured is listing-only; still stored for the archive.
  */
-export function normalizeServicePost(post: WpServicePost): Service {
+export function normalizeServicePost(
+  post: WpServicePost,
+  locale: SiteLocale = 'ru',
+): Service {
+  const acf = post.acf ?? ({} as WpServicePost['acf']);
+  const ruContent = emptyToNull(post.content?.rendered);
+  const enContent = resolveEnContent(post.meta, acf);
+
   return {
     id: post.id,
     slug: post.slug,
-    title: emptyToNull(post.title?.rendered) ?? post.slug,
-    contentHtml: emptyToNull(post.content?.rendered),
+    title: localizedRenderedTitle(
+      locale,
+      post.title?.rendered,
+      post.slug,
+      post.meta,
+      acf,
+    ),
+    contentHtml: pickLocalized(locale, ruContent, enContent),
     excerptHtml: emptyToNull(post.excerpt?.rendered),
     menuOrder: post.menu_order ?? 0,
     date: post.date,
     featuredImage: normalizeFeaturedFromEmbed(post._embedded?.['wp:featuredmedia']),
     tagIds: post.tags ?? [],
     tags: embeddedTagNames(post._embedded?.['wp:term']),
-    offers: normalizeOffers(post),
+    offers: normalizeOffers(post, locale),
   };
 }
 
-export function normalizeServiceChrome(acf: ThemeOptionsAcf | undefined): ServiceChrome {
+export function normalizeServiceChrome(
+  acf: ThemeOptionsAcf | undefined,
+  locale: SiteLocale = 'ru',
+): ServiceChrome {
   return {
-    sectionHeading: emptyToNull(acf?.services_section_heading),
-    priceFrom: emptyToNull(acf?.services_price_from),
-    orderLabel: emptyToNull(acf?.hero_order_label),
+    sectionHeading: pickLocalizedOption(locale, acf, 'services_section_heading'),
+    priceFrom: pickLocalizedOption(locale, acf, 'services_price_from'),
+    orderLabel: pickLocalizedOption(locale, acf, 'hero_order_label'),
   };
 }
 

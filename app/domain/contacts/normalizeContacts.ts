@@ -1,5 +1,7 @@
 import type { ContactAcfRow, ThemeOptionsAcf } from '~/types/wp';
 import type { Contact, ContactIcon, ContactPage } from '~/types/wp';
+import type { SiteLocale } from '~/domain/i18n';
+import { pickLocalized } from '~/domain/i18n';
 import { emptyToNull, stripHtmlToPlain } from '~/domain/wp';
 
 const ICON_EXACT: Record<string, ContactIcon> = {
@@ -47,8 +49,10 @@ function normalizeTarget(raw: string | false | undefined): '_self' | '_blank' {
   return raw === '_blank' ? '_blank' : '_self';
 }
 
-function normalizeContactRow(row: ContactAcfRow): Contact | null {
-  const label = emptyToNull(row.label);
+function normalizeContactRow(row: ContactAcfRow, locale: SiteLocale): Contact | null {
+  const ruLabel = emptyToNull(row.label);
+  const enLabel = emptyToNull(row.label_en);
+  const label = pickLocalized(locale, ruLabel, enLabel);
   const url = emptyToNull(row.url);
   if (!label || !url) return null;
 
@@ -61,25 +65,36 @@ function normalizeContactRow(row: ContactAcfRow): Contact | null {
   };
 }
 
-function normalizeContactRows(rows: ThemeOptionsAcf['weblaba_contacts']): Contact[] {
+function normalizeContactRows(
+  rows: ThemeOptionsAcf['weblaba_contacts'],
+  locale: SiteLocale,
+): Contact[] {
   if (!rows || rows === false || !Array.isArray(rows)) return [];
   const contacts: Contact[] = [];
   for (const row of rows) {
-    const contact = normalizeContactRow(row);
+    const contact = normalizeContactRow(row, locale);
     if (contact) contacts.push(contact);
   }
   return contacts;
 }
 
-/**
- * Raw ACF options → ContactPage. RU fields only; EN keys stay on the raw type.
- * Empty / false repeater → []. No PHP Telegram+phone fallback.
- */
-export function normalizeContactPage(acf: ThemeOptionsAcf | undefined): ContactPage {
+/** Raw ACF options → ContactPage. Empty / false repeater → []. */
+export function normalizeContactPage(
+  acf: ThemeOptionsAcf | undefined,
+  locale: SiteLocale = 'ru',
+): ContactPage {
   return {
-    title: emptyToNull(acf?.contact_popup_title),
-    text: emptyToNull(acf?.contact_popup_text),
-    contacts: normalizeContactRows(acf?.weblaba_contacts),
+    title: pickLocalized(
+      locale,
+      emptyToNull(acf?.contact_popup_title),
+      emptyToNull(acf?.contact_popup_title_en),
+    ),
+    text: pickLocalized(
+      locale,
+      emptyToNull(acf?.contact_popup_text),
+      emptyToNull(acf?.contact_popup_text_en),
+    ),
+    contacts: normalizeContactRows(acf?.weblaba_contacts, locale),
   };
 }
 

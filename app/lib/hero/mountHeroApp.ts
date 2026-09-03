@@ -36,6 +36,7 @@ import {
 } from '../../composables/useMoleculeCue';
 import { HOME_ITEM_ID, hubAtomId } from '../spatial/spatialAtoms';
 import { resolveCasePortfolioArchiveHref } from '../navigation/archiveReturn';
+import { localeFromPath } from '../../domain/i18n';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { SpatialController, type SpatialApplyOptions } from '../spatial/SpatialController';
 import type { SpatialState } from '../spatial/types';
@@ -51,7 +52,8 @@ const IDLE_RESUME_MS = 2000;
 
 function resolveMenuRoute(itemId: string, route: string | undefined): string | undefined {
   if (itemId !== 'work' || !route) return route;
-  return resolveCasePortfolioArchiveHref() ?? route;
+  const locale = localeFromPath(window.location.pathname);
+  return resolveCasePortfolioArchiveHref(window.location.pathname, locale) ?? route;
 }
 
 /**

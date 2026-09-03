@@ -3,6 +3,7 @@ import {
   archiveIndexHref,
   type ArchiveReturnScope,
 } from '~/lib/navigation/archiveReturn';
+import { localizedPath } from '~/domain/i18n';
 
 const props = withDefaults(
   defineProps<{
@@ -21,13 +22,14 @@ const props = withDefaults(
 
 const root = ref<HTMLElement | null>(null);
 const revealingGate = computed(() => Boolean(props.revealing));
+const { locale } = useLocale();
 
 useListingReveal(root, revealingGate);
 
 function defaultHref(scope: ArchiveReturnScope): string {
-  if (scope === 'services') return '/services';
-  if (scope === 'portfolio-legacy') return '/portfolio/legacy';
-  return '/portfolio';
+  if (scope === 'services') return localizedPath('/services', locale.value);
+  if (scope === 'portfolio-legacy') return localizedPath('/portfolio/legacy', locale.value);
+  return localizedPath('/portfolio', locale.value);
 }
 
 const archiveHref = ref(defaultHref(props.archiveScope));
@@ -37,8 +39,16 @@ const chromeScope = computed(() =>
   props.archiveScope === 'services' ? 'services' : 'portfolio',
 );
 
+function refreshArchiveHref() {
+  archiveHref.value = archiveIndexHref(undefined, props.archiveScope, locale.value);
+}
+
 onMounted(() => {
-  archiveHref.value = archiveIndexHref(undefined, props.archiveScope);
+  refreshArchiveHref();
+});
+
+watch(locale, () => {
+  refreshArchiveHref();
 });
 
 const chromeVariant = computed(() =>

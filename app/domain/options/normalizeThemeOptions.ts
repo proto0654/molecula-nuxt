@@ -1,22 +1,21 @@
-import type {
-  HeroNavItemRow,
-  ScrollToTopSettings,
-  ThemeOptions,
-  ThemeOptionsAcf,
-} from '~/types/wp';
+import type { ThemeOptions, ThemeOptionsAcf } from '~/types/wp';
+import type { SiteLocale } from '~/domain/i18n';
+import { pickLocalizedOption } from '~/domain/i18n';
 import { UI_STRING_KEYS, type UiStringKey, type UiStrings } from '~/types/wp/uiStrings';
 import { emptyToNull } from '~/domain/wp';
 
-function normalizeUiStrings(acf: ThemeOptionsAcf | undefined): UiStrings {
+function normalizeUiStrings(
+  acf: ThemeOptionsAcf | undefined,
+  locale: SiteLocale,
+): UiStrings {
   const strings = {} as UiStrings;
   for (const key of UI_STRING_KEYS) {
-    const raw = acf?.[key as keyof ThemeOptionsAcf];
-    strings[key] = typeof raw === 'string' ? emptyToNull(raw) : null;
+    strings[key] = pickLocalizedOption(locale, acf, key);
   }
   return strings;
 }
 
-function normalizeScrollToTop(acf: ThemeOptionsAcf | undefined): ScrollToTopSettings {
+function normalizeScrollToTop(acf: ThemeOptionsAcf | undefined) {
   const enabled = acf?.scroll_to_top_enabled;
   const triggerRaw = acf?.scroll_to_top_trigger_px;
   const sizeRaw = acf?.scroll_to_top_size_px;
@@ -60,15 +59,18 @@ function normalizeSchemaOrg(acf: ThemeOptionsAcf | undefined) {
   };
 }
 
-/** Raw ACF options → normalized ThemeOptions. RU only; EN keys stay on raw type. */
-export function normalizeThemeOptions(acf: ThemeOptionsAcf | undefined): ThemeOptions {
+/** Raw ACF options → normalized ThemeOptions. */
+export function normalizeThemeOptions(
+  acf: ThemeOptionsAcf | undefined,
+  locale: SiteLocale = 'ru',
+): ThemeOptions {
   return {
-    ui: normalizeUiStrings(acf),
+    ui: normalizeUiStrings(acf, locale),
     scrollToTop: normalizeScrollToTop(acf),
     footer: {
-      disclaimer: emptyToNull(acf?.footer_disclaimer),
-      cookieNotice: emptyToNull(acf?.footer_cookie_notice),
-      copyright: emptyToNull(acf?.footer_copyright),
+      disclaimer: pickLocalizedOption(locale, acf, 'footer_disclaimer'),
+      cookieNotice: pickLocalizedOption(locale, acf, 'footer_cookie_notice'),
+      copyright: pickLocalizedOption(locale, acf, 'footer_copyright'),
     },
     schemaOrg: normalizeSchemaOrg(acf),
     gtmContainerId: emptyToNull(acf?.gtm_container_id),

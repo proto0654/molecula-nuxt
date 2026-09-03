@@ -35,6 +35,7 @@ useHead({
     </main>
     <SiteFooterMenu />
     <SiteFooterLegal />
+    <SiteLocaleSwitch />
     <SiteScrollToTop />
   </div>
 </template>

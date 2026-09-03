@@ -57,6 +57,12 @@ async function fetchAllCptSlugs(cpt: string): Promise<string[]> {
   return slugs;
 }
 
+function mirrorEnRoutes(routes: string[]): string[] {
+  return routes
+    .filter((route) => route !== '/en' && !route.startsWith('/en/'))
+    .map((route) => (route === '/' ? '/en' : `/en${route}`));
+}
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   future: {
@@ -76,7 +82,6 @@ export default defineNuxtConfig({
     head: {
       title: 'WebLaba',
       titleTemplate: '%s',
-      htmlAttrs: { lang: 'ru' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -131,6 +136,20 @@ export default defineNuxtConfig({
     },
   },
   hooks: {
+    'pages:extend'(pages) {
+      const enPages = [];
+      for (const page of pages) {
+        if (!page.path || !page.file) continue;
+        if (page.path === '/en' || page.path.startsWith('/en/')) continue;
+        const enPath = page.path === '/' ? '/en' : `/en${page.path}`;
+        enPages.push({
+          ...page,
+          name: page.name ? `${page.name}-en` : undefined,
+          path: enPath,
+        });
+      }
+      pages.push(...enPages);
+    },
     async 'nitro:config'(nitroConfig) {
       if (nitroConfig.dev) return;
       nitroConfig.prerender ??= {};
@@ -153,10 +172,13 @@ export default defineNuxtConfig({
         '/privacy-policy',
       ]);
 
+      pushRoutes(mirrorEnRoutes(existing));
+
       try {
         const slugs = await fetchAllCptSlugs('portfolio');
         const routes = slugs.map((slug) => `/portfolio/${slug}`);
         pushRoutes(routes);
+        pushRoutes(mirrorEnRoutes(routes));
         console.info(`[prerender] queued ${routes.length} portfolio case routes`);
       } catch (err) {
         console.warn('[prerender] failed to fetch portfolio slugs:', err);
@@ -166,6 +188,7 @@ export default defineNuxtConfig({
         const slugs = await fetchAllCptSlugs('services');
         const routes = slugs.map((slug) => `/services/${slug}`);
         pushRoutes(routes);
+        pushRoutes(mirrorEnRoutes(routes));
         console.info(`[prerender] queued ${routes.length} service routes`);
       } catch (err) {
         console.warn('[prerender] failed to fetch service slugs:', err);

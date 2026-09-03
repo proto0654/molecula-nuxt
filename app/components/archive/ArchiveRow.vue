@@ -30,7 +30,8 @@ const meta = computed(() => archiveMetaLabel(item.value, props.categoryById));
 const specimen = computed(() => archiveSpecimenImage(item.value));
 const specimenUrl = computed(() => archiveSpecimenUrl(item.value));
 const specimenSrcSet = computed(() => archiveSpecimenSrcSet(item.value));
-const href = computed(() => `/portfolio/${item.value.slug}`);
+const { localizedPath } = useLocale();
+const href = computed(() => localizedPath(`/portfolio/${item.value.slug}`));
 
 function onNavigate() {
   saveArchiveReturn(

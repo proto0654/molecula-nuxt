@@ -1,4 +1,5 @@
-import type { WpServicePost } from '~/types/wp';
+import type { WpLocalizedMeta, WpServicePost } from '~/types/wp';
+import { resolveEnTitle } from '~/domain/i18n';
 import {
   getWpApiBaseFromEnv,
   wpFetch,
@@ -14,6 +15,7 @@ export type ServiceSlimItem = {
   menu_order: number;
   date: string;
   title: string;
+  titleEn: string | null;
 };
 
 type SlimIndexRaw = {
@@ -22,9 +24,10 @@ type SlimIndexRaw = {
   menu_order: number;
   date: string;
   title?: { rendered?: string };
+  meta?: WpLocalizedMeta;
 };
 
-const SLIM_FIELDS = ['id', 'slug', 'menu_order', 'date', 'title'].join(',');
+const SLIM_FIELDS = ['id', 'slug', 'menu_order', 'date', 'title', 'meta'].join(',');
 
 function mapSlimItem(raw: SlimIndexRaw): ServiceSlimItem {
   const rendered = raw.title?.rendered ?? '';
@@ -35,6 +38,7 @@ function mapSlimItem(raw: SlimIndexRaw): ServiceSlimItem {
     menu_order: raw.menu_order,
     date: raw.date,
     title,
+    titleEn: resolveEnTitle(raw.meta, undefined),
   };
 }
 

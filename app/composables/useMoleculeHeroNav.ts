@@ -12,6 +12,8 @@ import type { WpPage } from '~/types/wp';
  * Structure stays mountable with empty copy until pages resolve.
  */
 export function useMoleculeHeroNav() {
+  const { locale } = useLocale();
+
   const { data, pending, error, refresh, status } = useAsyncData(
     'molecule-hero-pages',
     () => getMoleculeHeroPages(),
@@ -23,9 +25,11 @@ export function useMoleculeHeroNav() {
     },
   );
 
-  const rows = computed(() => normalizeMoleculeHeroPages(data.value ?? []));
+  const rows = computed(() =>
+    normalizeMoleculeHeroPages(data.value ?? [], locale.value),
+  );
 
-  const navItems = computed(() => mergeHeroNavigation(rows.value));
+  const navItems = computed(() => mergeHeroNavigation(rows.value, locale.value));
 
   watch(
     [rows, pending, error, status],

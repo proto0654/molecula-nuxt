@@ -6,10 +6,11 @@ import type { UiStringKey } from '~/types/wp/uiStrings';
 const EMPTY_OPTIONS: ThemeOptions = normalizeThemeOptions(undefined);
 
 export function useThemeOptions() {
+  const { locale } = useLocale();
   const { acf, pending, error, refresh } = useThemeOptionsAcfData();
 
   const options = computed(() =>
-    acf.value ? normalizeThemeOptions(acf.value) : EMPTY_OPTIONS,
+    acf.value ? normalizeThemeOptions(acf.value, locale.value) : EMPTY_OPTIONS,
   );
 
   watch(

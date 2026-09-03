@@ -1,8 +1,9 @@
 ﻿<script setup lang="ts">
-import type { ArchiveReturnScope } from '~/lib/navigation/archiveReturn';
+import { routeChromeLabel } from '~/lib/navigation/routeChromeLabel';
 import {
   archiveIndexHref,
   resolveCasePortfolioArchiveHref,
+  type ArchiveReturnScope,
 } from '~/lib/navigation/archiveReturn';
 import { missingUiString } from '~/domain/options/missingUiString';
 import { stripTags } from '~/domain/portfolio/presentation';
@@ -29,14 +30,15 @@ const props = withDefaults(
 );
 
 const route = useRoute();
+const { locale, localizedPath } = useLocale();
 
 const archiveHref = computed(() => {
   if (props.archiveScope === 'services') {
-    return archiveIndexHref(undefined, 'services');
+    return archiveIndexHref(undefined, 'services', locale.value);
   }
   return (
-    resolveCasePortfolioArchiveHref(route.path) ??
-    archiveIndexHref(undefined, props.archiveScope)
+    resolveCasePortfolioArchiveHref(route.path, locale.value) ??
+    archiveIndexHref(undefined, props.archiveScope, locale.value)
   );
 });
 
@@ -67,6 +69,12 @@ const prevLabel = computed(() => {
   return optionOrMissing('case_nav_prev_label');
 });
 
+const archiveDirLabel = computed(() => {
+  const scope = props.archiveScope === 'services' ? 'services' : 'portfolio';
+  const label = routeChromeLabel(localizedPath(`/${scope}`), scope);
+  return label?.split('/')[0]?.trim() ?? '';
+});
+
 /** Numbered left rail (case + service detail). */
 const hasMarker = computed(
   () => props.sectionIndex != null && props.sectionIndex > 0,
@@ -74,7 +82,7 @@ const hasMarker = computed(
 
 function navTo(slug: string, flipSweep: EntityLightSweepDirection) {
   return {
-    path: `${props.basePath}/${slug}`,
+    path: localizedPath(`${props.basePath}/${slug}`),
     state: { flipSweep },
   };
 }
@@ -151,7 +159,7 @@ function plainTitle(title: string | null | undefined): string {
 
         <div class="case-nav__item case-nav__index">
           <NuxtLink :to="archiveHref" class="case-nav__link">
-            <span class="case-nav__dir">Архив</span>
+            <span class="case-nav__dir">{{ archiveDirLabel }}</span>
             {{ indexLabel }}
           </NuxtLink>
         </div>

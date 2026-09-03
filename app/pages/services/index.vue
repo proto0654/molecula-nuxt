@@ -42,6 +42,8 @@ usePageSeo({
 });
 
 const indexKicker = useUiString('chrome_index_kicker');
+const { localizedPath } = useLocale();
+const servicesBase = computed(() => localizedPath('/services'));
 </script>
 
 <template>
@@ -78,7 +80,7 @@ const indexKicker = useUiString('chrome_index_kicker');
       v-if="entries.length"
       :page="page"
       :total-pages="pagination.totalPages"
-      base-path="/services"
+      :base-path="servicesBase"
     />
   </ArchiveShell>
 </template>

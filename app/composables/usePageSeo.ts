@@ -1,5 +1,6 @@
 import type { MaybeRefOrGetter } from 'vue';
 import { toValue } from 'vue';
+import { alternateLocalePath, localeFromPath } from '~/domain/i18n';
 
 export type PageSeoOptions = {
   /** Page title without brand suffix (except when `home: true`). */
@@ -63,6 +64,36 @@ export function usePageSeo(options: PageSeoOptions): void {
     return joinSiteUrl(siteUrl, baseURL, canonicalPath(route.fullPath));
   });
 
+  const ogLocale = computed(() =>
+    localeFromPath(route.path) === 'en' ? 'en_US' : 'ru_RU',
+  );
+
+  const headLinks = computed(() => {
+    if (!indexable || !siteUrl) {
+      return canonicalUrl.value
+        ? [{ rel: 'canonical', href: canonicalUrl.value }]
+        : [];
+    }
+    const ruHref = joinSiteUrl(
+      siteUrl,
+      baseURL,
+      canonicalPath(alternateLocalePath(route.fullPath, 'ru')),
+    );
+    const enHref = joinSiteUrl(
+      siteUrl,
+      baseURL,
+      canonicalPath(alternateLocalePath(route.fullPath, 'en')),
+    );
+    return [
+      ...(canonicalUrl.value
+        ? [{ rel: 'canonical' as const, href: canonicalUrl.value }]
+        : []),
+      { rel: 'alternate' as const, hreflang: 'ru', href: ruHref },
+      { rel: 'alternate' as const, hreflang: 'en', href: enHref },
+      { rel: 'alternate' as const, hreflang: 'x-default', href: ruHref },
+    ];
+  });
+
   useSeoMeta({
     title: documentTitle,
     description: resolvedDescription,
@@ -71,7 +102,7 @@ export function usePageSeo(options: PageSeoOptions): void {
     ogDescription: resolvedDescription,
     ogType: options.ogType ?? 'website',
     ogUrl: canonicalUrl,
-    ogLocale: 'ru_RU',
+    ogLocale,
     ogSiteName: 'WebLaba',
     ogImage: resolvedOgImage,
     twitterCard: computed(() =>
@@ -83,11 +114,7 @@ export function usePageSeo(options: PageSeoOptions): void {
   });
 
   useHead({
-    link: computed(() =>
-      canonicalUrl.value
-        ? [{ rel: 'canonical', href: canonicalUrl.value }]
-        : [],
-    ),
+    link: headLinks,
   });
 }
 

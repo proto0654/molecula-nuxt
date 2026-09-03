@@ -7,6 +7,9 @@ import type {
   PortfolioCategory,
 } from '~/types/wp';
 import type { WpPortfolioCategory } from '~/types/wp';
+import type { SiteLocale } from '~/domain/i18n';
+import { pickLocalized } from '~/domain/i18n';
+import { localizedRenderedTitle, resolveEnContent } from '~/domain/i18n';
 import { parseBlockRatio } from '~/domain/portfolio/presentation';
 import {
   emptyToNull,
@@ -29,11 +32,6 @@ function normalizeGallery(acf: WpPortfolioPost['acf']): CaseGalleryItem[] {
 
 const DEFAULT_BLOCK_RATIO = '1/2.3';
 
-/**
- * Tall mobile screenshot → slice grid.
- * `block_ratio` defaults to 1/2.3 when screen-mobile is set (legacy default)
- * so filled screen-mobile is never dropped for a missing ratio field.
- */
 function normalizeMobileSlices(
   acf: WpPortfolioPost['acf'],
 ): CaseMobileSlices | null {
@@ -48,21 +46,23 @@ function normalizeMobileSlices(
   return { image, ratio };
 }
 
-/** Caption beside mockup / before slices — never drop when media is slices-only. */
-function normalizeMobileSignature(acf: WpPortfolioPost['acf']): string | null {
-  return emptyToNull(
+function normalizeMobileSignature(
+  acf: WpPortfolioPost['acf'],
+  locale: SiteLocale,
+): string | null {
+  const ru = emptyToNull(
     acf?.podpis_vozle_mokapa_mobily_pravo === false
       ? null
       : acf?.podpis_vozle_mokapa_mobily_pravo,
   );
+  const en = emptyToNull(
+    acf?.podpis_vozle_mokapa_mobily_pravo_en === false
+      ? null
+      : acf?.podpis_vozle_mokapa_mobily_pravo_en,
+  );
+  return pickLocalized(locale, ru, en);
 }
 
-/**
- * Phone composite / mobile specimen.
- * Prefer screenshot_image (ready mockup). If absent and slices cannot run,
- * fall back to screen-mobile so filled ACF media is never discarded.
- * screenshot_image can coexist with slices — both sections render.
- */
 function normalizeMobile(
   acf: WpPortfolioPost['acf'],
   hasSlices: boolean,
@@ -81,20 +81,35 @@ function normalizeMobile(
  * Raw WP portfolio post → normalized Case.
  * Absence stays null / empty — never invent placeholders.
  */
-export function normalizePortfolioPost(post: WpPortfolioPost): Case {
+export function normalizePortfolioPost(
+  post: WpPortfolioPost,
+  locale: SiteLocale = 'ru',
+): Case {
   const acf = post.acf ?? ({} as WpPortfolioPost['acf']);
-  const contentHtml = emptyToNull(post.content?.rendered);
-  const excerptHtml = emptyToNull(post.excerpt?.rendered);
+  const ruContent = emptyToNull(post.content?.rendered);
+  const enContent = resolveEnContent(post.meta, acf);
+  const contentHtml = pickLocalized(locale, ruContent, enContent);
   const mobileSlices = normalizeMobileSlices(acf);
   const mobile = normalizeMobile(acf, mobileSlices != null);
-  const mobileSignatureHtml = normalizeMobileSignature(acf);
+  const mobileSignatureHtml = normalizeMobileSignature(acf, locale);
+
+  const ruClient = emptyToNull(acf.client === false ? null : acf.client);
+  const enClient = emptyToNull(acf.client_en === false ? null : acf.client_en);
+  const ruTech = emptyToNull(acf.technologies === false ? null : acf.technologies);
+  const enTech = emptyToNull(acf.technologies_en === false ? null : acf.technologies_en);
 
   return {
     id: post.id,
     slug: post.slug,
-    title: emptyToNull(post.title?.rendered) ?? post.slug,
+    title: localizedRenderedTitle(
+      locale,
+      post.title?.rendered,
+      post.slug,
+      post.meta,
+      acf,
+    ),
     contentHtml,
-    excerptHtml,
+    excerptHtml: null,
     menuOrder: post.menu_order ?? 0,
     date: post.date,
     featuredImage: normalizeFeaturedFromEmbed(post._embedded?.['wp:featuredmedia']),
@@ -111,9 +126,9 @@ export function normalizePortfolioPost(post: WpPortfolioPost): Case {
     mobile,
     mobileSlices,
     mobileSignatureHtml,
-    client: emptyToNull(acf.client === false ? null : acf.client),
+    client: pickLocalized(locale, ruClient, enClient),
     projectUrl: emptyToNull(acf.project_url === false ? null : acf.project_url),
-    technologies: emptyToNull(acf.technologies === false ? null : acf.technologies),
+    technologies: pickLocalized(locale, ruTech, enTech),
   };
 }
 
@@ -127,7 +142,7 @@ export function normalizePortfolioCategory(cat: WpPortfolioCategory): PortfolioC
   };
 }
 
-/** Plain-text excerpt for SEO meta. */
+/** Plain-text description for SEO meta (from CMS body, not WP excerpt). */
 export function caseExcerptPlain(c: Case): string | null {
-  return stripHtmlToPlain(c.excerptHtml) ?? stripHtmlToPlain(c.contentHtml);
+  return stripHtmlToPlain(c.contentHtml);
 }

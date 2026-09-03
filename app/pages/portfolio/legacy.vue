@@ -54,6 +54,9 @@ usePageSeo({
 });
 
 const indexKicker = useUiString('chrome_index_kicker');
+const { localizedPath } = useLocale();
+const portfolioHref = computed(() => localizedPath('/portfolio'));
+const legacyBase = computed(() => localizedPath('/portfolio/legacy'));
 </script>
 
 <template>
@@ -62,7 +65,7 @@ const indexKicker = useUiString('chrome_index_kicker');
       <p class="archive-heading__kicker">{{ indexKicker }}</p>
       <SiteScrambleTitle class="archive-heading__title" :text="archiveTitle" />
       <p class="archive-heading__switch">
-        <NuxtLink to="/portfolio" class="archive-heading__switch-link">
+        <NuxtLink :to="portfolioHref" class="archive-heading__switch-link">
           {{ currentLinkText }}
         </NuxtLink>
       </p>
@@ -97,7 +100,7 @@ const indexKicker = useUiString('chrome_index_kicker');
       v-if="entries.length"
       :page="page"
       :total-pages="pagination.totalPages"
-      base-path="/portfolio/legacy"
+      :base-path="legacyBase"
     />
   </ArchiveShell>
 </template>

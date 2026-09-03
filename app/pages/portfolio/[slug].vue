@@ -15,13 +15,14 @@ import { resolveCaseHeroMedia } from '~/domain/editorialHero';
 
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
+const { locale } = useLocale();
 
 const { position, archiveScope, positionForSlug } = usePortfolioCaseNav(slug);
 
 provideCaseLightbox();
 
 const { data, pending, error } = useAsyncData(
-  () => `portfolio-case-${slug.value}`,
+  () => `portfolio-case-${locale.value}-${slug.value}`,
   async () => {
     if (!slug.value) {
       throw createError({
@@ -38,9 +39,9 @@ const { data, pending, error } = useAsyncData(
         fatal: true,
       });
     }
-    return normalizePortfolioPost(raw);
+    return normalizePortfolioPost(raw, locale.value);
   },
-  { watch: [slug] },
+  { watch: [slug, locale] },
 );
 
 const held = shallowRef(data.value ?? null);

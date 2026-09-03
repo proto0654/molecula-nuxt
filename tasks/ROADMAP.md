@@ -77,4 +77,4 @@ EN i18n. Не ломать content pipeline и `absence = null`.
 - [x] Molecule hero copy from five WP pages (`hero_*` + titles); Options `hero_nav_items` removed
 - [x] Foundation gaps: WP menu footer consumer, privacy prerender/sitemap, GTM noscript, image `srcset`
 - [x] `case_thanks_message` → CaseThanks (before NEXT; left full-bleed; empty → omit)
-- [ ] EN i18n (`*_en` typed, UI still RU)
+- [x] EN i18n (`*_en` typed, UI still RU)

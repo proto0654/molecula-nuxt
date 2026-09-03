@@ -20,6 +20,7 @@ const props = withDefaults(
 );
 
 const route = useRoute();
+const { locale } = useLocale();
 
 const root = ref<HTMLElement | null>(null);
 const revealingGate = computed(() => Boolean(props.revealing));
@@ -28,8 +29,8 @@ useListingReveal(root, revealingGate);
 
 function resolveArchiveHref(scope: ArchiveReturnScope): string {
   return (
-    resolveCasePortfolioArchiveHref(route.path) ??
-    archiveIndexHref(undefined, scope)
+    resolveCasePortfolioArchiveHref(route.path, locale.value) ??
+    archiveIndexHref(undefined, scope, locale.value)
   );
 }
 

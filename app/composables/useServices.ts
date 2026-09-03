@@ -19,6 +19,7 @@ type ArchivePagePayload = {
  * (`menu_order ASC`, then `date ASC`).
  */
 export function useServices(options: UseServicesOptions = {}) {
+  const { locale } = useLocale();
   const perPage = options.perPage ?? 12;
   const pageSource = options.page ?? 1;
 
@@ -29,7 +30,7 @@ export function useServices(options: UseServicesOptions = {}) {
   });
 
   const { data, pending, error, refresh } = useAsyncData(
-    () => `services-archive-${pageRef.value}-${perPage}`,
+    () => `services-archive-${locale.value}-${pageRef.value}-${perPage}`,
     async (): Promise<ArchivePagePayload> => {
       const slim = sortServiceSlimIndex(await getServiceSlimIndex());
       const total = slim.length;
@@ -45,7 +46,7 @@ export function useServices(options: UseServicesOptions = {}) {
         const raw = byId.get(slimItem.id);
         if (!raw) continue;
         entries.push({
-          item: normalizeServicePost(raw),
+          item: normalizeServicePost(raw, locale.value),
           index: start + i + 1,
         });
       }
@@ -54,7 +55,7 @@ export function useServices(options: UseServicesOptions = {}) {
         pagination: { total, totalPages },
       };
     },
-    { watch: [pageRef] },
+    { watch: [pageRef, locale] },
   );
 
   const held = shallowRef<ArchivePagePayload | null>(null);

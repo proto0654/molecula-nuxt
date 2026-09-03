@@ -103,6 +103,12 @@ export type WpEmbeddedFeaturedMedia = {
   };
 };
 
+export type WpLocalizedMeta = {
+  post_title_en?: string | null;
+  post_content_en?: string | null;
+  weblaba_title_en?: string | null;
+};
+
 export type WpPortfolioPost = {
   id: number;
   slug: string;
@@ -118,6 +124,7 @@ export type WpPortfolioPost = {
   tags: number[];
   portfolio_category: number[];
   acf: PortfolioAcf;
+  meta?: WpLocalizedMeta;
   _embedded?: {
     'wp:featuredmedia'?: WpEmbeddedFeaturedMedia[];
     'wp:term'?: WpEmbeddedTerms;
@@ -162,6 +169,7 @@ export type WpServicePost = {
   menu_order: number;
   tags: number[];
   acf: ServiceAcf;
+  meta?: WpLocalizedMeta;
   _embedded?: {
     'wp:featuredmedia'?: WpEmbeddedFeaturedMedia[];
     'wp:term'?: WpEmbeddedTerms;
@@ -301,6 +309,7 @@ export type WpPage = {
   template: string;
   tags?: number[];
   acf?: AboutAcf | MoleculeHeroPageAcf | Record<string, unknown>;
+  meta?: WpLocalizedMeta;
   _embedded?: {
     'wp:featuredmedia'?: WpEmbeddedFeaturedMedia[];
     'wp:term'?: WpEmbeddedTerms;

@@ -4,6 +4,7 @@ import { categoryNameMap } from '~/domain/portfolio/archive';
 import { withCountLabel } from '~/domain/portfolio/shelf';
 
 const route = useRoute();
+const { localizedPath } = useLocale();
 
 const page = computed(() => {
   const raw = route.query.page;
@@ -53,7 +54,8 @@ usePageSeo({
   description: archiveDescription,
 });
 
-const indexKicker = useUiString('chrome_index_kicker');
+const portfolioBase = computed(() => localizedPath('/portfolio'));
+const legacyHref = computed(() => localizedPath('/portfolio/legacy'));
 </script>
 
 <template>
@@ -62,7 +64,7 @@ const indexKicker = useUiString('chrome_index_kicker');
       <p class="archive-heading__kicker">{{ indexKicker }}</p>
       <SiteScrambleTitle class="archive-heading__title" :text="archiveTitle" />
       <p v-if="counts.legacy > 0" class="archive-heading__switch">
-        <NuxtLink to="/portfolio/legacy" class="archive-heading__switch-link">
+        <NuxtLink :to="legacyHref" class="archive-heading__switch-link">
           {{ legacyLinkText }}
         </NuxtLink>
       </p>
@@ -97,7 +99,7 @@ const indexKicker = useUiString('chrome_index_kicker');
       v-if="entries.length"
       :page="page"
       :total-pages="pagination.totalPages"
-      base-path="/portfolio"
+      :base-path="portfolioBase"
     />
   </ArchiveShell>
 </template>

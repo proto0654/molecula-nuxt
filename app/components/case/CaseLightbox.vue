@@ -1,12 +1,26 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { createFocusTrap, setPageInert } from '~/lib/a11y/focusTrap';
 
 const lightbox = useCaseLightbox();
 const panelRef = ref<HTMLElement | null>(null);
 
+const { locale } = useLocale();
+
 const dialogLabelFallback = useUiString('screenshot_lightbox_dialog_label');
 const closeAria = useUiString('screenshot_lightbox_close_aria');
 const navAria = useUiString('screenshot_lightbox_toggle_aria');
+
+const prevLabel = computed(() => (locale.value === 'en' ? 'Back' : 'Назад'));
+const nextLabel = computed(() => (locale.value === 'en' ? 'Forward' : 'Вперёд'));
+const closeLabel = computed(
+  () => closeAria.value || (locale.value === 'en' ? 'Close' : 'Закрыть'),
+);
+const prevNavAria = computed(() =>
+  locale.value === 'en' ? 'Previous screenshot' : `${navAria.value}: предыдущее`,
+);
+const nextNavAria = computed(() =>
+  locale.value === 'en' ? 'Next screenshot' : `${navAria.value}: следующее`,
+);
 
 let trap: ReturnType<typeof createFocusTrap> | null = null;
 let triggerEl: HTMLElement | null = null;
@@ -84,18 +98,18 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="case-lightbox__nav"
-                :aria-label="`${navAria}: предыдущее`"
+                :aria-label="prevNavAria"
                 @click="lightbox.prev"
               >
-                Назад
+                {{ prevLabel }}
               </button>
               <button
                 type="button"
                 class="case-lightbox__nav"
-                :aria-label="`${navAria}: следующее`"
+                :aria-label="nextNavAria"
                 @click="lightbox.next"
               >
-                Вперёд
+                {{ nextLabel }}
               </button>
             </template>
             <button
@@ -104,7 +118,7 @@ onBeforeUnmount(() => {
               :aria-label="closeAria"
               @click="lightbox.close"
             >
-              Закрыть
+              {{ closeLabel }}
             </button>
           </div>
         </header>

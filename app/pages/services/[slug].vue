@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getServiceBySlug, getServiceSlimIndex } from '~/api';
 import { getServicePosition } from '~/domain/services/adjacent';
+import { localizedSlimTitle } from '~/domain/i18n';
 import { resolveAdjacentFlipDirection } from '~/composables/useCasePageTransition';
 import {
   normalizeServiceChrome,
@@ -13,6 +14,7 @@ import { stripTags } from '~/domain/portfolio/presentation';
 
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
+const { locale } = useLocale();
 
 const { data: serviceSlimIndex } = useAsyncData(
   'service-slim-index',
@@ -20,7 +22,7 @@ const { data: serviceSlimIndex } = useAsyncData(
 );
 
 const { data, pending, error } = useAsyncData(
-  () => `service-${slug.value}`,
+  () => `service-${locale.value}-${slug.value}`,
   async () => {
     if (!slug.value) {
       throw createError({ statusCode: 404, statusMessage: 'Service not found', fatal: true });
@@ -29,12 +31,12 @@ const { data, pending, error } = useAsyncData(
     if (!raw) {
       throw createError({ statusCode: 404, statusMessage: 'Service not found', fatal: true });
     }
-    const service = normalizeServicePost(raw);
+    const service = normalizeServicePost(raw, locale.value);
     const slim = serviceSlimIndex.value ?? (await getServiceSlimIndex());
     const position = getServicePosition(slug.value, slim);
     return { service, position };
   },
-  { watch: [slug] },
+  { watch: [slug, locale] },
 );
 
 const { acf: themeAcf } = useThemeOptionsAcfData();
@@ -50,9 +52,29 @@ watch(
 
 const service = computed(() => held.value?.service ?? null);
 
-const position = computed(() => held.value?.position);
+const position = computed(() => {
+  const raw = held.value?.position;
+  if (!raw) return undefined;
+  const localize = (item: (typeof raw)['prev']) =>
+    item
+      ? {
+          ...item,
+          title: localizedSlimTitle(
+            locale.value,
+            item.title,
+            item.slug,
+            item.titleEn,
+          ),
+        }
+      : null;
+  return {
+    ...raw,
+    prev: localize(raw.prev),
+    next: localize(raw.next),
+  };
+});
 const backToArchiveLabel = useUiString('services_back_to_archive');
-const chrome = computed(() => normalizeServiceChrome(themeAcf.value));
+const chrome = computed(() => normalizeServiceChrome(themeAcf.value, locale.value));
 
 /** NEXT footer uses case-style marker; offers are list rows, not numbered case sections. */
 const navSectionIndex = 1;

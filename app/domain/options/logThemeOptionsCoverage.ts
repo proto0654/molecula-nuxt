@@ -66,7 +66,7 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
     consumer: 'portfolio/index.vue + legacy.vue SEO',
   },
   seo_hidden_h1: { wired: true, consumer: 'index.vue home SEO' },
-  lang_switch_aria: { wired: false, consumer: '(not wired — /en/ locale switch TBD)' },
+  lang_switch_aria: { wired: true, consumer: 'LocaleSwitch (SiteLocaleSwitch)' },
   hero_order_label: { wired: true, consumer: 'normalizeServiceChrome → service detail CTA' },
   hero_portfolio_label: {
     wired: false,

@@ -5,6 +5,7 @@
  * Hidden on /contact — contacts page already lists social channels.
  */
 import { menuItemHref, menuItemIsExternal } from '~/domain/menus';
+import { stripLocalePrefix } from '~/domain/i18n';
 
 const route = useRoute();
 const { menu } = useWpMenu('social');
@@ -13,10 +14,7 @@ const items = computed(() =>
   (menu.value?.items ?? []).filter((item) => item.title && item.url),
 );
 
-const isContact = computed(() => {
-  const path = route.path.replace(/\/+$/, '') || '/';
-  return path === '/contact';
-});
+const isContact = computed(() => stripLocalePrefix(route.path) === '/contact');
 
 const hasItems = computed(() => items.value.length > 0 && !isContact.value);
 </script>

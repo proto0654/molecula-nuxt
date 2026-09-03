@@ -22,11 +22,6 @@ const titlePlain = computed(() => stripTags(props.caseData.title));
       :text="titlePlain"
       :ready="revealReady"
     />
-    <div
-      v-if="caseData.excerptHtml"
-      class="case-header__intro"
-      v-html="caseData.excerptHtml"
-    />
     <CaseFacts v-if="showMeta" :case-data="caseData" />
   </header>
 </template>

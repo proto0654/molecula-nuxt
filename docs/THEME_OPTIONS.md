@@ -35,7 +35,8 @@ Global site chrome and UI copy from **ACF Options** (`GET /acf/v3/options/option
 - Hero / WebGL never blocks on fetch — `navigationConfig` mounts with empty copy; page `hero_*` merges when present (`useMoleculeHeroNav` is lazy, client-only).
 - Empty Options UI strings show as `[key]` (`missingUiString`) — no silent RU hardcode in Nuxt.
 - One Options fetch key for chrome consumers (`useThemeOptionsAcf` / `useThemeOptionsAcfData`).
-- RU fields only in UI; `*_en` keys stay on raw type for a future `/en/` pass.
+- RU at `/`; EN at `/en/*` (mirrored via `pages:extend` + prerender). `useLocale()` + [`app/domain/i18n/`](../app/domain/i18n/).
+- UI strings: `${key}_en` on Theme Options; empty → `[key]` on either locale.
 - Do **not** seed or wire Options `hero_nav_items` (removed on WP).
 - **WP seed:** Tools → WebLaba Migrations → **Seed empty UI string Options** writes code defaults into empty ACF Options so REST returns real values.
 - **Desktop rail CTA seed:** ACF `hud_nav_go` = `Перейти`, `hud_nav_go_en` = `Go to` (typed on `ThemeOptionsAcf`; UI still RU until `/en/`).
@@ -113,11 +114,12 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 | `hero_order_label` | Service CTA label (via `normalizeServiceChrome`) |
 | `screenshot_lightbox_*` | `CaseLightbox` aria |
 
+| `lang_switch_aria` | `LocaleSwitch` (`SiteLocaleSwitch` in layout) |
+
 ### UI strings — not wired yet (later)
 
 | Key | Notes |
 |-----|-------|
-| `lang_switch_aria` | `/en/` locale switch |
 | `case_mobile_signature_default_*` | Case mobile signature fallback |
 | `case_content_default_*` | Case body fallback when CMS blocks empty |
 
@@ -138,6 +140,7 @@ Wired in `app/layouts/default.vue`:
 
 - `SiteFooterMenu` — WP `menus/v1` slug `social` via `useWpMenu` (hidden on `/contact`; pose-gated fade-up enter)
 - `SiteFooterLegal` — disclaimer, cookie notice (links `/privacy-policy/` from WP HTML), copyright
+- `SiteLocaleSwitch` — RU/EN toggle (`lang_switch_aria`); fixed bottom-right above scroll-top
 - `SiteScrollToTop` — scroll-to-top button (Nuxt auto-import name for `components/site/ScrollToTop.vue`); HUD hairline square inset with `--hud-header-inset`; Options `enabled` + `trigger_px` only
 - `useSiteIntegrations()` — GTM script + noscript + Organization schema
 
@@ -148,8 +151,7 @@ Wired in `app/layouts/default.vue`:
 1. **WP:** Deploy `weblaba-rework` (incl. portfolio shelf strings in `locale.php` + ACF UI tab — see [`docs/seed/portfolio-shelves.seed.json`](seed/portfolio-shelves.seed.json)), then Tools → WebLaba Migrations → **Seed empty UI string Options**.
 2. Optional: fill `gtm_container_id`, archive SEO strings (empty ones show as `[key]` in UI/meta).
 3. Later: case defaults (design-aware).
-4. Later: i18n (`lang_switch_aria` + `*_en` / `/en/`).
-5. Later: Options key for desktop routes nav `aria-label` (currently empty when missing).
+4. Later: Options key for desktop routes nav `aria-label` (currently empty when missing).
 
 ---
 

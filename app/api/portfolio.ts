@@ -1,4 +1,5 @@
-import type { WpPortfolioCategory, WpPortfolioPost } from '~/types/wp';
+import type { WpLocalizedMeta, WpPortfolioCategory, WpPortfolioPost } from '~/types/wp';
+import { resolveEnTitle } from '~/domain/i18n';
 import {
   getWpApiBaseFromEnv,
   wpFetch,
@@ -19,8 +20,10 @@ export type PortfolioSlimItem = {
   slug: string;
   menu_order: number;
   date: string;
-  /** Plain title for prev/next labels. */
+  /** Plain RU title for prev/next labels. */
   title: string;
+  /** EN title from WP meta when present. */
+  titleEn: string | null;
   /** WP `portfolio_category` term ids (legacy shelf = includes legacy term). */
   categoryIds: number[];
 };
@@ -32,6 +35,7 @@ type SlimIndexRaw = {
   date: string;
   title?: { rendered?: string };
   portfolio_category?: number[];
+  meta?: WpLocalizedMeta;
 };
 
 const SLIM_FIELDS = [
@@ -41,6 +45,7 @@ const SLIM_FIELDS = [
   'date',
   'title',
   'portfolio_category',
+  'meta',
 ].join(',');
 
 function mapSlimItem(raw: SlimIndexRaw): PortfolioSlimItem {
@@ -52,6 +57,7 @@ function mapSlimItem(raw: SlimIndexRaw): PortfolioSlimItem {
     menu_order: raw.menu_order,
     date: raw.date,
     title,
+    titleEn: resolveEnTitle(raw.meta, undefined),
     categoryIds: Array.isArray(raw.portfolio_category)
       ? raw.portfolio_category
       : [],

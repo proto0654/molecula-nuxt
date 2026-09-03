@@ -17,6 +17,8 @@ const props = withDefaults(
 
 const fromLabel = computed(() => props.priceFrom || 'от');
 const ctaLabel = computed(() => props.orderLabel || 'Заказать');
+const { localizedPath } = useLocale();
+const contactHref = computed(() => localizedPath('/contact'));
 const metaLabel = computed(() => {
   if (props.offer.price) return `${fromLabel.value} ${props.offer.price}`;
   return 'Offer';
@@ -41,7 +43,7 @@ const metaLabel = computed(() => {
             v-html="offer.textHtml"
           />
           <p v-if="offer.price" class="service-offer__order">
-            <NuxtLink to="/contact" class="editorial-cta-link">{{ ctaLabel }}</NuxtLink>
+            <NuxtLink :to="contactHref" class="editorial-cta-link">{{ ctaLabel }}</NuxtLink>
           </p>
         </div>
       </span>

@@ -22,7 +22,8 @@ const meta = computed(() => serviceArchiveMetaLabel(item.value));
 const specimen = computed(() => serviceArchiveSpecimenImage(item.value));
 const specimenUrl = computed(() => serviceArchiveSpecimenUrl(item.value));
 const specimenSrcSet = computed(() => serviceArchiveSpecimenSrcSet(item.value));
-const href = computed(() => `/services/${item.value.slug}`);
+const { localizedPath } = useLocale();
+const href = computed(() => localizedPath(`/services/${item.value.slug}`));
 
 function onNavigate() {
   saveArchiveReturn(

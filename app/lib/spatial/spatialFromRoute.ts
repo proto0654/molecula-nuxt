@@ -1,17 +1,12 @@
+import { stripLocalePrefix } from '~/domain/i18n';
 import type { SpatialRouteInput, SpatialState } from './types';
-
-function normalizePath(path: string): string {
-  if (!path || path === '/') return '/';
-  const trimmed = path.replace(/\/+$/, '');
-  return trimmed || '/';
-}
 
 /**
  * Pure route → spatial mapping. Components must not re-parse `route.path`
  * to decide molecule pose.
  */
 export function spatialFromRoute(route: SpatialRouteInput): SpatialState {
-  const segments = normalizePath(route.path).split('/').filter(Boolean);
+  const segments = stripLocalePrefix(route.path).split('/').filter(Boolean);
 
   if (segments.length === 0) {
     return { mode: 'home' };
