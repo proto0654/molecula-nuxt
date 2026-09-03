@@ -35,7 +35,7 @@ Do not fade the whole `.archive-page__body` — chrome sits outside the body and
 | Beat | Target | Delay | Motion |
 |------|--------|-------|--------|
 | 0 chrome | `SiteChrome` (`.case-chrome__header--meta`) | `--enter-beat-chrome` (0) | opacity |
-| 1 kicker | `.archive-heading__kicker`, `.case-header__index` | `--enter-beat-kicker` (40ms) | opacity |
+| 1 kicker | `.archive-heading__kicker` (section INDEX only; detail entity/index is SiteChrome-only) | `--enter-beat-kicker` (40ms) | opacity |
 | 2 title | `SiteScrambleTitle` | `--enter-beat-title` (80ms) conceptually | existing scramble, pose-gated — **no extra CSS fade** |
 | 3 lead | intro, tags, section titles, case intro/facts, `.editorial-hero-media__fill` (after frame draw) | `--enter-beat-lead` (140ms) for copy; fill delay = `--line-draw-duration` + overlap |
 | 4 list | `.archive-row` | `--enter-beat-list` (180ms) + stagger | hairline `scaleX`, then row content |

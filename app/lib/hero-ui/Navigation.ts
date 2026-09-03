@@ -22,6 +22,7 @@ export class Navigation {
   private readonly listEl: HTMLElement;
   private readonly rowEl: HTMLElement;
   private readonly markEl: HTMLElement;
+  private navGoLabel = missingUiString('hud_nav_go');
   private readonly slideProgress: HeroSlideProgress;
   private readonly unsubscribe: () => void;
   private readonly onSelect: NavSelectListener | undefined;
@@ -89,7 +90,12 @@ export class Navigation {
       label.className = 'nav__label';
       label.textContent = item.label;
 
-      signal.append(signalLine, label);
+      const go = document.createElement('span');
+      go.className = 'nav__go';
+      go.setAttribute('aria-hidden', 'true');
+      go.textContent = this.navGoLabel;
+
+      signal.append(signalLine, label, go);
       button.append(idx, signal);
       button.setAttribute('aria-label', `${indexText} ${item.label}`);
       button.addEventListener('pointerenter', () => {
@@ -150,6 +156,11 @@ export class Navigation {
 
   setChromeCopy(copy: HeroChromeCopy): void {
     this.markEl.textContent = copy.navMark;
+    this.navGoLabel = copy.navGo;
+    for (const el of this.itemElements.values()) {
+      const go = el.querySelector('.nav__go');
+      if (go) go.textContent = copy.navGo;
+    }
   }
 
   syncNavigationCopy(): void {
@@ -158,6 +169,8 @@ export class Navigation {
       if (!item) continue;
       const label = el.querySelector('.nav__label');
       if (label) label.textContent = item.label;
+      const go = el.querySelector('.nav__go');
+      if (go) go.textContent = this.navGoLabel;
       const indexText = el.querySelector('.nav__index')?.textContent ?? '';
       el.setAttribute('aria-label', `${indexText} ${item.label}`.trim());
     }
@@ -165,28 +178,34 @@ export class Navigation {
 
   /**
    * Label right-edge mid-point in viewport CSS pixels (connector start).
-   * Uses the label, not the full button width, so the line meets the text.
+   * Prefers visible `.nav__go` (desktop committed), else `.nav__label` (preview).
    */
   getItemAnchor(itemId: string): { x: number; y: number } | null {
     const el = this.itemElements.get(itemId);
     if (!el) return null;
 
-    const label = el.querySelector('.nav__label');
-    const labelRect = label?.getBoundingClientRect();
     const signalExpanded =
       el.classList.contains('is-committed') ||
       el.classList.contains('is-preview');
 
-    if (
-      signalExpanded &&
-      labelRect &&
-      labelRect.width > 0 &&
-      labelRect.height > 0
-    ) {
-      return {
-        x: labelRect.right + 10,
-        y: labelRect.top + labelRect.height * 0.5,
-      };
+    if (signalExpanded) {
+      const go = el.querySelector('.nav__go');
+      const goRect = go?.getBoundingClientRect();
+      if (goRect && goRect.width > 0 && goRect.height > 0) {
+        return {
+          x: goRect.right + 10,
+          y: goRect.top + goRect.height * 0.5,
+        };
+      }
+
+      const label = el.querySelector('.nav__label');
+      const labelRect = label?.getBoundingClientRect();
+      if (labelRect && labelRect.width > 0 && labelRect.height > 0) {
+        return {
+          x: labelRect.right + 10,
+          y: labelRect.top + labelRect.height * 0.5,
+        };
+      }
     }
 
     const index = el.querySelector('.nav__index') ?? el;

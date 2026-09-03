@@ -1137,6 +1137,13 @@ html.nav-overlay-open body {
   text-transform: uppercase;
 }
 
+.nav__go {
+  display: none;
+  font-size: var(--text-nav);
+  letter-spacing: var(--track-nav);
+  text-transform: uppercase;
+}
+
 .nav__signal {
   display: inline-flex;
   align-items: baseline;
@@ -1474,6 +1481,13 @@ html.nav-overlay-open body {
     transition: color 0.18s ease, letter-spacing 0.22s ease;
   }
 
+  .molecular-chrome.is-home .nav__go {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.24em;
+    white-space: nowrap;
+  }
+
   .molecular-chrome.is-home .nav__item.is-committed .nav__signal,
   .molecular-chrome.is-home .nav__item.is-preview .nav__signal {
     max-width: 14rem;
@@ -1510,8 +1524,34 @@ html.nav-overlay-open body {
   }
 
   .molecular-chrome.is-home .nav__item.is-committed .nav__label {
+    display: none;
+  }
+
+  .molecular-chrome.is-home .nav__item.is-committed .nav__go {
+    display: inline;
     color: var(--color-ink-bright);
     letter-spacing: 0.24em;
+  }
+
+  /* Home hub: keep route name (ГЛАВНАЯ), not the go CTA */
+  .molecular-chrome.is-home .nav__item[data-nav-id='home'].is-committed .nav__label {
+    display: inline;
+    color: var(--color-ink-bright);
+    letter-spacing: 0.24em;
+  }
+
+  .molecular-chrome.is-home .nav__item[data-nav-id='home'].is-committed .nav__go {
+    display: none;
+  }
+
+  .molecular-chrome.is-home .nav__item[data-nav-id='home'].is-committed .nav__label::before {
+    content: none;
+  }
+
+  .molecular-chrome.is-home .nav__item[data-nav-id='home'].is-committed .nav__label::after {
+    content: var(--glyph-arrow);
+    color: var(--accent);
+    letter-spacing: 0;
   }
 
   .molecular-chrome.is-home .nav__item.is-preview .nav__label {
@@ -1519,11 +1559,7 @@ html.nav-overlay-open body {
     letter-spacing: 0.22em;
   }
 
-  .molecular-chrome.is-home .nav__item.is-committed .nav__label::before {
-    content: none;
-  }
-
-  .molecular-chrome.is-home .nav__item.is-committed .nav__label::after {
+  .molecular-chrome.is-home .nav__item.is-committed .nav__go::after {
     content: var(--glyph-arrow);
     color: var(--accent);
     letter-spacing: 0;
@@ -1871,6 +1907,7 @@ html.nav-overlay-open body {
   .nav__signal-line,
   .nav__index,
   .nav__label,
+  .nav__go,
   .hero-slide-progress__fill {
     transition: none;
   }

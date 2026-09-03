@@ -9,7 +9,7 @@ import {
 } from '~/domain/services';
 import { resolveServiceHeroMedia } from '~/domain/editorialHero';
 import { demoteCmsH1 } from '~/domain/wp';
-import { padCaseIndex, stripTags } from '~/domain/portfolio/presentation';
+import { stripTags } from '~/domain/portfolio/presentation';
 
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
@@ -52,7 +52,6 @@ const service = computed(() => held.value?.service ?? null);
 
 const position = computed(() => held.value?.position);
 const backToArchiveLabel = useUiString('services_back_to_archive');
-const serviceLabel = useUiString('chrome_service_label');
 const chrome = computed(() => normalizeServiceChrome(themeAcf.value));
 
 const ready = computed(
@@ -140,9 +139,6 @@ usePageSeo({
     <template v-else-if="service">
       <EditorialHero :media="heroMedia">
         <header class="archive-heading">
-          <p v-if="position?.index" class="archive-heading__kicker">
-            {{ serviceLabel }} / {{ padCaseIndex(position.index) }}
-          </p>
           <SiteScrambleTitle class="archive-heading__title" :text="titlePlain" />
           <ul v-if="service.tags.length" class="editorial-header__tags">
             <li v-for="tag in service.tags" :key="tag" class="editorial-header__tag">

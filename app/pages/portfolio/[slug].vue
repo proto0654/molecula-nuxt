@@ -306,15 +306,9 @@ onMounted(() => {
       <EditorialHero :media="heroMedia" variant="case">
 
         <CaseHeader
-
           :case-data="caseData"
-
-          :case-index="position?.index"
-
           :show-meta="!sections.content"
-
           :reveal-ready="titleReady"
-
         />
 
       </EditorialHero>

@@ -1,11 +1,10 @@
 ﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
-import { padCaseIndex, stripTags } from '~/domain/portfolio/presentation';
+import { stripTags } from '~/domain/portfolio/presentation';
 
 const props = withDefaults(
   defineProps<{
     caseData: Case;
-    caseIndex?: number | null;
     showMeta?: boolean;
     /** False while case body exits / waits for pose-chained enter. */
     revealReady?: boolean;
@@ -14,14 +13,10 @@ const props = withDefaults(
 );
 
 const titlePlain = computed(() => stripTags(props.caseData.title));
-const caseLabel = useUiString('chrome_case_label');
 </script>
 
 <template>
   <header class="case-header">
-    <p v-if="caseIndex" class="case-header__index">
-      {{ caseLabel }} / {{ padCaseIndex(caseIndex) }}
-    </p>
     <SiteScrambleTitle
       class="case-header__title"
       :text="titlePlain"

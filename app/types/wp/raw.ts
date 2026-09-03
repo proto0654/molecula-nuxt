@@ -233,6 +233,8 @@ export type ThemeOptionsAcf = ThemeOptionsUiFields & {
   services_price_from_en?: string | false;
   hero_order_label?: string | false;
   hero_order_label_en?: string | false;
+  /** EN stub for desktop rail CTA — UI still RU until `/en/`. */
+  hud_nav_go_en?: string | false;
   hero_tag_cloud?: HeroTagCloudRow[] | false;
   /** @deprecated Removed from WP Options — molecule copy lives on pages (`hero_*`). */
   hero_nav_items?: false | unknown;

@@ -31,6 +31,12 @@ const hasContent = computed(
   color: color-mix(in srgb, var(--wl-text, #e8fff4) 62%, transparent);
 }
 
+@media (min-width: 1024px) {
+  .site-footer-legal {
+    padding: var(--hud-header-inset);
+  }
+}
+
 .site-footer-legal__line {
   margin: 0 0 0.35rem;
 }

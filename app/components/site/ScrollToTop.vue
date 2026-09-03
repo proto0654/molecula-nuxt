@@ -2,17 +2,6 @@
 const { options } = useThemeOptions();
 const settings = computed(() => options.value.scrollToTop);
 const { visible, enabled, scrollToTop } = useScrollToTopState(settings);
-
-const buttonStyle = computed(() => ({
-  '--scroll-top-size': `${settings.value.sizePx}px`,
-  '--scroll-top-bg': settings.value.bgColor,
-  '--scroll-top-icon': settings.value.iconColor,
-  bottom: `${settings.value.offsetBottomPx}px`,
-  right:
-    settings.value.offsetRightPx != null
-      ? `${settings.value.offsetRightPx}px`
-      : 'var(--hud-edge-x, 1rem)',
-}));
 </script>
 
 <template>
@@ -21,7 +10,6 @@ const buttonStyle = computed(() => ({
     type="button"
     class="scroll-to-top"
     :class="{ 'is-visible': visible }"
-    :style="buttonStyle"
     aria-label="Scroll to top"
     @click="scrollToTop"
   >
@@ -33,19 +21,25 @@ const buttonStyle = computed(() => ({
 .scroll-to-top {
   position: fixed;
   z-index: 90;
-  width: var(--scroll-top-size, 48px);
-  height: var(--scroll-top-size, 48px);
-  border: 0;
-  border-radius: 50%;
-  background: var(--scroll-top-bg, #92ddb9);
-  color: var(--scroll-top-icon, #00160b);
+  bottom: var(--hud-header-inset);
+  right: var(--hud-header-inset);
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--wl-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-ink);
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
   transform: translateY(0.5rem);
   transition:
     opacity 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
 
 .scroll-to-top.is-visible {
@@ -54,8 +48,20 @@ const buttonStyle = computed(() => ({
   transform: translateY(0);
 }
 
+.scroll-to-top:hover,
+.scroll-to-top:focus-visible {
+  color: var(--color-ink-bright);
+  border-color: color-mix(in srgb, var(--color-ink) 42%, transparent);
+}
+
+.scroll-to-top:focus-visible {
+  outline: 1px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
 .scroll-to-top__icon {
   display: block;
-  font: 600 1.1rem/1 var(--font-ui, monospace);
+  font: 400 0.875rem/1 var(--font-ui, monospace);
+  letter-spacing: 0;
 }
 </style>

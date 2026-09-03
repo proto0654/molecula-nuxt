@@ -90,6 +90,7 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
   hud_menu_open: { wired: true, consumer: 'SiteHeader menu label (closed)' },
   hud_menu_close: { wired: true, consumer: 'SiteHeader menu label (open)' },
   hud_nav_mark: { wired: true, consumer: 'Navigation rail mark' },
+  hud_nav_go: { wired: true, consumer: 'Navigation desktop committed CTA' },
   hud_mobile_close: { wired: true, consumer: 'MobileNavOverlay close btn' },
   hud_sys_meta: { wired: true, consumer: 'HudFrame meta' },
   hud_node_idle: { wired: true, consumer: 'SiteHeader node idle' },
@@ -103,8 +104,8 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
     wired: true,
     consumer: 'SiteChrome + archive/about/contact/privacy kickers',
   },
-  chrome_case_label: { wired: true, consumer: 'SiteChrome / CaseHeader' },
-  chrome_service_label: { wired: true, consumer: 'SiteChrome / services/[slug]' },
+  chrome_case_label: { wired: true, consumer: 'SiteChrome' },
+  chrome_service_label: { wired: true, consumer: 'SiteChrome' },
   case_section_overview: { wired: true, consumer: 'CaseContent' },
   case_section_interface: { wired: true, consumer: 'CaseGallery' },
   case_section_mobile: { wired: true, consumer: 'CaseMobile / CaseMobileSignature' },
@@ -132,7 +133,7 @@ const STRUCTURAL_FIELDS: Array<{
   {
     field: 'scroll_to_top_*',
     wired: true,
-    consumer: 'ScrollToTop ← options.scrollToTop',
+    consumer: 'ScrollToTop ← enabled + triggerPx (HUD chrome; WP colors unused)',
     isEmpty: (acf) => acf?.scroll_to_top_enabled === false || acf?.scroll_to_top_enabled === 0,
   },
   {

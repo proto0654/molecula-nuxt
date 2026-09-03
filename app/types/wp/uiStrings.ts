@@ -45,6 +45,7 @@ export const UI_STRING_KEYS = [
   'hud_menu_open',
   'hud_menu_close',
   'hud_nav_mark',
+  'hud_nav_go',
   'hud_mobile_close',
   'hud_sys_meta',
   'hud_node_idle',

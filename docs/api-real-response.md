@@ -151,7 +151,7 @@ Theme options chrome (same options payload):
 | `contact_popup_text` | messenger CTA copy | EN pair |
 | `weblaba_contacts` | repeater (see below) | `label_en` per row |
 | `hero_tag_cloud` | repeater: `label` + `tier` (`primary` / `secondary`) | none |
-| `footer_*`, `scroll_to_top_*`, `schema_org_*` | wired in Nuxt (`SiteFooterLegal`, `SiteScrollToTop`, JSON-LD) |
+| `footer_*`, `scroll_to_top_*`, `schema_org_*` | wired (`SiteFooterLegal`, `SiteScrollToTop` HUD hairline + `enabled`/`trigger` only, JSON-LD) |
 | `gtm_container_id` | wired; **empty** on live API |
 | Header/drawer aria, archive headings, case nav, lightbox aria | wired — see [`THEME_OPTIONS.md`](THEME_OPTIONS.md) |
 | `header_portfolio_*`, `header_about_*` | in API; **skipped** — duplicate of page / hero nav titles |

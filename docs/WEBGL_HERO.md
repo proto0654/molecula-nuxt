@@ -71,7 +71,7 @@ Types in [`app/lib/molecular/types.ts`](../app/lib/molecular/types.ts):
 
 Helpers: `getItemById`, `getItemByAtomId`. Each nav item maps to exactly one molecule atom id. Atom `caption` is resolved from `navigationConfig` labels via `getItemByAtomId` in [`moleculeConfig.ts`](../app/lib/molecular/moleculeConfig.ts) — keep `items[].atomId` aligned with molecule atom ids; do not duplicate label strings.
 
-**Structure** (`id` / `atomId` / `route`) lives in [`navStructure.ts`](../app/lib/navigation/navStructure.ts); `navigationConfig` starts with empty copy. Live labels / blurbs / USP come from the five WP pages via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts) → `setNavigationItems`. Blurb CTA verbs (`кликай` / `тапай`) and visible HUD chrome strings come from Theme Options via [`resolveHeroChromeCopy`](../app/domain/options/heroChromeCopy.ts) → `setChromeCopy` / `setNavVerbCopy`. Empty Options UI strings render as `[key]` ([`missingUiString`](../app/domain/options/missingUiString.ts)). Specs: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md), [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
+**Structure** (`id` / `atomId` / `route`) lives in [`navStructure.ts`](../app/lib/navigation/navStructure.ts); `navigationConfig` starts with empty copy. Live labels / blurbs / USP come from the five WP pages via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts) → `setNavigationItems`. **Blurb CTA verbs** (`кликай` / `тапай`) and visible HUD chrome strings (incl. desktop rail `hud_nav_go`) come from Theme Options via [`resolveHeroChromeCopy`](../app/domain/options/heroChromeCopy.ts) → `setChromeCopy` / `setNavVerbCopy`. Empty Options UI strings render as `[key]` ([`missingUiString`](../app/domain/options/missingUiString.ts)). Specs: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md), [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
 
 On commit, `mountHeroApp` passes `buildAtomBlurb(item)` to `setAtomBlurb` — part 2 is `{verb}{blurbCta}` (touch via [`pointerInput.ts`](../app/lib/a11y/pointerInput.ts)); hub skips CTA. Pointer-type changes refresh the active blurb via `subscribePointerInput`.
 
@@ -335,7 +335,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `hero-ui/SiteHeader.ts` | WebLaba SVG logo (`sign-weblaba.svg`, `assetBaseURL`); home desktop: slide progress + NODE; off-home desktop/tablet: centered route links (direct `transitionTo`); mobile (home + off-home): MENU |
 | `hero-ui/UspHeadline.ts` / `hero-ui/textScramble.ts` | HUD USP scramble after focus settle |
 | `hero-ui/MobileNavOverlay.ts` | Editorial full-screen mobile nav index |
-| `hero-ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); mobile `nav__stack` (progress + row); `getItemAnchor`; zoom softness |
+| `hero-ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); mobile `nav__stack`; desktop committed `.nav__go` CTA (`hud_nav_go`, except hub `home`); `getItemAnchor`; zoom softness |
 | `hero-ui/tapGuard.ts` | Tap vs scroll-drag for nav controls |
 | `hero-ui/NavigationConnector.ts` | SVG elbow; sync `projectAtom` follow; idle/hover/active/zoom |
 | `hero-ui/DestinationView.ts` | Stub section + Return (routes without pages yet) |

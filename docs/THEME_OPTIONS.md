@@ -38,6 +38,7 @@ Global site chrome and UI copy from **ACF Options** (`GET /acf/v3/options/option
 - RU fields only in UI; `*_en` keys stay on raw type for a future `/en/` pass.
 - Do **not** seed or wire Options `hero_nav_items` (removed on WP).
 - **WP seed:** Tools → WebLaba Migrations → **Seed empty UI string Options** writes code defaults into empty ACF Options so REST returns real values.
+- **Desktop rail CTA seed:** ACF `hud_nav_go` = `Перейти`, `hud_nav_go_en` = `Go to` (typed on `ThemeOptionsAcf`; UI still RU until `/en/`).
 
 ---
 
@@ -80,7 +81,7 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 |-------|-------|---------|----------|
 | `hero_tag_cloud` | yes | 7 rows | `useHeroTagCloud` |
 | `weblaba_contacts` | yes | ok | `useContacts` |
-| `scroll_to_top_*` | yes | enabled | `SiteScrollToTop` |
+| `scroll_to_top_*` | yes (enabled + trigger) | enabled | `SiteScrollToTop` — HUD hairline control; WP bg/icon/size/offset unused |
 | `schema_org_*` | yes | ok | `useSiteIntegrations` (home JSON-LD) |
 | `gtm_container_id` | yes | **empty** | `useSiteIntegrations` GTM script |
 
@@ -97,8 +98,8 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 | `footer_*` | `SiteFooterLegal` |
 | `contact_popup_*` | `useContacts` → contact page |
 | `header_home_aria`, `drawer_*`, `hero_logo_alt` | Hero chrome aria (`SiteHeader`, `MobileNavOverlay`) |
-| `nav_verb_*`, `hud_*` | Hero HUD + atom blurb verbs (`setChromeCopy` → SiteHeader / Navigation / MobileNavOverlay / HudFrame / `buildAtomBlurb`) |
-| `chrome_index_kicker`, `chrome_case_label`, `chrome_service_label` | SiteChrome, CaseHeader, archive kickers, service detail |
+| `nav_verb_*`, `hud_*` | Hero HUD + atom blurb verbs (`setChromeCopy` → SiteHeader / Navigation / MobileNavOverlay / HudFrame / `buildAtomBlurb`). Desktop committed rail CTA: `hud_nav_go` |
+| `chrome_index_kicker`, `chrome_case_label`, `chrome_service_label` | SiteChrome + archive/about/contact/privacy kickers (`chrome_index_kicker` only) |
 | `case_section_*` | CaseContent / Gallery / Mobile / Slices section labels |
 | `case_nav_*`, `case_back_to_portfolio` | `DetailNav`, portfolio slug back link |
 | `portfolio_heading_current`, `portfolio_archive_description` | Portfolio archive + SEO |
@@ -133,14 +134,14 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 Wired in `app/layouts/default.vue`:
 
 - `SiteFooterLegal` — disclaimer, cookie notice, copyright
-- `SiteScrollToTop` — scroll-to-top button (Nuxt auto-import name for `components/site/ScrollToTop.vue`)
+- `SiteScrollToTop` — scroll-to-top button (Nuxt auto-import name for `components/site/ScrollToTop.vue`); HUD hairline square inset with `--hud-header-inset`; Options `enabled` + `trigger_px` only
 - `useSiteIntegrations()` — GTM + Organization schema
 
 ---
 
 ## Next iterations
 
-1. **WP:** Deploy theme + run **Seed empty UI string Options** if fields still empty in REST.
+1. **WP:** Deploy `weblaba-rework` (defaults + ACF pair for `hud_nav_go` / `hud_nav_go_en` in `locale.php` / `acf-i18n-helpers.php`), then Tools → WebLaba Migrations → **Seed empty UI string Options**.
 2. Optional: fill `gtm_container_id`, archive SEO strings (empty ones show as `[key]` in UI/meta).
 3. Later: case thanks / defaults / legacy portfolio (design-aware).
 4. Later: i18n (`lang_switch_aria` + `*_en` / `/en/`).

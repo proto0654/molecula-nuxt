@@ -10,6 +10,8 @@ export type HeroChromeCopy = {
   menuOpenLabel: string;
   menuCloseLabel: string;
   navMark: string;
+  /** Desktop committed rail CTA («Перейти») */
+  navGo: string;
   mobileCloseLabel: string;
   sysMeta: string;
   nodeIdle: string;
@@ -47,6 +49,7 @@ export function resolveHeroChromeCopy(ui: UiStrings): HeroChromeCopy {
     menuOpenLabel: uiOrMissing(ui.hud_menu_open, 'hud_menu_open'),
     menuCloseLabel: uiOrMissing(ui.hud_menu_close, 'hud_menu_close'),
     navMark: uiOrMissing(ui.hud_nav_mark, 'hud_nav_mark'),
+    navGo: uiOrMissing(ui.hud_nav_go, 'hud_nav_go'),
     mobileCloseLabel: uiOrMissing(ui.hud_mobile_close, 'hud_mobile_close'),
     sysMeta: uiOrMissing(ui.hud_sys_meta, 'hud_sys_meta'),
     nodeIdle: uiOrMissing(ui.hud_node_idle, 'hud_node_idle'),
