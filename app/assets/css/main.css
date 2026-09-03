@@ -196,7 +196,8 @@
   --z-hud: 1;
   --z-nav: 2;
   --z-connector: 2;
-  --z-header: 2;
+  /* Above the home rail so logo / locale stay clickable over the full-height .nav box. */
+  --z-header: 3;
   --z-stage: 0;
   --z-page: 2;
   --z-chrome: 4;
@@ -1089,7 +1090,8 @@ html.nav-overlay-open body {
   flex-direction: column;
   align-items: center;
   gap: 0.55rem;
-  pointer-events: auto;
+  /* Full-height desktop rail must not steal clicks from header locale/logo. */
+  pointer-events: none;
   max-width: calc(100% - 2rem);
   opacity: calc(1 - var(--nav-zoom-fade) * 0.85);
   transition: opacity 0.2s linear;
@@ -1186,6 +1188,7 @@ html.nav-overlay-open body {
   align-items: baseline;
   gap: 0.4rem;
   position: relative;
+  pointer-events: auto;
 }
 
 .nav__index {
