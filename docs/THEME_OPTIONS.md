@@ -114,7 +114,7 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 | `hero_order_label` | Service CTA label (via `normalizeServiceChrome`) |
 | `screenshot_lightbox_*` | `CaseLightbox` aria |
 
-| `lang_switch_aria` | `LocaleSwitch` (`SiteLocaleSwitch` in layout) |
+| `lang_switch_aria` | Locale switch (now inline in `SiteHeader.ts`; `LocaleSwitch.vue` is a no-op stub) |
 
 ### UI strings — not wired yet (later)
 
@@ -140,7 +140,7 @@ Wired in `app/layouts/default.vue`:
 
 - `SiteFooterMenu` — WP `menus/v1` slug `social` via `useWpMenu` (hidden on `/contact`; pose-gated fade-up enter)
 - `SiteFooterLegal` — disclaimer, cookie notice (links `/privacy-policy/` from WP HTML), copyright
-- `SiteLocaleSwitch` — RU/EN toggle (`lang_switch_aria`); fixed bottom-right above scroll-top
+- Locale switch — RU/ENG inline in `SiteHeader.ts` (was `SiteLocaleSwitch` Vue component; now a stub)
 - `SiteScrollToTop` — scroll-to-top button (Nuxt auto-import name for `components/site/ScrollToTop.vue`); HUD hairline square inset with `--hud-header-inset`; Options `enabled` + `trigger_px` only
 - `useSiteIntegrations()` — GTM script + noscript + Organization schema
 

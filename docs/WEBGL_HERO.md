@@ -332,7 +332,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `hero/HeroAutoplay.ts` | Home idle cycle: settle-gated progress, pause/resume, advance callback |
 | `hero-ui/HeroSlideProgress.ts` | Desktop header + mobile nav progress track |
 | `hero-ui/HudFrame.ts` | Grid + corner ticks (pointer-events none) |
-| `hero-ui/SiteHeader.ts` | WebLaba SVG logo (`sign-weblaba.svg`, `assetBaseURL`); home desktop: slide progress + NODE; off-home desktop/tablet: centered route links (direct `transitionTo`); mobile (home + off-home): MENU |
+| `hero-ui/SiteHeader.ts` | WebLaba SVG logo (`sign-weblaba.svg`, `assetBaseURL`); **inline locale switch** (RU \| ENG, vanilla `<a>` links, `syncLocale()` on nav change); home desktop: slide progress + NODE; off-home desktop/tablet: centered route links (direct `transitionTo`); mobile (home + off-home): MENU |
 | `hero-ui/UspHeadline.ts` / `hero-ui/textScramble.ts` | HUD USP scramble after focus settle |
 | `hero-ui/MobileNavOverlay.ts` | Editorial full-screen mobile nav index |
 | `hero-ui/Navigation.ts` | Bottom bar (≤1023) or left rail (≥1024); mobile `nav__stack`; desktop committed `.nav__go` CTA (`hud_nav_go`, except hub `home`); `getItemAnchor`; zoom softness |
