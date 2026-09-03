@@ -1,10 +1,17 @@
-export type ArchiveReturnScope = 'portfolio' | 'services';
+export type ArchiveReturnScope = 'portfolio' | 'portfolio-legacy' | 'services';
 
 export type ArchiveReturnState = {
   page: number;
   slug: string;
   y: number;
 };
+
+/** Set when entering a case from an archive row — used for menu/burger return from case pages. */
+type CasePortfolioReturnPointer = {
+  scope: 'portfolio' | 'portfolio-legacy';
+};
+
+const CASE_PORTFOLIO_RETURN_KEY = 'wl:case-portfolio-return';
 
 /** True while archive index is jumping to a restored row (listing measure waits). */
 let restoring = false;
@@ -62,11 +69,71 @@ export function whenArchivePaginationIdle(): Promise<void> {
 
 const SCOPE_CONFIG: Record<ArchiveReturnScope, { key: string; basePath: string }> = {
   portfolio: { key: 'wl:archive-return', basePath: '/portfolio' },
+  'portfolio-legacy': {
+    key: 'wl:archive-return:portfolio-legacy',
+    basePath: '/portfolio/legacy',
+  },
   services: { key: 'wl:archive-return:services', basePath: '/services' },
 };
 
 function canUseStorage(): boolean {
   return import.meta.client && typeof sessionStorage !== 'undefined';
+}
+
+function normalizePath(path: string): string {
+  if (!path || path === '/') return '/';
+  const trimmed = path.replace(/\/+$/, '');
+  return trimmed || '/';
+}
+
+/** `/portfolio/:slug` — not archive index or legacy shelf. */
+export function isPortfolioCasePath(path: string): boolean {
+  const segments = normalizePath(path).split('/').filter(Boolean);
+  if (segments.length !== 2) return false;
+  const [head, slug] = segments;
+  return head === 'portfolio' && slug !== 'legacy';
+}
+
+function isPortfolioArchiveScope(
+  scope: ArchiveReturnScope,
+): scope is 'portfolio' | 'portfolio-legacy' {
+  return scope === 'portfolio' || scope === 'portfolio-legacy';
+}
+
+function readCasePortfolioReturnPointer(): CasePortfolioReturnPointer | null {
+  if (!canUseStorage()) return null;
+  try {
+    const raw = sessionStorage.getItem(CASE_PORTFOLIO_RETURN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<CasePortfolioReturnPointer>;
+    if (parsed.scope === 'portfolio' || parsed.scope === 'portfolio-legacy') {
+      return { scope: parsed.scope };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCasePortfolioReturnPointer(scope: 'portfolio' | 'portfolio-legacy'): void {
+  if (!canUseStorage()) return;
+  try {
+    sessionStorage.setItem(
+      CASE_PORTFOLIO_RETURN_KEY,
+      JSON.stringify({ scope } satisfies CasePortfolioReturnPointer),
+    );
+  } catch {
+    // best-effort
+  }
+}
+
+function clearCasePortfolioReturnPointer(): void {
+  if (!canUseStorage()) return;
+  try {
+    sessionStorage.removeItem(CASE_PORTFOLIO_RETURN_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 export function saveArchiveReturn(
@@ -76,9 +143,22 @@ export function saveArchiveReturn(
   if (!canUseStorage()) return;
   try {
     sessionStorage.setItem(SCOPE_CONFIG[scope].key, JSON.stringify(state));
+    if (isPortfolioArchiveScope(scope)) {
+      writeCasePortfolioReturnPointer(scope);
+    }
   } catch {
     // Quota / private mode — restoration is best-effort.
   }
+}
+
+/** Keep archive page/scroll when moving prev/next within the same shelf. */
+export function touchArchiveReturnSlug(
+  slug: string,
+  scope: ArchiveReturnScope,
+): void {
+  const saved = peekArchiveReturn(scope);
+  if (!saved || saved.slug === slug) return;
+  saveArchiveReturn({ ...saved, slug }, scope);
 }
 
 export function peekArchiveReturn(
@@ -110,6 +190,9 @@ export function consumeArchiveReturn(
   if (!canUseStorage()) return state;
   try {
     sessionStorage.removeItem(SCOPE_CONFIG[scope].key);
+    if (isPortfolioArchiveScope(scope)) {
+      clearCasePortfolioReturnPointer();
+    }
   } catch {
     // ignore
   }
@@ -124,6 +207,21 @@ export function archiveIndexHref(
   const base = SCOPE_CONFIG[scope].basePath;
   if (page <= 1) return base;
   return `${base}?page=${page}`;
+}
+
+/**
+ * From a portfolio case page only: return saved archive shelf + pagination.
+ * Null when not on a case or when the case was not opened from an archive row.
+ */
+export function resolveCasePortfolioArchiveHref(
+  path: string = typeof window !== 'undefined' ? window.location.pathname : '/',
+): string | null {
+  if (!isPortfolioCasePath(path)) return null;
+  const pointer = readCasePortfolioReturnPointer();
+  if (!pointer) return null;
+  const state = peekArchiveReturn(pointer.scope);
+  if (!state) return null;
+  return archiveIndexHref(state, pointer.scope);
 }
 
 /** Jump to the saved row (instant) and release the listing-reveal wait. */

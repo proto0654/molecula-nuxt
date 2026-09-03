@@ -1,26 +1,39 @@
 <script setup lang="ts">
-import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
+import {
+  archiveIndexHref,
+  resolveCasePortfolioArchiveHref,
+  type ArchiveReturnScope,
+} from '~/lib/navigation/archiveReturn';
 
-const props = defineProps<{
-  accentColor?: string | null;
-  caseIndex?: number | null;
-  sparse?: boolean;
-  hasSlices?: boolean;
-  landingOnly?: boolean;
-  bodyClass?: string;
-  revealing?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    accentColor?: string | null;
+    caseIndex?: number | null;
+    sparse?: boolean;
+    hasSlices?: boolean;
+    landingOnly?: boolean;
+    bodyClass?: string;
+    revealing?: boolean;
+    archiveScope?: ArchiveReturnScope;
+  }>(),
+  { archiveScope: 'portfolio' },
+);
+
+const route = useRoute();
 
 const root = ref<HTMLElement | null>(null);
 const revealingGate = computed(() => Boolean(props.revealing));
 
 useListingReveal(root, revealingGate);
 
-const archiveHref = ref('/portfolio');
+function resolveArchiveHref(scope: ArchiveReturnScope): string {
+  return (
+    resolveCasePortfolioArchiveHref(route.path) ??
+    archiveIndexHref(undefined, scope)
+  );
+}
 
-onMounted(() => {
-  archiveHref.value = archiveIndexHref();
-});
+const archiveHref = computed(() => resolveArchiveHref(props.archiveScope));
 
 defineExpose({ root });
 </script>

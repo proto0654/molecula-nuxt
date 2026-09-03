@@ -47,6 +47,7 @@
 - [x] Persistent molecular shell: layout-owned canvas, spatial state machine, home hub always focused, freeze off-home
 - [x] Case composition pass: sequential markers (including NEXT), density recipes A–G, motion L1/L2/L3, in-page case→case reveal + delayed accent
 - [x] Portfolio archive + Home/Case integration: editorial numbered rows, SiteChrome, veil handoff, session restore, case→case without generic loader
+- [x] Portfolio current/legacy shelves: `/portfolio` + `/portfolio/legacy`, cross-links with counts, shelf-scoped CASE / NN + prev/next, archive return from case (Index, footer, hero menu)
 - [x] Section stubs `/about` `/services` `/contact` + approach hold; off-home header route menu; single approach tween; no page scrim
 
 ## Foundation gaps

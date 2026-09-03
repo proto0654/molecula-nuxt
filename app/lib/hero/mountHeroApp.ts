@@ -35,6 +35,7 @@ import {
   type EntityLightSweepDirection,
 } from '../../composables/useMoleculeCue';
 import { HOME_ITEM_ID, hubAtomId } from '../spatial/spatialAtoms';
+import { resolveCasePortfolioArchiveHref } from '../navigation/archiveReturn';
 import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { SpatialController, type SpatialApplyOptions } from '../spatial/SpatialController';
 import type { SpatialState } from '../spatial/types';
@@ -47,6 +48,11 @@ const DESKTOP_MQ = '(min-width: 1024px)';
 
 const SLIDE_DURATION_MS = 5500;
 const IDLE_RESUME_MS = 2000;
+
+function resolveMenuRoute(itemId: string, route: string | undefined): string | undefined {
+  if (itemId !== 'work' || !route) return route;
+  return resolveCasePortfolioArchiveHref() ?? route;
+}
 
 /**
  * Imperative hero bootstrap (former Vite `main.ts`).
@@ -340,8 +346,9 @@ export function mountHeroApp(
     if (!item) return;
 
     if (!isHome) {
-      if (item.route) {
-        void options.onNavigateRoute?.(item.route);
+      const target = resolveMenuRoute(itemId, item.route);
+      if (target) {
+        void options.onNavigateRoute?.(target);
       }
       return;
     }
@@ -393,7 +400,8 @@ export function mountHeroApp(
       if (item.route !== '/') options.prefetchRoute?.(item.route);
       autoplay.pause();
       uspHeadline.hide();
-      void options.onNavigateRoute?.(item.route);
+      const target = resolveMenuRoute(itemId, item.route);
+      if (target) void options.onNavigateRoute?.(target);
     }
   }
 

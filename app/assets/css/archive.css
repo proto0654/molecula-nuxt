@@ -477,6 +477,27 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
   text-transform: uppercase;
 }
 
+.archive-heading__switch {
+  margin: 0.85rem 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+}
+
+.archive-heading__switch-link {
+  color: var(--wl-muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.archive-heading__switch-link:hover,
+.archive-heading__switch-link:focus-visible {
+  color: var(--color-ink-title);
+  border-bottom-color: color-mix(in srgb, var(--color-ink-title) 35%, transparent);
+}
+
 .archive-heading__title .scramble-title__display {
   color: var(--color-ink-title);
 }

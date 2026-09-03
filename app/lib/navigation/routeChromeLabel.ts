@@ -22,11 +22,19 @@ export function routeChromeLabel(
 
   const [head, entityId] = segments;
 
-  if (head === 'portfolio' || head === 'services') {
+  if (head === 'portfolio') {
+    // `/portfolio` and `/portfolio/legacy` are archives; other segments are cases.
+    if (!entityId || entityId === 'legacy') {
+      return 'ARCHIVE / portfolio';
+    }
+    return null;
+  }
+
+  if (head === 'services') {
     if (entityId) {
       return null;
     }
-    return `ARCHIVE / ${head}`;
+    return 'ARCHIVE / services';
   }
 
   if (segments.length === 1) {

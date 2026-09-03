@@ -1,29 +1,43 @@
-import { getPortfolioPostsByIds, getPortfolioCategories, getPortfolioSlimIndex } from '~/api/portfolio';
+import {
+  getPortfolioPostsByIds,
+  getPortfolioCategories,
+  getPortfolioSlimIndex,
+} from '~/api/portfolio';
 import { sortPortfolioSlimIndex } from '~/domain/portfolio/adjacent';
 import {
   normalizePortfolioPost,
   normalizePortfolioCategory,
 } from '~/domain/portfolio/normalizePortfolio';
 import type { ArchiveEntry } from '~/domain/portfolio/archive';
+import {
+  filterSlimByShelf,
+  resolveLegacyCategoryId,
+  shelfCounts,
+  type PortfolioShelf,
+} from '~/domain/portfolio/shelf';
 import type { PortfolioCategory } from '~/types/wp';
 import type { WpPaginationMeta } from '~/api/client';
 
 export type UsePortfolioOptions = {
   page?: number | Ref<number> | ComputedRef<number>;
   perPage?: number;
+  /** Current (non-legacy) vs legacy category shelf. Default: current. */
+  shelf?: PortfolioShelf;
 };
 
 type ArchivePagePayload = {
   entries: ArchiveEntry[];
   pagination: WpPaginationMeta;
+  counts: { current: number; legacy: number };
 };
 
 /**
- * Slim-index paginated archive. Order matches CASE / NN
+ * Slim-index paginated archive. Order matches CASE / NN within the shelf
  * (`menu_order ASC`, then `date DESC`).
  */
 export function usePortfolio(options: UsePortfolioOptions = {}) {
   const perPage = options.perPage ?? 12;
+  const shelf: PortfolioShelf = options.shelf ?? 'current';
   const pageSource = options.page ?? 1;
 
   const pageRef = computed(() => {
@@ -33,9 +47,16 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
   });
 
   const { data, pending, error, refresh } = useAsyncData(
-    () => `portfolio-archive-${pageRef.value}-${perPage}`,
+    () => `portfolio-archive-${shelf}-${pageRef.value}-${perPage}`,
     async (): Promise<ArchivePagePayload> => {
-      const slim = sortPortfolioSlimIndex(await getPortfolioSlimIndex());
+      const [rawSlim, rawCats] = await Promise.all([
+        getPortfolioSlimIndex(),
+        getPortfolioCategories(),
+      ]);
+      const legacyId = resolveLegacyCategoryId(rawCats);
+      const sorted = sortPortfolioSlimIndex(rawSlim);
+      const counts = shelfCounts(sorted, legacyId);
+      const slim = filterSlimByShelf(sorted, shelf, legacyId);
       const total = slim.length;
       const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
       const page = Math.min(pageRef.value, totalPages);
@@ -56,6 +77,7 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
       return {
         entries,
         pagination: { total, totalPages },
+        counts,
       };
     },
     { watch: [pageRef] },
@@ -95,9 +117,16 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
     return held.value?.pagination ?? { total: 0, totalPages: 0 };
   });
 
+  const counts = computed(
+    () =>
+      data.value?.counts ??
+      held.value?.counts ?? { current: 0, legacy: 0 },
+  );
+
   return {
     entries,
     pagination,
+    counts,
     pending,
     transitioning,
     error,

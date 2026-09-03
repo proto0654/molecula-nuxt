@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
+import {
+  archiveIndexHref,
+  type ArchiveReturnScope,
+} from '~/lib/navigation/archiveReturn';
 
 const props = withDefaults(
   defineProps<{
     revealing?: boolean;
     detailIndex?: number | null;
     detailVariant?: 'service' | 'case';
-    archiveScope?: 'services' | 'portfolio';
+    archiveScope?: ArchiveReturnScope;
     bodyClass?: string;
   }>(),
   {
@@ -21,8 +24,17 @@ const revealingGate = computed(() => Boolean(props.revealing));
 
 useListingReveal(root, revealingGate);
 
-const archiveHref = ref(
-  props.archiveScope === 'services' ? '/services' : '/portfolio',
+function defaultHref(scope: ArchiveReturnScope): string {
+  if (scope === 'services') return '/services';
+  if (scope === 'portfolio-legacy') return '/portfolio/legacy';
+  return '/portfolio';
+}
+
+const archiveHref = ref(defaultHref(props.archiveScope));
+
+/** Chrome label scope collapses portfolio-legacy → portfolio. */
+const chromeScope = computed(() =>
+  props.archiveScope === 'services' ? 'services' : 'portfolio',
 );
 
 onMounted(() => {
@@ -44,7 +56,7 @@ const chromeVariant = computed(() =>
       :variant="chromeVariant"
       :case-index="detailIndex"
       :archive-href="archiveHref"
-      :archive-scope="archiveScope"
+      :archive-scope="chromeScope"
     />
     <div class="archive-page__body" :class="bodyClass">
       <slot />

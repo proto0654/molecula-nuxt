@@ -122,6 +122,7 @@ export default defineNuxtConfig({
       routes: [
         '/',
         '/portfolio',
+        '/portfolio/legacy',
         '/about',
         '/services',
         '/contact',
@@ -145,6 +146,7 @@ export default defineNuxtConfig({
       pushRoutes([
         '/',
         '/portfolio',
+        '/portfolio/legacy',
         '/about',
         '/services',
         '/contact',

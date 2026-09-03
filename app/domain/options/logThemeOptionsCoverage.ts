@@ -53,9 +53,18 @@ const UI_STRING_CONSUMERS: Record<UiStringKey, UiStringConsumer> = {
   case_nav_next_label: { wired: true, consumer: 'DetailNav next' },
   case_nav_none: { wired: true, consumer: 'DetailNav empty prev/next slot' },
   portfolio_heading_current: { wired: true, consumer: 'portfolio/index.vue' },
-  portfolio_heading_legacy: { wired: false, consumer: '(not wired — legacy category archive TBD)' },
-  portfolio_link_current: { wired: false, consumer: '(not wired — legacy category link TBD)' },
-  portfolio_archive_description: { wired: true, consumer: 'portfolio/index.vue SEO' },
+  portfolio_heading_legacy: {
+    wired: true,
+    consumer: 'portfolio/legacy.vue + current archive cross-link',
+  },
+  portfolio_link_current: {
+    wired: true,
+    consumer: 'portfolio/legacy.vue cross-link to /portfolio',
+  },
+  portfolio_archive_description: {
+    wired: true,
+    consumer: 'portfolio/index.vue + legacy.vue SEO',
+  },
   seo_hidden_h1: { wired: true, consumer: 'index.vue home SEO' },
   lang_switch_aria: { wired: false, consumer: '(not wired — /en/ locale switch TBD)' },
   hero_order_label: { wired: true, consumer: 'normalizeServiceChrome → service detail CTA' },

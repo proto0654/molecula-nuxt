@@ -53,7 +53,7 @@ Rules:
 - Empty text `""` → `null`
 - Image `sizes`: string URL keys only (no invented WebP); `sizeWidths` from ACF `*-width` / embed `media_details` for `srcset`
 - Display: `caseImageUrl` + optional `caseImageSrcSet` (null if &lt;2 candidates) — hero, gallery, archive specimens, lightbox; CaseSlices CSS background unchanged
-- Prev/next: slim index sorted `menu_order ASC`, then `date DESC` ([`getCasePosition`](../app/domain/portfolio/adjacent.ts)) — not archive-page array index. Slim `_fields` include `title` for footer labels.
+- Prev/next: slim index sorted `menu_order ASC`, then `date DESC` ([`getCasePosition`](../app/domain/portfolio/adjacent.ts)) — **within shelf** (`current` vs `legacy` via `portfolio_category`); not archive-page array index. Slim `_fields` include `title` + `portfolio_category` for shelf filter ([`shelf.ts`](../app/domain/portfolio/shelf.ts)).
 - Archive listing uses the same slim sort, then `include` + `orderby=include` for the current page. Row numbers are 1-based positions in that index.
 
 ## Routes
@@ -61,8 +61,9 @@ Rules:
 | Route | Source |
 |-------|--------|
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
-| `/portfolio` | `usePortfolio(page)` — slim-index pagination (`include` ids), editorial rows; [`useArchivePaginationScroll`](../app/composables/useArchivePaginationScroll.ts) + `dataPage` gate on page change |
-| `/portfolio/[slug]` | `CaseShell` + video hero + layout featured wash / accent overlay + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT |
+| `/portfolio` | `usePortfolio({ shelf: 'current' })` — slim-index pagination, editorial rows; cross-link to legacy shelf |
+| `/portfolio/legacy` | `usePortfolio({ shelf: 'legacy' })` — `portfolio_category: legacy` only; cross-link back to current |
+| `/portfolio/[slug]` | `CaseShell` + [`usePortfolioCaseNav`](../app/composables/usePortfolioCaseNav.ts) (CASE / NN + prev/next within shelf) + video hero + layout featured wash / accent overlay + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT; archive return (Index, footer, hero menu «Портфолио») restores shelf + pagination when opened from archive row |
 | `/services` | `useServices(page)` — slim-index pagination, editorial rows **without** featured wash; same archive pagination scroll gate |
 | `/services/[slug]` | `ArchiveShell` (`SERVICE / NN`) + Index kicker + title/tags + intro + offer repeater (`archive-list` rows: index, price meta, hover line/arrow, body + order CTA) + [`ArchiveDetailNav`](../app/components/archive/DetailNav.vue) |
 | `/about` | `ArchiveShell` + Index kicker + title/tags + optional photo + intro + skills repeater (`archive-list`) + CTA → `/contact` |

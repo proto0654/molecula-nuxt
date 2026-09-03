@@ -21,6 +21,8 @@ export type PortfolioSlimItem = {
   date: string;
   /** Plain title for prev/next labels. */
   title: string;
+  /** WP `portfolio_category` term ids (legacy shelf = includes legacy term). */
+  categoryIds: number[];
 };
 
 type SlimIndexRaw = {
@@ -29,9 +31,17 @@ type SlimIndexRaw = {
   menu_order: number;
   date: string;
   title?: { rendered?: string };
+  portfolio_category?: number[];
 };
 
-const SLIM_FIELDS = ['id', 'slug', 'menu_order', 'date', 'title'].join(',');
+const SLIM_FIELDS = [
+  'id',
+  'slug',
+  'menu_order',
+  'date',
+  'title',
+  'portfolio_category',
+].join(',');
 
 function mapSlimItem(raw: SlimIndexRaw): PortfolioSlimItem {
   const rendered = raw.title?.rendered ?? '';
@@ -42,6 +52,9 @@ function mapSlimItem(raw: SlimIndexRaw): PortfolioSlimItem {
     menu_order: raw.menu_order,
     date: raw.date,
     title,
+    categoryIds: Array.isArray(raw.portfolio_category)
+      ? raw.portfolio_category
+      : [],
   };
 }
 

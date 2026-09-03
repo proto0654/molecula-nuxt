@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { restoreArchiveScroll } from '~/lib/navigation/archiveReturn';
 import { categoryNameMap } from '~/domain/portfolio/archive';
 import { withCountLabel } from '~/domain/portfolio/shelf';
@@ -16,30 +16,30 @@ const { entries, pagination, counts, pending, transitioning, error } =
   usePortfolio({
     page,
     perPage: 12,
-    shelf: 'current',
+    shelf: 'legacy',
   });
 const { data: categories } = usePortfolioCategories();
 
 const categoryById = computed(() => categoryNameMap(categories.value));
 
 onMounted(() => {
-  restoreArchiveScroll('portfolio');
+  restoreArchiveScroll('portfolio-legacy');
 });
 
 useArchivePaginationScroll(page, pending);
 
 const { revealing } = usePageContentReveal();
 
-const headingLabel = useUiString('portfolio_heading_current');
-const legacyLinkLabel = useUiString('portfolio_heading_legacy');
+const headingLabel = useUiString('portfolio_heading_legacy');
+const currentLinkLabel = useUiString('portfolio_link_current');
 const archiveDescription = useUiString('portfolio_archive_description');
 
 const archiveTitle = computed(() =>
-  withCountLabel(headingLabel.value, counts.value.current),
+  withCountLabel(headingLabel.value, counts.value.legacy),
 );
 
-const legacyLinkText = computed(() =>
-  withCountLabel(legacyLinkLabel.value, counts.value.legacy),
+const currentLinkText = computed(() =>
+  withCountLabel(currentLinkLabel.value, counts.value.current),
 );
 
 const pageTitle = computed(() =>
@@ -57,13 +57,13 @@ const indexKicker = useUiString('chrome_index_kicker');
 </script>
 
 <template>
-  <ArchiveShell :revealing="revealing">
+  <ArchiveShell :revealing="revealing" archive-scope="portfolio-legacy">
     <header class="archive-heading">
       <p class="archive-heading__kicker">{{ indexKicker }}</p>
       <SiteScrambleTitle class="archive-heading__title" :text="archiveTitle" />
-      <p v-if="counts.legacy > 0" class="archive-heading__switch">
-        <NuxtLink to="/portfolio/legacy" class="archive-heading__switch-link">
-          {{ legacyLinkText }}
+      <p class="archive-heading__switch">
+        <NuxtLink to="/portfolio" class="archive-heading__switch-link">
+          {{ currentLinkText }}
         </NuxtLink>
       </p>
     </header>
@@ -89,7 +89,7 @@ const indexKicker = useUiString('chrome_index_kicker');
         :page="page"
         :eager="i < 2"
         :category-by-id="categoryById"
-        archive-scope="portfolio"
+        archive-scope="portfolio-legacy"
       />
     </ul>
 
@@ -97,7 +97,7 @@ const indexKicker = useUiString('chrome_index_kicker');
       v-if="entries.length"
       :page="page"
       :total-pages="pagination.totalPages"
-      base-path="/portfolio"
+      base-path="/portfolio/legacy"
     />
   </ArchiveShell>
 </template>

@@ -20,7 +20,8 @@ export function spatialFromRoute(route: SpatialRouteInput): SpatialState {
   const [head, entityId] = segments;
 
   if (head === 'portfolio') {
-    if (!entityId) {
+    // `/portfolio` and `/portfolio/legacy` are archives; other segments are cases.
+    if (!entityId || entityId === 'legacy') {
       return { mode: 'portfolio-archive', context: 'portfolio' };
     }
     return { mode: 'case', context: 'portfolio', entityId };

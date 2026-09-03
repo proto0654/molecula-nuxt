@@ -23,6 +23,22 @@ export {
 } from './archive';
 
 export {
+  LEGACY_CATEGORY_SLUG,
+  resolveLegacyCategoryId,
+  isLegacyCategoryIds,
+  isLegacySlimItem,
+  filterSlimByShelf,
+  shelfForCategoryIds,
+  archiveScopeForShelf,
+  shelfCounts,
+  withCountLabel,
+  resolveCaseShelfFromSlim,
+  getCasePositionInShelf,
+  getCasePositionForSlug,
+  type PortfolioShelf,
+} from './shelf';
+
+export {
   getCaseComposition,
   getCaseSectionNumbers,
   caseHasSlices,

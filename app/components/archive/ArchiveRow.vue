@@ -8,14 +8,21 @@ import {
   archiveTitlePlain,
 } from '~/domain/portfolio/archive';
 import { padCaseIndex } from '~/domain/portfolio/presentation';
-import { saveArchiveReturn } from '~/lib/navigation/archiveReturn';
+import {
+  saveArchiveReturn,
+  type ArchiveReturnScope,
+} from '~/lib/navigation/archiveReturn';
 
-const props = defineProps<{
-  entry: ArchiveEntry;
-  page: number;
-  eager?: boolean;
-  categoryById: Map<number, string>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    entry: ArchiveEntry;
+    page: number;
+    eager?: boolean;
+    categoryById: Map<number, string>;
+    archiveScope?: ArchiveReturnScope;
+  }>(),
+  { archiveScope: 'portfolio' },
+);
 
 const item = computed(() => props.entry.item);
 const title = computed(() => archiveTitlePlain(item.value));
@@ -26,11 +33,14 @@ const specimenSrcSet = computed(() => archiveSpecimenSrcSet(item.value));
 const href = computed(() => `/portfolio/${item.value.slug}`);
 
 function onNavigate() {
-  saveArchiveReturn({
-    page: props.page,
-    slug: item.value.slug,
-    y: window.scrollY,
-  });
+  saveArchiveReturn(
+    {
+      page: props.page,
+      slug: item.value.slug,
+      y: window.scrollY,
+    },
+    props.archiveScope,
+  );
 }
 </script>
 

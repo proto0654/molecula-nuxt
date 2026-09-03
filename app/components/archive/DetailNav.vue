@@ -1,6 +1,9 @@
 ﻿<script setup lang="ts">
 import type { ArchiveReturnScope } from '~/lib/navigation/archiveReturn';
-import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
+import {
+  archiveIndexHref,
+  resolveCasePortfolioArchiveHref,
+} from '~/lib/navigation/archiveReturn';
 import { missingUiString } from '~/domain/options/missingUiString';
 import { stripTags } from '~/domain/portfolio/presentation';
 import type { EntityLightSweepDirection } from '~/composables/useMoleculeCue';
@@ -25,7 +28,18 @@ const props = withDefaults(
   },
 );
 
-const archiveHref = ref(props.basePath);
+const route = useRoute();
+
+const archiveHref = computed(() => {
+  if (props.archiveScope === 'services') {
+    return archiveIndexHref(undefined, 'services');
+  }
+  return (
+    resolveCasePortfolioArchiveHref(route.path) ??
+    archiveIndexHref(undefined, props.archiveScope)
+  );
+});
+
 const { t } = useThemeOptions();
 
 const sectionLabel = useUiString('case_nav_see_also');
@@ -51,10 +65,6 @@ const prevLabel = computed(() => {
     return t('services_nav_prev_label') || SERVICE_PREV_FALLBACK;
   }
   return optionOrMissing('case_nav_prev_label');
-});
-
-onMounted(() => {
-  archiveHref.value = archiveIndexHref(undefined, props.archiveScope);
 });
 
 /** Numbered left rail (case + service detail). */

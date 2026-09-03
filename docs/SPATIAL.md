@@ -67,6 +67,7 @@ MoleculeController         setMode / restoreOverview / focus* / freeze
 |---|---|
 | `/` | `{ mode: 'home' }` |
 | `/portfolio` | `{ mode: 'portfolio-archive', context: 'portfolio' }` |
+| `/portfolio/legacy` | `{ mode: 'portfolio-archive', context: 'portfolio' }` (not a case slug) |
 | `/portfolio/:slug` | `{ mode: 'case', context: 'portfolio', entityId }` |
 | `/services` | `{ mode: 'service-archive', context: 'services' }` |
 | `/services/:slug` | `{ mode: 'service', context: 'services', entityId }` |
