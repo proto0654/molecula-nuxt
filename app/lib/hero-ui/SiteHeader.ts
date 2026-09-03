@@ -14,6 +14,7 @@ import { NavigationState } from '../navigation/NavigationState';
 import { HeroSlideProgress } from './HeroSlideProgress';
 import { createSiteLogoMark } from './siteLogoMark';
 import { attachTapGuard } from './tapGuard';
+import { registerChromeInfoSetter } from './chromeInfoBridge';
 
 export type MenuToggleListener = () => void;
 export type HeaderSelectListener = (itemId: string) => void;
@@ -38,6 +39,9 @@ export class SiteHeader {
   private readonly routesEl: HTMLElement;
   private readonly linkElements = new Map<string, HTMLElement>();
   private readonly nodeEl: HTMLElement;
+  private readonly chromeEl: HTMLElement;
+  private readonly chromeLabelEl: HTMLElement;
+  private readonly chromeLinkEl: HTMLAnchorElement;
   private readonly menuBtn: HTMLButtonElement;
   private readonly navState: NavigationState;
   private readonly unsubscribe: () => void;
@@ -122,6 +126,20 @@ export class SiteHeader {
     this.nodeEl = document.createElement('span');
     this.nodeEl.className = 'site-header__node';
 
+    /* --- Chrome slot (right side: route meta set via setChromeInfo) --- */
+    this.chromeEl = document.createElement('span');
+    this.chromeEl.className = 'site-header__chrome';
+
+    this.chromeLabelEl = document.createElement('p');
+    this.chromeLabelEl.className = 'site-header__chrome-label';
+
+    this.chromeLinkEl = document.createElement('a');
+    this.chromeLinkEl.className = 'site-header__chrome-link';
+
+    this.chromeEl.append(this.chromeLabelEl, this.chromeLinkEl);
+
+    registerChromeInfoSetter((label, href, text) => this.setChromeInfo(label, href, text));
+
     /* --- Mobile menu button --- */
     this.menuBtn = document.createElement('button');
     this.menuBtn.type = 'button';
@@ -138,6 +156,7 @@ export class SiteHeader {
       this.localeEl,
       this.routesEl,
       this.nodeEl,
+      this.chromeEl,
       this.menuBtn,
     );
     parent.append(this.root);
@@ -223,6 +242,25 @@ export class SiteHeader {
     }
     this.syncNode(this.navState);
     this.syncLocale();
+  }
+
+  /**
+   * Set the right-side chrome info (e.g. "ARCHIVE / SERVICES" or "CASE / 03" + INDEX link).
+   * Called by SiteChrome.vue on mount/update. Pass nulls to clear.
+   */
+  setChromeInfo(label: string | null, linkHref?: string | null, linkText?: string | null): void {
+    this.chromeLabelEl.textContent = label ?? '';
+    this.chromeLabelEl.style.display = label ? '' : 'none';
+
+    if (linkHref && linkText) {
+      this.chromeLinkEl.href = linkHref;
+      this.chromeLinkEl.textContent = linkText;
+      this.chromeLinkEl.style.display = '';
+    } else {
+      this.chromeLinkEl.removeAttribute('href');
+      this.chromeLinkEl.textContent = '';
+      this.chromeLinkEl.style.display = 'none';
+    }
   }
 
   /** Update locale links from current URL. Call after any navigation. */

@@ -1,6 +1,8 @@
 ﻿<script setup lang="ts">
+import { onBeforeUnmount, watch } from 'vue';
 import { padCaseIndex } from '~/domain/portfolio/presentation';
 import { routeChromeLabel } from '~/lib/navigation/routeChromeLabel';
+import { setChromeInfo } from '~/lib/hero-ui/chromeInfoBridge';
 
 const props = withDefaults(
   defineProps<{
@@ -33,31 +35,36 @@ const routeLabel = computed(() => {
   const label = routeChromeLabel(route.path, props.archiveScope);
   return label ?? `ARCHIVE / ${props.archiveScope}`;
 });
+
+const labelText = computed(() => {
+  if (props.variant === 'archive') return routeLabel.value;
+  if (props.variant === 'section') return props.sectionLabel;
+  if (props.caseIndex) {
+    return `${entityLabel.value} / ${padCaseIndex(props.caseIndex)}`;
+  }
+  return null;
+});
+
+const linkHref = computed(() => {
+  if (props.variant !== 'case' && props.variant !== 'service') return null;
+  return props.archiveHref;
+});
+
+const linkText = computed(() => {
+  if (!linkHref.value) return null;
+  return indexKicker.value;
+});
+
+function sync() {
+  setChromeInfo(labelText.value, linkHref.value, linkText.value);
+}
+
+onMounted(sync);
+watch([labelText, linkHref, linkText], sync);
+onBeforeUnmount(() => setChromeInfo(null));
 </script>
 
 <template>
-  <header class="case-chrome__header case-chrome__header--meta">
-    <div class="case-chrome__meta">
-      <slot name="meta">
-        <p
-          v-if="variant === 'archive'"
-          class="case-chrome__index"
-        >
-          {{ routeLabel }}
-        </p>
-        <p
-          v-else-if="variant === 'section'"
-          class="case-chrome__index"
-        >
-          {{ sectionLabel }}
-        </p>
-        <template v-else>
-          <p v-if="caseIndex" class="case-chrome__index">
-            {{ entityLabel }} / {{ padCaseIndex(caseIndex) }}
-          </p>
-          <NuxtLink :to="archiveHref" class="case-chrome__archive">{{ indexKicker }}</NuxtLink>
-        </template>
-      </slot>
-    </div>
-  </header>
+  <!-- Data-only bridge: content rendered by SiteHeader.ts -->
+  <span class="site-chrome-stub" />
 </template>
