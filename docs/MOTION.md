@@ -51,7 +51,7 @@ Do **not** assign `animation-delay: index * n` to every row. A below-fold item w
 
 After gate + archive-return restore + two rAFs:
 
-1. Collect `.archive-list .archive-row`, `[data-enter="tail"]` (except `.case-nav`, handled below), on case pages `.case-section:not(.case-nav)` + `nav.case-nav.case-section`, CMS prose blocks (`p`, headings before lists) and list rows in case prose/caption, and `nav.case-nav--archive` on service detail pages.
+1. Collect `.archive-list .archive-row`, `[data-enter="tail"]` (except `.case-nav`, handled below), on case pages `.case-section:not(.case-nav)` + `nav.case-nav.case-section`, CMS prose blocks (`p`, headings before lists) and list rows in case prose/caption, and on archive pages `nav.case-nav.case-section` (service detail) + `nav.case-nav--archive`.
 2. In-view = intersects the viewport with an ~8% bottom inset.
 3. In-view items in DOM order: `data-reveal="chain"`, `--reveal-i: min(i, cap-1)`. Cap **6**, stagger `--enter-stagger` (55ms).
 4. Below-fold: one `IntersectionObserver` (`rootMargin: 0px 0px -8% 0px`), `once`. On intersect: `data-reveal="in"`, delay **0**.
@@ -59,7 +59,7 @@ After gate + archive-return restore + two rAFs:
 
 Uprock motif — implementation of [hairline language](DESIGN.md#hairline-language): the **full-width** row hairline (`::before` / last-row `::after`), wiped **left → right** via `clip-path: inset(0 100% 0 0)` → `inset(0 0 0 0)`. Short `.archive-row__line` tick uses `scaleX(0 → 1)` with `transform-origin: left center`. Row content starts after `--reveal-content-delay` so the draw reads first.
 
-Same motif on case section markers, CMS list rows, and footer nav. **Footer nav** (`nav.case-nav`) is one listing unit; when `is-revealed`, an internal chain runs via `--nav-origin` + step offsets: case — marker line → marker label → Next → Previous line → Previous → Index; service — Next → Previous line → Previous → Index.
+Same motif on case section markers, CMS list rows, and footer nav. **Footer nav** (`nav.case-nav`) is one listing unit; when `is-revealed`, an internal chain runs via `--nav-origin` + step offsets: case / service detail (`case-section`) — marker line → marker label → Next → Previous line → Previous → Index; archive-only (`case-nav--archive`) — Next → Previous line → Previous → Index.
 
 Layout **social footer** (`SiteFooterMenu`) is outside the page shell: pose-gated (`is-awaiting-pose`) fade-up with `--enter-beat-list`, hidden on `/contact`.
 

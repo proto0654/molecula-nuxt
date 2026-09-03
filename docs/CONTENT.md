@@ -71,7 +71,7 @@ Rules:
 
 Hero: video only (flat). Interface = `landing_screen` (index 0) + repeater — desktop always 3 flex cols via `balanceCaseScreenColumns` (first screen pinned in col0; taller stacks prefer earlier cols, then equalize); &lt;1024: 2-col CSS masonry. Section numbers sequential among visible blocks (`getCaseComposition`, including NEXT).
 
-Service detail composition: Index kicker + `SERVICE / NN` when indexed → intro if content → offers if rows (`services_section_heading` H2 only when both heading and rows exist) → NEXT via `ArchiveDetailNav` (same `case-nav` tokens as portfolio case; archive variant aligns from column 3). Price in row meta (`от` + amount); order CTA in row body when `cf_price` is set. Chrome strings from theme options: `services_section_heading`, `services_price_from` (fallback «от»), `hero_order_label` (fallback «Заказать»).
+Service detail composition: Index kicker + `SERVICE / NN` when indexed → intro if content → offers if rows (`services_section_heading` H2 only when both heading and rows exist) → NEXT via `ArchiveDetailNav` with `sectionIndex={1}` (case-style `01 / См. также` rail) + service next/prev labels. Price in row meta (`от` + amount); order CTA in row body when `cf_price` is set. Chrome strings from theme options: `services_section_heading`, `services_price_from` (fallback «от»), `hero_order_label` (fallback «Заказать»), `services_nav_next_label` / `services_nav_prev_label` (fallback «Следующая/Предыдущая услуга»).
 
 About order: Index kicker + H1 + tags → optional photo → intro if content → skills if rows (H2 `about_section_title` only if title and rows; `archive-list` with numbered rows) → CTA if `about_cta_label`.
 

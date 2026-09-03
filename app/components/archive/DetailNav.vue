@@ -1,9 +1,11 @@
 ﻿<script setup lang="ts">
 import type { ArchiveReturnScope } from '~/lib/navigation/archiveReturn';
 import { archiveIndexHref } from '~/lib/navigation/archiveReturn';
+import { missingUiString } from '~/domain/options/missingUiString';
 import { stripTags } from '~/domain/portfolio/presentation';
 import type { EntityLightSweepDirection } from '~/composables/useMoleculeCue';
 import { armFlipSweepDirection } from '~/lib/molecular/moleculeFlipIntent';
+import type { UiStringKey } from '~/types/wp/uiStrings';
 
 const props = withDefaults(
   defineProps<{
@@ -24,17 +26,41 @@ const props = withDefaults(
 );
 
 const archiveHref = ref(props.basePath);
+const { t } = useThemeOptions();
 
-const nextLabel = useUiString('case_nav_next_label');
-const prevLabel = useUiString('case_nav_prev_label');
 const sectionLabel = useUiString('case_nav_see_also');
 const navNoneLabel = useUiString('case_nav_none');
+
+/** Soft defaults until Options seeded (same pattern as service offer chrome). */
+const SERVICE_NEXT_FALLBACK = 'Следующая услуга';
+const SERVICE_PREV_FALLBACK = 'Предыдущая услуга';
+
+function optionOrMissing(key: UiStringKey): string {
+  return t(key) || missingUiString(key);
+}
+
+const nextLabel = computed(() => {
+  if (props.archiveScope === 'services') {
+    return t('services_nav_next_label') || SERVICE_NEXT_FALLBACK;
+  }
+  return optionOrMissing('case_nav_next_label');
+});
+
+const prevLabel = computed(() => {
+  if (props.archiveScope === 'services') {
+    return t('services_nav_prev_label') || SERVICE_PREV_FALLBACK;
+  }
+  return optionOrMissing('case_nav_prev_label');
+});
 
 onMounted(() => {
   archiveHref.value = archiveIndexHref(undefined, props.archiveScope);
 });
 
-const isCase = computed(() => props.sectionIndex != null && props.sectionIndex > 0);
+/** Numbered left rail (case + service detail). */
+const hasMarker = computed(
+  () => props.sectionIndex != null && props.sectionIndex > 0,
+);
 
 function navTo(slug: string, flipSweep: EntityLightSweepDirection) {
   return {
@@ -57,14 +83,14 @@ function plainTitle(title: string | null | undefined): string {
   <nav
     class="case-nav"
     :class="{
-      'case-nav--archive': !isCase,
-      'case-section case-grid case-section--tone-editorial': isCase,
+      'case-nav--archive': !hasMarker,
+      'case-section case-grid case-section--tone-editorial': hasMarker,
     }"
-    :data-enter="isCase ? undefined : 'tail'"
+    :data-enter="hasMarker ? undefined : 'tail'"
     :aria-label="ariaLabel"
   >
     <CaseSectionMarker
-      v-if="isCase"
+      v-if="hasMarker"
       class="case-zone-label"
       :index="sectionIndex!"
       :label="sectionLabel"

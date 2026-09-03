@@ -19,7 +19,7 @@ const CASE_LIST_SELECTOR =
   '.case-page .case-mobile-signature__prose ol > li';
 
 const ITEM_SELECTOR =
-  '.archive-row, [data-enter="tail"], .case-page .case-section:not(.case-nav), .case-page nav.case-nav.case-section, .archive-page nav.case-nav--archive, ' +
+  '.archive-row, [data-enter="tail"], .case-page .case-section:not(.case-nav), .case-page nav.case-nav.case-section, .archive-page nav.case-nav.case-section, .archive-page nav.case-nav--archive, ' +
   CASE_PROSE_BLOCK_SELECTOR +
   ', ' +
   CASE_LIST_SELECTOR;

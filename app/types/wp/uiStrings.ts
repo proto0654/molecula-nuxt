@@ -31,6 +31,8 @@ export const UI_STRING_KEYS = [
   'services_heading_archive',
   'services_archive_description',
   'services_back_to_archive',
+  'services_nav_next_label',
+  'services_nav_prev_label',
   'case_thanks_message',
   'case_back_to_portfolio',
   'case_mobile_signature_default_heading',

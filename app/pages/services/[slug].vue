@@ -54,6 +54,9 @@ const position = computed(() => held.value?.position);
 const backToArchiveLabel = useUiString('services_back_to_archive');
 const chrome = computed(() => normalizeServiceChrome(themeAcf.value));
 
+/** NEXT footer uses case-style marker; offers are list rows, not numbered case sections. */
+const navSectionIndex = 1;
+
 const ready = computed(
   () => Boolean(data.value?.service) && data.value?.service?.slug === slug.value,
 );
@@ -157,6 +160,7 @@ usePageSeo({
       <ServiceOffers :service="service" :chrome="chrome" />
 
       <ArchiveDetailNav
+        :section-index="navSectionIndex"
         :prev-slug="position?.prev?.slug ?? null"
         :next-slug="position?.next?.slug ?? null"
         :prev-title="position?.prev?.title ?? null"

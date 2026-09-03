@@ -102,7 +102,8 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 | `chrome_index_kicker`, `chrome_case_label`, `chrome_service_label` | SiteChrome + archive/about/contact/privacy kickers (`chrome_index_kicker` only) |
 | `case_section_*` | CaseContent / Gallery / Mobile / Slices section labels |
 | `case_thanks_message` | `CaseThanks` (before NEXT; empty → omit) |
-| `case_nav_*`, `case_back_to_portfolio` | `DetailNav`, portfolio slug back link |
+| `case_nav_*`, `case_back_to_portfolio` | `DetailNav` (portfolio), portfolio slug back link |
+| `services_nav_next_label`, `services_nav_prev_label`, `services_back_to_archive` | `DetailNav` (services scope; soft RU fallback until Options seeded) |
 | `portfolio_heading_current`, `portfolio_archive_description` | Portfolio archive + SEO |
 | `services_*` (chrome + archive) | Service detail chrome, services archive |
 | `seo_hidden_h1` | Home SEO |
@@ -143,7 +144,7 @@ Wired in `app/layouts/default.vue`:
 ## Next iterations
 
 1. **WP:** Deploy `weblaba-rework` (defaults + ACF pair for `hud_nav_go` / `hud_nav_go_en` in `locale.php` / `acf-i18n-helpers.php`), then Tools → WebLaba Migrations → **Seed empty UI string Options**.
-2. Optional: fill `gtm_container_id`, archive SEO strings (empty ones show as `[key]` in UI/meta).
+2. Optional: fill `gtm_container_id`, archive SEO strings (empty ones show as `[key]` in UI/meta); seed `services_nav_next_label` / `services_nav_prev_label` ([`docs/seed/services-nav-labels.seed.json`](seed/services-nav-labels.seed.json)) — UI has soft RU fallbacks until then.
 3. Later: case defaults / legacy portfolio (design-aware).
 4. Later: i18n (`lang_switch_aria` + `*_en` / `/en/`).
 5. Later: Options key for desktop routes nav `aria-label` (currently empty when missing).

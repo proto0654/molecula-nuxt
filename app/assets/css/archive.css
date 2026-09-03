@@ -623,6 +623,137 @@ html.js-enabled .archive-page.is-revealing nav.case-nav--archive.is-revealed .ca
   );
 }
 
+/* Service detail — same numbered rail as case NEXT (CaseSectionMarker). */
+html.js-enabled .archive-page nav.case-nav.case-section {
+  position: relative;
+}
+
+html.js-enabled .archive-page nav.case-nav.case-section .case-marker--editorial {
+  position: relative;
+}
+
+html.js-enabled .archive-page nav.case-nav.case-section .case-marker--editorial::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--wl-line);
+  clip-path: inset(0 0 0 0);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 1023px) {
+  html.js-enabled .archive-page nav.case-nav.case-section .case-marker--editorial::after {
+    top: auto;
+    bottom: 0;
+  }
+}
+
+html.js-enabled .archive-page nav.case-nav.case-section .case-marker--editorial {
+  border-color: transparent;
+}
+
+html.js-enabled .archive-page nav.case-nav.case-section .case-nav__prev {
+  position: relative;
+  border-top-color: transparent;
+}
+
+html.js-enabled .archive-page nav.case-nav.case-section .case-nav__prev::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--wl-line);
+  clip-path: inset(0 0 0 0);
+  pointer-events: none;
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed {
+  --nav-origin: calc(var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)));
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed[data-reveal='in'] {
+  --nav-origin: 0ms;
+}
+
+html.js-enabled .archive-page:not(.is-revealing) nav.case-nav.case-section .case-marker--editorial::after,
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section:not(.is-revealed) .case-marker--editorial::after,
+html.js-enabled .archive-page:not(.is-revealing) nav.case-nav.case-section .case-nav__prev::after,
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section:not(.is-revealed) .case-nav__prev::after {
+  clip-path: inset(0 100% 0 0);
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed .case-marker--editorial::after {
+  animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: var(--nav-origin);
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed .case-nav__prev::after {
+  animation: wl-enter-line var(--line-draw-duration) var(--line-draw-ease) both;
+  animation-delay: calc(var(--nav-origin) + (2 * var(--enter-stagger)));
+}
+
+html.js-enabled .archive-page:not(.is-revealing) nav.case-nav.case-section .case-marker,
+html.js-enabled .archive-page:not(.is-revealing) nav.case-nav.case-section .case-nav__item :is(.case-nav__link, .case-nav__muted),
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section:not(.is-revealed) .case-marker,
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section:not(.is-revealed)
+  .case-nav__item
+  :is(.case-nav__link, .case-nav__muted) {
+  opacity: 0;
+  transform: translate3d(0, var(--enter-y), 0);
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed .case-marker {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(var(--nav-origin) + var(--reveal-content-delay));
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed .case-nav__next :is(.case-nav__link, .case-nav__muted) {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--nav-origin) + var(--enter-stagger) + var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed .case-nav__prev :is(.case-nav__link, .case-nav__muted) {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--nav-origin) + (2 * var(--enter-stagger)) + var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed .case-nav__index :is(.case-nav__link, .case-nav__muted) {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--nav-origin) + (3 * var(--enter-stagger)) + var(--reveal-content-delay)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-enabled .archive-page nav.case-nav.case-section .case-marker--editorial::after,
+  html.js-enabled .archive-page nav.case-nav.case-section .case-nav__prev::after,
+  html.js-enabled .archive-page nav.case-nav.case-section .case-marker,
+  html.js-enabled .archive-page nav.case-nav.case-section .case-nav__item :is(.case-nav__link, .case-nav__muted) {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    animation: none;
+  }
+
+  html.js-enabled .archive-page nav.case-nav.case-section .case-marker--editorial {
+    border-color: rgb(214 219 224 / var(--line-opacity));
+  }
+
+  html.js-enabled .archive-page nav.case-nav.case-section .case-nav__prev {
+    border-top-color: rgb(214 219 224 / var(--line-opacity));
+  }
+}
+
 .archive-list {
   list-style: none;
   margin: 0;
