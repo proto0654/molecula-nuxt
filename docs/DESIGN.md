@@ -202,7 +202,7 @@ Part of the site-wide [hairline language](#hairline-language). Tablet/mobile nav
 - `01` muted index + uppercase label.
 - **Desktop (≥1024):** left vertical rail (`--sidebar-width`), column stack. Footer `УЗЕЛ nn` + `АКТИВЕН|ГОТОВ|ПРОСТОЙ` is centered under the **full** HUD frame (not the rail alone). Active via brighter text + wider tracking + thin left marker — no pills / filled rects.
 - **Desktop home committed signal:** expands stub line + label + `→`. Non-`home` items swap the route label for Theme Options `hud_nav_go` (`.nav__go`, e.g. «Перейти»); hub `home` keeps the route name. Tablet/mobile `⟨ … ⟩` wrap does **not** apply on desktop home.
-- **Tablet (768–1023):** bottom bar; separators `·`. Commit wraps label with `⟨ … ⟩`.
+- **Tablet (768–1023):** bottom bar stretched to HUD edges (like mobile); full-width slide progress in `nav__stack`; separators `·`. Commit wraps label with `⟨ … ⟩`.
 - **Mobile (≤767):** bottom stack: slide progress (`nav__stack`, relative) + `/ NAV` + indexed labels (horizontal scroll; enlarged type ~0.94rem label / 0.81rem index; active item scrolled into view). Inset via `--nav-mobile-bottom` inside `--hud-inset-mobile-bottom`. Safe-area bottom. Tap vs scroll-drag via `attachTapGuard`. Full index opens in [`MobileNavOverlay`](../app/lib/hero-ui/MobileNavOverlay.ts). Home only — hidden off-home.
 - No background, no border.
 

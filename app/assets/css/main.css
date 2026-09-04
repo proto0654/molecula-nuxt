@@ -1751,11 +1751,63 @@ html.nav-overlay-open body {
   }
 
   .nav {
+    left: var(--hud-edge-x-tablet);
+    right: var(--hud-edge-x-tablet);
     bottom: 1.1rem;
+    transform: none;
+    width: auto;
+    max-width: none;
+    padding: 0;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 0;
+  }
+
+  .nav::before {
+    content: none;
+  }
+
+  .nav__stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    position: relative;
+  }
+
+  .molecular-chrome.is-home .hero-slide-progress--mobile {
+    display: block;
+    position: relative;
+    width: 100%;
+  }
+
+  .hero-slide-progress--desktop {
+    display: none;
+  }
+
+  .nav__row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.65rem;
+    width: 100%;
+    min-width: 0;
   }
 
   .nav__list {
+    width: auto;
+    flex: 1 1 auto;
+    justify-content: flex-start;
     gap: 0.25rem 0.55rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav__list::-webkit-scrollbar {
+    display: none;
   }
 
   .nav__label {
