@@ -134,9 +134,10 @@ export class NavigationConnector {
       return;
     }
 
-    const vv = window.visualViewport;
-    const vw = vv?.width ?? window.innerWidth;
-    const vh = vv?.height ?? window.innerHeight;
+    // Match the stable chrome/stage CSS box (`lvh`/`lvw`), not visualViewport
+    // which jumps when mobile browser chrome shows/hides.
+    const vw = this.root.clientWidth || window.innerWidth;
+    const vh = this.root.clientHeight || window.innerHeight;
     this.root.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
 
     const { itemId, showAsActive, showAsHover } = resolveConnectorItem(

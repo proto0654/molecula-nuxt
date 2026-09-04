@@ -140,11 +140,19 @@ function fillViewportTargetForMode(mode: ViewportMode): number {
 const AXIS_Y = new Vector3(0, 1, 0);
 const AXIS_X = new Vector3(1, 0, 0);
 
-/** Layout size for camera aspect / renderer; prefers `visualViewport` on mobile. */
-function getViewportSize(): { width: number; height: number } {
-  const vv = window.visualViewport;
-  if (vv) {
-    return { width: vv.width, height: vv.height };
+/**
+ * Layout size for camera aspect / renderer from the canvas CSS box.
+ * Prefer client box (stable with `lvh`/`lvw` stage) over `visualViewport`,
+ * which jumps when mobile browser chrome shows/hides.
+ */
+function getViewportSize(canvas: HTMLCanvasElement): {
+  width: number;
+  height: number;
+} {
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  if (width > 0 && height > 0) {
+    return { width, height };
   }
   return { width: window.innerWidth, height: window.innerHeight };
 }
@@ -379,6 +387,8 @@ export class MoleculeController {
   private readonly unsubscribePointerInput: () => void;
   private reducedMotion = false;
   private readonly onResizeBound: () => void;
+  /** Pinch-zoom / visualViewport offset only — no drawing-buffer resize. */
+  private readonly onVisualViewportBound: () => void;
   private readonly onOrientationChangeBound: () => void;
   private readonly onPointerMoveBound: (event: PointerEvent) => void;
   private readonly onPointerLeaveBound: () => void;
@@ -431,7 +441,7 @@ export class MoleculeController {
     });
 
     this.onResizeBound = () => {
-      const { width, height } = getViewportSize();
+      const { width, height } = getViewportSize(this.canvas);
       this.scene.resize(width, height);
       this.applyCompositionBias();
       this.refreshCanvasRect();
@@ -443,6 +453,10 @@ export class MoleculeController {
         this.atomHover.markDirty();
       }
       this.lastLabelZoomProgress = Number.NaN;
+    };
+
+    this.onVisualViewportBound = () => {
+      this.refreshCanvasRect();
     };
 
     this.onOrientationChangeBound = () => {
@@ -1507,7 +1521,7 @@ export class MoleculeController {
     }
 
     atom.mesh.getWorldPosition(this.scratchAtomPos);
-    const { width, height } = getViewportSize();
+    const { width, height } = getViewportSize(this.canvas);
     const visible = projectToScreenInto(
       this.scratchAtomPos,
       this.scene.camera,
@@ -1682,8 +1696,8 @@ export class MoleculeController {
     window.addEventListener('orientationchange', this.onOrientationChangeBound);
     const vv = window.visualViewport;
     if (vv) {
-      vv.addEventListener('resize', this.onResizeBound);
-      vv.addEventListener('scroll', this.onResizeBound);
+      vv.addEventListener('resize', this.onVisualViewportBound);
+      vv.addEventListener('scroll', this.onVisualViewportBound);
     }
     window.addEventListener('pointermove', this.onPointerMoveBound);
     document.addEventListener('pointerleave', this.onPointerLeaveBound);
@@ -1707,8 +1721,8 @@ export class MoleculeController {
     window.removeEventListener('orientationchange', this.onOrientationChangeBound);
     const vv = window.visualViewport;
     if (vv) {
-      vv.removeEventListener('resize', this.onResizeBound);
-      vv.removeEventListener('scroll', this.onResizeBound);
+      vv.removeEventListener('resize', this.onVisualViewportBound);
+      vv.removeEventListener('scroll', this.onVisualViewportBound);
     }
     window.removeEventListener('pointermove', this.onPointerMoveBound);
     document.removeEventListener('pointerleave', this.onPointerLeaveBound);

@@ -7,8 +7,9 @@ Principles: the molecule is primary; HUD is secondary. No cards, no filled butto
 ## Document scroll
 
 - `html`: `scrollbar-gutter: stable both-edges` — reserves symmetric inline gutters so layout width stays stable when the scrollbar appears or disappears (home ↔ scrollable routes, short ↔ tall pages). Prevents horizontal jump during molecular route transitions.
-- Default: `html` scrolls (`overflow-y: auto`); `body` / `#__nuxt` stay `overflow: visible` (do not set `overflow-y` there — double scrollbar with 3D overflow).
-- Home only: `html.hero-lock` (from [`app/layouts/default.vue`](../app/layouts/default.vue) when spatial mode is `home`) sets `overflow: hidden` — document scroll locked for the fullscreen hero.
+- Default: `html` scrolls (`overflow-y: auto`); `body` / `#__nuxt` stay `overflow: visible` (do not set `overflow-y` there — double scrollbar with 3D overflow). Document / page shells use `min-height: 100dvh`.
+- Home only: `html.hero-lock` (from [`app/layouts/default.vue`](../app/layouts/default.vue) when spatial mode is `home`) sets `overflow: hidden` + `height: 100dvh` — document scroll locked for the fullscreen hero.
+- Fixed molecular stage / chrome (`.molecular-hero`, `.molecular-chrome`, fallback) use **`100lvw` × `100lvh`** (fallback `100%`), not `inset: 0` / `dvh`, so the background canvas does not resize when mobile browser chrome shows or hides. Drawing-buffer sizing follows the canvas CSS box — see [`WEBGL_HERO.md`](WEBGL_HERO.md).
 - Portfolio / case pages must **not** set `hero-lock`.
 - Full-bleed breakout: use `--content-bleed-width` (`calc(100% + 2 * var(--content-bleed-x))`) instead of `100vw` where horizontal scrollbar gutter matters.
 

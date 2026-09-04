@@ -346,7 +346,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `debug/PerfOverlay.ts` | Dev-only throttled FPS / quality HUD |
 ## Scene constraints (current stage)
 
-- Canvas fills the viewport (`100%` / `100dvh`); background `--color-bg` / `0x14161c`. Home locks document scroll via `html.hero-lock`. `html` uses `scrollbar-gutter: stable both-edges` so route transitions do not shift layout when the scrollbar toggles (see [`DESIGN.md`](DESIGN.md) § Document scroll).
+- Canvas fills a stable large-viewport stage (`100lvw` / `100lvh` on `.molecular-hero` / chrome); background `--color-bg` / `0x14161c`. Home locks document scroll via `html.hero-lock` (`100dvh`). `html` uses `scrollbar-gutter: stable both-edges` so route transitions do not shift layout when the scrollbar toggles (see [`DESIGN.md`](DESIGN.md) § Document scroll).
 - Techno HUD overlay (grid, corners, header, nav rail, mobile overlay, SVG connector) — see [`DESIGN.md`](DESIGN.md). `NavigationItem.route` drives Nuxt when wired (`/portfolio`); other items still use DestinationView stub.
 - Responsive: desktop ≥1024 (rail + header progress + composition profile + connector; full captions), tablet 768–1023 (bottom nav on home; off-home header with centered route links), mobile ≤767 (home: header + bottom rail + slide progress + MENU overlay with one-shot leave; off-home: header LOGO + MENU + overlay with direct route hops; mobile framing, full captions, touch trackball/tap + calibrated gyro tilt).
 - No postprocessing, bloom, particle systems, physics, realtime shadows, or environment maps. Scene uses a matching `Fog` for slight depth only.
@@ -372,7 +372,7 @@ Separate concerns so nothing hidden reallocates every frame:
 
 Frame order after transforms: single forced matrix update, then labels (only when orientation / `zoomProgress` / `fillProgress` changed, or after resize), then selection indicator (pulse needs elapsed time; skip billboard when idle), then hover (no second matrix force). `projectToScreenInto` uses module/instance scratches. Zoom measurement may still force a matrix pass while measuring the atom at rest translation. HUD / nav / overlay stay off the rAF path.
 
-Resize sizing prefers `window.visualViewport` when present, else `innerWidth` / `innerHeight`. Listeners: `resize`, `orientationchange`, and `visualViewport` `resize` / `scroll` (torn down in `stop()`).
+Resize sizing uses the canvas CSS box (`clientWidth` / `clientHeight`, fallback `innerWidth` / `innerHeight`) so the drawing buffer stays locked to the `lvh`/`lvw` stage and does not jump when mobile browser chrome shows/hides. Full resize on `window` `resize` and `orientationchange`. `visualViewport` `resize` / `scroll` only refresh the cached canvas rect (pinch-zoom / offset), not `setSize` (torn down in `stop()`).
 
 ## Build & deploy
 
@@ -407,7 +407,8 @@ Fonts live in `public/fonts/` (copied to dist root). Troika font URL must use Nu
 - While `Navigator.busy` (including `complete`), `mountHeroApp.ts` skips hover-driven focus updates.
 - Focus uses **rest-frame** atom position (ignore current group rotation) so the focus quaternion stays absolute and independent of the mouse layer.
 - `setCompositionProfile` must use FOV/aspect only — never `getBoundingClientRect` on the sidebar. Atom locals stay fixed. Prefer profiles over ad-hoc `setCompositionBias`.
-- `NavigationConnector` consumes screen pixels only (`projectAtom` + DOM anchors). Do not import scene graph objects into UI modules. Tip + tiny marker stop short of the atom.
+- `NavigationConnector` consumes screen pixels only (`projectAtom` + DOM anchors). Do not import scene graph objects into UI modules. Tip + tiny marker stop short of the atom. SVG `viewBox` follows the chrome CSS box (`clientWidth`/`clientHeight`), not `visualViewport`.
+- Do not size the stage or WebGL buffer from `visualViewport` height — mobile URL-bar show/hide would jerk the molecule. Keep `.molecular-hero` / chrome on `lvh`/`lvw`; `setSize` from canvas client box; use `visualViewport` only to refresh the cached pointer rect.
 - Desktop rail / header / connector are CSS ≥1024; tablet keeps bottom nav on home; mobile home uses header + compact rail + MENU overlay (one-shot leave); mobile off-home uses header LOGO + MENU overlay (direct hops) and hides the connector.
 - `clearFocus` only lowers `focusStrength`; do not slerp focus orientation to identity on leave (avoids a long unused arc).
 - Central / Home atom (zero offset): no unique focus forward — on enter, apply a π flip about a random axis from the current focus pose (idempotent while already focused on hub). Peripheral focus uses `getStableFocusQuaternion`. **Hero leave approach** (peripherals only): one full revolution (2π) about the atom's orbit normal **in parallel with** zoom+fill (separate GSAP tweens) — ends back on the settled facing pose. `focusAtom` also clears residual pointer/touch/gyro spin so the atom faces the camera.
