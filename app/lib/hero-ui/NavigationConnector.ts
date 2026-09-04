@@ -134,7 +134,7 @@ export class NavigationConnector {
       return;
     }
 
-    // Match the stable chrome/stage CSS box (`lvh`/`lvw`), not visualViewport
+    // Match the stable chrome/stage CSS box (`svh`/`svw`), not visualViewport
     // which jumps when mobile browser chrome shows/hides.
     const vw = this.root.clientWidth || window.innerWidth;
     const vh = this.root.clientHeight || window.innerHeight;

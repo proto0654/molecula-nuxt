@@ -335,7 +335,7 @@ html.hero-lock,
 html.hero-lock body,
 html.hero-lock #__nuxt {
   height: 100%;
-  height: 100dvh;
+  height: 100svh;
   overflow: hidden;
 }
 
@@ -345,11 +345,12 @@ html.hero-lock #__nuxt {
   top: 0;
   left: 0;
   z-index: var(--z-stage);
-  /* Large viewport units: stable when mobile browser chrome shows/hides. */
+  /* Small viewport units: stable when chrome toggles, always fits on-screen
+     (lvh clipped the HUD frame under the URL bar on home / no-scroll). */
   width: 100%;
-  width: 100lvw;
+  width: 100svw;
   height: 100%;
-  height: 100lvh;
+  height: 100svh;
   pointer-events: none;
 }
 
@@ -367,9 +368,9 @@ html.hero-lock #__nuxt {
   left: 0;
   z-index: var(--z-chrome);
   width: 100%;
-  width: 100lvw;
+  width: 100svw;
   height: 100%;
-  height: 100lvh;
+  height: 100svh;
   pointer-events: none;
 }
 
@@ -507,9 +508,9 @@ html.hero-lock #__nuxt {
   left: 0;
   z-index: var(--z-stage);
   width: 100%;
-  width: 100lvw;
+  width: 100svw;
   height: 100%;
-  height: 100lvh;
+  height: 100svh;
   background: var(--wl-bg, #14161c);
 }
 
