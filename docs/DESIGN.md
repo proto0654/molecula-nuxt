@@ -197,7 +197,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 
 ### 4. Hairline rule / rail divider
 
-Part of the site-wide [hairline language](#hairline-language). Tablet/mobile nav top: 1px gradient (`.nav::before`). Desktop: thin right-edge divider on the rail (`.nav::after`) at `--line-opacity`.
+Part of the site-wide [hairline language](#hairline-language). Bottom bars (tablet/mobile home): full-width slide progress track in `nav__stack` (`.nav::before` unused). Desktop: thin right-edge divider on the rail (`.nav::after`) at `--line-opacity`.
 
 ### 5. Indexed text nav
 
@@ -210,7 +210,8 @@ Part of the site-wide [hairline language](#hairline-language). Tablet/mobile nav
 
 ### 6. Mobile nav overlay
 
-- Full-viewport veil (`--color-bg`), not a card. Large numbering, thin item hairlines, subtle crosshair, status strip.
+- Veil: `position: fixed` + **`100lvh` / `100lvw`** (`--color-bg`), always covers when the URL bar hides — not a card.
+- Inner `__frame`: **`100dvh`** so header / list / status track the visible area (safe-area padding).
 - Open from MENU; close via CLOSE / ESC / backdrop / item select.
 - **Home mobile:** same `selectItem` path as the rail (two-step molecule commit).
 - **Off-home mobile:** direct `transitionTo` per item — no atom commit step.

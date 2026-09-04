@@ -13,7 +13,7 @@
 
 # A. ГДЕ МЫ СЕЙЧАС ОСТАНОВИЛИСЬ
 
-**Дата чекпоинта:** 2026-09-03  
+**Дата чекпоинта:** 2026-09-04  
 **Ветка:** `main` (`origin` = `molecula-nuxt`)  
 **Удалено намеренно:** ветка `feat/headless-api-foundation` (неудачная Vite-API итерация; не переносить)
 
@@ -50,6 +50,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Node:** `^22.19.0` (`engines` в `package.json`)
 - **Home `/`:** empty page slot; molecule lives in [`layouts/default.vue`](../app/layouts/default.vue)
 - **Persistent shell:** one canvas / `MoleculeController` / rAF across routes — [`docs/SPATIAL.md`](../docs/SPATIAL.md)
+- **Mobile viewport:** `#hero-canvas` bottom-aligned `100svh` (stable WebGL); stage/chrome dynamic `inset: 0` (HUD frame); burger veil `lvh` / frame `dvh`; scroll-to-top `--hud-scroll-inset-*` inside L-ticks — [`docs/WEBGL_HERO.md`](../docs/WEBGL_HERO.md), [`docs/DESIGN.md`](../docs/DESIGN.md)
 - **Spatial:** `/` home (hub `C` always focused, pointer live); other routes frozen + page overlay
 - **API:** `app/api/client.ts` + portfolio/services/options/menus/pages/media; components не знают REST URL
 - **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw, unused in UI.

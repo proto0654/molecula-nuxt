@@ -1286,33 +1286,33 @@ html.nav-overlay-open body {
 }
 
 .nav-connector__line {
-  stroke: rgb(0 0 0 / var(--line-opacity));
+  stroke: #33353b;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 
 .nav-connector.is-active .nav-connector__line {
-  stroke: rgb(0 0 0 / 0.38);
+  stroke: #4e5157;
 }
 
 .nav-connector.is-hover .nav-connector__line {
-  stroke: rgb(0 0 0 / 0.28);
+  stroke: #3e4147;
 }
 
 .nav-connector__endpoint {
   fill: none;
-  stroke: rgb(0 0 0 / var(--line-opacity));
+  stroke: #33353b;
   stroke-width: 1;
 }
 
 .nav-connector.is-active .nav-connector__endpoint {
-  stroke: rgb(0 0 0 / 0.5);
-  fill: rgb(0 0 0 / 0.12);
+  stroke: #62646a;
+  fill: #24262c;
 }
 
 .nav-connector.is-hover .nav-connector__endpoint {
-  stroke: rgb(0 0 0 / 0.36);
-  fill: rgb(0 0 0 / 0.06);
+  stroke: #4a4d53;
+  fill: #1c1e24;
 }
 
 /* --- Transition + destination --- */

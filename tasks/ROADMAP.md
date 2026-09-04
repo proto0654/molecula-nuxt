@@ -25,6 +25,7 @@
 - [x] HUD design tokens (`:root` in `styles.css`) + [`docs/DESIGN.md`](../docs/DESIGN.md) decorative patterns
 - [x] Render-loop hygiene audit: single matrix update, dirty-gated labels, every-frame selection tick, DPR resize, dispose `forceContextLoss`, no hot-path allocs
 - [x] Stable mobile canvas: `#hero-canvas` bottom-aligned `100svh`; stage/chrome dynamic `inset: 0`; drawing buffer from canvas client box; `visualViewport` only refreshes pointer rect (no `setSize` on browser chrome toggle)
+- [x] Mobile nav overlay: veil `100lvh` / inner frame `100dvh`; tablet home bottom nav + full-width slide progress; scroll-to-top aligned to HUD L-ticks (`--hud-scroll-inset-*`)
 - [x] QualityManager (`high` / `medium` / `low`) + lock-once performance sample + capped pixel ratio
 - [x] Shared low-poly geometry (`GeometryCache`); selected wireframe; quality-gated selection rings + decorative orbits
 - [x] Dev-only throttled perf overlay (`DEBUG_PERF` / `?debug=0`)
