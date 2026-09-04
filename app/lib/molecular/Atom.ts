@@ -207,6 +207,15 @@ export class Atom {
   }
 
   private applyShellColor(): void {
+    // LOW (Lambert): base graphite palette — dim/emissive fill reads flat and dark.
+    if (this.material instanceof MeshLambertMaterial) {
+      this.material.color.copy(this.baseShellColor);
+      this.material.emissive.setHex(0x000000);
+      this.material.emissiveIntensity = 0;
+      this.material.fog = true;
+      return;
+    }
+
     const t =
       this.shellColorMix * (1 - this.sweepLightingRelief * SWEEP_SHELL_RELIEF);
     if (t <= 0.001) {
