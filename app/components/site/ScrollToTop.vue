@@ -21,8 +21,8 @@ const { visible, enabled, scrollToTop } = useScrollToTopState(settings);
 .scroll-to-top {
   position: fixed;
   z-index: 90;
-  bottom: var(--hud-header-inset);
-  right: var(--hud-header-inset);
+  bottom: var(--hud-scroll-inset-bottom);
+  right: var(--hud-scroll-inset-right);
   width: 2.25rem;
   height: 2.25rem;
   display: grid;
@@ -40,6 +40,17 @@ const { visible, enabled, scrollToTop } = useScrollToTopState(settings);
     transform 0.2s ease,
     border-color 0.18s ease,
     color 0.18s ease;
+}
+
+@media (max-width: 767px) {
+  .scroll-to-top {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .scroll-to-top__icon {
+    font-size: 0.8125rem;
+  }
 }
 
 .scroll-to-top.is-visible {

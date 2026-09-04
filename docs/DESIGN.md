@@ -47,6 +47,7 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--sidebar-width` | `clamp(220px, 20vw, 280px)` | Desktop rail width |
 | `--hud-inset-desktop` | `1.5rem` all sides — corner ticks on this frame | Frame inset ≥1024 |
 | `--hud-header-inset` | frame inset + corner size + `--hud-chrome-pad` | Desktop header / rail align inside ticks |
+| `--hud-scroll-inset-right` / `--hud-scroll-inset-bottom` | same formula per breakpoint (mobile uses `--corner-size-mobile` + off-home frame bottom + safe-area) | [`ScrollToTop`](../app/components/site/ScrollToTop.vue) inside L-ticks |
 | `--z-hud` / `--z-nav` / `--z-connector` / `--z-header` / `--z-overlay` / `--z-debug` | `1` / `2` / `2` / `3` / `5` / `10` | Inside stage/chrome: HUD → nav → header (above full-height rail) → veil |
 | `--z-stage` / `--z-backdrop` / `--z-page` / `--z-chrome` | `0` / `1` / `2` / `4` | Canvas → persistent featured wash (+ accent overlay) → NuxtPage → molecular chrome |
 | `--glyph-angle-open` / `--glyph-angle-close` | `⟨ ` / ` ⟩` | Committed nav wrap (tablet/mobile) |
@@ -273,12 +274,12 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 | Dark matte faceted atoms, light type | Glossy / smooth spheres; light atoms that match caption color |
 | Overlay `pointer-events: none` except interactive children (`.nav__item`, header logo/locale/INDEX, return) | Full-height `.nav` rail capturing clicks over logo/locale |
 | Desktop rail as light overlay | Application dashboard chrome |
-| Scroll-to-top: 1px `--wl-line` square, `--hud-header-inset` from L-ticks | Mint filled circles / flush-to-viewport FAB |
+| Scroll-to-top: 1px `--wl-line` square, `--hud-scroll-inset-*` from L-ticks | Mint filled circles / flush-to-viewport FAB |
 | Footer legal: desktop pad `--hud-header-inset` (inside ticks) | Flush to frame corners |
 
 ## Layout chrome (document)
 
 - [`SiteFooterLegal`](../app/components/site/SiteFooterLegal.vue) — disclaimer / cookies / copyright from Options; desktop padding `--hud-header-inset`.
-- [`ScrollToTop`](../app/components/site/ScrollToTop.vue) — HUD hairline square (`↑`); Options `enabled` + `trigger_px` only (WP bg/icon/size/offset unused); fixed at `--hud-header-inset`.
+- [`ScrollToTop`](../app/components/site/ScrollToTop.vue) — HUD hairline square (`↑`); Options `enabled` + `trigger_px` only (WP bg/icon/size/offset unused); fixed at `--hud-scroll-inset-*` (inside L-ticks; mobile/tablet override desktop `--hud-header-inset`).
 
 Case page visual system (12-col editorial, overlay on frozen molecule): [`CASES.md`](CASES.md).

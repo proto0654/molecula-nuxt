@@ -167,8 +167,9 @@
   --hud-edge-x-tablet: max(0px, calc(1.1rem - var(--scrollbar-gutter-x, 0px)));
   --hud-inset-tablet: 1rem var(--hud-edge-x-tablet) 4.5rem;
   --hud-edge-x-mobile: max(0px, calc(0.75rem - var(--scrollbar-gutter-x, 0px)));
+  --hud-edge-y-mobile-bottom: 0.75rem;
   --hud-inset-mobile: 2.75rem var(--hud-edge-x-mobile) 5.5rem;
-  --hud-inset-mobile-off-home: 2.75rem var(--hud-edge-x-mobile) 0.75rem;
+  --hud-inset-mobile-off-home: 2.75rem var(--hud-edge-x-mobile) var(--hud-edge-y-mobile-bottom);
   --hud-inset-mobile-bottom: 5.5rem;
   --nav-mobile-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
   /* Equal edges — corner ticks sit on this frame; header/nav pad inward from ticks */
@@ -178,6 +179,9 @@
     var(--hud-edge-x-desktop);
   --hud-chrome-pad: 0.6rem;
   --hud-header-inset: calc(var(--hud-edge-x-desktop) + var(--corner-size) + var(--hud-chrome-pad));
+  /* Scroll-to-top: inside L-ticks (same formula as header; overridden per breakpoint) */
+  --hud-scroll-inset-right: var(--hud-header-inset);
+  --hud-scroll-inset-bottom: var(--hud-header-inset);
   --hud-meta-inset: 1.35rem 1.85rem;
   --sidebar-width: clamp(220px, 20vw, 280px);
   --glyph-angle-open: '⟨ ';
@@ -1682,6 +1686,11 @@ html.nav-overlay-open body {
 @media (min-width: 768px) and (max-width: 1023px) {
   :root {
     --grid-origin: calc(var(--grid-size-tablet) * 0.5);
+    --hud-scroll-inset-right: calc(
+      var(--hud-edge-x-tablet) + var(--corner-size) + var(--hud-chrome-pad)
+    );
+    /* Frame bottom on tablet is 4.5rem (`--hud-inset-tablet`) */
+    --hud-scroll-inset-bottom: calc(4.5rem + var(--corner-size) + var(--hud-chrome-pad));
   }
 
   .hud__grid {
@@ -1819,6 +1828,13 @@ html.nav-overlay-open body {
     --mobile-header-pad-top: calc(0.85rem + env(safe-area-inset-top, 0px));
     --mobile-header-side-col: 6.35rem;
     --mobile-header-grid: var(--mobile-header-side-col) 1fr var(--mobile-header-side-col);
+    --hud-scroll-inset-right: calc(
+      var(--hud-edge-x-mobile) + var(--corner-size-mobile) + var(--hud-chrome-pad)
+    );
+    --hud-scroll-inset-bottom: calc(
+      var(--hud-edge-y-mobile-bottom) + var(--corner-size-mobile) + var(--hud-chrome-pad) +
+        env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .hud__grid {
