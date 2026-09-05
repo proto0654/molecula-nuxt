@@ -3,6 +3,7 @@ import {
   getPortfolioCategories,
   getPortfolioSlimIndex,
 } from '~/api/portfolio';
+import { preferStaticCachedData } from '~/composables/preferStaticCachedData';
 import { sortPortfolioSlimIndex } from '~/domain/portfolio/adjacent';
 import {
   normalizePortfolioPost,
@@ -25,18 +26,18 @@ export type UsePortfolioOptions = {
   shelf?: PortfolioShelf;
 };
 
-type ArchivePagePayload = {
+type ArchiveShelfPayload = {
   entries: ArchiveEntry[];
-  pagination: WpPaginationMeta;
   counts: { current: number; legacy: number };
 };
 
 /**
- * Slim-index paginated archive. Order matches CASE / NN within the shelf
- * (`menu_order ASC`, then `date DESC`).
+ * Full-shelf archive payload (SSG once per locale+shelf), then client page slice.
+ * Query `?page=N` cannot be prerendered as separate Nitro routes.
  */
 export function usePortfolio(options: UsePortfolioOptions = {}) {
   const { locale } = useLocale();
+  const nuxtApp = useNuxtApp();
   const perPage = options.perPage ?? 12;
   const shelf: PortfolioShelf = options.shelf ?? 'current';
   const pageSource = options.page ?? 1;
@@ -48,8 +49,8 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
   });
 
   const { data, pending, error, refresh } = useAsyncData(
-    () => `portfolio-archive-${locale.value}-${shelf}-${pageRef.value}-${perPage}`,
-    async (): Promise<ArchivePagePayload> => {
+    () => `portfolio-archive-${locale.value}-${shelf}`,
+    async (): Promise<ArchiveShelfPayload> => {
       const [rawSlim, rawCats] = await Promise.all([
         getPortfolioSlimIndex(),
         getPortfolioCategories(),
@@ -58,64 +59,60 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
       const sorted = sortPortfolioSlimIndex(rawSlim);
       const counts = shelfCounts(sorted, legacyId);
       const slim = filterSlimByShelf(sorted, shelf, legacyId);
-      const total = slim.length;
-      const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
-      const page = Math.min(pageRef.value, totalPages);
-      const start = (page - 1) * perPage;
-      const slice = slim.slice(start, start + perPage);
-      const posts = await getPortfolioPostsByIds(slice.map((item) => item.id));
+      const posts = await getPortfolioPostsByIds(slim.map((item) => item.id));
       const byId = new Map(posts.map((post) => [post.id, post]));
       const entries: ArchiveEntry[] = [];
-      for (let i = 0; i < slice.length; i += 1) {
-        const slimItem = slice[i]!;
+      for (let i = 0; i < slim.length; i += 1) {
+        const slimItem = slim[i]!;
         const raw = byId.get(slimItem.id);
         if (!raw) continue;
         entries.push({
           item: normalizePortfolioPost(raw, locale.value),
-          index: start + i + 1,
+          index: i + 1,
         });
       }
-      return {
-        entries,
-        pagination: { total, totalPages },
-        counts,
-      };
+      return { entries, counts };
     },
-    { watch: [pageRef, locale] },
+    {
+      watch: [locale],
+      getCachedData(key, app, ctx) {
+        return preferStaticCachedData<ArchiveShelfPayload>(
+          key,
+          app ?? nuxtApp,
+          ctx,
+        );
+      },
+    },
   );
 
-  const held = shallowRef<ArchivePagePayload | null>(null);
-  const heldPage = shallowRef<number | null>(null);
-  const dataPage = shallowRef<number | null>(null);
+  const held = shallowRef<ArchiveShelfPayload | null>(null);
   watch(
     data,
     (value) => {
-      if (value) {
-        held.value = value;
-        heldPage.value = pageRef.value;
-        dataPage.value = pageRef.value;
-      }
+      if (value) held.value = value;
     },
     { immediate: true },
   );
 
-  const transitioning = computed(() => dataPage.value !== pageRef.value);
+  const allEntries = computed(
+    () => data.value?.entries ?? held.value?.entries ?? [],
+  );
+
+  const pagination = computed((): WpPaginationMeta => {
+    const total = allEntries.value.length;
+    const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
+    return { total, totalPages };
+  });
+
+  const pageClamped = computed(() =>
+    Math.min(pageRef.value, pagination.value.totalPages),
+  );
+
+  const transitioning = computed(() => false);
 
   const entries = computed(() => {
-    if (data.value?.entries && dataPage.value === pageRef.value) {
-      return data.value.entries;
-    }
-    if (heldPage.value === pageRef.value) return held.value?.entries ?? [];
-    return [];
-  });
-  const pagination = computed((): WpPaginationMeta => {
-    if (data.value?.pagination && dataPage.value === pageRef.value) {
-      return data.value.pagination;
-    }
-    if (heldPage.value === pageRef.value) {
-      return held.value?.pagination ?? { total: 0, totalPages: 0 };
-    }
-    return held.value?.pagination ?? { total: 0, totalPages: 0 };
+    const start = (pageClamped.value - 1) * perPage;
+    return allEntries.value.slice(start, start + perPage);
   });
 
   const counts = computed(
@@ -137,8 +134,21 @@ export function usePortfolio(options: UsePortfolioOptions = {}) {
 
 /** Optional category name map for archive meta. */
 export function usePortfolioCategories() {
-  return useAsyncData('portfolio-categories', async () => {
-    const cats = await getPortfolioCategories();
-    return cats.map(normalizePortfolioCategory) as PortfolioCategory[];
-  });
+  const nuxtApp = useNuxtApp();
+  return useAsyncData(
+    'portfolio-categories',
+    async () => {
+      const cats = await getPortfolioCategories();
+      return cats.map(normalizePortfolioCategory) as PortfolioCategory[];
+    },
+    {
+      getCachedData(key, app, ctx) {
+        return preferStaticCachedData<PortfolioCategory[]>(
+          key,
+          app ?? nuxtApp,
+          ctx,
+        );
+      },
+    },
+  );
 }

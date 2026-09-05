@@ -54,7 +54,7 @@ Capture non-obvious gotchas where they belong (existing file or the new domain d
 
 - Hero: dispose/HMR, bond orientation, color maps, `navigationConfig` `atomId` alignment, `ClientOnly` mount, `TransitionController` vs `Navigator` zoom.
 - Content: absence = `null` / `[]` (do not render empty sections); components must not call WP URLs directly.
-- Prerender: portfolio slugs queued in `nitro:config` from live WP; Pages is static (`generate`), no Nitro server.
+- Prerender: CPT slugs queued in `nitro:config` from live WP; Pages/prod are static (`generate`); **strict SSG** — prod client never calls `/wp-json` (see [`docs/CONTENT.md`](../../docs/CONTENT.md)).
 
 Do **not** create Bitrix / 1C / LK / WinSCP docs, migration archives, or parallel session “fixes” changelogs. Do **not** duplicate the same architecture in three places — update the domain doc and keep CONTEXT/hub as pointers.
 

@@ -21,7 +21,7 @@ Live response notes: [`api-real-response.md`](api-real-response.md).
 
 | Module | Role |
 |--------|------|
-| `client.ts` | `wpFetch` / `wpFetchPaginated` + `X-WP-Total` / `X-WP-TotalPages` |
+| `client.ts` | `wpFetch` / `wpFetchPaginated` + pagination headers; **prod client blocked** (SSG) |
 | `portfolio.ts` | list page, posts by ids, case by slug, categories, slim index, slugs |
 | `services.ts` | posts by ids, service by slug, slim index, slugs |
 | `options.ts` | ACF theme options (`/acf/v3/options/options`) — RU chrome for services + contacts + hero tag cloud |
@@ -61,10 +61,10 @@ Rules:
 | Route | Source |
 |-------|--------|
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
-| `/portfolio` | `usePortfolio({ shelf: 'current' })` — slim-index pagination, editorial rows; cross-link to legacy shelf |
-| `/portfolio/legacy` | `usePortfolio({ shelf: 'legacy' })` — `portfolio_category: legacy` only; cross-link back to current |
+| `/portfolio` | `usePortfolio({ shelf: 'current' })` — full-shelf SSG payload, client `?page=` slice; editorial rows; cross-link to legacy shelf |
+| `/portfolio/legacy` | `usePortfolio({ shelf: 'legacy' })` — same pattern for `portfolio_category: legacy`; cross-link back to current |
 | `/portfolio/[slug]` | `CaseShell` + [`usePortfolioCaseNav`](../app/composables/usePortfolioCaseNav.ts) (CASE / NN + prev/next within shelf) + video hero + layout featured wash / accent overlay + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT; archive return (Index, footer, hero menu «Портфолио») restores shelf + pagination when opened from archive row |
-| `/services` | `useServices(page)` — slim-index pagination, editorial rows **without** featured wash; same archive pagination scroll gate |
+| `/services` | `useServices(page)` — full-list SSG payload, client `?page=` slice; editorial rows **without** featured wash; same archive pagination scroll gate |
 | `/services/[slug]` | `ArchiveShell` (`SERVICE / NN`) + Index kicker + title/tags + intro + offer repeater (`archive-list` rows: index, price meta, hover line/arrow, body + order CTA) + [`ArchiveDetailNav`](../app/components/archive/DetailNav.vue) |
 | `/about` | `ArchiveShell` + Index kicker + title/tags + optional photo + intro + skills repeater (`archive-list`) + CTA → `/contact` |
 | `/contact` | `ArchiveShell` + Index kicker «Контакты» + intro (`contact_popup_text`) + optional H2 (`contact_popup_title`) + contacts (`ContactArchiveRow` / `archive-list`) |
@@ -119,7 +119,14 @@ Mobile field mapping (cases): slices from `screen-mobile` (`block_ratio` default
 
 ## Prerender / Pages
 
-[`nuxt.config.ts`](../nuxt.config.ts) `nitro:config` hook fetches publish slugs and queues `/portfolio/{slug}` and `/services/{slug}`. GitHub Pages uses `npm run generate` (static); no Nitro runtime.
+**Strict SSG for CMS text:** production browser never calls `api…/wp-json`. WordPress REST runs only during `nuxt generate` (and `nuxt dev`). Content updates require push / `workflow_dispatch` → generate → deploy. Media `src`/`srcset` still point at `api.weblaba.ru/wp-content/…` (URLs baked into HTML).
+
+[`nuxt.config.ts`](../nuxt.config.ts) `nitro:config` queues:
+
+- publish slugs → `/portfolio/{slug}`, `/services/{slug}` (+ `/en/…`)
+- archive bases `/portfolio`, `/portfolio/legacy`, `/services` (+ EN); `?page=N` slices the **full shelf payload** client-side (Nitro skips query-string prerender routes)
+
+`experimental.sharedPrerenderData` + `preferStaticCachedData` reuse payload across routes. `wpFetch` throws on production client if anything tries a live REST call.
 
 Deploy: [DEPLOY.md](DEPLOY.md) — production [weblaba.ru](https://weblaba.ru) via [deploy-production.yml](../.github/workflows/deploy-production.yml); preview [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/) via [deploy.yml](../.github/workflows/deploy.yml) (`NUXT_PUBLIC_INDEXABLE=false`). WP API: `https://api.weblaba.ru/wp-json`.
 

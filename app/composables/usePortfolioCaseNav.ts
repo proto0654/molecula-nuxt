@@ -1,5 +1,7 @@
 import type { MaybeRefOrGetter } from 'vue';
 import { getPortfolioSlimIndex } from '~/api/portfolio';
+import type { PortfolioSlimItem } from '~/api/portfolio';
+import { preferStaticCachedData } from '~/composables/preferStaticCachedData';
 import { localizedSlimTitle } from '~/domain/i18n';
 import type { CasePosition } from '~/domain/portfolio/adjacent';
 import {
@@ -25,6 +27,7 @@ import { usePortfolioCategories } from '~/composables/usePortfolio';
 export function usePortfolioCaseNav(slug: MaybeRefOrGetter<string>) {
   const slugRef = computed(() => String(toValue(slug) || ''));
   const { locale } = useLocale();
+  const nuxtApp = useNuxtApp();
 
   function localizePosition(position: CasePosition): CasePosition {
     const localize = (item: CasePosition['prev']) =>
@@ -46,8 +49,18 @@ export function usePortfolioCaseNav(slug: MaybeRefOrGetter<string>) {
     };
   }
 
-  const { data: slimIndex } = useAsyncData('portfolio-slim-index', () =>
-    getPortfolioSlimIndex(),
+  const { data: slimIndex } = useAsyncData(
+    'portfolio-slim-index',
+    () => getPortfolioSlimIndex(),
+    {
+      getCachedData(key, app, ctx) {
+        return preferStaticCachedData<PortfolioSlimItem[]>(
+          key,
+          app ?? nuxtApp,
+          ctx,
+        );
+      },
+    },
   );
 
   const { data: categories } = usePortfolioCategories();

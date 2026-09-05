@@ -27,12 +27,13 @@ Global site chrome and UI copy from **ACF Options** (`GET /acf/v3/options/option
 
 | Layer | Path | Role |
 |-------|------|------|
-| Fetch | `getMoleculeHeroPages` / `useMoleculeHeroNav` | Five pages, lazy |
+| Fetch | `getMoleculeHeroPages` / `useMoleculeHeroNav` | Five pages, lazy; generate prefetch |
+| Plugin | `app/plugins/molecule-hero-nav.ts` | Prefetch into payload (strict SSG) |
 | Normalize | `normalizeMoleculeHeroPages` + `mergeHeroNavigation` | title + `hero_*` → nav items |
 
 **Rules**
 
-- Hero / WebGL never blocks on fetch — `navigationConfig` mounts with empty copy; page `hero_*` merges when present (`useMoleculeHeroNav` is lazy, client-only).
+- Hero / WebGL never blocks on fetch — `navigationConfig` mounts with empty copy; page `hero_*` merges when present (`useMoleculeHeroNav` is **lazy**; prod payload via [`molecule-hero-nav`](../app/plugins/molecule-hero-nav.ts) plugin + SSG).
 - Empty Options UI strings show as `[key]` (`missingUiString`) — no silent RU hardcode in Nuxt.
 - One Options fetch key for chrome consumers (`useThemeOptionsAcf` / `useThemeOptionsAcfData`).
 - RU at `/`; EN at `/en/*` (mirrored via `pages:extend` + prerender). `useLocale()` + [`app/domain/i18n/`](../app/domain/i18n/).

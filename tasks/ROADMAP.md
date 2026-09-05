@@ -80,3 +80,4 @@ EN i18n. Не ломать content pipeline и `absence = null`.
 - [x] Foundation gaps: WP menu footer consumer, privacy prerender/sitemap, GTM noscript, image `srcset`
 - [x] `case_thanks_message` → CaseThanks (before NEXT; left full-bleed; empty → omit)
 - [x] EN i18n (`*_en` typed, UI still RU)
+- [x] Strict SSG: prod payload-only CMS (`wpFetch` client gate, hero plugin, full-shelf archive payloads)

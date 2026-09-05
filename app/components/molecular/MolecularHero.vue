@@ -16,7 +16,7 @@ const spatial = useSpatialState();
 const router = useRouter();
 const { tags } = useHeroTagCloud();
 const { options } = useThemeOptions();
-const { navItems, refresh: refreshHeroNav } = useMoleculeHeroNav();
+const { navItems } = useMoleculeHeroNav();
 
 const heroChromeCopy = computed(() => resolveHeroChromeCopy(options.value.ui));
 
@@ -76,10 +76,6 @@ onMounted(() => {
   hero.setTagCloud(tags.value);
   applyNavCopy();
   applyChromeCopy();
-
-  void refreshHeroNav().then(() => {
-    applyNavCopy();
-  });
 
   stopTransition = hero.onTransition((snap) => {
     if (!snap.busy) revealWhenSettled();

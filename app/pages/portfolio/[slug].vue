@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { getPortfolioCase } from '~/api/portfolio';
+import { preferStaticCachedData } from '~/composables/preferStaticCachedData';
 import { resolveAdjacentFlipDirection, useCasePageTransition } from '~/composables/useCasePageTransition';
 import {
   caseExcerptPlain,
@@ -12,10 +13,12 @@ import {
   stripTags,
 } from '~/domain/portfolio/presentation';
 import { resolveCaseHeroMedia } from '~/domain/editorialHero';
+import type { Case } from '~/types/wp';
 
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
 const { locale } = useLocale();
+const nuxtApp = useNuxtApp();
 
 const { position, archiveScope, positionForSlug } = usePortfolioCaseNav(slug);
 
@@ -41,7 +44,12 @@ const { data, pending, error } = useAsyncData(
     }
     return normalizePortfolioPost(raw, locale.value);
   },
-  { watch: [slug, locale] },
+  {
+    watch: [slug, locale],
+    getCachedData(key, app, ctx) {
+      return preferStaticCachedData<Case>(key, app ?? nuxtApp, ctx);
+    },
+  },
 );
 
 const held = shallowRef(data.value ?? null);

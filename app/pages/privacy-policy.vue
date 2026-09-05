@@ -1,10 +1,20 @@
 ﻿<script setup lang="ts">
 import { getPage } from '~/api';
+import { preferStaticCachedData } from '~/composables/preferStaticCachedData';
 import { demoteCmsH1, htmlToPlainText } from '~/domain/wp';
 import { stripTags } from '~/domain/portfolio/presentation';
+import type { WpPage } from '~/types/wp';
 
-const { data: page, pending, error } = useAsyncData('page-privacy-policy', () =>
-  getPage('privacy-policy'),
+const nuxtApp = useNuxtApp();
+
+const { data: page, pending, error } = useAsyncData(
+  'page-privacy-policy',
+  () => getPage('privacy-policy'),
+  {
+    getCachedData(key, app, ctx) {
+      return preferStaticCachedData<WpPage | null>(key, app ?? nuxtApp, ctx);
+    },
+  },
 );
 
 const { revealing } = usePageContentReveal();

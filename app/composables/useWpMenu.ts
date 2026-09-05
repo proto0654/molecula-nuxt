@@ -1,4 +1,5 @@
 import { getMenu } from '~/api/menus';
+import { preferStaticCachedData } from '~/composables/preferStaticCachedData';
 import { normalizeMenu } from '~/domain/menus/normalizeMenu';
 import type { NavigationMenu } from '~/types/wp';
 
@@ -7,6 +8,7 @@ import type { NavigationMenu } from '~/types/wp';
  */
 export function useWpMenu(slug: string | Ref<string> = 'main') {
   const slugRef = computed(() => unref(slug));
+  const nuxtApp = useNuxtApp();
 
   const { data, pending, error, refresh } = useAsyncData(
     () => `wp-menu-${slugRef.value}`,
@@ -14,7 +16,16 @@ export function useWpMenu(slug: string | Ref<string> = 'main') {
       const raw = await getMenu(slugRef.value);
       return raw ? normalizeMenu(raw) : null;
     },
-    { watch: [slugRef] },
+    {
+      watch: [slugRef],
+      getCachedData(key, app, ctx) {
+        return preferStaticCachedData<NavigationMenu | null>(
+          key,
+          app ?? nuxtApp,
+          ctx,
+        );
+      },
+    },
   );
 
   return {

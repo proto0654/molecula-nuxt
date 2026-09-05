@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { getServiceBySlug, getServiceSlimIndex } from '~/api';
-import { getServicePosition } from '~/domain/services/adjacent';
+import type { ServiceSlimItem } from '~/api/services';
+import {
+  getServicePosition,
+  type ServicePosition,
+} from '~/domain/services/adjacent';
+import { preferStaticCachedData } from '~/composables/preferStaticCachedData';
 import { localizedSlimTitle } from '~/domain/i18n';
 import { resolveAdjacentFlipDirection } from '~/composables/useCasePageTransition';
 import {
@@ -11,14 +16,30 @@ import {
 import { resolveServiceHeroMedia } from '~/domain/editorialHero';
 import { demoteCmsH1 } from '~/domain/wp';
 import { stripTags } from '~/domain/portfolio/presentation';
+import type { Service } from '~/types/wp';
 
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
 const { locale } = useLocale();
+const nuxtApp = useNuxtApp();
+
+type ServicePagePayload = {
+  service: Service;
+  position: ServicePosition;
+};
 
 const { data: serviceSlimIndex } = useAsyncData(
   'service-slim-index',
   () => getServiceSlimIndex(),
+  {
+    getCachedData(key, app, ctx) {
+      return preferStaticCachedData<ServiceSlimItem[]>(
+        key,
+        app ?? nuxtApp,
+        ctx,
+      );
+    },
+  },
 );
 
 const { data, pending, error } = useAsyncData(
@@ -36,7 +57,16 @@ const { data, pending, error } = useAsyncData(
     const position = getServicePosition(slug.value, slim);
     return { service, position };
   },
-  { watch: [slug, locale] },
+  {
+    watch: [slug, locale],
+    getCachedData(key, app, ctx) {
+      return preferStaticCachedData<ServicePagePayload>(
+        key,
+        app ?? nuxtApp,
+        ctx,
+      );
+    },
+  },
 );
 
 const { acf: themeAcf } = useThemeOptionsAcfData();

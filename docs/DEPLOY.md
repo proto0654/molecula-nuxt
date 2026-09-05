@@ -19,6 +19,8 @@ push main
 
 Media URLs come from WordPress as absolute `https://api.weblaba.ru/wp-content/...` — no rewrite in Nuxt.
 
+**CMS text is SSG-only:** editing WordPress does **not** change weblaba.ru until the next `npm run generate` deploy (push to `main` or Actions → Run workflow). After deploy, DevTools → Network should show **no** `/wp-json` XHR — only `_payload.json` / static assets (and `wp-content` media). `npm run dev` still hits the live API for local editing.
+
 ---
 
 ## Part A — SSH key for GitHub Actions

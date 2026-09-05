@@ -54,10 +54,11 @@ EN stubs (schema only until `/en/`): `hero_usp_en`, `hero_blurb_en`, `hero_blurb
 
 ## Nuxt runtime
 
-1. `getMoleculeHeroPages()` — slim `_fields=id,slug,title,acf`
-2. `normalizeMoleculeHeroPages()` → `HeroNavItemRow[]`
-3. `mergeHeroNavigation(rows, navigationConfig.items)` in `useMoleculeHeroNav()` (**lazy** — hero never waits on WP)
-4. `MolecularHero` watches `navItems` and calls `setNavigationItems`
+1. `getMoleculeHeroPages()` — slim `_fields=id,slug,title,acf` (generate / `nuxt dev` only)
+2. Plugin [`molecule-hero-nav.ts`](../app/plugins/molecule-hero-nav.ts) prefetches into payload; production SPA reads `_payload.json` (no client REST)
+3. `normalizeMoleculeHeroPages()` → `HeroNavItemRow[]`
+4. `mergeHeroNavigation(rows, navigationConfig.items)` in `useMoleculeHeroNav()` (**lazy** — molecule mounts with empty copy until payload resolves)
+5. `MolecularHero` watches `navItems` and calls `setNavigationItems`
 
 ```
 displayBlurb = buildAtomBlurb({ blurb, blurbCta })

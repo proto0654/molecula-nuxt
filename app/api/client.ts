@@ -43,6 +43,17 @@ function parseHeaderInt(headers: Headers, name: string, fallback: number): numbe
 }
 
 /**
+ * Strict SSG: production browser must not hit WP REST (payload only).
+ * Allowed: Node/prerender (`import.meta.server`) and `nuxt dev`.
+ */
+function assertWpFetchAllowed(path: string): void {
+  if (import.meta.server || import.meta.dev) return;
+  throw new Error(
+    `[wpFetch] blocked in production client (${path}). Content is SSG — redeploy after CMS changes.`,
+  );
+}
+
+/**
  * Typed WordPress REST fetch. Components must not call WP URLs directly.
  */
 export async function wpFetch<T>(
@@ -50,6 +61,7 @@ export async function wpFetch<T>(
   options: FetchOptions<'json'> = {},
   baseOverride?: string,
 ): Promise<T> {
+  assertWpFetchAllowed(path);
   const url = joinUrl(resolveWpApiBase(baseOverride), path);
   return $fetch<T>(url, options);
 }
@@ -62,6 +74,7 @@ export async function wpFetchPaginated<T>(
   options: FetchOptions<'json'> = {},
   baseOverride?: string,
 ): Promise<WpPaginatedResult<T>> {
+  assertWpFetchAllowed(path);
   const url = joinUrl(resolveWpApiBase(baseOverride), path);
   const response = await $fetch.raw<T>(url, options);
   const data = response._data as T;
