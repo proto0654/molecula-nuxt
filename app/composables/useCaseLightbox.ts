@@ -5,6 +5,8 @@ export type CaseLightboxItem = {
   image: CaseImage;
   /** Technical label e.g. SCREEN / 03 */
   label: string;
+  /** Phone screenshots: constrain width on desktop (mockup / slices). */
+  variant?: 'mobile';
 };
 
 export type CaseLightboxState = {

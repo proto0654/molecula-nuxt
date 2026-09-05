@@ -29,6 +29,8 @@
   --case-accent-ink: color-mix(in srgb, var(--case-accent) 42%, var(--color-ink-bright));
   --case-media-max: min(68vh, 38rem);
   --case-mobile-max: min(20rem, 34vw);
+  /* Lightbox phone screens (mockup / slices) — slightly wider than in-page mockup */
+  --case-lightbox-mobile-max: min(26rem, 92vw);
   --case-mobile-caption-max: 44rem;
   /* Desktop screens: absolute + relative width cap */
   --case-screen-max: min(52rem, 78vw);
@@ -2356,6 +2358,10 @@ html.case-lightbox-open {
   pointer-events: none;
 }
 
+.case-lightbox--mobile .case-lightbox__panel {
+  width: min(100%, var(--case-lightbox-mobile-max));
+}
+
 .case-lightbox__bar {
   display: flex;
   align-items: baseline;
@@ -2523,6 +2529,7 @@ html.js-enabled .case-page.is-revealing .case-thanks[data-enter='tail'].is-revea
 }
 
 .case-nav__link {
+  display: block;
   color: var(--color-ink-title);
   text-decoration: none;
   font-size: var(--text-nav);

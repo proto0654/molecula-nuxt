@@ -80,6 +80,9 @@ onBeforeUnmount(() => {
     <div
       v-if="lightbox.state.open && lightbox.current"
       class="case-lightbox"
+      :class="{
+        'case-lightbox--mobile': lightbox.current.variant === 'mobile',
+      }"
       role="dialog"
       aria-modal="true"
       :aria-label="lightbox.current.label || dialogLabelFallback"
@@ -128,7 +131,13 @@ onBeforeUnmount(() => {
             class="case-lightbox__img"
             :src="lightbox.currentUrl"
             :srcset="lightbox.currentSrcSet ?? undefined"
-            :sizes="lightbox.currentSrcSet ? '100vw' : undefined"
+            :sizes="
+              lightbox.currentSrcSet
+                ? lightbox.current.variant === 'mobile'
+                  ? '(min-width: 1024px) 26rem, 92vw'
+                  : '100vw'
+                : undefined
+            "
             :alt="lightbox.current.image.alt || lightbox.current.label"
           />
         </div>

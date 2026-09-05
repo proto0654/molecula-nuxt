@@ -72,6 +72,7 @@ function openFull() {
       {
         image: slices.image,
         label: 'MOBILE / FULL',
+        variant: 'mobile',
       },
     ],
     0,

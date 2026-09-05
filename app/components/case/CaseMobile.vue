@@ -44,6 +44,7 @@ function openMockup() {
       {
         image: props.caseData.mobile.image,
         label: 'MOBILE / 01',
+        variant: 'mobile',
       },
     ],
     0,
