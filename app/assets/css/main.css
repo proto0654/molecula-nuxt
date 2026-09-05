@@ -117,6 +117,13 @@
   --accent: var(--color-accent);
   --accent-ink: color-mix(in srgb, var(--color-accent) 42%, var(--color-ink-bright));
   --grid-opacity: 0.032;
+  /* Edge vignette grid — ink with a slight brand-mint cast */
+  --grid-line: color-mix(in srgb, var(--color-accent) 40%, var(--color-ink));
+  --grid-line-fade: color-mix(
+    in srgb,
+    var(--grid-line) calc(var(--grid-opacity) * 100%),
+    transparent
+  );
   --frame-opacity: 0.28;
   --line-opacity: 0.22;
 
@@ -396,11 +403,18 @@ html.hero-lock #__nuxt {
   display: none;
 }
 
-/* Settled route: neutral grid — no cool gray cast over the molecule. */
+/* Settled route: quieter grid, same mint cast as home. */
 .molecular-chrome.is-settled-route .hud__grid {
   background-image:
-    linear-gradient(rgb(255 255 255 / 0.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 0.022) 1px, transparent 1px);
+    linear-gradient(
+      color-mix(in srgb, var(--grid-line) 2.2%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--grid-line) 2.2%, transparent) 1px,
+      transparent 1px
+    );
 }
 
 /* Molecule nav (desktop rail + mobile bottom) — home only. Off-home mobile uses MENU + overlay. */
@@ -551,8 +565,8 @@ html.hero-lock #__nuxt {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgb(214 219 224 / var(--grid-opacity)) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(214 219 224 / var(--grid-opacity)) 1px, transparent 1px);
+    linear-gradient(var(--grid-line-fade) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line-fade) 1px, transparent 1px);
   background-size: var(--grid-size) var(--grid-size);
   background-position: var(--grid-origin) var(--grid-origin);
   mask-image: radial-gradient(ellipse 55% 50% at 50% 46%, transparent 42%, #000 100%);

@@ -14,7 +14,7 @@ import {
 import { AtomLabel } from './AtomLabel';
 import type { QualityMaterialKind, QualitySettings } from './quality/types';
 import type { GeometryCache } from './resources/GeometryCache';
-import { SCENE_BG } from './sceneColors';
+import { SHELL_DIM_COLOR } from './sceneColors';
 import type { AtomConfig } from './types';
 
 const COLOR_BY_LABEL: Record<string, number> = {
@@ -49,7 +49,7 @@ export class Atom {
   private shellColorMix = FIXED_SHELL_COLOR_MIX;
   private sweepLightingRelief = 0;
   private readonly baseShellColor = new Color();
-  private readonly dimShellColor = new Color(SCENE_BG);
+  private readonly dimShellColor = new Color(SHELL_DIM_COLOR);
   private readonly shellShadow = new Color(SHELL_SHADOW_COLOR);
   private readonly scratchShellColor = new Color();
 
