@@ -80,7 +80,7 @@ MoleculeController         setMode / restoreOverview / focus* / freeze
 | Mode | Molecule | Pointer |
 |---|---|---|
 | `home` | Hub atom `C` focused (`restoreOverview`) with full readout (blurb + USP via `onHomeActivated`). Always committed — no unselected / empty rest. Zoom/fill at rest. | Unfrozen: mouse/touch tilt. |
-| `section` | `focusSection(sectionId)` → matching nav atom, **held at approach** (zoom+fill = 1, planet framing per atom) | Frozen |
+| `section` | `focusSection(sectionId)` → matching nav atom, **held at approach** (zoom+fill = 1, planet framing per atom). `/privacy-policy` frames hub `C` the same way but is not a nav-rail destination. | Frozen |
 | `portfolio-archive` / `case` | `focusContext('portfolio')` → work atom `H3`, held at approach (planet from bottom) | Frozen |
 | `service-archive` / `service` | `focusContext('services')` → `H2`, held at approach (planet from top) | Frozen |
 

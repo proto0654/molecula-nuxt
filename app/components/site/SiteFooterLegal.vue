@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { internalAppPathFromHref } from '~/domain/menus';
+import { stripLocalePrefix } from '~/domain/i18n';
+
 const { options } = useThemeOptions();
+const { localizedPath } = useLocale();
 
 const disclaimer = computed(() => options.value.footer.disclaimer);
 const cookieNotice = computed(() => options.value.footer.cookieNotice);
@@ -8,6 +12,27 @@ const copyright = computed(() => options.value.footer.copyright);
 const hasContent = computed(
   () => Boolean(disclaimer.value || cookieNotice.value || copyright.value),
 );
+
+/** WP cookie HTML uses raw `<a>` — intercept same-origin so the canvas SPA hop runs. */
+function onCookieClick(event: MouseEvent): void {
+  if (event.defaultPrevented || event.button !== 0) return;
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const anchor = target.closest('a');
+  if (!anchor) return;
+  if (anchor.target && anchor.target !== '_self') return;
+
+  const href = anchor.getAttribute('href');
+  if (!href) return;
+
+  const appPath = internalAppPathFromHref(href);
+  if (!appPath) return;
+
+  event.preventDefault();
+  void navigateTo(localizedPath(stripLocalePrefix(appPath)));
+}
 </script>
 
 <template>
@@ -17,6 +42,7 @@ const hasContent = computed(
       v-if="cookieNotice"
       class="site-footer-legal__line site-footer-legal__line--cookie"
       v-html="cookieNotice"
+      @click="onCookieClick"
     />
     <p v-if="copyright" class="site-footer-legal__line">{{ copyright }}</p>
   </footer>

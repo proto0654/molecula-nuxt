@@ -2,8 +2,8 @@ import { prefersReducedMotion } from '../a11y/reducedMotion';
 import { approachFramingForAtom } from '../molecular/composition/approachFraming';
 import type { MoleculeController } from '../molecular/MoleculeController';
 import type { NavigationState } from '../navigation/NavigationState';
+import { getItemById } from '../navigation/navigationConfig';
 import {
-  atomIdForSection,
   atomIdForSpatialState,
   HOME_ITEM_ID,
   itemIdForContext,
@@ -160,8 +160,9 @@ export class SpatialController {
       case 'section': {
         const sectionId = state.sectionId;
         if (sectionId) {
+          // Only nav-backed sections commit a rail id (privacy frames hub but is not a nav item).
           this.navigationState.setCommitted(
-            atomIdForSection(sectionId) ? sectionId : null,
+            getItemById(sectionId) ? sectionId : null,
           );
         }
         break;

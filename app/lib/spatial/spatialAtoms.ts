@@ -10,7 +10,11 @@ export const CONTEXT_ITEM_ID: Record<SpatialContext, string> = {
 export const HOME_ITEM_ID = 'home';
 
 export function atomIdForSection(sectionId: string): string | null {
-  return getItemById(sectionId)?.atomId ?? null;
+  const fromNav = getItemById(sectionId)?.atomId ?? null;
+  if (fromNav) return fromNav;
+  // Legal page: frame hub at approach (not a nav-rail destination).
+  if (sectionId === 'privacy-policy') return hubAtomId();
+  return null;
 }
 
 export function atomIdForContext(context: SpatialContext): string | null {

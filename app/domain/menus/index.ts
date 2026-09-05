@@ -1,2 +1,6 @@
 export { normalizeMenu } from './normalizeMenu';
-export { menuItemHref, menuItemIsExternal } from './menuLink';
+export {
+  internalAppPathFromHref,
+  menuItemHref,
+  menuItemIsExternal,
+} from './menuLink';
