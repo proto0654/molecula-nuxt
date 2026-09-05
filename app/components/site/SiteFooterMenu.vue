@@ -69,13 +69,13 @@ const hasItems = computed(() => items.value.length > 0 && !isContact.value);
 
 .site-footer-menu__link {
   font: 300 0.72rem/1.4 var(--font-body, sans-serif);
-  color: color-mix(in srgb, var(--wl-text, #e8fff4) 72%, transparent);
+  color: var(--color-accent);
   text-decoration: none;
   text-underline-offset: 0.15em;
 }
 
 .site-footer-menu__link:hover {
-  color: var(--wl-text, #e8fff4);
+  color: var(--color-ink-white);
   text-decoration: underline;
 }
 </style>

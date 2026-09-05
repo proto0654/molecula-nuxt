@@ -1,12 +1,13 @@
 import { Group, type Camera, type Object3D, Vector3 } from 'three';
 import { Text } from 'troika-three-text';
+import { ACCENT_COLOR } from './sceneColors';
 
 /** Idle titles stay muted so the committed atom reads as primary. */
 const LETTER_COLOR_IDLE = 0x000000;
 const LETTER_COLOR_ACTIVE = 0xd6dbe0;
 const REMAINDER_COLOR_IDLE = 0x000000;
 const REMAINDER_COLOR_ACTIVE = 0xb8c0c8;
-const BLURB_COLOR = 0x8b949e;
+const BLURB_COLOR = ACCENT_COLOR;
 const REMAINDER_GAP = 0.08;
 const TYPE_SECONDS = 0.028;
 /** Camera distance at rest framing — scale 1 here keeps the original glyph size. */

@@ -27,10 +27,10 @@ const { visible, enabled, scrollToTop } = useScrollToTopState(settings);
   height: 2.25rem;
   display: grid;
   place-items: center;
-  border: 1px solid var(--wl-line);
+  border: 1px solid var(--color-accent);
   border-radius: 0;
   background: transparent;
-  color: var(--color-ink);
+  color: var(--color-accent);
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
@@ -61,12 +61,12 @@ const { visible, enabled, scrollToTop } = useScrollToTopState(settings);
 
 .scroll-to-top:hover,
 .scroll-to-top:focus-visible {
-  color: var(--color-ink-bright);
-  border-color: color-mix(in srgb, var(--color-ink) 42%, transparent);
+  color: var(--color-ink-white);
+  border-color: var(--color-ink-white);
 }
 
 .scroll-to-top:focus-visible {
-  outline: 1px solid var(--color-ink);
+  outline: 1px solid var(--color-ink-white);
   outline-offset: 2px;
 }
 

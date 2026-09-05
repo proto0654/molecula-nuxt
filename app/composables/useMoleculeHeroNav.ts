@@ -1,6 +1,5 @@
 import { getMoleculeHeroPages } from '~/api';
 import {
-  logMoleculeHeroNavCoverage,
   mergeHeroNavigation,
   normalizeMoleculeHeroPages,
 } from '~/domain/hero';
@@ -30,22 +29,6 @@ export function useMoleculeHeroNav() {
   );
 
   const navItems = computed(() => mergeHeroNavigation(rows.value, locale.value));
-
-  watch(
-    [rows, pending, error, status],
-    () => {
-      if (pending.value || status.value === 'idle') return;
-      if (error.value) {
-        if (import.meta.dev) {
-          console.warn('[molecule-hero-nav] fetch error', error.value);
-        }
-        return;
-      }
-      if (status.value !== 'success') return;
-      logMoleculeHeroNavCoverage(rows.value);
-    },
-    { immediate: true },
-  );
 
   return { navItems, rows, pending, error, refresh, status };
 }

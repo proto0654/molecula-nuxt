@@ -25,15 +25,21 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--color-ink` | `#d6dbe0` | Default HUD / body text |
 | `--color-ink-bright` | `#f4f6f8` | Nav hover / `.is-active` |
 | `--color-ink-title` | `#e8ecef` | Destination title |
-| `--color-ink-white` | `#fff` | Committed nav label, return hover |
+| `--color-ink-white` | `#fff` | Locale hover / bright chrome |
+| `--color-accent` | `#6ec99f` | Brand accent (logo mark) — committed cues, hovers, neon title glow |
 | `--ink-04` … `--ink-78` | `rgb(214 219 224 / α)` | Legacy alpha steps |
 | `--ui-muted` | → `--ink-42` | Meta / status |
 | `--ui-primary` | → `--color-ink` | Default chrome text |
-| `--accent` | → `--color-ink-white` | Committed marker / signal |
+| `--accent` | → `--color-accent` | Semantic accent alias |
+| `--accent-ink` | `color-mix(accent 42%, ink-bright)` | Readable accent labels on dark bg |
+| `--accent-line` | `color-mix(accent 22%, bg)` | Solid quiet listing / connector hairlines (no alpha) |
+| `--title-text-shadow` | soft `0 0 0.55em` accent @ 42% | Scramble / USP neon glow (static; no keyframe) |
+| `--scramble-duration` | `1.05s` | Match `scrambleText` — ink lift animation length |
 | `--grid-opacity` | `0.032` | Edge grid stroke alpha |
 | `--frame-opacity` | `0.28` | Corner ticks / active rail marker |
 | `--line-opacity` | `0.22` | Divider, SVG connector |
-| `--wl-line` | → `rgb(214 219 224 / var(--line-opacity))` | **Hairline language** — all 1px rules site-wide |
+| `--wl-line` | → `rgb(214 219 224 / var(--line-opacity))` | **Hairline language** — structural 1px rules |
+| `--wl-accent` | → `--color-accent` | Interactive accent (listing hover titles, pagination) |
 | `--line-draw-duration` / `--line-draw-ease` / `--reveal-content-delay` | `1.25s` / `cubic-bezier(0.33, 0, 0.18, 1)` / `500ms` | Animated draw — see [Hairline language](#hairline-language) + [`MOTION.md`](MOTION.md) |
 | `--enter-*` / `--reveal-cap` | see [`MOTION.md`](MOTION.md) | Off-home HTML entrance (beats, listing chain) |
 | `--font-ui` | `'JetBrains Mono'`, ui-monospace fallbacks | HUD / titles / markers (self-hosted Cyrillic) |
@@ -159,10 +165,12 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Caption letter (active) | `0xd6dbe0` | Committed atom title (`--color-ink`) |
 | Caption remainder (idle) | `0x000000` | Matches idle letter |
 | Caption remainder (active) | `0xb8c0c8` | Committed remainder |
-| Caption blurb | `0x8b949e` | `AtomLabel` `BLURB_COLOR` |
-| Selection rings / ticks / cross | `0xb8c0c8` | `AtomSelectionIndicator` `RING_COLOR` (base) |
-| Selection chrome (settled freeze) | `0x000000` | Lerp after approach settle; opacity unchanged |
-| Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell (base); same black lerp when settled |
+| Caption blurb | `0x6ec99f` | `AtomLabel` `BLURB_COLOR` → `ACCENT_COLOR` |
+| Selection rings / ticks / cross (hover) | `0xb8c0c8` | `AtomSelectionIndicator` `RING_COLOR` |
+| Selection rings (committed) | `0x6ec99f` | Same indicator — `ACCENT_COLOR`; outer rings fade (`RING_OPACITY_WEIGHTS` 1 / 0.4 / 0.14) |
+| Selection chrome (settled freeze) | `0x2a2e38` | Lerp toward `CHROME_DIM_COLOR` after approach settle |
+| Entity sweep point light | `0xa8e0c4` | `ACCENT_LIGHT_COLOR` — horizontal / depth facet cues |
+| Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell (base); same chrome-dim lerp when settled |
 | Decorative orbits / nodes | black @ ~0.42 / active `#3a3e44` @ ~0.55; nodes `0x6a737c` | `DecorativeNodes` (HIGH only) |
 | Tag cloud | `0x585f67` primary / `0x424950` secondary (`fillOpacity` 1) | `TagCloud` — muted, all quality levels |
 | Atom shell (settled) | emissive → `0x14161c` @ ~0.62; shadow facets `0x020306` | Fixed fill — bg-adjacent mean tone, facet contrast from scene lights |
@@ -237,7 +245,7 @@ Part of the site-wide [hairline language](#hairline-language). Bottom bars (tabl
 - Idle titles are pure black; committed and hover-preview atoms brighten letter + remainder via `setAtomTitleHighlight` (orchestrated in `applyVisuals`; blurb is separate).
 - On commit, typewriter `// blurb` under the title in the **same** group.
 - Screen-flat: scene-parented group, `quaternion.copy(camera.quaternion)`, scale by distance. Lift toward camera (`SURFACE_PAD`) so glyphs clear the atom.
-- Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; camera-quat billboard under molecule parent; not raycast targets. Settled off-home freeze lerps color to black (`setDimmed`); leave restores `RING_COLOR`.
+- Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; outer rings more transparent; camera-quat billboard under molecule parent; not raycast targets. Committed reticle uses brand `ACCENT_COLOR` (`#6ec99f`); hover stays `RING_COLOR`. Settled off-home freeze lerps toward `CHROME_DIM_COLOR`; leave restores base.
 - Wireframe: committed static shell (`setWireframeAtom`) + accent shell for hover preview / autoplay-next pulse (`setAccentWireframeAtom`); shared `EdgesGeometry` icosahedron (~1.04× radius); quality may disable both. Same settled-freeze black lerp via `MoleculeScene.setChromeDimmed`.
 - Decorative ghost: one hub-centered orbit per peripheral (black idle / dark gray active) + wireframe fragments on `moleculeGroup`; HIGH only; fades with zoom/fill.
 

@@ -323,6 +323,11 @@ html.js-enabled .case-page .case-marker--visual::after {
   z-index: 1;
 }
 
+html.js-enabled .case-page .case-section:not(.case-nav) .case-marker--editorial::after,
+html.js-enabled .case-page .case-section:not(.case-nav) .case-marker--visual::after {
+  background: var(--accent-line);
+}
+
 @media (max-width: 1023px) {
   html.js-enabled .case-page .case-marker--editorial::after,
   html.js-enabled .case-page .case-marker--visual::after {
@@ -892,10 +897,6 @@ html.js-enabled .case-page.is-revealing
   color: var(--color-ink-title);
 }
 
-.case-header__title.is-scrambling .scramble-title__display {
-  color: var(--ink-62);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .case-header__title.is-scrambling .scramble-title__display {
     color: var(--color-ink-title);
@@ -936,7 +937,7 @@ html.js-enabled .case-page.is-revealing
   font-size: var(--text-index);
   letter-spacing: var(--track-meta);
   text-transform: uppercase;
-  color: var(--case-accent-ink);
+  color: var(--accent-ink);
 }
 
 .case-facts dd {
@@ -953,8 +954,8 @@ html.js-enabled .case-page.is-revealing
 }
 
 .case-facts a:hover {
-  color: var(--case-accent-ink);
-  border-bottom-color: var(--case-accent);
+  color: var(--accent-ink);
+  border-bottom-color: var(--color-accent);
 }
 
 @media (min-width: 1024px) {
@@ -1043,6 +1044,18 @@ html.js-enabled .case-page.is-revealing
 }
 
 @media (min-width: 1024px) {
+  .case-section:not(.case-nav) .case-marker--editorial {
+    border-top-color: var(--accent-line);
+  }
+
+  .case-section:not(.case-nav) .case-marker--editorial::before {
+    background: var(--accent-line);
+  }
+
+  .case-section:not(.case-nav) .case-marker--visual {
+    border-top-color: var(--accent-line);
+  }
+
   .case-marker--editorial {
     position: relative;
     margin: 0;
@@ -1096,7 +1109,7 @@ html.js-enabled .case-page.is-revealing
   .case-content__facts {
     margin-top: 0;
     padding-top: 0.75rem;
-    border-top: 1px solid rgb(214 219 224 / var(--line-opacity));
+    border-top: 1px solid var(--accent-line);
   }
 
   /* Hero + Overview share 50/50: marker left, prose right. */
@@ -1190,8 +1203,8 @@ html.js-enabled .case-page.is-revealing
   height: 1px;
   background: linear-gradient(
     90deg,
-    rgb(214 219 224 / var(--line-opacity)) 0%,
-    rgb(214 219 224 / var(--line-opacity)) 72%,
+    var(--accent-line) 0%,
+    var(--accent-line) 72%,
     transparent 100%
   );
 }
@@ -1224,11 +1237,11 @@ html.js-enabled .case-page.is-revealing
 .case-content__prose a {
   color: var(--color-ink-bright);
   text-decoration: none;
-  border-bottom: 1px solid var(--case-accent);
+  border-bottom: 1px solid var(--color-accent);
 }
 
 .case-content__prose a:hover {
-  color: var(--case-accent-ink);
+  color: var(--accent-ink);
 }
 
 .case-content__prose strong {
@@ -1605,7 +1618,7 @@ html.js-enabled .case-page.is-revealing
 .case-interactive--slices .case-interactive__slice.is-interactive-focus .case-slices__connector,
 .case-interactive--slices .case-interactive__slice:hover .case-slices__connector {
   opacity: 0.85;
-  background: var(--case-accent-ink);
+  background: var(--accent-line);
 }
 
 .case-interactive__glare--slice {
@@ -2518,12 +2531,12 @@ html.js-enabled .case-page.is-revealing .case-thanks[data-enter='tail'].is-revea
   line-height: 1.4;
 }
 
-.case-nav__link:hover {
-  color: var(--case-accent-ink);
+.case-nav__title {
+  color: inherit;
 }
 
-.case-nav__link:hover .case-nav__dir {
-  color: var(--case-accent-ink);
+.case-nav__link:hover .case-nav__title {
+  color: var(--color-accent);
 }
 
 .case-nav__muted {
@@ -2537,8 +2550,8 @@ html.js-enabled .case-page.is-revealing .case-thanks[data-enter='tail'].is-revea
   color: var(--wl-muted);
 }
 
-.case-nav__index .case-nav__link:hover {
-  color: var(--case-accent-ink);
+.case-nav__index .case-nav__link:hover .case-nav__title {
+  color: var(--color-accent);
 }
 
 @media (min-width: 1024px) {

@@ -413,12 +413,6 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
   color: var(--color-ink-title);
 }
 
-.editorial-hero__content
-  :is(.archive-heading__title, .case-header__title).is-scrambling
-  .scramble-title__display {
-  color: var(--ink-62);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .editorial-hero__content
     :is(.archive-heading__title, .case-header__title).is-scrambling
@@ -509,10 +503,6 @@ html.js-enabled .case-page.is-revealing .editorial-hero-media__edge--left {
 
 .archive-heading__title .scramble-title__display {
   color: var(--color-ink-title);
-}
-
-.archive-heading__title.is-scrambling .scramble-title__display {
-  color: var(--ink-62);
 }
 
 .archive-status {
@@ -801,7 +791,7 @@ html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--accent-line);
   clip-path: inset(0 0 0 0);
   pointer-events: none;
   z-index: 1;
@@ -984,7 +974,7 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
   flex: 0 0 auto;
   width: 2.25rem;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--ink-38);
   transform-origin: left center;
 }
 
@@ -1107,37 +1097,32 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
 
   .archive-row__link:hover .archive-row__title {
     transform: translateX(0.35rem);
+    color: var(--color-accent);
   }
 
   .archive-row__link:hover .archive-row__title-link {
     transform: none;
+    color: var(--color-accent);
   }
 
   .archive-row.is-revealed .archive-row__link:hover .archive-row__line,
   html:not(.js-enabled) .archive-row__link:hover .archive-row__line {
     width: 4.5rem;
-    background: var(--case-accent-ink, var(--wl-accent));
   }
 
   .archive-row__link:hover .archive-row__arrow {
-    color: var(--wl-accent);
     transform: translateX(0.25rem);
   }
 
   .archive-row__link:hover .archive-row__specimen img {
-    transform: translate3d(0, -5%, 0);
+    transform: scale(1.06);
   }
 }
 
 @media (hover: hover) and (prefers-reduced-motion: reduce) {
-  .archive-row__link:hover .archive-row__arrow,
-  .archive-row__link:hover .archive-row__category {
+  .archive-row__link:hover .archive-row__title,
+  .archive-row__link:hover .archive-row__title-link {
     color: var(--wl-accent);
-  }
-
-  .archive-row.is-revealed .archive-row__link:hover .archive-row__line,
-  html:not(.js-enabled) .archive-row__link:hover .archive-row__line {
-    background: var(--wl-accent);
   }
 }
 

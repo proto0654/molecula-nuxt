@@ -143,12 +143,17 @@ export function mountHeroApp(
     navigator.cancel();
   });
 
+  async function navigateRoute(route: string): Promise<void> {
+    await options.onNavigateRoute?.(route);
+    siteHeader.syncRouteLinks();
+  }
+
   navigator.onNavigate((atomId) => {
     const item = getItemByAtomId(atomId);
     if (!item) return;
     const route = item.route;
-    if (route && route !== '/' && options.onNavigateRoute) {
-      void options.onNavigateRoute(route);
+    if (route && route !== '/') {
+      void navigateRoute(route);
       return;
     }
     destination.show(item);
@@ -350,7 +355,7 @@ export function mountHeroApp(
     if (!isHome) {
       const target = resolveMenuRoute(itemId, item.route);
       if (target) {
-        void options.onNavigateRoute?.(target);
+        void navigateRoute(target);
       }
       return;
     }
@@ -384,7 +389,7 @@ export function mountHeroApp(
       if (isHome) {
         restoreHomeSelection();
       } else if (item.route) {
-        void options.onNavigateRoute?.(item.route);
+        void navigateRoute(item.route);
       }
       return;
     }
@@ -403,7 +408,7 @@ export function mountHeroApp(
       autoplay.pause();
       uspHeadline.hide();
       const target = resolveMenuRoute(itemId, item.route);
-      if (target) void options.onNavigateRoute?.(target);
+      if (target) void navigateRoute(target);
     }
   }
 

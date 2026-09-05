@@ -132,7 +132,7 @@ function plainTitle(title: string | null | undefined): string {
               @pointerdown.capture="armSweep(1)"
             >
               <span class="case-nav__dir">{{ nextLabel }}</span>
-              <span>{{ plainTitle(nextTitle) || nextSlug }}</span>
+              <span class="case-nav__title">{{ plainTitle(nextTitle) || nextSlug }}</span>
             </NuxtLink>
             <span v-else class="case-nav__muted">
               <span class="case-nav__dir">{{ nextLabel }}</span>
@@ -148,7 +148,7 @@ function plainTitle(title: string | null | undefined): string {
               @pointerdown.capture="armSweep(-1)"
             >
               <span class="case-nav__dir">{{ prevLabel }}</span>
-              <span>{{ plainTitle(prevTitle) || prevSlug }}</span>
+              <span class="case-nav__title">{{ plainTitle(prevTitle) || prevSlug }}</span>
             </NuxtLink>
             <span v-else class="case-nav__muted">
               <span class="case-nav__dir">{{ prevLabel }}</span>
@@ -160,7 +160,7 @@ function plainTitle(title: string | null | undefined): string {
         <div class="case-nav__item case-nav__index">
           <NuxtLink :to="archiveHref" class="case-nav__link">
             <span class="case-nav__dir">{{ archiveDirLabel }}</span>
-            {{ indexLabel }}
+            <span class="case-nav__title">{{ indexLabel }}</span>
           </NuxtLink>
         </div>
       </div>

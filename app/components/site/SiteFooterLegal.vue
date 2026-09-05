@@ -46,9 +46,13 @@ const hasContent = computed(
 }
 
 .site-footer-legal__line--cookie :deep(a) {
-  color: inherit;
+  color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 0.15em;
+}
+
+.site-footer-legal__line--cookie :deep(a:hover) {
+  color: var(--color-ink-white);
 }
 </style>
 

@@ -22,7 +22,7 @@ import type { QualityManager } from './quality/QualityManager';
 import type { QualitySettings } from './quality/types';
 import { GeometryCache } from './resources/GeometryCache';
 import type { MoleculeConfig } from './types';
-import { CHROME_DIM_COLOR, SCENE_BG } from './sceneColors';
+import { ACCENT_LIGHT_COLOR, CHROME_DIM_COLOR, SCENE_BG } from './sceneColors';
 
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
@@ -58,9 +58,9 @@ const SWEEP_VERTICAL_MIRROR = 0.68;
  * focused atom and lights secondary spheres above/below it.
  */
 const SWEEP_DEPTH_VERTICAL_MIRROR = 0.82;
-const SWEEP_PEAK_INTENSITY = 0.52;
+const SWEEP_PEAK_INTENSITY = 0.72;
 /** Archive depth sweep: brighter so secondary atoms read the flyby. */
-const SWEEP_DEPTH_PEAK_INTENSITY = 0.62;
+const SWEEP_DEPTH_PEAK_INTENSITY = 0.85;
 /** Sight-ray pull near atom plane (deep) vs near camera. */
 const SWEEP_DEPTH_PULL_FAR = 0.95;
 const SWEEP_DEPTH_PULL_NEAR = 0.18;
@@ -221,7 +221,7 @@ export class MoleculeScene {
     fill.position.set(-2.5, 1.2, -2);
     fill.castShadow = false;
     this.scene.add(ambient, key, fill);
-    this.entityPointLight = new PointLight(0xffffff, 0, 0, 0.45);
+    this.entityPointLight = new PointLight(ACCENT_LIGHT_COLOR, 0, 0, 0.45);
     this.entityPointLight.castShadow = false;
     this.scene.add(this.entityPointLight);
 

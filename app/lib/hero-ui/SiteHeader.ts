@@ -4,6 +4,7 @@ import { missingUiString } from '../../domain/options/missingUiString';
 import {
   localeFromPath,
   alternateLocalePath,
+  stripLocalePrefix,
   type SiteLocale,
 } from '../../domain/i18n/locale';
 import {
@@ -50,6 +51,10 @@ export class SiteHeader {
   private chromeCopy: HeroChromeCopy | null = null;
   private onMenuToggle: MenuToggleListener | undefined;
   private onSelect: HeaderSelectListener | undefined;
+
+  private readonly onPopState = (): void => {
+    this.syncLocale();
+  };
 
   constructor(
     parent: HTMLElement,
@@ -167,11 +172,11 @@ export class SiteHeader {
 
     this.unsubscribe = state.subscribe(() => {
       this.syncNode(state);
-      this.syncLinks(state);
       this.syncLocale();
     });
     this.syncNode(state);
-    this.syncLinks(state);
+    this.syncRouteLinks();
+    window.addEventListener('popstate', this.onPopState);
   }
 
   onSelectItem(listener: HeaderSelectListener): void {
@@ -245,6 +250,7 @@ export class SiteHeader {
       if (label) label.textContent = item.label;
     }
     this.syncNode(this.navState);
+    this.syncRouteLinks();
     this.syncLocale();
   }
 
@@ -278,6 +284,7 @@ export class SiteHeader {
       event.preventDefault();
       void transitionTo(href).then(() => {
         this.syncLocale();
+        this.syncRouteLinks();
       });
     });
   }
@@ -298,15 +305,30 @@ export class SiteHeader {
       this.enLink.setAttribute('aria-current', 'page');
       this.ruLink.removeAttribute('aria-current');
     }
+    this.syncRouteLinks();
   }
 
-  private syncLinks(state: NavigationState): void {
-    const active = state.activeItemId;
-    const committed = state.committedItemId;
+  /** Top routes: direct SPA hops — no molecule active/committed chrome. */
+  syncRouteLinks(): void {
+    const path =
+      typeof window !== 'undefined'
+        ? stripLocalePrefix(window.location.pathname)
+        : '/';
+    const normalized = path.replace(/\/$/, '') || '/';
+
     for (const [id, el] of this.linkElements) {
-      el.classList.toggle('is-active', id === active);
-      el.classList.toggle('is-committed', id === committed);
-      if (id === committed) {
+      el.classList.remove('is-active', 'is-committed');
+      const item = getItemById(id);
+      if (!item?.route) {
+        el.removeAttribute('aria-current');
+        continue;
+      }
+      const route = stripLocalePrefix(item.route).replace(/\/$/, '') || '/';
+      const matches =
+        route === '/'
+          ? normalized === '/'
+          : normalized === route || normalized.startsWith(`${route}/`);
+      if (matches) {
         el.setAttribute('aria-current', 'page');
       } else {
         el.removeAttribute('aria-current');
@@ -334,6 +356,7 @@ export class SiteHeader {
   }
 
   dispose(): void {
+    window.removeEventListener('popstate', this.onPopState);
     this.unsubscribe();
     this.slideProgress.dispose();
     this.root.remove();

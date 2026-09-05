@@ -8,7 +8,7 @@ import {
   type BufferGeometry,
   type Camera,
 } from 'three';
-import { CHROME_DIM_COLOR } from './sceneColors';
+import { ACCENT_COLOR, CHROME_DIM_COLOR } from './sceneColors';
 
 export type HaloMode = 'idle' | 'hover' | 'committed';
 
@@ -21,11 +21,14 @@ export type SelectionGeometries = {
 const RING_COLOR = 0xb8c0c8;
 const DIM_COLOR = CHROME_DIM_COLOR;
 const RING_SCALES = [1.28, 1.62, 2.02];
+/** Outer rings fade out — index 0 = innermost. */
+const RING_OPACITY_WEIGHTS = [1, 0.4, 0.14];
 const FOLLOW = 10;
 /** Softer than opacity follow — settled freeze chrome fade. */
 const COLOR_FOLLOW = 6;
 const HOVER_OPACITY = 0.4;
-const COMMITTED_OPACITY = 0.32;
+/** Accent committed reads darker than gray ink — keep a bit brighter. */
+const COMMITTED_OPACITY = 0.48;
 
 /**
  * Screen-flat measurement reticle around an atom (camera billboard).
@@ -57,6 +60,7 @@ export class AtomSelectionIndicator {
   private readonly scratchParentQ = new Quaternion();
   private readonly scratchBillboard = new Quaternion();
   private readonly scratchBaseColor = new Color(RING_COLOR);
+  private readonly scratchAccentColor = new Color(ACCENT_COLOR);
   private readonly scratchDimColor = new Color(DIM_COLOR);
   private readonly scratchColor = new Color();
 
@@ -215,7 +219,8 @@ export class AtomSelectionIndicator {
     for (let i = 0; i < this.ringCount; i += 1) {
       const ring = this.rings[i]!;
       const material = this.ringMaterials[i]!;
-      const ringOpacityBase = this.opacity * (0.72 - i * 0.16);
+      const ringOpacityBase =
+        this.opacity * (RING_OPACITY_WEIGHTS[i] ?? 0.1);
       if (this.simple) {
         ring.scale.setScalar(this.radius * RING_SCALES[i]!);
         material.opacity = ringOpacityBase;
@@ -242,11 +247,9 @@ export class AtomSelectionIndicator {
   }
 
   private applyColorMix(): void {
-    this.scratchColor.lerpColors(
-      this.scratchBaseColor,
-      this.scratchDimColor,
-      this.colorMix,
-    );
+    const base =
+      this.mode === 'committed' ? this.scratchAccentColor : this.scratchBaseColor;
+    this.scratchColor.lerpColors(base, this.scratchDimColor, this.colorMix);
     for (const material of this.ringMaterials) {
       material.color.copy(this.scratchColor);
     }
