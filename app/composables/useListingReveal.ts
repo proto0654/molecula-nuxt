@@ -75,16 +75,20 @@ export function useListingReveal(
   }
 
   function armWillChange(el: HTMLElement) {
+    // Hairline hosts only animate clip-path / children — will-change on the host
+    // flattens mid-draw and flashes the 1px rule. Timeout-only; no animationend
+    // (pseudos + bubbled child ends clear too early).
+    if (
+      el.classList.contains('archive-row') ||
+      el.classList.contains('case-section') ||
+      el.classList.contains('case-nav')
+    ) {
+      return;
+    }
     el.style.willChange = 'opacity, transform';
-    const onEnd = () => {
-      el.removeEventListener('animationend', onEnd);
-      clearWill(el);
-    };
-    el.addEventListener('animationend', onEnd);
     willTimers.set(
       el,
       window.setTimeout(() => {
-        el.removeEventListener('animationend', onEnd);
         clearWill(el);
       }, WILL_CHANGE_MS),
     );

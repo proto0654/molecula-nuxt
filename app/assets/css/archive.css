@@ -158,7 +158,7 @@ html.js-enabled .editorial-hero-media__frame {
 
 .editorial-hero-media__edge {
   position: absolute;
-  background: var(--wl-line);
+  background: var(--wl-line-solid);
   z-index: 2;
   pointer-events: none;
 }
@@ -589,7 +589,7 @@ html.js-enabled .archive-page nav.case-nav--archive .case-nav__prev::after {
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--wl-line-solid);
   clip-path: inset(0 0 0 0);
   pointer-events: none;
 }
@@ -659,7 +659,7 @@ html.js-enabled .archive-page nav.case-nav.case-section .case-marker--editorial:
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--wl-line-solid);
   clip-path: inset(0 0 0 0);
   pointer-events: none;
   z-index: 1;
@@ -688,7 +688,7 @@ html.js-enabled .archive-page nav.case-nav.case-section .case-nav__prev::after {
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--wl-line-solid);
   clip-path: inset(0 0 0 0);
   pointer-events: none;
 }
@@ -718,9 +718,9 @@ html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed
   animation-delay: calc(var(--nav-origin) + (2 * var(--enter-stagger)));
 }
 
-html.js-enabled .archive-page:not(.is-revealing) nav.case-nav.case-section .case-marker,
+html.js-enabled .archive-page:not(.is-revealing) nav.case-nav.case-section .case-marker > *,
 html.js-enabled .archive-page:not(.is-revealing) nav.case-nav.case-section .case-nav__item :is(.case-nav__link, .case-nav__muted),
-html.js-enabled .archive-page.is-revealing nav.case-nav.case-section:not(.is-revealed) .case-marker,
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section:not(.is-revealed) .case-marker > *,
 html.js-enabled .archive-page.is-revealing nav.case-nav.case-section:not(.is-revealed)
   .case-nav__item
   :is(.case-nav__link, .case-nav__muted) {
@@ -728,7 +728,7 @@ html.js-enabled .archive-page.is-revealing nav.case-nav.case-section:not(.is-rev
   transform: translate3d(0, var(--enter-y), 0);
 }
 
-html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed .case-marker {
+html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed .case-marker > * {
   animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
   animation-delay: calc(var(--nav-origin) + var(--reveal-content-delay));
 }
@@ -757,7 +757,7 @@ html.js-enabled .archive-page.is-revealing nav.case-nav.case-section.is-revealed
 @media (prefers-reduced-motion: reduce) {
   html.js-enabled .archive-page nav.case-nav.case-section .case-marker--editorial::after,
   html.js-enabled .archive-page nav.case-nav.case-section .case-nav__prev::after,
-  html.js-enabled .archive-page nav.case-nav.case-section .case-marker,
+  html.js-enabled .archive-page nav.case-nav.case-section .case-marker > *,
   html.js-enabled .archive-page nav.case-nav.case-section .case-nav__item :is(.case-nav__link, .case-nav__muted) {
     opacity: 1;
     transform: none;
@@ -974,7 +974,7 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
   flex: 0 0 auto;
   width: 2.25rem;
   height: 1px;
-  background: var(--ink-38);
+  background: color-mix(in srgb, rgb(214 219 224) 38%, var(--color-bg));
   transform-origin: left center;
 }
 
@@ -1084,15 +1084,17 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .archive-row__title,
   .archive-row__title-link,
-  .archive-row__line,
   .archive-row__arrow,
   .archive-row__specimen img {
     transition:
       transform 0.45s ease,
-      width 0.45s ease,
-      background-color 0.45s ease,
       color 0.45s ease,
       opacity 0.45s ease;
+  }
+
+  /* Width only — transform/background must not fight enter scaleX. */
+  .archive-row__line {
+    transition: width 0.45s ease;
   }
 
   .archive-row__link:hover .archive-row__title {
@@ -1168,6 +1170,10 @@ html.js-enabled .archive-page.is-revealing .archive-row.is-revealed[data-reveal=
   .archive-row__line,
   .archive-row__arrow,
   .archive-row__specimen img {
-    transition: color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+    transition: color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .archive-row__line {
+    transition: width 0.2s ease;
   }
 }

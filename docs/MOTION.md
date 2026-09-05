@@ -57,7 +57,7 @@ After gate + archive-return restore + two rAFs:
 4. Below-fold: one `IntersectionObserver` (`rootMargin: 0px 0px -8% 0px`), `once`. On intersect: `data-reveal="in"`, delay **0**.
 5. Played → `data-reveal="done"`. Never replay.
 
-Uprock motif — implementation of [hairline language](DESIGN.md#hairline-language): the **full-width** row hairline (`::before` / last-row `::after`), wiped **left → right** via `clip-path: inset(0 100% 0 0)` → `inset(0 0 0 0)`. Short `.archive-row__line` tick uses `scaleX(0 → 1)` with `transform-origin: left center`. Row content starts after `--reveal-content-delay` so the draw reads first.
+Uprock motif — implementation of [hairline language](DESIGN.md#hairline-language): the **full-width** row hairline (`::before` / last-row `::after`), wiped **left → right** via `clip-path: inset(0 100% 0 0)` → `inset(0 0 0 0)`. Short `.archive-row__line` tick uses `scaleX(0 → 1)` with `transform-origin: left`. Row content starts after `--reveal-content-delay` so the draw reads first. **Hairline hosts stay opaque** — fade only content (`.archive-row__link`, `.case-marker > *`, list `li > *`); never put `opacity` animation on the element that owns the line pseudo.
 
 Same motif on case section markers, CMS list rows, and footer nav. **Footer nav** (`nav.case-nav`) is one listing unit; when `is-revealed`, an internal chain runs via `--nav-origin` + step offsets: case / service detail (`case-section`) — marker line → marker label → Next → Previous line → Previous → Index; archive-only (`case-nav--archive`) — Next → Previous line → Previous → Index.
 

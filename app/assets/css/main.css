@@ -126,6 +126,8 @@
   --wl-muted: var(--ui-muted);
   /* Hairline language — static + draw tokens; docs/DESIGN.md § Hairline language */
   --wl-line: rgb(214 219 224 / var(--line-opacity));
+  /* Solid stand-in for --wl-line (nav / fallback) — no alpha flash on draw settle */
+  --wl-line-solid: color-mix(in srgb, rgb(214 219 224) 22%, var(--color-bg));
   --wl-accent: var(--color-accent);
   /* Listing hairlines — solid mix (no alpha compositing), same weight as --wl-line */
   --accent-line: color-mix(in srgb, var(--color-accent) 22%, var(--color-bg));
@@ -1024,7 +1026,7 @@ html.hero-lock #__nuxt {
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--accent-line);
   clip-path: inset(0 0 0 0);
   pointer-events: none;
   z-index: 1;

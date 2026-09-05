@@ -33,6 +33,7 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--accent` | → `--color-accent` | Semantic accent alias |
 | `--accent-ink` | `color-mix(accent 42%, ink-bright)` | Readable accent labels on dark bg |
 | `--accent-line` | `color-mix(accent 22%, bg)` | Solid quiet listing / connector hairlines (no alpha) |
+| `--wl-line-solid` | `color-mix(ink 22%, bg)` | Solid stand-in for `--wl-line` (nav separators; no alpha flash) |
 | `--title-text-shadow` | soft `0 0 0.55em` accent @ 42% | Scramble / USP neon glow (static; no keyframe) |
 | `--scramble-duration` | `1.05s` | Match `scrambleText` — ink lift animation length |
 | `--grid-opacity` | `0.032` | Edge grid stroke alpha |
@@ -71,8 +72,9 @@ Site-wide design principle: **thin rules structure the layout** — they are not
 
 | Token | Role |
 |-------|------|
-| `--line-opacity` | Alpha for all hairlines (HUD, archive, case, prose) |
-| `--wl-line` | Canonical 1px color — always prefer this over ad-hoc `border-color` |
+| `--line-opacity` | Alpha for static HUD hairlines |
+| `--wl-line` | Canonical 1px alpha color for static rules |
+| `--wl-line-solid` / `--accent-line` | Solid draws on enter (nav neutral / listing accent) |
 | `--line-draw-duration` | Full-width wipe duration (left → right) |
 | `--line-draw-ease` | Draw easing — even, readable, not snappy |
 | `--reveal-content-delay` | Gap between line finish and content fade — line leads, copy follows |
@@ -82,7 +84,7 @@ Motion choreography (chain vs viewport, `--reveal-cap`, `--enter-stagger`) lives
 ### Rules
 
 1. **1px only.** Height or stroke width = 1px. No 2px dividers, no box shadows as separators.
-2. **Color = `--wl-line`.** Exception: partial prose headings may use a gradient fade to transparent (still sourced from `--line-opacity`).
+2. **Color = `--wl-line`** for static HUD rules. **Listing enter hairlines** use solid `--accent-line` (or `--wl-line-solid` on post-nav separators that stay neutral). Never animate alpha on 1px draws — parent opacity on a hairline host flashes the settled color. Exception: partial prose headings may use a gradient fade to transparent (still sourced from `--line-opacity`).
 3. **Placement follows the grid**, not the viewport edge blindly:
    - **Editorial rail** — horizontal rule on the marker / label column (cols 1–4 on case 12-col), optionally paired with a short vertical guide. Do not span the full section width if the editorial rail is only in the label column.
    - **Listing row** — full width of the row container (`::before` top; last row may have bottom `::after`).

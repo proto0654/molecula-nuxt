@@ -319,7 +319,7 @@ html.js-enabled .case-page .case-marker--visual::after {
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--wl-line-solid);
   clip-path: inset(0 0 0 0);
   pointer-events: none;
   z-index: 1;
@@ -349,7 +349,7 @@ html.js-enabled .case-page .case-nav .case-nav__prev::after {
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--wl-line-solid);
   clip-path: inset(0 0 0 0);
   pointer-events: none;
 }
@@ -398,15 +398,18 @@ html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed
   animation-delay: 0s;
 }
 
-html.js-enabled .case-page:not(.is-revealing) .case-section:not(.case-nav) > *,
-html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) > * {
+/* Fade content only — marker / prev shells stay opaque so hairlines don't dim. */
+html.js-enabled .case-page:not(.is-revealing) .case-section:not(.case-nav) > *:not(.case-marker),
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) > *:not(.case-marker),
+html.js-enabled .case-page:not(.is-revealing) .case-section:not(.case-nav) > .case-marker > *,
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) > .case-marker > * {
   opacity: 0;
   transform: translate3d(0, var(--enter-y), 0);
 }
 
-html.js-enabled .case-page:not(.is-revealing) nav.case-nav .case-marker,
+html.js-enabled .case-page:not(.is-revealing) nav.case-nav .case-marker > *,
 html.js-enabled .case-page:not(.is-revealing) nav.case-nav .case-nav__item :is(.case-nav__link, .case-nav__muted),
-html.js-enabled .case-page.is-revealing nav.case-nav:not(.is-revealed) .case-marker,
+html.js-enabled .case-page.is-revealing nav.case-nav:not(.is-revealed) .case-marker > *,
 html.js-enabled .case-page.is-revealing nav.case-nav:not(.is-revealed)
   .case-nav__item
   :is(.case-nav__link, .case-nav__muted) {
@@ -414,7 +417,8 @@ html.js-enabled .case-page.is-revealing nav.case-nav:not(.is-revealed)
   transform: translate3d(0, var(--enter-y), 0);
 }
 
-html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed > * {
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed > *:not(.case-marker),
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed > .case-marker > * {
   animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
   animation-delay: calc(
     var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
@@ -422,7 +426,7 @@ html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed
   );
 }
 
-html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-marker {
+html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-marker > * {
   animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
   animation-delay: calc(var(--nav-origin) + var(--reveal-content-delay));
 }
@@ -453,8 +457,29 @@ html.js-enabled .case-page.is-revealing nav.case-nav.is-revealed .case-nav__inde
   );
 }
 
-html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] > * {
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] > *:not(.case-marker),
+html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] > .case-marker > * {
   animation-delay: var(--reveal-content-delay);
+}
+
+/* Desktop vertical guide — fade with label, not with the horizontal wipe. */
+@media (min-width: 1024px) {
+  html.js-enabled .case-page:not(.is-revealing) .case-section:not(.case-nav) .case-marker--editorial::before,
+  html.js-enabled .case-page.is-revealing .case-section:not(.case-nav):not(.is-revealed) .case-marker--editorial::before {
+    opacity: 0;
+  }
+
+  html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed .case-marker--editorial::before {
+    animation: wl-enter-fade var(--enter-duration) var(--enter-ease) both;
+    animation-delay: calc(
+      var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
+        var(--reveal-content-delay)
+    );
+  }
+
+  html.js-enabled .case-page.is-revealing .case-section:not(.case-nav).is-revealed[data-reveal='in'] .case-marker--editorial::before {
+    animation-delay: var(--reveal-content-delay);
+  }
 }
 
 /* Prose / caption lists — own listing rows; body shell stays visible for stagger. */
@@ -479,14 +504,49 @@ html.js-enabled .case-page.is-revealing
   > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading):not(.is-revealed),
 html.js-enabled .case-page:not(.is-revealing)
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  :is(ul, ol, .wp-block-list)
-  > li,
+  :is(ul, .wp-block-list)
+  > li
+  > *,
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  :is(ul, ol, .wp-block-list)
-  > li:not(.is-revealed) {
+  :is(ul, .wp-block-list)
+  > li:not(.is-revealed)
+  > *,
+html.js-enabled .case-page:not(.is-revealing)
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li
+  > *,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li:not(.is-revealed)
+  > * {
   opacity: 0;
   transform: translate3d(0, var(--enter-y), 0);
+}
+
+/* Bullets: opacity only — keep translateY(-50%) centering. */
+html.js-enabled .case-page:not(.is-revealing)
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li::before,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li:not(.is-revealed)::before {
+  opacity: 0;
+}
+
+html.js-enabled .case-page:not(.is-revealing)
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li::marker,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li:not(.is-revealed)::marker {
+  color: transparent;
 }
 
 html.js-enabled .case-page.is-revealing
@@ -494,8 +554,14 @@ html.js-enabled .case-page.is-revealing
   > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading).is-revealed,
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  :is(ul, ol, .wp-block-list)
-  > li.is-revealed {
+  :is(ul, .wp-block-list)
+  > li.is-revealed
+  > *,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li.is-revealed
+  > * {
   animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease) both;
   animation-delay: calc(
     var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
@@ -505,11 +571,42 @@ html.js-enabled .case-page.is-revealing
 
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li.is-revealed::before {
+  animation: wl-enter-fade var(--enter-duration) var(--enter-ease) both;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i) * var(--enter-stagger)) +
+      var(--reveal-content-delay)
+  );
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li.is-revealed::marker {
+  color: var(--case-accent-ink);
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
   > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading).is-revealed[data-reveal='in'],
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  :is(ul, ol, .wp-block-list)
-  > li.is-revealed[data-reveal='in'] {
+  :is(ul, .wp-block-list)
+  > li.is-revealed[data-reveal='in']
+  > *,
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  ol
+  > li.is-revealed[data-reveal='in']
+  > * {
+  animation-delay: var(--reveal-content-delay);
+}
+
+html.js-enabled .case-page.is-revealing
+  :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+  :is(ul, .wp-block-list)
+  > li.is-revealed[data-reveal='in']::before {
   animation-delay: var(--reveal-content-delay);
 }
 
@@ -529,7 +626,7 @@ html.js-enabled .case-page
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--wl-line);
+  background: var(--accent-line);
   clip-path: inset(0 0 0 0);
   pointer-events: none;
   z-index: 1;
@@ -604,8 +701,9 @@ html.js-enabled .case-page.is-revealing
   html.js-enabled .case-page .case-marker--editorial::after,
   html.js-enabled .case-page .case-marker--visual::after,
   html.js-enabled .case-page .case-nav .case-nav__prev::after,
-  html.js-enabled .case-page .case-section:not(.case-nav) > *,
-  html.js-enabled .case-page nav.case-nav .case-marker,
+  html.js-enabled .case-page .case-section:not(.case-nav) > *:not(.case-marker),
+  html.js-enabled .case-page .case-section:not(.case-nav) > .case-marker > *,
+  html.js-enabled .case-page nav.case-nav .case-marker > *,
   html.js-enabled .case-page nav.case-nav .case-nav__item :is(.case-nav__link, .case-nav__muted) {
     opacity: 1;
     transform: none;
@@ -640,8 +738,18 @@ html.js-enabled .case-page.is-revealing
     > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading),
   html.js-enabled .case-page
     :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-    :is(ul, ol, .wp-block-list)
-    > li,
+    :is(ul, .wp-block-list)
+    > li
+    > *,
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    :is(ul, .wp-block-list)
+    > li::before,
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    ol
+    > li
+    > *,
   html.js-enabled .case-page
     :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
     :is(ul, .wp-block-list)
@@ -656,6 +764,13 @@ html.js-enabled .case-page.is-revealing
     transform: none;
     clip-path: inset(0 0 0 0);
     animation: none;
+  }
+
+  html.js-enabled .case-page
+    :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
+    ol
+    > li::marker {
+    color: var(--case-accent-ink);
   }
 }
 
