@@ -4,7 +4,7 @@ export type ArchiveScope = 'portfolio' | 'services';
 
 /**
  * Route path → top-right chrome label for archive/section pages.
- * Returns null for home and slug detail routes (CASE/SERVICE branch).
+ * Returns null for slug detail routes (CASE/SERVICE branch).
  */
 export function routeChromeLabel(
   path: string,
@@ -13,7 +13,7 @@ export function routeChromeLabel(
   const segments = stripLocalePrefix(path).split('/').filter(Boolean);
 
   if (segments.length === 0) {
-    return null;
+    return 'home';
   }
 
   const [head, entityId] = segments;

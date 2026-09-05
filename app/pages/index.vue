@@ -13,6 +13,7 @@ usePageSeo({
 
 <template>
   <div class="home-page">
+    <SiteChrome variant="archive" />
     <div class="home-page__seo">
       <h1>{{ homeTitle }}</h1>
       <p>{{ homeDescription }}</p>
