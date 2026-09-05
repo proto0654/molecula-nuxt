@@ -262,7 +262,7 @@ Highlight is separate from focus orientation: `setHighlightedAtom` is a no-op fo
 
 **Frozen entity cues (no molecule spin):**
 
-Shared scene `PointLight` (`startEntityLightSweep` mode `horizontal` | `depth`, color `ACCENT_LIGHT_COLOR`): soft ambient dip on the envelope peak, opposite-Y bias vs focused atom screen Y (stronger for depth), mild decay so periphery catches the flyby. Cost is one existing light + brief shell-color updates on all atoms (~1–1.45s). Not quality-tiered; `prefers-reduced-motion` no-ops both cues.
+Shared scene `PointLight` (`startEntityLightSweep` mode `horizontal` | `depth`, color `ACCENT_LIGHT_COLOR`): soft ambient dip on the envelope peak, opposite-Y bias vs focused atom screen Y (stronger for depth), mild decay so periphery catches the flyby. Peak intensity is quality-tiered — HIGH/MEDIUM ~1.55 / ~1.85 (horizontal / depth); LOW ~2.35 / ~2.75 because Lambert skips shell relief. Cost is one existing light + brief shell-color updates on all atoms (~1–1.45s). `prefers-reduced-motion` no-ops both cues.
 
 | Cue | Trigger | Scene |
 |-----|---------|-------|

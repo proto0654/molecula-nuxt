@@ -58,9 +58,15 @@ const SWEEP_VERTICAL_MIRROR = 0.68;
  * focused atom and lights secondary spheres above/below it.
  */
 const SWEEP_DEPTH_VERTICAL_MIRROR = 0.82;
-const SWEEP_PEAK_INTENSITY = 0.72;
+const SWEEP_PEAK_INTENSITY = 1.55;
 /** Archive depth sweep: brighter so secondary atoms read the flyby. */
-const SWEEP_DEPTH_PEAK_INTENSITY = 0.85;
+const SWEEP_DEPTH_PEAK_INTENSITY = 1.85;
+/**
+ * LOW (Lambert): shell relief is skipped — brighter PointLight so the
+ * horizontal / depth flyby still reads on base graphite facets.
+ */
+const SWEEP_PEAK_INTENSITY_LOW = 2.35;
+const SWEEP_DEPTH_PEAK_INTENSITY_LOW = 2.75;
 /** Sight-ray pull near atom plane (deep) vs near camera. */
 const SWEEP_DEPTH_PULL_FAR = 0.95;
 const SWEEP_DEPTH_PULL_NEAR = 0.18;
@@ -617,8 +623,9 @@ export class MoleculeScene {
     // >0.5 flips past screen center to the opposite side of the atom.
     const sweepNdcY = this.scratchNdc.y * (1 - 2 * verticalMirror);
 
+    const isLow = this.quality.get().level === 'low';
     let pull = SWEEP_VIEWER_PULL;
-    let peak = SWEEP_PEAK_INTENSITY;
+    let peak = isLow ? SWEEP_PEAK_INTENSITY_LOW : SWEEP_PEAK_INTENSITY;
     if (this.sweepMode === 'depth') {
       // direction 1 = toward viewer (far→near), −1 = into screen (near→far).
       const t =
@@ -626,7 +633,9 @@ export class MoleculeScene {
       pull =
         SWEEP_DEPTH_PULL_FAR +
         (SWEEP_DEPTH_PULL_NEAR - SWEEP_DEPTH_PULL_FAR) * t;
-      peak = SWEEP_DEPTH_PEAK_INTENSITY;
+      peak = isLow
+        ? SWEEP_DEPTH_PEAK_INTENSITY_LOW
+        : SWEEP_DEPTH_PEAK_INTENSITY;
       this.scratchNdc.set(this.scratchNdc.x, sweepNdcY, this.scratchNdc.z);
     } else {
       const ndcX = this.sweepDirection * SWEEP_NDC_SPAN * (1 - 2 * progress);
