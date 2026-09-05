@@ -1106,6 +1106,13 @@ html.js-enabled .case-page.is-revealing
   margin-top: var(--case-space-hero);
 }
 
+@media (min-width: 1024px) {
+  /* Case posts: no extra air between hero and first section on desktop. */
+  .editorial-hero--case + .case-section {
+    margin-top: 0;
+  }
+}
+
 .case-marker {
   display: flex;
   flex-direction: row;
