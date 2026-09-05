@@ -22,13 +22,7 @@ import type { QualityManager } from './quality/QualityManager';
 import type { QualitySettings } from './quality/types';
 import { GeometryCache } from './resources/GeometryCache';
 import type { MoleculeConfig } from './types';
-import {
-  ACCENT_LIGHT_COLOR,
-  CHROME_DIM_COLOR,
-  FILL_LIGHT_COLOR,
-  KEY_LIGHT_COLOR,
-  SCENE_BG,
-} from './sceneColors';
+import { ACCENT_LIGHT_COLOR, CHROME_DIM_COLOR, SCENE_BG } from './sceneColors';
 
 const WIREFRAME_SCALE = 1.04;
 const WIREFRAME_COLOR = 0xd6dbe0;
@@ -220,10 +214,10 @@ export class MoleculeScene {
 
     const ambient = new AmbientLight(0xffffff, AMBIENT_BASE);
     this.ambientLight = ambient;
-    const key = new DirectionalLight(KEY_LIGHT_COLOR, 1.28);
+    const key = new DirectionalLight(0xffffff, 1.28);
     key.position.set(3, 4, 5);
     key.castShadow = false;
-    const fill = new DirectionalLight(FILL_LIGHT_COLOR, 0.14);
+    const fill = new DirectionalLight(0xd8dde4, 0.14);
     fill.position.set(-2.5, 1.2, -2);
     fill.castShadow = false;
     this.scene.add(ambient, key, fill);
