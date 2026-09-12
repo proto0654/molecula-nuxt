@@ -2,7 +2,9 @@ export {
   decodeHtmlEntities,
   demoteCmsH1,
   htmlToPlainText,
+  prepareCaseProseHtml,
   unwrapHtmlLinks,
+  wrapCaseListItemBodies,
 } from './htmlPlain';
 export {
   emptyToNull,

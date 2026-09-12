@@ -498,10 +498,10 @@ html.js-enabled .case-page
 
 html.js-enabled .case-page:not(.is-revealing)
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading),
+  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, div, .wp-block-paragraph, .wp-block-heading):not(:has(:is(ul, ol, .wp-block-list))),
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading):not(.is-revealed),
+  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, div, .wp-block-paragraph, .wp-block-heading):not(:has(:is(ul, ol, .wp-block-list))):not(.is-revealed),
 html.js-enabled .case-page:not(.is-revealing)
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
   :is(ul, .wp-block-list)
@@ -551,7 +551,7 @@ html.js-enabled .case-page.is-revealing
 
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading).is-revealed,
+  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, div, .wp-block-paragraph, .wp-block-heading):not(:has(:is(ul, ol, .wp-block-list))).is-revealed,
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
   :is(ul, .wp-block-list)
@@ -589,7 +589,7 @@ html.js-enabled .case-page.is-revealing
 
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading).is-revealed[data-reveal='in'],
+  > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, div, .wp-block-paragraph, .wp-block-heading):not(:has(:is(ul, ol, .wp-block-list))).is-revealed[data-reveal='in'],
 html.js-enabled .case-page.is-revealing
   :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
   :is(ul, .wp-block-list)
@@ -735,7 +735,7 @@ html.js-enabled .case-page.is-revealing
 
   html.js-enabled .case-page
     :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
-    > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading),
+    > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, div, .wp-block-paragraph, .wp-block-heading):not(:has(:is(ul, ol, .wp-block-list))),
   html.js-enabled .case-page
     :is(.case-content__prose, .case-mobile__caption, .case-mobile-signature__prose)
     :is(ul, .wp-block-list)
@@ -973,11 +973,11 @@ html.js-enabled .case-page.is-revealing
   }
 
   .case-content__body {
-    grid-column: 4 / 10;
+    grid-column: 4 / -1;
   }
 
   .case-content__facts {
-    grid-column: 10 / -1;
+    grid-column: 4 / -1;
   }
 }
 
@@ -1230,23 +1230,11 @@ html.js-enabled .case-page.is-revealing
 }
 
 @media (min-width: 1024px) {
+  /* Overview 3/9: facts stack under prose in the same copy column. */
   .case-content__facts {
-    margin-top: 0;
+    margin-top: 1.75rem;
     padding-top: 0.75rem;
     border-top: 1px solid var(--accent-line);
-  }
-
-  /* Hero + Overview share 50/50: marker left, prose right. */
-  .editorial-hero--case + .case-content .case-zone-label {
-    grid-column: 1 / 7;
-  }
-
-  .editorial-hero--case + .case-content .case-content__body {
-    grid-column: 7 / -1;
-  }
-
-  .editorial-hero--case + .case-content .case-content__facts {
-    grid-column: 7 / -1;
   }
 }
 
@@ -2252,6 +2240,20 @@ html.js-enabled .case-page.is-revealing
   color: var(--ink-62);
 }
 
+.case-mobile__caption strong,
+.case-mobile-signature__prose strong {
+  font-weight: inherit;
+  color: var(--color-ink-bright);
+}
+
+/* Lead-in above a list (e.g. pasted CMS div/p before ul). */
+.case-mobile__caption > :is(p, div, h1, h2, h3, h4, h5, h6):has(+ :is(ul, ol, .wp-block-list)),
+.case-mobile-signature__prose > :is(p, div, h1, h2, h3, h4, h5, h6):has(+ :is(ul, ol, .wp-block-list)) {
+  margin: 0 0 1.35em;
+  font-weight: 600;
+  color: var(--color-ink-bright);
+}
+
 .case-mobile__caption p {
   margin: 0 0 0.75em;
 }
@@ -2269,7 +2271,7 @@ html.js-enabled .case-page.is-revealing
     margin: 0 0 1.35rem;
   }
 
-  /* Align mockup / caption split with footer nav (cols 1–6 | 7–12). */
+  /* Mobile 3/6/3: caption cols 4–9, mockup specimen cols 10–12. */
   .case-section:has(.case-mobile) .case-section__body {
     grid-column: 1 / -1;
     display: grid;
@@ -2285,9 +2287,9 @@ html.js-enabled .case-page.is-revealing
   }
 
   .case-mobile__mockup {
-    grid-column: 1 / 7;
-    justify-self: end;
-    margin-inline-end: clamp(1.5rem, 3vw, 2.5rem);
+    grid-column: 10 / -1;
+    justify-self: stretch;
+    margin-inline-end: 0;
     margin-block-end: 1rem;
   }
 
@@ -2296,10 +2298,15 @@ html.js-enabled .case-page.is-revealing
   }
 
   .case-mobile__caption {
-    grid-column: 7 / -1;
+    grid-column: 4 / 10;
     width: 100%;
     max-width: none;
     padding-top: 0;
+  }
+
+  /* Signature (slices-only): same 3/6/3 copy column. */
+  .case-section:has(.case-mobile-signature) .case-section__body {
+    grid-column: 4 / 10;
   }
 }
 
@@ -2321,6 +2328,13 @@ html.js-enabled .case-page.is-revealing
 
 .case-mobile-signature__prose p:last-child {
   margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .case-mobile-signature__prose {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 /* --- Mobile slice grid --- */

@@ -6,9 +6,9 @@ import {
 } from '~/lib/navigation/archiveReturn';
 
 const CASE_PROSE_BLOCK_SELECTOR =
-  '.case-page .case-content__prose > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading), ' +
-  '.case-page .case-mobile__caption > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading), ' +
-  '.case-page .case-mobile-signature__prose > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, .wp-block-paragraph, .wp-block-heading)';
+  '.case-page .case-content__prose > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, div, .wp-block-paragraph, .wp-block-heading):not(:has(:is(ul, ol, .wp-block-list))), ' +
+  '.case-page .case-mobile__caption > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, div, .wp-block-paragraph, .wp-block-heading):not(:has(:is(ul, ol, .wp-block-list))), ' +
+  '.case-page .case-mobile-signature__prose > :is(p, h1, h2, h3, h4, h5, h6, blockquote, figure, div, .wp-block-paragraph, .wp-block-heading):not(:has(:is(ul, ol, .wp-block-list)))';
 
 const CASE_LIST_SELECTOR =
   '.case-page .case-content__prose :is(ul, .wp-block-list) > li, ' +

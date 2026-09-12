@@ -114,7 +114,7 @@ All detail pages (about, service, contact, case) use [`.editorial-hero`](../app/
 | **Left** | [`EditorialHeroMedia`](../app/components/EditorialHeroMedia.vue) — video, featured image, or outline placeholder; centered in column with `--editorial-hero-media-inset`; frame draws on enter (four edges sequentially) |
 | **Right** | Copy: kicker, title, tags, intro / case header |
 
-Case variant: `.editorial-hero--case` — taller min-height; Overview after hero keeps 50/50 (marker cols 1–6, prose cols 7–12). About variant: `.editorial-hero--about` — square media frame on all breakpoints; padded inset on all sides. Service / contact / case on mobile: `.editorial-hero--bleed-mobile` — media spans full viewport width.
+Case variant: `.editorial-hero--case` — taller min-height; Overview after hero uses **3/9** (marker cols 1–3, prose cols 4–12). About variant: `.editorial-hero--about` — square media frame on all breakpoints; padded inset on all sides. Service / contact / case on mobile: `.editorial-hero--bleed-mobile` — media spans full viewport width.
 
 Media resolution ([`editorialHero.ts`](../app/domain/editorialHero.ts)):
 
@@ -150,13 +150,13 @@ Manual play while scrolled down is blocked (`play` event → immediate `pause`).
 
 **Scroll source:** [`getCaseScrollTop()`](../app/composables/useCaseTopScrollBand.ts) reads `window.scrollY` (ready for a future smooth-scroll proxy).
 
-**Overview (CMS content)** is its own 12-col composition, not `CaseSection` body (cols 4–12):
+**Overview (CMS content)** is its own 12-col composition, not `CaseSection` body:
 
-- marker `NN / OVERVIEW` — cols 1–4 (editorial rail + vertical guide on lg)
-- `.case-content__body` — cols 4–10 (6 columns; no `max-width: 65ch`, not centered)
-- `.case-content__facts` — cols 10–13 when any fact exists; otherwise that span stays empty (negative space)
+- marker `NN / OVERVIEW` — cols 1–3 (editorial rail + vertical guide on lg)
+- `.case-content__body` — cols 4–12 (**3/9**; no `max-width: 65ch`, not centered)
+- `.case-content__facts` — same cols 4–12, stacked under prose when any fact exists
 
-CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong, figcaption) — not a single typography utility. `p` / `li` / `.wp-block-paragraph` share one inherited `--text-case-body` size (WP `has-*-font-size` classes are neutralized). Paragraph gap ~`1.15em`; list items ~`0.7em`. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph.
+CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong, figcaption) — not a single typography utility. `p` / `li` / `.wp-block-paragraph` share one inherited `--text-case-body` size (WP `has-*-font-size` classes are neutralized). Paragraph gap ~`1.15em`; list items ~`0.7em`. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph. Mixed list rows (`strong` + text nodes) are normalized via [`prepareCaseProseHtml`](../app/domain/wp/htmlPlain.ts) / `wrapCaseListItemBodies` so listing reveal fades one `li > *` unit.
 
 ## Visual media blocks
 
@@ -206,7 +206,7 @@ Respect `prefers-reduced-motion` (no GSAP; stair margins reset). Do not put `ove
 
 Do not drop filled `screen-mobile` / `screenshot_image` / mobile signature. Both mockup and slices may appear on the same case.
 
-**Composite mockup (Mobile):** flat `screenshot_image` (no card frame). Desktop (`≥1024px`): page **subgrid** split aligned with footer nav — mockup cols 1–6 (right-aligned within left half, external `margin-inline-end`), caption cols 7–12; section marker spans full width (`tone="visual"`). Service-style archive footer uses the same 50/50 split with a decorative left rail (no index). Pointer tilt + glass glare on desktop; `DeviceOrientation` tilt on touch devices. Interactive layer gated by [`caseMotionGate`](../app/composables/caseMotionGate.ts) during route exit / case→case transition.
+**Composite mockup (Mobile):** flat `screenshot_image` (no card frame). Desktop (`≥1024px`): page **subgrid** **3/6/3** — caption cols 4–9, mockup specimen cols 10–12; section marker spans full width (`tone="visual"`). Signature-only (slices, no mockup) uses the same copy column (cols 4–9). Service-style archive footer keeps a 50/50 split with a decorative left rail (no index). Pointer tilt + glass glare on desktop; `DeviceOrientation` tilt on touch devices. Interactive layer gated by [`caseMotionGate`](../app/composables/caseMotionGate.ts) during route exit / case→case transition.
 
 ### Lightbox
 

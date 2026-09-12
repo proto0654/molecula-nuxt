@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
-import { demoteCmsH1 } from '~/domain/wp';
+import { prepareCaseProseHtml } from '~/domain/wp';
 
 const props = defineProps<{
   caseData: Case;
@@ -15,7 +15,9 @@ const hasMeta = computed(
 );
 
 const proseHtml = computed(() =>
-  props.caseData.contentHtml ? demoteCmsH1(props.caseData.contentHtml) : null,
+  props.caseData.contentHtml
+    ? prepareCaseProseHtml(props.caseData.contentHtml)
+    : null,
 );
 
 const overviewLabel = useUiString('case_section_overview');

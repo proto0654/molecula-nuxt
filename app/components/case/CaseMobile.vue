@@ -5,6 +5,7 @@ import {
   caseImageUrl,
   stripTags,
 } from '~/domain/portfolio/presentation';
+import { wrapCaseListItemBodies } from '~/domain/wp';
 
 const props = defineProps<{
   caseData: Case;
@@ -34,6 +35,12 @@ const mobileSrc = computed(() =>
 const mobileSrcSet = computed(() =>
   props.caseData.mobile
     ? caseImageSrcSet(props.caseData.mobile.image)
+    : null,
+);
+
+const captionHtml = computed(() =>
+  props.caseData.mobileSignatureHtml
+    ? wrapCaseListItemBodies(props.caseData.mobileSignatureHtml)
     : null,
 );
 
@@ -92,9 +99,9 @@ const mobileLabel = useUiString('case_section_mobile');
         </div>
       </div>
       <div
-        v-if="caseData.mobileSignatureHtml"
+        v-if="captionHtml"
         class="case-mobile__caption"
-        v-html="caseData.mobileSignatureHtml"
+        v-html="captionHtml"
       />
     </div>
   </CaseSection>
