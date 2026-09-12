@@ -973,11 +973,11 @@ html.js-enabled .case-page.is-revealing
   }
 
   .case-content__body {
-    grid-column: 4 / -1;
+    grid-column: 4 / 10;
   }
 
   .case-content__facts {
-    grid-column: 4 / -1;
+    grid-column: 10 / -1;
   }
 }
 
@@ -1230,9 +1230,9 @@ html.js-enabled .case-page.is-revealing
 }
 
 @media (min-width: 1024px) {
-  /* Overview 3/9: facts stack under prose in the same copy column. */
+  /* Overview 3/6/3: facts in the trailing third. */
   .case-content__facts {
-    margin-top: 1.75rem;
+    margin-top: 0;
     padding-top: 0.75rem;
     border-top: 1px solid var(--accent-line);
   }

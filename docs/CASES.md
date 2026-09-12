@@ -114,7 +114,7 @@ All detail pages (about, service, contact, case) use [`.editorial-hero`](../app/
 | **Left** | [`EditorialHeroMedia`](../app/components/EditorialHeroMedia.vue) — video, featured image, or outline placeholder; centered in column with `--editorial-hero-media-inset`; frame draws on enter (four edges sequentially) |
 | **Right** | Copy: kicker, title, tags, intro / case header |
 
-Case variant: `.editorial-hero--case` — taller min-height; Overview after hero uses **3/9** (marker cols 1–3, prose cols 4–12). About variant: `.editorial-hero--about` — square media frame on all breakpoints; padded inset on all sides. Service / contact / case on mobile: `.editorial-hero--bleed-mobile` — media spans full viewport width.
+Case variant: `.editorial-hero--case` — taller min-height; Overview after hero uses **3/6/3** (marker cols 1–3, prose cols 4–9, facts 10–12). About variant: `.editorial-hero--about` — square media frame on all breakpoints; padded inset on all sides. Service / contact / case on mobile: `.editorial-hero--bleed-mobile` — media spans full viewport width.
 
 Media resolution ([`editorialHero.ts`](../app/domain/editorialHero.ts)):
 
@@ -153,8 +153,8 @@ Manual play while scrolled down is blocked (`play` event → immediate `pause`).
 **Overview (CMS content)** is its own 12-col composition, not `CaseSection` body:
 
 - marker `NN / OVERVIEW` — cols 1–3 (editorial rail + vertical guide on lg)
-- `.case-content__body` — cols 4–12 (**3/9**; no `max-width: 65ch`, not centered)
-- `.case-content__facts` — same cols 4–12, stacked under prose when any fact exists
+- `.case-content__body` — cols 4–9 (**3/6/3**; no `max-width: 65ch`, not centered)
+- `.case-content__facts` — cols 10–12 when any fact exists; otherwise that span stays empty (negative space)
 
 CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong, figcaption) — not a single typography utility. `p` / `li` / `.wp-block-paragraph` share one inherited `--text-case-body` size (WP `has-*-font-size` classes are neutralized). Paragraph gap ~`1.15em`; list items ~`0.7em`. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph. Mixed list rows (`strong` + text nodes) are normalized via [`prepareCaseProseHtml`](../app/domain/wp/htmlPlain.ts) / `wrapCaseListItemBodies` so listing reveal fades one `li > *` unit.
 
