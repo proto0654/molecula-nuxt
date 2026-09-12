@@ -2250,7 +2250,6 @@ html.js-enabled .case-page.is-revealing
 .case-mobile__caption > :is(p, div, h1, h2, h3, h4, h5, h6):has(+ :is(ul, ol, .wp-block-list)),
 .case-mobile-signature__prose > :is(p, div, h1, h2, h3, h4, h5, h6):has(+ :is(ul, ol, .wp-block-list)) {
   margin: 0 0 1.35em;
-  font-weight: 600;
   color: var(--color-ink-bright);
 }
 
