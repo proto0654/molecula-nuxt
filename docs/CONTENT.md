@@ -52,6 +52,7 @@ Rules:
 - ACF media/repeater `false` → `null` / `[]`
 - Empty text `""` → `null`
 - Image `sizes`: string URL keys only (no invented WebP); `sizeWidths` from ACF `*-width` / embed `media_details` for `srcset`
+- [`normalizeAcfImage`](../app/domain/wp/normalizeMedia.ts): ACF image object **or** bare URL string (portfolio `repeater_field` often returns strings). String → `url` only; `id` optional on `CaseImage`
 - Display: `caseImageUrl` + optional `caseImageSrcSet` (null if &lt;2 candidates) — hero, gallery, archive specimens, lightbox; CaseSlices CSS background unchanged
 - Prev/next: slim index sorted `menu_order ASC`, then `date DESC` ([`getCasePosition`](../app/domain/portfolio/adjacent.ts)) — **within shelf** (`current` vs `legacy` via `portfolio_category`); not archive-page array index. Slim `_fields` include `title` + `portfolio_category` for shelf filter ([`shelf.ts`](../app/domain/portfolio/shelf.ts)).
 - Archive listing uses the same slim sort, then `include` + `orderby=include` for the current page. Row numbers are 1-based positions in that index.

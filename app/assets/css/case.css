@@ -1970,25 +1970,26 @@ html.js-enabled .case-page.is-revealing
     .case-inner-pages__card-motion {
     animation: grid-screen-flip-y linear both;
     animation-timeline: view();
-    animation-range: entry 22% entry 38%;
+    /* Later entry + shorter range — match GSAP screensGrid scrub. */
+    animation-range: entry 42% entry 68%;
   }
 
   html:not(.js-enabled)
     .case-inner-pages:not(.case-inner-pages--landing-only)
     .case-inner-pages__card-motion[data-case-col='0'] {
-    --grid-flip-y: 50deg;
+    --grid-flip-y: 56deg;
   }
 
   html:not(.js-enabled)
     .case-inner-pages:not(.case-inner-pages--landing-only)
     .case-inner-pages__card-motion[data-case-col='1'] {
-    --grid-flip-y: -50deg;
+    --grid-flip-y: -56deg;
   }
 
   html:not(.js-enabled)
     .case-inner-pages:not(.case-inner-pages--landing-only)
     .case-inner-pages__card-motion[data-case-col='2'] {
-    --grid-flip-y: 50deg;
+    --grid-flip-y: 56deg;
   }
 
   html:not(.js-enabled)
@@ -2052,12 +2053,18 @@ html.js-enabled .case-page.is-revealing
 }
 
 @keyframes grid-screen-flip-y {
-  from {
+  0% {
     opacity: 0;
-    transform: perspective(1200px) rotateY(var(--grid-flip-y, 50deg));
+    transform: perspective(1200px) rotateY(var(--grid-flip-y, 56deg));
   }
 
-  to {
+  /* Hold edged pose while fading in — then unfold. */
+  32% {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(var(--grid-flip-y, 56deg));
+  }
+
+  100% {
     opacity: 1;
     transform: perspective(1200px) rotateY(0deg);
   }

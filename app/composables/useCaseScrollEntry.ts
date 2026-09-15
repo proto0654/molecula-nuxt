@@ -49,11 +49,21 @@ const SLICE_STOPS = [
   { t: 1, opacity: 1, rotateX: 0, rotateY: 0, yMul: 0, z: 0, scale: 1 },
 ] as const;
 
-/** Per-column rotateY flip — starts once the screen is mostly in view. */
-const GRID_FLIP_Y = [50, -50, 50] as const;
+/**
+ * Per-column rotateY flip. Scrub starts after the card is clearly in view
+ * (not at the bottom edge), then finishes quickly so the turn reads.
+ * Opacity leads rotate so the edged pose is visible before the unfold.
+ */
+const GRID_FLIP_Y = [56, -56, 56] as const;
 const GRID_FLIP_PERSPECTIVE = 1200;
-const GRID_FLIP_START = 'top 88%';
-const GRID_FLIP_END = 'top 62%';
+/** Desktop: later + shorter scrub (was ~26vh of travel → ~18vh). */
+const GRID_FLIP_START = 'top 70%';
+const GRID_FLIP_END = 'top 52%';
+/** Mobile masonry cards are taller — start later, snap faster. */
+const GRID_FLIP_START_MOBILE = 'top 64%';
+const GRID_FLIP_END_MOBILE = 'top 42%';
+/** Fraction of scrub spent fading in while still edged (rest = flip). */
+const GRID_FLIP_FADE_FRAC = 0.32;
 
 function readCaseCol(el: HTMLElement): number {
   const raw =
@@ -212,6 +222,9 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
       if (preset === 'screensGrid') {
         const col = readCaseCol(motion);
         const fromY = GRID_FLIP_Y[col] ?? GRID_FLIP_Y[1]!;
+        const wide = window.matchMedia('(min-width: 1024px)').matches;
+        const flipStart = wide ? GRID_FLIP_START : GRID_FLIP_START_MOBILE;
+        const flipEnd = wide ? GRID_FLIP_END : GRID_FLIP_END_MOBILE;
         gsap.set(motion, {
           opacity: 0,
           rotateX: 0,
@@ -222,18 +235,30 @@ export function useCaseScrollEntry(options: CaseScrollEntryOptions) {
           transformPerspective: GRID_FLIP_PERSPECTIVE,
           force3D: true,
         });
-        const tween = gsap.to(motion, {
-          opacity: 1,
-          rotateY: 0,
-          ease: 'power2.out',
+        const tl = gsap.timeline({
           scrollTrigger: {
             trigger,
-            start: GRID_FLIP_START,
-            end: GRID_FLIP_END,
+            start: flipStart,
+            end: flipEnd,
             scrub: true,
           },
         });
-        if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+        // Hold the edged pose while opacity rises, then flip flat.
+        tl.to(
+          motion,
+          { opacity: 1, duration: GRID_FLIP_FADE_FRAC, ease: 'none' },
+          0,
+        );
+        tl.to(
+          motion,
+          {
+            rotateY: 0,
+            duration: 1 - GRID_FLIP_FADE_FRAC,
+            ease: 'power2.out',
+          },
+          GRID_FLIP_FADE_FRAC,
+        );
+        if (tl.scrollTrigger) triggers.push(tl.scrollTrigger);
         continue;
       }
 

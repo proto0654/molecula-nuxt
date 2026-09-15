@@ -71,6 +71,8 @@ Keys observed on live posts:
 
 **Important:** fields vary per case. `false` means “no media/repeater”, not an error. Empty string `""` for text should normalize to `null` for conditional UI.
 
+**Gotcha — `repeater_field` shape:** live posts mix **ACF Image Array objects** and **bare upload URL strings** (~half each among cases with a gallery). `landing_screen` / `screen-mobile` stay objects. [`normalizeAcfImage`](../app/domain/wp/normalizeMedia.ts) accepts both; a string becomes `{ url, alt: '', width/height: null, sizes: {}, sizeWidths: {} }` (`CaseImage.id` optional). Without that, Interface `SCREEN / 02+` cards render with empty `src` while `LANDING / 01` still works.
+
 No separate WebP URLs in JSON — only registered size names (below). Nuxt builds `srcset` from named size URLs + widths (`sizeWidths` / fallback map); never invents WebP.
 
 ### ACF image object (compact)

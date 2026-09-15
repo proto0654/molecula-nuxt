@@ -13,7 +13,7 @@
 
 # A. ГДЕ МЫ СЕЙЧАС ОСТАНОВИЛИСЬ
 
-**Дата чекпоинта:** 2026-09-05  
+**Дата чекпоинта:** 2026-09-15  
 **Ветка:** `main` (`origin` = `molecula-nuxt`)  
 **Удалено намеренно:** ветка `feat/headless-api-foundation` (неудачная Vite-API итерация; не переносить)
 
@@ -53,7 +53,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Mobile viewport:** `#hero-canvas` bottom-aligned `100svh` (stable WebGL); stage/chrome dynamic `inset: 0` (HUD frame); burger veil `lvh` / frame `dvh`; scroll-to-top `--hud-scroll-inset-*` inside L-ticks — [`docs/WEBGL_HERO.md`](../docs/WEBGL_HERO.md), [`docs/DESIGN.md`](../docs/DESIGN.md)
 - **Spatial:** `/` home (hub `C` always focused, pointer live); other routes frozen + page overlay
 - **API:** `app/api/client.ts` + portfolio/services/options/menus/pages/media; components не знают REST URL
-- **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw, unused in UI.
+- **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw, unused in UI. **`normalizeAcfImage`** accepts ACF image objects **and** bare URL strings (`repeater_field` mix on live cases) — otherwise Interface `SCREEN` cards get empty `src`.
 - **Theme Options:** [`useThemeOptions`](../app/composables/useThemeOptions.ts) — footer, scroll-top, GTM/schema, HUD chrome UI strings (`nav_verb_*`, `hud_*`, `chrome_*`, `case_section_*`); empty → visible `[key]`; coverage `[theme-options]`; docs [`THEME_OPTIONS.md`](../docs/THEME_OPTIONS.md). WP: Tools → **Seed empty UI string Options**.
 - **Molecule hero copy:** five pages `post_title` + `hero_*` via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts); structure in `navStructure`; Options `hero_nav_items` removed — [`HERO_WP_FIELDS.md`](../docs/HERO_WP_FIELDS.md)
 - **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); **full shelf** in one SSG payload, `?page=N` slices client-side; SiteChrome meta `ARCHIVE`; transparent page over frozen molecule; featured wash on hover is CSS-only (`.archive-row__backdrop`), gated by `is-washes-ready` / [`usePortfolioWashGate`](../app/composables/usePortfolioWashGate.ts)

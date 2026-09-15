@@ -168,9 +168,11 @@ Optional; missing blocks leave no reserved gap. Numbered sections count **visibl
 
 Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in center column (cols 4–10 / `.case-zone-center`). Repeater masonry respects `--case-pad-x`; landing-only card breaks out to full viewport width on mobile (`<1024px`, same bleed pattern as `.editorial-hero--bleed-mobile`).
 
+`repeater_field` may be an ACF image object **or** a bare URL string (production mix). Normalization is in [`normalizeAcfImage`](../app/domain/wp/normalizeMedia.ts) — see [api-real-response.md](api-real-response.md). String rows have no `id` / size map; `caseImageUrl` falls back to full `url`.
+
 | Mode | When | Layout | GSAP |
 |------|------|--------|------|
-| **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | per-card `rotateY` flip (±50° by column), scrub `top 88%`→`top 62%`; no repeater pointer layer. CSS fallback: `grid-screen-flip-y` (`animation-timeline: view()`, entry 22%–38%) |
+| **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | per-card `rotateY` flip (±56° by column); opacity leads, then flip. Desktop scrub `top 70%`→`top 52%`; mobile `top 64%`→`top 42%`. CSS fallback: `grid-screen-flip-y` (`animation-timeline: view()`, entry 42%–68%, hold-edge keyframe) |
 | **Landing-only** | only `landing_screen` | one card; mobile: full viewport width; desktop: centered in center column (`--case-landing-max`) | kinetic float (`translateZ` −140 + `rotateX` 24° + `translateY` 40); specular tilt + glare on pointer |
 
 Stair (desktop, first card in col): `--stair-0` `clamp(7rem, 28vw, 18rem)`, `--stair-1` `clamp(3.5rem, 14vw, 9rem)`. Reset under `prefers-reduced-motion`.
