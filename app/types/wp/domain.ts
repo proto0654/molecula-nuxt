@@ -6,7 +6,8 @@
 import type { UiStrings } from './uiStrings';
 
 export type CaseImage = {
-  id: number;
+  /** Missing when ACF returns a bare URL string (no media id). */
+  id?: number;
   url: string;
   alt: string;
   width: number | null;

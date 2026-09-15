@@ -59,7 +59,7 @@ Keys observed on live posts:
 | `landing_screen` | `false` | ACF image object |
 | `screen-mobile` | `false` | ACF image object |
 | `screenshot_image` | `false` (common) | ACF image object |
-| `repeater` | `false` | `[{ repeater_field: AcfImage }, ...]` |
+| `repeater` | `false` | `[{ repeater_field: AcfImage \| string }, ...]` (string = bare upload URL) |
 | `video` | `false` | ACF file/video object (`url`, `mime_type`, …) |
 | `block_ratio` | `false` / absent | string e.g. `"1/2.3"` |
 | `podpis_vozle_mokapa_mobily_pravo` | `""` / `false` | HTML string |

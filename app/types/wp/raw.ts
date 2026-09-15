@@ -58,7 +58,8 @@ export type AcfVideo = {
 };
 
 export type AcfRepeaterRow = {
-  repeater_field: AcfImage | false;
+  /** Image Array object, or bare upload URL (legacy / mixed ACF return format). */
+  repeater_field: AcfImage | string | false;
 };
 
 /**

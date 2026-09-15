@@ -49,8 +49,26 @@ export function normalizeSizeWidths(
   return out;
 }
 
-export function normalizeAcfImage(image: AcfImage | false | undefined | null): CaseImage | null {
+/**
+ * ACF image fields usually return an object; some repeater rows return a bare URL string.
+ */
+export function normalizeAcfImage(
+  image: AcfImage | string | false | undefined | null,
+): CaseImage | null {
   if (!image || image === false) return null;
+  if (typeof image === 'string') {
+    const url = image.trim();
+    if (!url) return null;
+    return {
+      url,
+      alt: '',
+      width: null,
+      height: null,
+      sizes: {},
+      sizeWidths: {},
+    };
+  }
+  if (typeof image !== 'object') return null;
   return {
     id: image.id ?? image.ID,
     url: image.url,
