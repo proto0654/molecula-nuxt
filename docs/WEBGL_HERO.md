@@ -73,7 +73,7 @@ Helpers: `getItemById`, `getItemByAtomId`. Each nav item maps to exactly one mol
 
 **Structure** (`id` / `atomId` / `route`) lives in [`navStructure.ts`](../app/lib/navigation/navStructure.ts); `navigationConfig` starts with empty copy. Live labels / blurbs / USP come from the five WP pages via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts) → `setNavigationItems`. **Blurb CTA verbs** (`кликай` / `тапай`) and visible HUD chrome strings (incl. desktop rail `hud_nav_go`) come from Theme Options via [`resolveHeroChromeCopy`](../app/domain/options/heroChromeCopy.ts) → `setChromeCopy` / `setNavVerbCopy`. Empty Options UI strings render as `[key]` ([`missingUiString`](../app/domain/options/missingUiString.ts)). Specs: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md), [`THEME_OPTIONS.md`](THEME_OPTIONS.md).
 
-On commit, `mountHeroApp` passes `buildAtomBlurb(item)` to `setAtomBlurb` — part 2 is `{verb}{blurbCta}` (touch via [`pointerInput.ts`](../app/lib/a11y/pointerInput.ts)); hub skips CTA. Pointer-type changes refresh the active blurb via `subscribePointerInput`.
+On commit, `mountHeroApp` passes `buildAtomBlurb(item)` to `setAtomBlurb` — part 2 is `navBlurbCta(blurbCta)` = Options `{кликай|тапай|click|tap}` + page tail (touch via [`pointerInput.ts`](../app/lib/a11y/pointerInput.ts)); hub skips CTA. `navBlurbCta` trims the tail then inserts a space unless it starts with punctuation (avoids `clickto` after `emptyToNull` strips a leading space). Pointer-type changes refresh the active blurb via `subscribePointerInput`.
 
 ## Navigation state
 
@@ -323,7 +323,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `TagCloud.ts` | Decorative troika tags from ACF `hero_tag_cloud` (all quality levels); scene-parented billboard like `AtomLabel`; tier = size + color; not pickable; hides on zoom/fill |
 | `moleculeConfig.ts` / `types.ts` | Declarative molecule data; captions pulled from nav labels |
 | `navigation/navigationConfig.ts` | Structure + WP-hydrated `NavigationItem[]` (labels/blurbs/USPs) |
-| `navigation/buildAtomBlurb.ts` | Assemble typewriter string; `{кликай\|тапай}` + CTA tail |
+| `navigation/buildAtomBlurb.ts` | Assemble typewriter string; verb + CTA tail (`navBlurbCta` space/punct join) |
 | `a11y/pointerInput.ts` | `(pointer: coarse)` / `(hover: none)` touch heuristic + subscribe |
 | `navigation/NavigationState.ts` | atomHover + navHover + committed; `focusItemId`; subscribe |
 | `navigation/Navigator.ts` | GSAP page-transition coordinator; `navigateTo` / `approachTo` / `retargetApproach` / `onNavigate` / `cancel` |
@@ -398,7 +398,7 @@ Fonts live in `public/fonts/` (copied to dist root). Troika font URL must use Nu
 - Atom rest-frame position for focus is `atom.object.position` (the Group), not `mesh.position` (local origin after the unit-icosahedron scale wrap).
 - Shared geometries live in `GeometryCache` — do not `geometry.dispose()` on atom/selection teardown. Bond lines own their geometry and dispose it in `Bond.dispose()`. `applyQuality` must not call `buildMolecule`.
 - Wireframe shells are decorative; committed (`setWireframeAtom`) + accent preview/autoplay (`setAccentWireframeAtom`); quality may disable both. Never add them to `atomMeshes`.
-- Keep `navigationConfig.items[].atomId` aligned with molecule atom ids. Captions/blurbs/USPs/labels are authored on WP navigation pages; `moleculeConfig` reads captions via `getItemByAtomId`. HUD chrome + blurb verbs: Theme Options.
+- Keep `navigationConfig.items[].atomId` aligned with molecule atom ids. Captions/blurbs/USPs/labels are authored on WP navigation pages; `moleculeConfig` reads captions via `getItemByAtomId`. HUD chrome + blurb verbs: Theme Options. `hero_blurb_cta` is a **grammatical tail** after the verb — not a button label; `navBlurbCta` re-spaces after normalize trim (else EN tails become `clickto…`).
 - Troika captions load JetBrains Mono ttf via `import.meta.env.BASE_URL` + `fonts/JetBrainsMono-Regular.ttf` (Cyrillic). HUD CSS uses the matching `.woff2` from `public/fonts/`. Do not point troika at woff2.
 - Hover may **not** call `focusAtom` — preview uses highlight / pulsing reticle / bright title / accent wireframe. Focus comes from `committed` (first click). Zoom starts on the second click via `navigateTo`.
 - USP reveal shares `isFocusSettled()` with zoom-in. Arm via `activateCommittedItem` on commit / home restore; do not scramble on hover or before the gate. Fade USP with zoom/fill; dispose with other HUD on HMR. Scramble must use a hidden measure layer + absolute paint layer + target-letter charset — a wide random charset or layout-affecting `textContent` will jump lines (especially on mobile where the block is vertically centered).

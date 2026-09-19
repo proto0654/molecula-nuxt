@@ -13,7 +13,7 @@
 
 # A. ГДЕ МЫ СЕЙЧАС ОСТАНОВИЛИСЬ
 
-**Дата чекпоинта:** 2026-09-15  
+**Дата чекпоинта:** 2026-09-19  
 **Ветка:** `main` (`origin` = `molecula-nuxt`)  
 **Удалено намеренно:** ветка `feat/headless-api-foundation` (неудачная Vite-API итерация; не переносить)
 
@@ -55,7 +55,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **API:** `app/api/client.ts` + portfolio/services/options/menus/pages/media; components не знают REST URL
 - **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw, unused in UI. **`normalizeAcfImage`** accepts ACF image objects **and** bare URL strings (`repeater_field` mix on live cases) — otherwise Interface `SCREEN` cards get empty `src`.
 - **Theme Options:** [`useThemeOptions`](../app/composables/useThemeOptions.ts) — footer, scroll-top, GTM/schema, HUD chrome UI strings (`nav_verb_*`, `hud_*`, `chrome_*`, `case_section_*`); empty → visible `[key]`; coverage `[theme-options]`; docs [`THEME_OPTIONS.md`](../docs/THEME_OPTIONS.md). WP: Tools → **Seed empty UI string Options**.
-- **Molecule hero copy:** five pages `post_title` + `hero_*` via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts); structure in `navStructure`; Options `hero_nav_items` removed — [`HERO_WP_FIELDS.md`](../docs/HERO_WP_FIELDS.md)
+- **Molecule hero copy:** five pages `post_title` + `hero_*` / `*_en` via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts); structure in `navStructure`; Options `hero_nav_items` removed — [`HERO_WP_FIELDS.md`](../docs/HERO_WP_FIELDS.md). Live WP + seed refreshed 2026-09-19 (marketing USP/blurb; About CTA = стек/подход, not Telegram). `navBlurbCta` inserts space after trim so EN does not become `clickto…`. Prod shows new copy only after generate deploy (strict SSG).
 - **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); **full shelf** in one SSG payload, `?page=N` slices client-side; SiteChrome meta `ARCHIVE`; transparent page over frozen molecule; featured wash on hover is CSS-only (`.archive-row__backdrop`), gated by `is-washes-ready` / [`usePortfolioWashGate`](../app/composables/usePortfolioWashGate.ts)
 - **Case page:** editorial inspection (12-col grid, SiteChrome `CASE / NN`); Interface = `landing_screen` + repeater; sequential `getCaseComposition` markers including NEXT; lightbox + `useCaseScrollEntry`; in-page case→case via `useCasePageTransition` (hold previous payload, no generic loader); Index restores `?page=` + scroll (`wl:archive-return`); featured wash is layout-owned (not remounted in CaseShell); same wash entrance gate from outside portfolio
 - **Typography:** `--font-ui` JetBrains Mono (HUD / all-caps titles / troika); `--font-body` Exo 2 300 (case prose / intro / captions). Titles via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue) — absolute paint layer, pose-gated (+ case `revealReady`); archive/section body fade via [`usePageContentReveal`](../app/composables/usePageContentReveal.ts)
@@ -65,6 +65,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Off-home chrome:** header route menu (direct `transitionTo`); molecule rail / bottom nav / MENU hidden; logo clickable (`pointer-events: auto`)
 - **Approach:** `Navigator` single approach tween (zoom+fill together); `freeze()` + hide labels at start; no forward veil
 - **Strict SSG:** prod browser never hits `/wp-json` (`wpFetch` gated); CMS text from generate payload + `preferStaticCachedData` / `sharedPrerenderData`; `nuxt dev` still live REST. Hero via plugin prefetch. Content updates = push → generate → deploy — [`docs/CONTENT.md`](../docs/CONTENT.md), [`docs/DEPLOY.md`](../docs/DEPLOY.md)
+- **SSR hydration:** footer cookie WYSIWYG unwrapped + `div` host; archive Index href / case `--case-accent` deferred until after mount — [`docs/CONTENT.md`](../docs/CONTENT.md), [`docs/CASES.md`](../docs/CASES.md)
 - **Prerender:** portfolio **and** service slugs queued at generate via live WP (+ `/about` `/services` `/contact` + EN mirrors)
 - **Deploy:** production [weblaba.ru](https://weblaba.ru) — [deploy-production.yml](../.github/workflows/deploy-production.yml) (rsync REG.RU, push `main`); preview [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/) — [deploy.yml](../.github/workflows/deploy.yml) (`NUXT_APP_BASE_URL=/molecula-nuxt/`, `NUXT_PUBLIC_INDEXABLE=false`); WP `https://api.weblaba.ru/wp-json` — [`docs/DEPLOY.md`](../docs/DEPLOY.md)
 - **Case / archive docs:** [`docs/CASES.md`](../docs/CASES.md), [`docs/CONTENT.md`](../docs/CONTENT.md)
@@ -1123,13 +1124,13 @@ Do NOT continue automatically into visual case redesign.
 # D. ПРОМПТ ДЛЯ СЛЕДУЮЩЕГО ЧАТА (короткий)
 
 ```
-Продолжаем headless WebLaba: foundation + case visual + archive + spatial shell done; CMS text is strict SSG (prod payload-only; `nuxt dev` live REST); /about, /services, /contact WP-backed (services archive without wash; contact = ACF weblaba_contacts + popup chrome, no form/popup overlay). EN fields typed; UI has `/en/*` + pickLocalized.
+Продолжаем headless WebLaba: foundation + case visual + archive + spatial shell done; CMS text is strict SSG (prod payload-only; `nuxt dev` live REST); /about, /services, /contact WP-backed; molecule hero USP/blurb/CTA live on WP + seed (RU/EN), typewriter via buildAtomBlurb/navBlurbCta.
 
 Источник правды: tasks/HEADLESS_NUXT_TZ.md
 Сверка: tasks/ROADMAP.md
-Content: docs/CONTENT.md + docs/api-real-response.md
+Content: docs/CONTENT.md + docs/api-real-response.md + docs/HERO_WP_FIELDS.md
 Case / archive visual: docs/CASES.md
 
 Scope: polish EN i18n / remaining chrome. Optional: case defaults, lang_switch_aria. Fill WP gtm_container_id when ready.
-Не ломать absence-as-null, case wash, services-without-wash, persistent shell, contact options normalize, strict SSG (no prod client /wp-json).
+Не ломать absence-as-null, case wash, services-without-wash, persistent shell, contact options normalize, strict SSG (no prod client /wp-json), hero blurb CTA grammar (verb + tail), SSR-safe cookie footer / archive href / case accent.
 ```

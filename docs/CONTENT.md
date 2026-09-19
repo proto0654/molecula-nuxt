@@ -93,7 +93,7 @@ Decorative tag cloud around the molecule: ACF options `hero_tag_cloud` via [`use
 | `blurb` | Typewriter under atom on commit | part 1 + `blurbCta` in config; verb from [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) | Page ACF `hero_blurb` + `hero_blurb_cta` |
 | `usp` | HUD headline after focus settle | hardcode | Page ACF `hero_usp` |
 
-Blurbs: part 1 + `blurbCta` glued to Options verb (`nav_verb_click` / `nav_verb_tap`). Hub is descriptive only.
+Blurbs: part 1 + Options verb + `blurbCta` via [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) / `navBlurbCta` (punct tails glue; else space). Hub is descriptive only. Live seed + EN pairs: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md).
 
 WP field spec + import: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md).
 
@@ -134,7 +134,10 @@ Deploy: [DEPLOY.md](DEPLOY.md) — production [weblaba.ru](https://weblaba.ru) v
 ## Gotchas
 
 - Components must not call WordPress URLs directly.
+- **Molecule hero copy on production** updates only after `generate` + deploy (strict SSG). Editing WP `hero_*` alone does not change weblaba.ru until the next push / `workflow_dispatch`.
+- `footer_cookie_notice` may arrive as a single WYSIWYG `<p>…</p>` — `unwrapOuterParagraph` strips the outer tag before `v-html` in a block host (avoids nested `<p>` hydration mismatches). [`SiteFooterLegal`](../app/components/site/SiteFooterLegal.vue) hosts cookie HTML in a `div`.
 - Document scroll is locked only on home (`html.hero-lock`); portfolio/case pages scroll normally. `html` uses `scrollbar-gutter: stable both-edges` ([`main.css`](../app/assets/css/main.css)) so scrollbar appearance does not shift layout on route change.
 - Case visual system: [`CASES.md`](CASES.md) / [`case.css`](../app/assets/css/case.css). Archive listing + detail repeaters: [`archive.css`](../app/assets/css/archive.css). Services + about editorial tokens: [`services.css`](../app/assets/css/services.css). About photo: [`about.css`](../app/assets/css/about.css). Shared footer nav: [`DetailNav.vue`](../app/components/archive/DetailNav.vue) auto-imports as **`ArchiveDetailNav`**. Keep conditional rendering; absence stays `null` / `[]`. No Three.js on archive, case, service, about, or contact pages.
+- Case/service Index archive href: SSR-stable base path; `sessionStorage` pagination applied after mount ([`CaseShell`](../app/components/case/CaseShell.vue) / [`DetailNav`](../app/components/archive/DetailNav.vue)) — avoids hydration mismatch.
 - Service archive return uses session key `wl:archive-return:services` (portfolio keeps `wl:archive-return`).
 - `wpFetch` must not call `useRuntimeConfig()` after `await` inside `useAsyncData` (NUXT_E1001). Resolve base via `tryUseNuxtApp()?.$config` with env fallback ([`client.ts`](../app/api/client.ts)).

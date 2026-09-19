@@ -44,9 +44,12 @@ Structural mapping stays in Nuxt:
 |-------|------|------|-------|
 | Molecule USP headline | `hero_usp` | text | HUD scramble after focus |
 | Molecule blurb | `hero_blurb` | textarea | Typewriter part 1 |
-| Molecule blurb CTA tail | `hero_blurb_cta` | text | Glued after blurb + `{кликай\|тапай}` |
+| Molecule blurb CTA tail | `hero_blurb_cta` | text | Grammatical tail after Options `{кликай\|тапай}` — prefer `, …` / space-led EN; **not** a button label |
+| Molecule USP headline (EN) | `hero_usp_en` | text | `/en/` via `pickLocalized` |
+| Molecule blurb (EN) | `hero_blurb_en` | textarea | |
+| Molecule blurb CTA tail (EN) | `hero_blurb_cta_en` | text | Same join rules as RU |
 
-EN stubs (schema only until `/en/`): `hero_usp_en`, `hero_blurb_en`, `hero_blurb_cta_en`.
+`emptyToNull` / merge `trim` strip a leading space on EN tails; [`navBlurbCta`](../app/lib/navigation/buildAtomBlurb.ts) re-inserts a space unless the tail starts with punctuation.
 
 **Defaults / import:** theme `inc/page-molecule-hero-defaults.php` + **Tools → Molecule Hero Import** (or WebLaba Migrations → Run Molecule Hero Import). Import also clears deprecated Options `hero_nav_items`.
 

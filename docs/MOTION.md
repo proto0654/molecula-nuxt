@@ -61,7 +61,7 @@ Uprock motif — implementation of [hairline language](DESIGN.md#hairline-langua
 
 Same motif on case section markers, CMS list rows, and footer nav. **Footer nav** (`nav.case-nav`) is one listing unit; when `is-revealed`, an internal chain runs via `--nav-origin` + step offsets: case / service detail (`case-section`) — marker line → marker label → Next → Previous line → Previous → Index; archive-only (`case-nav--archive`) — Next → Previous line → Previous → Index.
 
-Layout **social footer** (`SiteFooterMenu`) is outside the page shell: pose-gated (`is-awaiting-pose`) fade-up with `--enter-beat-list`, hidden on `/contact`. **Legal footer** (`SiteFooterLegal`) uses the same pattern.
+Layout **social footer** (`SiteFooterMenu`) is outside the page shell: pose-gated (`is-awaiting-pose`) fade-up with `--enter-beat-list`, hidden on `/contact`. **Legal footer** (`SiteFooterLegal`) uses the same pattern. Cookie HTML is phrasing-safe (`unwrapOuterParagraph` + `div` host) so SSR does not nest `<p>` — see [`CONTENT.md`](CONTENT.md) gotchas.
 
 **About CTA** (`.about-cta`): pose-gated `wl-enter-fade-up` in [`about.css`](../app/assets/css/about.css), with chain/IO reveal index. Fallback for late WP data arrival (`v-if="page.ctaLabel"` may render after initial `classify()`).
 

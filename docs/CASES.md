@@ -64,7 +64,7 @@ Marker tones: **editorial** (Overview, Next) = horizontal rail + occasional vert
 
 ## Tokens
 
-Set `--case-accent` from `case.accentColor` **after reveal** (`@property` interpolates). Until then the page uses the ink default. **Never** use accent as the page background (`--wl-bg` stays). Atmosphere tint on `/portfolio*` goes through the layout wash’s solid overlay (`--backdrop-accent`), not a page fill.
+Set `--case-accent` from `case.accentColor` **after hydrate + reveal** (`@property` interpolates). [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) keeps `appliedAccent` null through the first client render (including `prefers-reduced-motion`, which skips the timed delay but still waits for `onMounted`) so SSR HTML has no inline `--case-accent` style. Until accent applies, the page uses the ink default. **Never** use accent as the page background (`--wl-bg` stays). Atmosphere tint on `/portfolio*` goes through the layout wash’s solid overlay (`--backdrop-accent`), not a page fill.
 
 Accent belongs on: section marker number, metadata labels, hover/active nav, selected lines. Not on section fills or gallery cards.
 
@@ -232,7 +232,7 @@ Archive → case: click commits featured URL + accent; case layout wash shows wh
 
 Entering `/portfolio*` from home/sections: pose settle, then ~700ms hold, then washes fade in (~1.15s). Archive↔case does not re-gate.
 
-Case → archive: existing body L1 exit, then archive reveal; wash **stays** (sticky). `useCasePageTransition` does **not** run `beginEnter` on `onBeforeRouteLeave` (avoids a double fade of the departing post). [`sessionStorage`](../app/lib/navigation/archiveReturn.ts) `wl:archive-return` restores `?page=` and scroll to the row. Index / Back to portfolio use that href. No accent reveal on the archive.
+Case → archive: existing body L1 exit, then archive reveal; wash **stays** (sticky). `useCasePageTransition` does **not** run `beginEnter` on `onBeforeRouteLeave` (avoids a double fade of the departing post). [`sessionStorage`](../app/lib/navigation/archiveReturn.ts) `wl:archive-return` restores `?page=` and scroll to the row. Index / Back to portfolio hrefs stay SSR-stable (base path) on first paint; storage pagination is applied after mount in [`CaseShell`](../app/components/case/CaseShell.vue) / [`DetailNav`](../app/components/archive/DetailNav.vue). No accent reveal on the archive.
 
 Case → case: same `[slug].vue` watches the param, so Nuxt page transitions do not run. [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) runs body L1 exit **in parallel** with the slug swap (route is not blocked); content reveal may start while the veil is up (`contentRevealReady`). Previous payload is held so the generic `Loading…` string does not flash. Prev/next on [`DetailNav`](../app/components/archive/DetailNav.vue) arms sweep direction before navigation; the frozen atom plays a subtle directional facet sweep (see [`WEBGL_HERO.md`](WEBGL_HERO.md)). New `--case-accent` is applied after reveal and interpolates. Featured wash + accent overlay crossfade via the same layout layer when the new case’s featured URL / accent differ. Services detail uses the same transition + [`archive.css`](../app/assets/css/archive.css) body phases on `ArchiveShell`.
 
