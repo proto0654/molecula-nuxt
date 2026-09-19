@@ -21,9 +21,11 @@ const props = withDefaults(
 
 /** Uppercased for measure + scramble so line breaks stay locked like USP. */
 const titleDisplay = computed(() => props.text.toLocaleUpperCase('ru-RU'));
-const displayTitle = ref(titleDisplay.value);
+/** Paint layer only — empty on SSR so measure+display do not double in HTML text. */
+const displayTitle = ref('');
 const isVisible = ref(true);
 const isScrambling = ref(false);
+const isHydrated = ref(false);
 const awaitingPose = useAwaitingPose();
 
 /** Last target we started (or finished) revealing — skip duplicate starts. */
@@ -80,7 +82,8 @@ function runScramble(target: string) {
 function tryReveal() {
   const target = titleDisplay.value;
   if (!import.meta.client) {
-    displayTitle.value = target;
+    // SSG/SSR: measure alone carries the title (visible via :not(.is-hydrated) CSS).
+    displayTitle.value = '';
     isVisible.value = true;
     isScrambling.value = false;
     return;
@@ -104,6 +107,7 @@ function tryReveal() {
 }
 
 onMounted(() => {
+  isHydrated.value = true;
   tryReveal();
 });
 
@@ -128,6 +132,7 @@ watch([awaitingPose, () => props.ready], () => {
     :class="{
       'is-visible': isVisible,
       'is-scrambling': isScrambling,
+      'is-hydrated': isHydrated,
     }"
     :aria-label="titleDisplay"
   >

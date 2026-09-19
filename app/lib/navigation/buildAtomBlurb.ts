@@ -2,8 +2,6 @@ import { prefersTouchInput } from '../a11y/pointerInput';
 import { missingUiString } from '../../domain/options/missingUiString';
 import type { NavigationItem } from './navigationConfig';
 
-const HOME_ITEM_ID = 'home';
-
 type NavVerbCopy = {
   click: string;
   tap: string;
@@ -36,13 +34,11 @@ export function navBlurbCta(
   return `${verb} ${t}`;
 }
 
-/** Descriptive part 1 + optional click/tap CTA for navigable atoms. */
+/** Descriptive part 1 + optional click/tap CTA for navigable atoms (incl. hub when set). */
 export function buildAtomBlurb(item: NavigationItem): string {
-  if (item.id === HOME_ITEM_ID || item.route === '/') {
-    return item.blurb;
-  }
   if (!item.blurb) return '';
-  return `${item.blurb} / ${navBlurbCta(item.blurbCta ?? '')}`;
+  if (!item.blurbCta) return item.blurb;
+  return `${item.blurb} / ${navBlurbCta(item.blurbCta)}`;
 }
 
 export { subscribePointerInput } from '../a11y/pointerInput';

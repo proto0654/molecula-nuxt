@@ -73,15 +73,15 @@ Verb from [`pointerInput.ts`](../app/lib/a11y/pointerInput.ts).
 
 ## Seed values (RU / EN)
 
-`blurb_cta` is a **grammatical tail after** Theme Options `{кликай|тапай}` — leading `, ` / space, not a button label. Hub has empty CTA.
+`blurb_cta` is a **grammatical tail after** Theme Options `{кликай|тапай}` — same `, …` format on every node, target length **16–18** characters (incl. leading `, `). Hub includes CTA like the rest.
 
-| nav_id | label | usp | blurb | blurb_cta |
-|--------|-------|-----|-------|-----------|
-| `home` | Главная / Home | Кастомные сервисы под ваш процесс | От идеи до продакшена: код, UX и интеграции без посредников | *(empty)* |
-| `about` | О нас / About | Архитектура, UI и код в одних руках | Один инженер вместо агентства — прямой контакт и ясный результат | `, узнать стек и подход` |
-| `services` | Услуги / Services | От лендинга до ИИ-агентов и API | Web, боты, Mini Apps, интеграции, рефакторинг и дизайн-системы | `, чтобы выбрать услугу` |
-| `work` | Портфолио / Portfolio | Разборы интерфейсов и интеграций | Обзор, UI, mobile и срезы — без воды, с деталями реализации | `, чтобы открыть кейсы` |
-| `contact` | Контакты / Contact | Telegram, телефон, почта — напрямую | Короткий контекст задачи достаточно — уточню детали в диалоге | `, написать сейчас` |
+| nav_id | label | usp | blurb | blurb_cta (len) |
+|--------|-------|-----|-------|-----------------|
+| `home` | Главная / Home | Кастомные сервисы под ваш процесс | От идеи до продакшена: код, UX и интеграции без посредников | `, обсудим проект` (16) |
+| `about` | О нас / About | Архитектура, UI и код в одних руках | Один инженер вместо агентства — прямой контакт и ясный результат | `, стек и подход` (15) |
+| `services` | Услуги / Services | От лендинга до ИИ-агентов и API | Web, боты, Mini Apps, интеграции, рефакторинг и дизайн-системы | `, выбрать услугу` (16) |
+| `work` | Портфолио / Portfolio | Разборы интерфейсов и интеграций | Обзор, UI, mobile и срезы — без воды, с деталями реализации | `, открыть кейсы` (15) |
+| `contact` | Контакты / Contact | Telegram, телефон, почта — напрямую | Короткий контекст задачи достаточно — уточню детали в диалоге | `, написать сейчас` (17) |
 
 EN pairs: `hero_usp_en` / `hero_blurb_en` / `hero_blurb_cta_en` — see [`seed/hero-navigation-options.seed.json`](seed/hero-navigation-options.seed.json).
 

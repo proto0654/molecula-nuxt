@@ -853,6 +853,15 @@ html.hero-lock #__nuxt {
   pointer-events: none;
 }
 
+/* Pre-hydrate SSG: show measure only so HTML text isn't doubled (display empty). */
+.scramble-title:not(.is-hydrated) .scramble-title__measure {
+  visibility: visible;
+}
+
+.scramble-title:not(.is-hydrated) .scramble-title__display {
+  display: none;
+}
+
 .scramble-title__display {
   position: absolute;
   inset: 0;
