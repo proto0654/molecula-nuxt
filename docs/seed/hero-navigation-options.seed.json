@@ -17,10 +17,10 @@
       "label_en": "About",
       "usp": "Архитектура, UI и код в одних руках",
       "blurb": "Один инженер вместо агентства — прямой контакт и ясный результат",
-      "blurb_cta": ", стек и подход",
+      "blurb_cta": ", чтобы узнать стек",
       "usp_en": "Architecture, UI, and code in one pair of hands",
       "blurb_en": "One engineer instead of an agency — direct contact and a clear result",
-      "blurb_cta_en": ", stack & approach"
+      "blurb_cta_en": ", to learn the stack"
     },
     {
       "nav_id": "services",
@@ -28,10 +28,10 @@
       "label_en": "Services",
       "usp": "От лендинга до ИИ-агентов и API",
       "blurb": "Web, боты, Mini Apps, интеграции, рефакторинг и дизайн-системы",
-      "blurb_cta": ", выбрать услугу",
+      "blurb_cta": ", чтобы выбрать",
       "usp_en": "From landing pages to AI agents and APIs",
       "blurb_en": "Web, bots, Mini Apps, integrations, refactoring, and design systems",
-      "blurb_cta_en": ", pick a service"
+      "blurb_cta_en": ", to pick a service"
     },
     {
       "nav_id": "work",
@@ -39,10 +39,10 @@
       "label_en": "Portfolio",
       "usp": "Разборы интерфейсов и интеграций",
       "blurb": "Обзор, UI, mobile и срезы — без воды, с деталями реализации",
-      "blurb_cta": ", открыть кейсы",
+      "blurb_cta": ", чтобы открыть",
       "usp_en": "Interface and integration breakdowns",
       "blurb_en": "Overview, UI, mobile, and slices — no fluff, with implementation detail",
-      "blurb_cta_en": ", open the cases"
+      "blurb_cta_en": ", to open the cases"
     },
     {
       "nav_id": "contact",
@@ -50,10 +50,10 @@
       "label_en": "Contact",
       "usp": "Telegram, телефон, почта — напрямую",
       "blurb": "Короткий контекст задачи достаточно — уточню детали в диалоге",
-      "blurb_cta": ", написать сейчас",
+      "blurb_cta": ", чтобы написать",
       "usp_en": "Telegram, phone, email — direct",
       "blurb_en": "A short brief is enough — I will clarify the details in conversation",
-      "blurb_cta_en": ", message me now"
+      "blurb_cta_en": ", to message now"
     }
   ]
 }
