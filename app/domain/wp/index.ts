@@ -7,6 +7,7 @@ export {
   unwrapOuterParagraph,
   wrapCaseListItemBodies,
 } from './htmlPlain';
+export { fixOrphanPrepositions } from './fixOrphanPrepositions';
 export {
   emptyToNull,
   stripHtmlToPlain,

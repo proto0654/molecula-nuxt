@@ -7,6 +7,7 @@ import {
 } from '~/lib/navigation/archiveReturn';
 import { missingUiString } from '~/domain/options/missingUiString';
 import { stripTags } from '~/domain/portfolio/presentation';
+import { fixOrphanPrepositions } from '~/domain/wp';
 import type { EntityLightSweepDirection } from '~/composables/useMoleculeCue';
 import { armFlipSweepDirection } from '~/lib/molecular/moleculeFlipIntent';
 import type { UiStringKey } from '~/types/wp/uiStrings';
@@ -114,7 +115,7 @@ function armSweep(direction: EntityLightSweepDirection) {
 
 function plainTitle(title: string | null | undefined): string {
   if (!title) return '';
-  return stripTags(title);
+  return fixOrphanPrepositions(stripTags(title));
 }
 </script>
 

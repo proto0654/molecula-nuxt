@@ -11,6 +11,7 @@ import { pickLocalized, pickLocalizedOption } from '~/domain/i18n';
 import { localizedRenderedTitle, resolveEnContent } from '~/domain/i18n';
 import {
   emptyToNull,
+  fixOrphanPrepositions,
   stripHtmlToPlain,
   normalizeFeaturedFromEmbed,
   embeddedTagNames,
@@ -50,9 +51,10 @@ function normalizeOffersFromRows(
 
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i]!;
-    const title = emptyToNull(
+    const rawTitle = emptyToNull(
       enMode ? (row as ServiceRepeaterRowEn).cf_title_en : (row as ServiceRepeaterRow).cf_title,
     );
+    const title = rawTitle ? fixOrphanPrepositions(rawTitle) : null;
     const rawText = emptyToNull(
       enMode ? (row as ServiceRepeaterRowEn).cf_text_en : (row as ServiceRepeaterRow).cf_text,
     );

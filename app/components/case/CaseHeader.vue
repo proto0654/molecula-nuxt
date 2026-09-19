@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import type { Case } from '~/types/wp';
-import { stripTags } from '~/domain/portfolio/presentation';
+import { archiveTitlePlain } from '~/domain/portfolio/archive';
 
 const props = withDefaults(
   defineProps<{
@@ -12,7 +12,7 @@ const props = withDefaults(
   { showMeta: true, revealReady: true },
 );
 
-const titlePlain = computed(() => stripTags(props.caseData.title));
+const titlePlain = computed(() => archiveTitlePlain(props.caseData));
 </script>
 
 <template>

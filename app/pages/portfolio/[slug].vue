@@ -6,11 +6,11 @@ import {
   caseExcerptPlain,
   normalizePortfolioPost,
 } from '~/domain/portfolio/normalizePortfolio';
+import { archiveTitlePlain } from '~/domain/portfolio/archive';
 import {
   caseImageUrl,
   CASE_SCREEN_SIZES,
   getCaseComposition,
-  stripTags,
 } from '~/domain/portfolio/presentation';
 import { resolveCaseHeroMedia } from '~/domain/editorialHero';
 import type { Case } from '~/types/wp';
@@ -119,7 +119,7 @@ const pageRevealing = computed(
 const pageTitle = computed(() => {
   const c = caseData.value;
   if (!c) return null;
-  return stripTags(c.title) || c.slug;
+  return archiveTitlePlain(c);
 });
 
 const pageDescription = computed(() => {

@@ -1,3 +1,4 @@
+import { fixOrphanPrepositions } from '../../domain/wp';
 import { scrambleText, charsetFromTarget, type ScrambleHandle } from './textScramble';
 
 /**
@@ -69,7 +70,7 @@ export class UspHeadline {
   /** Start scramble if armed and not already showing that string. */
   tryReveal(): void {
     if (!this.pending || this.revealed === this.pending) return;
-    const target = this.pending.toLocaleUpperCase('ru-RU');
+    const target = fixOrphanPrepositions(this.pending.toLocaleUpperCase('ru-RU'));
     this.revealed = this.pending;
     this.cancelScramble();
     this.measureEl.textContent = target;

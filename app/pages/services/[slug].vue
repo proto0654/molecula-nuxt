@@ -11,11 +11,11 @@ import { resolveAdjacentFlipDirection } from '~/composables/useCasePageTransitio
 import {
   normalizeServiceChrome,
   normalizeServicePost,
+  serviceArchiveTitlePlain,
   serviceExcerptPlain,
 } from '~/domain/services';
 import { resolveServiceHeroMedia } from '~/domain/editorialHero';
 import { demoteCmsH1 } from '~/domain/wp';
-import { stripTags } from '~/domain/portfolio/presentation';
 import type { Service } from '~/types/wp';
 
 const route = useRoute();
@@ -134,7 +134,7 @@ const { revealing } = usePageContentReveal();
 
 const titlePlain = computed(() => {
   if (!service.value) return '';
-  return stripTags(service.value.title) || service.value.slug;
+  return serviceArchiveTitlePlain(service.value);
 });
 
 const pageTitle = computed(() => titlePlain.value || null);

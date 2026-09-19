@@ -32,11 +32,13 @@ Base URL: `runtimeConfig.public.wpApiBase` (`NUXT_PUBLIC_WP_API_BASE`). Build/pr
 
 ## Normalization
 
-Shared media/text helpers live in [`app/domain/wp/`](../app/domain/wp/normalizeMedia.ts) (`emptyToNull`, ACF image, featured embed, tag names from `_embedded["wp:term"]`).
+Shared media/text helpers live in [`app/domain/wp/`](../app/domain/wp/) (`emptyToNull`, ACF image, featured embed, tag names from `_embedded["wp:term"]`, orphan-preposition glue).
+
+[`fixOrphanPrepositions`](../app/domain/wp/fixOrphanPrepositions.ts) glues short RU/EN particles (1–2 letters RU; short EN words incl. `the`/`and`/`for`) to the next word with `\u00A0`. Lookbehind keeps adjacent shorts (`of the`) in one pass; already-glued NBSP is idempotent. Apply **after** [`htmlToPlainText`](../app/domain/wp/htmlPlain.ts) / `stripTags` — that helper collapses `\s` (including NBSP) back to regular spaces. Wired on: case/service archive + detail titles (`archiveTitlePlain` / `serviceArchiveTitlePlain`), prev/next labels (`DetailNav`), service offer titles (normalize), hero USP (`UspHeadline` after uppercase).
 
 [`normalizePortfolioPost`](../app/domain/portfolio/normalizePortfolio.ts) maps `WpPortfolioPost` → `Case`.
 
-[`normalizeServicePost`](../app/domain/services/normalizeService.ts) maps `WpServicePost` → `Service` (RU only). Empty `service-repeater` → `[]` (hide offers). Offer anchors: slug from `cf_title`, else `usluga-{n}`, collisions `-2`, `-3`. `cf_features` and `service-thumb` are ignored. Featured image is stored for the archive specimen; service detail does not render it.
+[`normalizeServicePost`](../app/domain/services/normalizeService.ts) maps `WpServicePost` → `Service`. Empty `service-repeater` → `[]` (hide offers). Offer titles run through `fixOrphanPrepositions`. Offer anchors: slug from `cf_title`, else `usluga-{n}`, collisions `-2`, `-3`. `cf_features` and `service-thumb` are ignored. Featured image is stored for the archive specimen; service detail does not render it.
 
 [`normalizeAboutPage`](../app/domain/about/normalizeAbout.ts) maps page `about` → `AboutPage`. Empty `about-repeater` → `[]` (hide skills) — **no PHP demo-skill fallback**. Empty photo → no placeholder image.
 

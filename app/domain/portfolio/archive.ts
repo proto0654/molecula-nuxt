@@ -1,5 +1,6 @@
 import type { Case, CaseImage, PortfolioCategory } from '~/types/wp';
 import type { SiteLocale } from '~/domain/i18n';
+import { fixOrphanPrepositions } from '~/domain/wp';
 import {
   caseImageSrcSet,
   caseImageUrl,
@@ -14,7 +15,7 @@ export type ArchiveEntry = {
 };
 
 export function archiveTitlePlain(item: Case): string {
-  return stripTags(item.title) || item.slug;
+  return fixOrphanPrepositions(stripTags(item.title) || item.slug);
 }
 
 export function archiveSpecimenImage(item: Case): CaseImage | null {

@@ -5,6 +5,7 @@ import {
   CASE_SCREEN_SIZES,
   stripTags,
 } from '~/domain/portfolio/presentation';
+import { fixOrphanPrepositions } from '~/domain/wp';
 
 export type ServiceArchiveEntry = {
   item: Service;
@@ -13,7 +14,7 @@ export type ServiceArchiveEntry = {
 };
 
 export function serviceArchiveTitlePlain(item: Service): string {
-  return stripTags(item.title) || item.slug;
+  return fixOrphanPrepositions(stripTags(item.title) || item.slug);
 }
 
 export function serviceArchiveSpecimenImage(item: Service): CaseImage | null {
