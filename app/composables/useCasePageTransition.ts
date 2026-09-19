@@ -68,6 +68,8 @@ export function useCasePageTransition(options: {
   let exitPromise: Promise<void> | null = null;
   let pendingEnter = false;
   let leavingPage = false;
+  /** Gate accent until after hydrate — reduced-motion used to set it in setup. */
+  let accentArmed = false;
 
   function clearAccentTimer() {
     if (accentTimer == null) return;
@@ -78,7 +80,7 @@ export function useCasePageTransition(options: {
   function scheduleAccent() {
     clearAccentTimer();
     const color = toValue(options.accentColor) ?? null;
-    if (!import.meta.client) return;
+    if (!import.meta.client || !accentArmed) return;
     if (prefersReducedMotion()) {
       appliedAccent.value = color;
       return;
@@ -191,6 +193,14 @@ export function useCasePageTransition(options: {
     if (leavingPage) return;
     if (next === 'hidden' && pendingEnter && toValue(options.ready)) {
       beginEnter();
+    }
+  });
+
+  onMounted(() => {
+    accentArmed = true;
+    if (leavingPage) return;
+    if (toValue(options.ready) && phase.value === 'idle') {
+      scheduleAccent();
     }
   });
 

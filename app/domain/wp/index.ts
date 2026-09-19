@@ -4,6 +4,7 @@ export {
   htmlToPlainText,
   prepareCaseProseHtml,
   unwrapHtmlLinks,
+  unwrapOuterParagraph,
   wrapCaseListItemBodies,
 } from './htmlPlain';
 export {

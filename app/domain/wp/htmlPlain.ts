@@ -200,3 +200,16 @@ export function unwrapHtmlLinks(html: string): string {
   }
   return result;
 }
+
+/**
+ * Strip a single outer `<p>…</p>` so WP WYSIWYG HTML is safe inside a block host
+ * (avoids nested `<p>` hydration mismatches). Leaves multi-block markup alone.
+ */
+export function unwrapOuterParagraph(html: string): string {
+  const trimmed = html.trim();
+  const match = trimmed.match(/^<p\b[^>]*>([\s\S]*)<\/p>$/i);
+  if (!match) return trimmed;
+  const inner = match[1] ?? '';
+  if (/<p\b/i.test(inner)) return trimmed;
+  return inner.trim();
+}

@@ -3,37 +3,57 @@
     {
       "nav_id": "home",
       "label": "Главная",
-      "blurb": "weblaba / студия веб-продуктов",
+      "label_en": "Home",
+      "usp": "Кастомные сервисы под ваш процесс",
+      "blurb": "От идеи до продакшена: код, UX и интеграции без посредников",
       "blurb_cta": "",
-      "usp": "Цифровые продукты из одного узла"
+      "usp_en": "Custom services for your process",
+      "blurb_en": "From idea to production: code, UX, and integrations — no middlemen",
+      "blurb_cta_en": ""
     },
     {
       "nav_id": "about",
       "label": "О нас",
-      "blurb": "студия weblaba",
-      "blurb_cta": ", будем знакомиться",
-      "usp": "Команда, процесс, подход"
+      "label_en": "About",
+      "usp": "Архитектура, UI и код в одних руках",
+      "blurb": "Один инженер вместо агентства — прямой контакт и ясный результат",
+      "blurb_cta": ", узнать стек и подход",
+      "usp_en": "Architecture, UI, and code in one pair of hands",
+      "blurb_en": "One engineer instead of an agency — direct contact and a clear result",
+      "blurb_cta_en": ", learn the stack and approach"
     },
     {
       "nav_id": "services",
       "label": "Услуги",
-      "blurb": "разработка и дизайн",
-      "blurb_cta": ", чтобы выбрать услуги",
-      "usp": "От идеи до релиза"
+      "label_en": "Services",
+      "usp": "От лендинга до ИИ-агентов и API",
+      "blurb": "Web, боты, Mini Apps, интеграции, рефакторинг и дизайн-системы",
+      "blurb_cta": ", чтобы выбрать услугу",
+      "usp_en": "From landing pages to AI agents and APIs",
+      "blurb_en": "Web, bots, Mini Apps, integrations, refactoring, and design systems",
+      "blurb_cta_en": " to pick a service"
     },
     {
       "nav_id": "work",
       "label": "Портфолио",
-      "blurb": "архив проектов",
-      "blurb_cta": ", переход в портфолио",
-      "usp": "Кейсы, которые работают"
+      "label_en": "Portfolio",
+      "usp": "Разборы интерфейсов и интеграций",
+      "blurb": "Обзор, UI, mobile и срезы — без воды, с деталями реализации",
+      "blurb_cta": ", чтобы открыть кейсы",
+      "usp_en": "Interface and integration breakdowns",
+      "blurb_en": "Overview, UI, mobile, and slices — no fluff, with implementation detail",
+      "blurb_cta_en": " to open cases"
     },
     {
       "nav_id": "contact",
       "label": "Контакты",
-      "blurb": "открытый канал",
-      "blurb_cta": " для связи со мной",
-      "usp": "Прямой канал без шума"
+      "label_en": "Contact",
+      "usp": "Telegram, телефон, почта — напрямую",
+      "blurb": "Короткий контекст задачи достаточно — уточню детали в диалоге",
+      "blurb_cta": ", написать сейчас",
+      "usp_en": "Telegram, phone, email — direct",
+      "blurb_en": "A short brief is enough — I will clarify the details in conversation",
+      "blurb_cta_en": ", message now"
     }
   ]
 }

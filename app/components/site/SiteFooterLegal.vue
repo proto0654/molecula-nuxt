@@ -38,7 +38,7 @@ function onCookieClick(event: MouseEvent): void {
 <template>
   <footer v-if="hasContent" class="site-footer-legal">
     <p v-if="disclaimer" class="site-footer-legal__line">{{ disclaimer }}</p>
-    <p
+    <div
       v-if="cookieNotice"
       class="site-footer-legal__line site-footer-legal__line--cookie"
       v-html="cookieNotice"

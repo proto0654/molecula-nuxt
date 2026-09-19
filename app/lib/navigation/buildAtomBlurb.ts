@@ -28,7 +28,12 @@ export function navBlurbCta(
   touch = prefersTouchInput(),
 ): string {
   const verb = touch ? verbCopy.tap : verbCopy.click;
-  return `${verb}${tail}`;
+  // emptyToNull / merge pick trim leading spaces — re-join safely.
+  const t = typeof tail === 'string' ? tail.trim() : '';
+  if (!t) return verb;
+  // `, foo` / `; foo` glue directly; otherwise insert a space (`click to…`).
+  if (/^[,.;:!?…]/.test(t)) return `${verb}${t}`;
+  return `${verb} ${t}`;
 }
 
 /** Descriptive part 1 + optional click/tap CTA for navigable atoms. */

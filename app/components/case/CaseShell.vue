@@ -4,6 +4,7 @@ import {
   resolveCasePortfolioArchiveHref,
   type ArchiveReturnScope,
 } from '~/lib/navigation/archiveReturn';
+import { localizedPath } from '~/domain/i18n';
 
 const props = withDefaults(
   defineProps<{
@@ -27,6 +28,14 @@ const revealingGate = computed(() => Boolean(props.revealing));
 
 useListingReveal(root, revealingGate);
 
+function defaultArchiveHref(scope: ArchiveReturnScope): string {
+  if (scope === 'services') return localizedPath('/services', locale.value);
+  if (scope === 'portfolio-legacy') {
+    return localizedPath('/portfolio/legacy', locale.value);
+  }
+  return localizedPath('/portfolio', locale.value);
+}
+
 function resolveArchiveHref(scope: ArchiveReturnScope): string {
   return (
     resolveCasePortfolioArchiveHref(route.path, locale.value) ??
@@ -34,7 +43,20 @@ function resolveArchiveHref(scope: ArchiveReturnScope): string {
   );
 }
 
-const archiveHref = computed(() => resolveArchiveHref(props.archiveScope));
+/** SSR-stable; sessionStorage pagination applied after mount. */
+const archiveHref = ref(defaultArchiveHref(props.archiveScope));
+
+function refreshArchiveHref() {
+  archiveHref.value = resolveArchiveHref(props.archiveScope);
+}
+
+onMounted(() => {
+  refreshArchiveHref();
+});
+
+watch([locale, () => props.archiveScope, () => route.path], () => {
+  refreshArchiveHref();
+});
 
 defineExpose({ root });
 </script>

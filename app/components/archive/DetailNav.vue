@@ -32,14 +32,35 @@ const props = withDefaults(
 const route = useRoute();
 const { locale, localizedPath } = useLocale();
 
-const archiveHref = computed(() => {
+function defaultArchiveHref(): string {
   if (props.archiveScope === 'services') {
-    return archiveIndexHref(undefined, 'services', locale.value);
+    return localizedPath('/services', locale.value);
   }
-  return (
+  if (props.archiveScope === 'portfolio-legacy') {
+    return localizedPath('/portfolio/legacy', locale.value);
+  }
+  return localizedPath('/portfolio', locale.value);
+}
+
+/** SSR-stable; sessionStorage pagination applied after mount. */
+const archiveHref = ref(defaultArchiveHref());
+
+function refreshArchiveHref() {
+  if (props.archiveScope === 'services') {
+    archiveHref.value = archiveIndexHref(undefined, 'services', locale.value);
+    return;
+  }
+  archiveHref.value =
     resolveCasePortfolioArchiveHref(route.path, locale.value) ??
-    archiveIndexHref(undefined, props.archiveScope, locale.value)
-  );
+    archiveIndexHref(undefined, props.archiveScope, locale.value);
+}
+
+onMounted(() => {
+  refreshArchiveHref();
+});
+
+watch([locale, () => props.archiveScope, () => route.path], () => {
+  refreshArchiveHref();
 });
 
 const { t } = useThemeOptions();

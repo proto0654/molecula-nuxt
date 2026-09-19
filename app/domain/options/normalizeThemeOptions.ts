@@ -2,7 +2,7 @@ import type { ThemeOptions, ThemeOptionsAcf } from '~/types/wp';
 import type { SiteLocale } from '~/domain/i18n';
 import { pickLocalizedOption } from '~/domain/i18n';
 import { UI_STRING_KEYS, type UiStringKey, type UiStrings } from '~/types/wp/uiStrings';
-import { emptyToNull } from '~/domain/wp';
+import { emptyToNull, unwrapOuterParagraph } from '~/domain/wp';
 
 function normalizeUiStrings(
   acf: ThemeOptionsAcf | undefined,
@@ -69,7 +69,10 @@ export function normalizeThemeOptions(
     scrollToTop: normalizeScrollToTop(acf),
     footer: {
       disclaimer: pickLocalizedOption(locale, acf, 'footer_disclaimer'),
-      cookieNotice: pickLocalizedOption(locale, acf, 'footer_cookie_notice'),
+      cookieNotice: (() => {
+        const raw = pickLocalizedOption(locale, acf, 'footer_cookie_notice');
+        return raw ? unwrapOuterParagraph(raw) : null;
+      })(),
       copyright: pickLocalizedOption(locale, acf, 'footer_copyright'),
     },
     schemaOrg: normalizeSchemaOrg(acf),
