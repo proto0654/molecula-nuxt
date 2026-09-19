@@ -34,10 +34,13 @@ export function navBlurbCta(
   return `${verb} ${t}`;
 }
 
-/** Descriptive part 1 + optional click/tap CTA for navigable atoms (incl. hub when set). */
+/**
+ * Descriptive part 1 + optional click/tap CTA for navigable atoms.
+ * Hub (`home`) never gets a verb — already on the landing; second click is a no-op route.
+ */
 export function buildAtomBlurb(item: NavigationItem): string {
   if (!item.blurb) return '';
-  if (!item.blurbCta) return item.blurb;
+  if (item.id === 'home' || !item.blurbCta) return item.blurb;
   return `${item.blurb} / ${navBlurbCta(item.blurbCta)}`;
 }
 

@@ -93,7 +93,7 @@ Decorative tag cloud around the molecule: ACF options `hero_tag_cloud` via [`use
 | `blurb` | Typewriter under atom on commit | part 1 + `blurbCta` in config; verb from [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) | Page ACF `hero_blurb` + `hero_blurb_cta` |
 | `usp` | HUD headline after focus settle | hardcode | Page ACF `hero_usp` |
 
-Blurbs: part 1 + Options verb + `blurbCta` via [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) / `navBlurbCta` (punct tails glue; else space). Every nav page including hub authors `, …` CTA (~16–18 chars). Live seed + EN pairs: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md).
+Blurbs: part 1 + Options verb + `blurbCta` via [`buildAtomBlurb`](../app/lib/navigation/buildAtomBlurb.ts) / `navBlurbCta` (punct tails glue; else space). Hub (`home`) leaves CTA empty — no click/tap invite. Other pages author `, чтобы …` + object (~15–22 chars). Live seed + EN pairs: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md).
 
 WP field spec + import: [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md).
 

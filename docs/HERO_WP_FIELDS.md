@@ -73,15 +73,15 @@ Verb from [`pointerInput.ts`](../app/lib/a11y/pointerInput.ts).
 
 ## Seed values (RU / EN)
 
-`blurb_cta` is a **grammatical tail after** Theme Options `{кликай|тапай}` — prefer `, чтобы …` before infinitives (or conjugated like `, обсудим …` on hub). Target length ~15–19 characters.
+`blurb_cta` is a **grammatical tail after** Theme Options `{кликай|тапай}` — prefer `, чтобы …` + clear object before infinitives. **Hub (`home`) leaves CTA empty** — no second-click invite on the landing. Target length ~15–22 characters.
 
 | nav_id | label | usp | blurb | blurb_cta |
 |--------|-------|-----|-------|-----------|
-| `home` | Главная / Home | Кастомные сервисы под ваш процесс | От идеи до продакшена: код, UX и интеграции без посредников | `, обсудим проект` |
+| `home` | Главная / Home | Кастомные сервисы под ваш процесс | От идеи до продакшена: код, UX и интеграции без посредников | *(empty)* |
 | `about` | О нас / About | Архитектура, UI и код в одних руках | Один инженер вместо агентства — прямой контакт и ясный результат | `, чтобы узнать стек` |
-| `services` | Услуги / Services | От лендинга до ИИ-агентов и API | Web, боты, Mini Apps, интеграции, рефакторинг и дизайн-системы | `, чтобы выбрать` |
-| `work` | Портфолио / Portfolio | Разборы интерфейсов и интеграций | Обзор, UI, mobile и срезы — без воды, с деталями реализации | `, чтобы открыть` |
-| `contact` | Контакты / Contact | Telegram, телефон, почта — напрямую | Короткий контекст задачи достаточно — уточню детали в диалоге | `, чтобы написать` |
+| `services` | Услуги / Services | От лендинга до ИИ-агентов и API | Web, боты, Mini Apps, интеграции, рефакторинг и дизайн-системы | `, чтобы выбрать услугу` |
+| `work` | Портфолио / Portfolio | Разборы интерфейсов и интеграций | Обзор, UI, mobile и срезы — без воды, с деталями реализации | `, чтобы открыть кейсы` |
+| `contact` | Контакты / Contact | Telegram, телефон, почта — напрямую | Короткий контекст задачи достаточно — уточню детали в диалоге | `, чтобы написать мне` |
 
 EN pairs: `hero_usp_en` / `hero_blurb_en` / `hero_blurb_cta_en` — see [`seed/hero-navigation-options.seed.json`](seed/hero-navigation-options.seed.json).
 
