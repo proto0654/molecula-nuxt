@@ -1,5 +1,6 @@
 import { Group, type Camera, type Object3D, Vector3 } from 'three';
 import { Text } from 'troika-three-text';
+import { fixOrphanPrepositions } from '../../domain/wp';
 import { ACCENT_COLOR } from './sceneColors';
 
 /** Idle titles stay muted so the committed atom reads as primary. */
@@ -14,6 +15,12 @@ const TYPE_SECONDS = 0.028;
 const REF_DISTANCE = 4.5;
 /** Extra lift toward the camera, in letter-font units, so title + blurb clear the sphere. */
 const SURFACE_PAD = 0.55;
+/** Blurb wrap box width in letter-font units (before right pad). */
+const BLURB_WIDTH_EM = 14;
+/** Right inset so the typed line does not hug / clip the wrap edge. */
+const BLURB_RIGHT_PAD_EM = 1.25;
+/** JetBrains Mono advance width as a fraction of fontSize. */
+const MONO_ADVANCE = 0.6;
 /** Self-hosted JetBrains Mono (Cyrillic); troika needs ttf/woff, not woff2. */
 let labelFontUrl = '/fonts/JetBrainsMono-Regular.ttf';
 
@@ -42,9 +49,80 @@ function wrapBlurbAtSlash(prefixed: string): string {
   return `${prefixed.slice(0, idx)}\n/${prefixed.slice(idx + sep.length)}`;
 }
 
-function buildFullBlurb(blurb: string, wrapAtSlash: boolean): string {
+/**
+ * Word-boundary soft-wrap for monospace blurbs. Preserves hard `\n`.
+ * Precomputing breaks stops Troika from reflowing mid-word during typewriter.
+ */
+function softWrapBlurb(text: string, maxChars: number): string {
+  const limit = Math.max(1, maxChars);
+  return text
+    .split('\n')
+    .map((paragraph) => softWrapParagraph(paragraph, limit))
+    .join('\n');
+}
+
+function softWrapParagraph(paragraph: string, maxChars: number): string {
+  if (paragraph.length <= maxChars) return paragraph;
+
+  // Split on breakable spaces only — keep NBSP from fixOrphanPrepositions glued.
+  const words = paragraph.split(/([ \t]+)/);
+  const lines: string[] = [];
+  let line = '';
+
+  for (const token of words) {
+    if (!token) continue;
+    if (!line) {
+      // Oversized single token: hard-break so it still fits the box.
+      if (token.length > maxChars && !/^[ \t]+$/.test(token)) {
+        let rest = token;
+        while (rest.length > maxChars) {
+          lines.push(rest.slice(0, maxChars));
+          rest = rest.slice(maxChars);
+        }
+        line = rest;
+      } else {
+        line = token;
+      }
+      continue;
+    }
+
+    if (line.length + token.length <= maxChars) {
+      line += token;
+      continue;
+    }
+
+    // Prefer breaking before a space rather than carrying it to the next line.
+    if (/^[ \t]+$/.test(token)) {
+      lines.push(line);
+      line = '';
+      continue;
+    }
+
+    lines.push(line.trimEnd());
+    if (token.length > maxChars) {
+      let rest = token;
+      while (rest.length > maxChars) {
+        lines.push(rest.slice(0, maxChars));
+        rest = rest.slice(maxChars);
+      }
+      line = rest;
+    } else {
+      line = token;
+    }
+  }
+
+  if (line) lines.push(line.trimEnd());
+  return lines.join('\n');
+}
+
+function buildFullBlurb(
+  blurb: string,
+  wrapAtSlash: boolean,
+  maxChars: number,
+): string {
   const line = `// ${blurb}`;
-  return wrapAtSlash ? wrapBlurbAtSlash(line) : line;
+  const withSlash = wrapAtSlash ? wrapBlurbAtSlash(line) : line;
+  return softWrapBlurb(fixOrphanPrepositions(withSlash), maxChars);
 }
 
 function sliceByLogicalLength(text: string, logicalLen: number): string {
@@ -130,6 +208,8 @@ export class AtomLabel {
     this.blurb.color = BLURB_COLOR;
     this.blurb.anchorX = 'left';
     this.blurb.anchorY = 'top';
+    // Explicit `\n` from soft-wrap; nowrap blocks Troika soft-reflow mid-typewriter.
+    this.blurb.whiteSpace = 'nowrap';
     this.blurb.visible = false;
     this.blurb.raycast = () => {};
     this.blurb.frustumCulled = false;
@@ -212,15 +292,7 @@ export class AtomLabel {
     if (this.blurbWrapAtSlash === wrap) return;
     this.blurbWrapAtSlash = wrap;
     if (!this.rawBlurb) return;
-
-    const logicalTyped = this.typed.replace(/\n/g, '').length;
-    this.fullBlurb = buildFullBlurb(this.rawBlurb, wrap);
-    if (!this.blurb.visible) return;
-
-    this.typed = sliceByLogicalLength(this.fullBlurb, logicalTyped);
-    this.blurb.text = this.typed;
-    this.typing = this.typed.length < this.fullBlurb.length;
-    this.blurb.sync();
+    this.rebuildBlurbLayout();
   }
 
   /** Type `// blurb` under the title. Pass null to hide immediately. */
@@ -238,7 +310,11 @@ export class AtomLabel {
       return;
     }
     this.rawBlurb = blurb;
-    this.fullBlurb = buildFullBlurb(blurb, this.blurbWrapAtSlash);
+    this.fullBlurb = buildFullBlurb(
+      blurb,
+      this.blurbWrapAtSlash,
+      this.blurbMaxChars(),
+    );
     this.blurb.text = '';
     this.blurb.visible = true;
     this.typing = true;
@@ -298,6 +374,42 @@ export class AtomLabel {
     return this.baseLetterFontSize * this.fontScale * this.titleScale;
   }
 
+  private get effectiveBlurbFontSize(): number {
+    return this.baseBlurbFontSize * this.fontScale * this.blurbScale;
+  }
+
+  private blurbMaxWidth(): number {
+    return (
+      this.effectiveLetterFontSize * (BLURB_WIDTH_EM - BLURB_RIGHT_PAD_EM)
+    );
+  }
+
+  private blurbMaxChars(): number {
+    return Math.max(
+      8,
+      Math.floor(this.blurbMaxWidth() / (this.effectiveBlurbFontSize * MONO_ADVANCE)),
+    );
+  }
+
+  /** Rebuild soft-wrap from raw blurb; keep logical typewriter progress. */
+  private rebuildBlurbLayout(): void {
+    if (!this.rawBlurb) return;
+    const logicalTyped = this.typed.replace(/\n/g, '').length;
+    this.fullBlurb = buildFullBlurb(
+      this.rawBlurb,
+      this.blurbWrapAtSlash,
+      this.blurbMaxChars(),
+    );
+    if (!this.blurb.visible) return;
+
+    this.typed = sliceByLogicalLength(this.fullBlurb, logicalTyped);
+    this.blurb.text = this.typed;
+    this.typing = this.typed.length < this.fullBlurb.length;
+    // Keep typeAccum aligned so the next ticks continue from the new length.
+    this.typeAccum = Math.max(0, (this.typed.length - 1) * TYPE_SECONDS);
+    this.blurb.sync();
+  }
+
   private applyFontSizes(): void {
     const letterSize = this.effectiveLetterFontSize;
     this.letter.fontSize = letterSize;
@@ -306,10 +418,12 @@ export class AtomLabel {
       this.fontScale *
       this.titleScale *
       this.remainderScale;
-    this.blurb.fontSize =
-      this.baseBlurbFontSize * this.fontScale * this.blurbScale;
-    this.blurb.maxWidth = letterSize * 14;
+    this.blurb.fontSize = this.effectiveBlurbFontSize;
+    this.blurb.maxWidth = this.blurbMaxWidth();
     this.blurb.position.y = -letterSize * 0.72;
+    if (this.rawBlurb && this.blurb.visible) {
+      this.rebuildBlurbLayout();
+    }
     this.letter.sync(() => this.layoutBlock());
     this.remainder.sync();
     this.blurb.sync();

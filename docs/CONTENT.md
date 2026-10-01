@@ -34,7 +34,7 @@ Base URL: `runtimeConfig.public.wpApiBase` (`NUXT_PUBLIC_WP_API_BASE`). Build/pr
 
 Shared media/text helpers live in [`app/domain/wp/`](../app/domain/wp/) (`emptyToNull`, ACF image, featured embed, tag names from `_embedded["wp:term"]`, orphan-preposition glue).
 
-[`fixOrphanPrepositions`](../app/domain/wp/fixOrphanPrepositions.ts) glues short RU/EN particles (1–2 letters RU; short EN words incl. `the`/`and`/`for`) to the next word with `\u00A0`. Lookbehind keeps adjacent shorts (`of the`) in one pass; already-glued NBSP is idempotent. Apply **after** [`htmlToPlainText`](../app/domain/wp/htmlPlain.ts) / `stripTags` — that helper collapses `\s` (including NBSP) back to regular spaces. Wired on: case/service archive + detail titles (`archiveTitlePlain` / `serviceArchiveTitlePlain`), prev/next labels (`DetailNav`), service offer titles (normalize), hero USP (`UspHeadline` after uppercase).
+[`fixOrphanPrepositions`](../app/domain/wp/fixOrphanPrepositions.ts) glues short RU/EN particles (1–2 letters RU; short EN words incl. `the`/`and`/`for`) to the next word with `\u00A0`. Lookbehind keeps adjacent shorts (`of the`) in one pass; already-glued NBSP is idempotent. Apply **after** [`htmlToPlainText`](../app/domain/wp/htmlPlain.ts) / `stripTags` — that helper collapses `\s` (including NBSP) back to regular spaces. Wired on: case/service archive + detail titles (`archiveTitlePlain` / `serviceArchiveTitlePlain`), prev/next labels (`DetailNav`), service offer titles (normalize), hero USP (`UspHeadline` after uppercase), atom typewriter blurb (`AtomLabel` before soft-wrap; wrap must not split on NBSP).
 
 [`normalizePortfolioPost`](../app/domain/portfolio/normalizePortfolio.ts) maps `WpPortfolioPost` → `Case`.
 
