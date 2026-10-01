@@ -141,6 +141,8 @@ When ACF `video` is present, hero media is a `<video>`. Playback combines the or
 
 Bind assumes the shell is in view (the frame may have no layout yet during enter beats); the observer's first callback corrects it.
 
+**SSG gotcha:** right after hydration the router fires a same-path `replace`. `onBeforeRouteUpdate` in `useCaseVideoBoot` ignores updates where the path (minus trailing slash) is unchanged — otherwise it disposes the bindings between init and kickoff and the video never autoplays. Only reproducible on `generate` output, not `npm run dev`.
+
 Featured backdrop wash uses the same top band ([`useCaseTopScrollBand`](../app/composables/useCaseTopScrollBand.ts)).
 
 **Markup** ([`CaseVideo.vue`](../app/components/case/CaseVideo.vue)): `[data-case-video-shell]` + featured `poster` (and dark skeleton fallback) until `.is-loaded`; `[data-case-video]` with `controls`, `playsinline`, `muted`, `preload="none"` — no `autoplay` attribute. On error the shell gets `.is-failed` and keeps the poster.

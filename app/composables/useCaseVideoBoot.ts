@@ -6,6 +6,10 @@ import {
   kickoffDeferredCaseVideos,
 } from '~/composables/useCaseVideos';
 
+function normalizePath(path: string): string {
+  return path.replace(/\/+$/, '') || '/';
+}
+
 function doubleRaf(): Promise<void> {
   return new Promise((resolve) => {
     requestAnimationFrame(() => {
@@ -83,7 +87,9 @@ export function useCaseVideoBoot(options: {
     { immediate: true, flush: 'post' },
   );
 
-  onBeforeRouteUpdate(() => {
+  onBeforeRouteUpdate((to, from) => {
+    // Post-hydration replace (trailing slash / query / hash) must not drop the bound video.
+    if (normalizePath(to.path) === normalizePath(from.path)) return;
     kickoffGeneration += 1;
     teardown();
     disposeAllCaseVideos();
