@@ -12,7 +12,8 @@ const HAVE_CURRENT_DATA = 2;
 type VideoBinding = {
   video: HTMLVideoElement;
   shell: HTMLElement | null;
-  onPlay: () => void;
+  /** Any pixel of the shell still intersects the viewport. */
+  inView: boolean;
   onLoaded: () => void;
   onCanPlay: () => void;
   onPlaying: () => void;
@@ -21,7 +22,11 @@ type VideoBinding = {
 
 const bindings = new Map<HTMLVideoElement, VideoBinding>();
 const deferredKickoffs = new Set<HTMLVideoElement>();
+let observer: IntersectionObserver | null = null;
 let bandUnsub: (() => void) | null = null;
+/** Edge-detect top band so mid-scroll does not crush manual play. */
+let bandPrimed = false;
+let wasAtTop = false;
 
 function revealShell(shell: HTMLElement | null) {
   if (!shell || shell.classList.contains('is-failed')) return;
@@ -33,9 +38,24 @@ function failShell(shell: HTMLElement | null) {
   shell?.classList.remove('is-loaded');
 }
 
+function observeTarget(binding: VideoBinding): Element {
+  return binding.shell ?? binding.video;
+}
+
+function isFullyOutOfView(el: Element): boolean {
+  const r = el.getBoundingClientRect();
+  return (
+    r.bottom <= 0 ||
+    r.top >= (window.innerHeight || 0) ||
+    r.right <= 0 ||
+    r.left >= (window.innerWidth || 0)
+  );
+}
+
 function playCaseVideo(video: HTMLVideoElement) {
-  if (!isCaseAtTop()) return;
-  const shell = bindings.get(video)?.shell ?? null;
+  const binding = bindings.get(video);
+  if (binding && !binding.inView) return;
+  const shell = binding?.shell ?? null;
   video
     .play()
     .then(() => {
@@ -44,31 +64,73 @@ function playCaseVideo(video: HTMLVideoElement) {
     .catch(() => {});
 }
 
-function syncVideo(video: HTMLVideoElement) {
-  if (isCaseAtTop()) {
-    playCaseVideo(video);
-  } else {
-    video.pause();
-  }
+function pauseIfPlaying(video: HTMLVideoElement) {
+  if (!video.paused) video.pause();
 }
 
-function syncAllVideos() {
+/** Old top-band autoplay: at top → play; leave top → pause. No play-event block. */
+function onTopBand(atTop: boolean) {
+  if (!bandPrimed) {
+    bandPrimed = true;
+    wasAtTop = atTop;
+    return;
+  }
+  if (atTop === wasAtTop) return;
+  wasAtTop = atTop;
+
+  if (atTop) {
+    for (const { video, inView } of bindings.values()) {
+      if (inView && !deferredKickoffs.has(video)) playCaseVideo(video);
+    }
+    return;
+  }
+
   for (const { video } of bindings.values()) {
-    syncVideo(video);
+    pauseIfPlaying(video);
   }
 }
 
 function ensureBandSync() {
   if (bandUnsub) return;
-  bandUnsub = subscribeCaseTopBand(() => {
-    syncAllVideos();
-  });
+  bandPrimed = false;
+  bandUnsub = subscribeCaseTopBand(onTopBand);
 }
 
 function releaseBandSync() {
   if (bindings.size > 0 || bandUnsub == null) return;
   bandUnsub();
   bandUnsub = null;
+  bandPrimed = false;
+  wasAtTop = false;
+}
+
+function onIntersection(entries: IntersectionObserverEntry[]) {
+  for (const entry of entries) {
+    const target = entry.target;
+    for (const binding of bindings.values()) {
+      if (observeTarget(binding) !== target) continue;
+      binding.inView = entry.isIntersecting;
+      // Fully out of viewport → pause if still playing (manual play ok while in view).
+      if (!entry.isIntersecting) {
+        pauseIfPlaying(binding.video);
+      }
+      break;
+    }
+  }
+}
+
+function ensureObserver() {
+  if (observer || !import.meta.client) return;
+  observer = new IntersectionObserver(onIntersection, {
+    root: null,
+    threshold: 0,
+  });
+}
+
+function releaseObserver() {
+  if (bindings.size > 0 || !observer) return;
+  observer.disconnect();
+  observer = null;
 }
 
 /**
@@ -99,21 +161,17 @@ function bindVideo(video: HTMLVideoElement, deferKickoff: boolean) {
     revealShell(shell);
   }
 
-  const onPlay = () => {
-    if (!isCaseAtTop()) video.pause();
-  };
-
   const onLoaded = () => {
     // Keep poster up during deferred warm-buffer; reveal on play/playing.
     if (deferredKickoffs.has(video)) return;
     revealShell(shell);
-    syncVideo(video);
+    if (isCaseAtTop()) playCaseVideo(video);
   };
 
   const onCanPlay = () => {
     if (deferredKickoffs.has(video)) return;
     revealShell(shell);
-    syncVideo(video);
+    if (isCaseAtTop()) playCaseVideo(video);
   };
 
   const onPlaying = () => {
@@ -124,27 +182,32 @@ function bindVideo(video: HTMLVideoElement, deferKickoff: boolean) {
     failShell(shell);
   };
 
-  video.addEventListener('play', onPlay);
   video.addEventListener('loadeddata', onLoaded);
   video.addEventListener('canplay', onCanPlay);
   video.addEventListener('playing', onPlaying);
   video.addEventListener('error', onError);
 
+  const target = shell ?? video;
+  const inView = !isFullyOutOfView(target);
+
   bindings.set(video, {
     video,
     shell,
-    onPlay,
+    inView,
     onLoaded,
     onCanPlay,
     onPlaying,
     onError,
   });
 
-  if (deferKickoff && isCaseAtTop()) {
+  ensureObserver();
+  observer?.observe(target);
+
+  if (deferKickoff && isCaseAtTop() && inView) {
     deferredKickoffs.add(video);
     warmStart(video);
-  } else {
-    syncVideo(video);
+  } else if (isCaseAtTop() && inView) {
+    playCaseVideo(video);
   }
 }
 
@@ -152,18 +215,18 @@ function unbindVideo(video: HTMLVideoElement) {
   const binding = bindings.get(video);
   if (!binding) return;
 
-  video.removeEventListener('play', binding.onPlay);
   video.removeEventListener('loadeddata', binding.onLoaded);
   video.removeEventListener('canplay', binding.onCanPlay);
   video.removeEventListener('playing', binding.onPlaying);
   video.removeEventListener('error', binding.onError);
+  observer?.unobserve(observeTarget(binding));
   video.pause();
 
   bindings.delete(video);
   deferredKickoffs.delete(video);
 }
 
-/** Attach scroll-gated playback to all case hero videos under `root`. */
+/** Attach top-band + viewport playback to all case hero videos under `root`. */
 export function initCaseVideos(
   root: HTMLElement,
   opts?: { deferKickoff?: boolean },
@@ -184,12 +247,16 @@ export function initCaseVideos(
       unbindVideo(video);
     }
     releaseBandSync();
+    releaseObserver();
   };
 }
 
 /** First programmatic play after enter reveal (deferred kickoff queue). */
 export function kickoffDeferredCaseVideos() {
-  if (!isCaseAtTop()) return;
+  if (!isCaseAtTop()) {
+    deferredKickoffs.clear();
+    return;
+  }
 
   for (const video of deferredKickoffs) {
     playCaseVideo(video);
@@ -206,5 +273,11 @@ export function disposeAllCaseVideos() {
   if (bandUnsub) {
     bandUnsub();
     bandUnsub = null;
+  }
+  bandPrimed = false;
+  wasAtTop = false;
+  if (observer) {
+    observer.disconnect();
+    observer = null;
   }
 }

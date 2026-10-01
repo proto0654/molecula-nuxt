@@ -15,8 +15,8 @@ function doubleRaf(): Promise<void> {
 }
 
 /**
- * Case hero video boot: init scroll-gated playback, defer first play until after reveal.
- * Maps legacy bootAfterPageReveal → initCaseVideos + rAF kickoff.
+ * Case hero video boot: top-band autoplay + viewport pause, free manual controls in-view.
+ * Defers first play until after reveal.
  */
 export function useCaseVideoBoot(options: {
   enabled: MaybeRefOrGetter<boolean>;

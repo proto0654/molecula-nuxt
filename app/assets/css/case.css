@@ -240,7 +240,7 @@ html.js-enabled .case-page.is-revealing .case-header .case-facts {
   animation-delay: var(--enter-beat-lead);
 }
 
-/* --- Case hero video shell (scroll-gated autoplay) --- */
+/* --- Case hero video shell (top-band + viewport pause + poster) --- */
 
 .case-video-shell {
   position: relative;

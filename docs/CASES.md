@@ -12,7 +12,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 | [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Title (USP-style scramble reveal), excerpt; facts only when there is no CMS body. Entity/index (`CASE / NN`) lives in [`SiteChrome`](../app/components/site/SiteChrome.vue) only — no duplicate above the H1 |
 | [`EditorialHero.vue`](../app/components/EditorialHero.vue) | Unified 50/50 hero shell (all detail pages; variants `archive` / `case` / `about`) |
 | [`EditorialHeroMedia.vue`](../app/components/EditorialHeroMedia.vue) | Left column frame: video, image, or outline placeholder |
-| [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Hero `<video>` shell + scroll-gated autoplay (see below) |
+| [`CaseVideo.vue`](../app/components/case/CaseVideo.vue) | Hero `<video>` shell + top-band autoplay / viewport pause |
 | [`CaseSectionMarker.vue`](../app/components/case/CaseSectionMarker.vue) | Shared `NN / LABEL` marker (`editorial` rail + vertical guide, `visual` hairline, `quiet` almost clean) |
 | [`CaseSection.vue`](../app/components/case/CaseSection.vue) | Numbered marker + body; `visual` full-bleed / `center` cols 4–10 / `tone` |
 | [`CaseContent.vue`](../app/components/case/CaseContent.vue) | Editorial Overview: 3-col label + 6-col CMS body + optional facts |
@@ -127,26 +127,28 @@ Media resolution ([`editorialHero.ts`](../app/domain/editorialHero.ts)):
 
 **Featured image** also drives the persistent layout wash ([`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue)) on cases. **`landing_screen`** is Interface index 0 (with repeater). `screenshot_image` is not a hero.
 
-### Case hero video (scroll-gated autoplay)
+### Case hero video (top-band autoplay + free controls)
 
-When ACF `video` is present, hero media is a `<video>` — not viewport autoplay. Playback is tied to **page scroll position**:
+When ACF `video` is present, hero media is a `<video>`. Playback combines the original top-band autoplay with free manual controls while the frame is visible:
 
-| `scrollTop` | Video | Featured backdrop |
-|-------------|-------|-------------------|
-| `≤ 2px` | play (resume `currentTime`) | wash + tint visible |
-| `> 2px` | pause | wash + tint fade out |
+| Condition | Video |
+|-----------|-------|
+| `scrollTop ≤ 2` (enter top) | Auto `play` / resume (muted) |
+| Leave top (`scrollTop > 2`) | Auto `pause` once |
+| Still intersects viewport below top | Manual `controls` work — play is **not** blocked |
+| Shell fully leaves viewport (`IntersectionObserver`) | If still playing → `pause()` |
 
-Manual play while scrolled down is blocked (`play` event → immediate `pause`). User can still use `controls` (including unmute) at the top.
+Featured backdrop wash uses the same top band ([`useCaseTopScrollBand`](../app/composables/useCaseTopScrollBand.ts)).
 
 **Markup** ([`CaseVideo.vue`](../app/components/case/CaseVideo.vue)): `[data-case-video-shell]` + featured `poster` (and dark skeleton fallback) until `.is-loaded`; `[data-case-video]` with `controls`, `playsinline`, `muted`, `preload="none"` — no `autoplay` attribute. On error the shell gets `.is-failed` and keeps the poster.
 
 **Boot** ([`useCaseVideoBoot`](../app/composables/useCaseVideoBoot.ts) on [`portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue)):
 
 1. Enter beats / title scramble (`titleReady`)
-2. `initCaseVideos({ deferKickoff: true })` — listeners; warm-start (`preload=auto` + `load()`) so large mp4s buffer during reveal; poster visible immediately
-3. After `pageRevealing`: double rAF → `kickoffDeferredCaseVideos()` — first `play()`; `.is-loaded` also recovered on re-bind when `readyState` already has a frame
+2. `initCaseVideos({ deferKickoff: true })` — top-band + IO; warm-start (`preload=auto` + `load()`) so large mp4s buffer during reveal; poster visible immediately
+3. After `pageRevealing`: double rAF → `kickoffDeferredCaseVideos()` — first `play()` when still at top / in view
 
-**Reduced motion:** no defer kickoff; scroll gating and `controls` remain.
+**Reduced motion:** no defer kickoff; top-band, viewport pause, and `controls` remain.
 
 **Scroll source:** [`getCaseScrollTop()`](../app/composables/useCaseTopScrollBand.ts) reads `window.scrollY` (ready for a future smooth-scroll proxy).
 
