@@ -6,12 +6,16 @@ import {
 const VIDEO_SELECTOR = '[data-case-video]';
 const SHELL_SELECTOR = '[data-case-video-shell]';
 
+/** HTMLMediaElement.HAVE_CURRENT_DATA — first frame available. */
+const HAVE_CURRENT_DATA = 2;
+
 type VideoBinding = {
   video: HTMLVideoElement;
   shell: HTMLElement | null;
   onPlay: () => void;
   onLoaded: () => void;
   onCanPlay: () => void;
+  onPlaying: () => void;
   onError: () => void;
 };
 
@@ -20,12 +24,24 @@ const deferredKickoffs = new Set<HTMLVideoElement>();
 let bandUnsub: (() => void) | null = null;
 
 function revealShell(shell: HTMLElement | null) {
-  shell?.classList.add('is-loaded');
+  if (!shell || shell.classList.contains('is-failed')) return;
+  shell.classList.add('is-loaded');
+}
+
+function failShell(shell: HTMLElement | null) {
+  shell?.classList.add('is-failed');
+  shell?.classList.remove('is-loaded');
 }
 
 function playCaseVideo(video: HTMLVideoElement) {
   if (!isCaseAtTop()) return;
-  video.play().catch(() => {});
+  const shell = bindings.get(video)?.shell ?? null;
+  video
+    .play()
+    .then(() => {
+      revealShell(shell);
+    })
+    .catch(() => {});
 }
 
 function syncVideo(video: HTMLVideoElement) {
@@ -55,41 +71,78 @@ function releaseBandSync() {
   bandUnsub = null;
 }
 
+/**
+ * Start buffering without playing — avoids waiting for deferred kickoff
+ * play() to discover a multi‑MB mp4 from cold `preload="none"`.
+ */
+function warmStart(video: HTMLVideoElement) {
+  if (video.readyState >= HAVE_CURRENT_DATA) return;
+  if (video.networkState === HTMLMediaElement.NETWORK_LOADING) return;
+  video.preload = 'auto';
+  try {
+    video.load();
+  } catch {
+    /* ignore */
+  }
+}
+
 function bindVideo(video: HTMLVideoElement, deferKickoff: boolean) {
   if (bindings.has(video)) return;
 
   const shell =
     video.closest<HTMLElement>(SHELL_SELECTOR) ?? video.parentElement;
 
+  shell?.classList.remove('is-failed');
+
+  // Re-init race: playback already running while listeners were torn down.
+  if (!video.paused && video.readyState >= HAVE_CURRENT_DATA) {
+    revealShell(shell);
+  }
+
   const onPlay = () => {
     if (!isCaseAtTop()) video.pause();
   };
 
   const onLoaded = () => {
-    revealShell(shell);
+    // Keep poster up during deferred warm-buffer; reveal on play/playing.
     if (deferredKickoffs.has(video)) return;
+    revealShell(shell);
     syncVideo(video);
   };
 
   const onCanPlay = () => {
-    revealShell(shell);
     if (deferredKickoffs.has(video)) return;
+    revealShell(shell);
     syncVideo(video);
   };
 
-  const onError = () => {
+  const onPlaying = () => {
     revealShell(shell);
+  };
+
+  const onError = () => {
+    failShell(shell);
   };
 
   video.addEventListener('play', onPlay);
   video.addEventListener('loadeddata', onLoaded);
   video.addEventListener('canplay', onCanPlay);
+  video.addEventListener('playing', onPlaying);
   video.addEventListener('error', onError);
 
-  bindings.set(video, { video, shell, onPlay, onLoaded, onCanPlay, onError });
+  bindings.set(video, {
+    video,
+    shell,
+    onPlay,
+    onLoaded,
+    onCanPlay,
+    onPlaying,
+    onError,
+  });
 
   if (deferKickoff && isCaseAtTop()) {
     deferredKickoffs.add(video);
+    warmStart(video);
   } else {
     syncVideo(video);
   }
@@ -102,6 +155,7 @@ function unbindVideo(video: HTMLVideoElement) {
   video.removeEventListener('play', binding.onPlay);
   video.removeEventListener('loadeddata', binding.onLoaded);
   video.removeEventListener('canplay', binding.onCanPlay);
+  video.removeEventListener('playing', binding.onPlaying);
   video.removeEventListener('error', binding.onError);
   video.pause();
 

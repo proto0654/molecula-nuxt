@@ -58,6 +58,7 @@ const imageSizes = computed(() =>
           v-if="media.kind === 'video'"
           class="editorial-hero-media__video"
           :video="media.video"
+          :poster="media.poster"
         />
         <img
           v-else-if="media.kind === 'image' && imageSrc"

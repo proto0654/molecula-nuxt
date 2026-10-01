@@ -8,7 +8,7 @@ import {
 } from '~/domain/portfolio/presentation';
 
 export type EditorialHeroMedia =
-  | { kind: 'video'; video: CaseVideo }
+  | { kind: 'video'; video: CaseVideo; poster: CaseImage | null }
   | { kind: 'image'; image: CaseImage; alt: string }
   | { kind: 'placeholder' };
 
@@ -38,7 +38,13 @@ export function editorialHeroFrameAspectRatio(
 }
 
 export function resolveCaseHeroMedia(c: Case): EditorialHeroMedia {
-  if (c.video) return { kind: 'video', video: c.video };
+  if (c.video) {
+    return {
+      kind: 'video',
+      video: c.video,
+      poster: c.featuredImage,
+    };
+  }
   if (c.featuredImage) {
     return {
       kind: 'image',

@@ -138,13 +138,13 @@ When ACF `video` is present, hero media is a `<video>` — not viewport autoplay
 
 Manual play while scrolled down is blocked (`play` event → immediate `pause`). User can still use `controls` (including unmute) at the top.
 
-**Markup** ([`CaseVideo.vue`](../app/components/case/CaseVideo.vue)): `[data-case-video-shell]` + skeleton until `.is-loaded`; `[data-case-video]` with `controls`, `playsinline`, `muted`, `preload="none"` — no `autoplay` attribute.
+**Markup** ([`CaseVideo.vue`](../app/components/case/CaseVideo.vue)): `[data-case-video-shell]` + featured `poster` (and dark skeleton fallback) until `.is-loaded`; `[data-case-video]` with `controls`, `playsinline`, `muted`, `preload="none"` — no `autoplay` attribute. On error the shell gets `.is-failed` and keeps the poster.
 
 **Boot** ([`useCaseVideoBoot`](../app/composables/useCaseVideoBoot.ts) on [`portfolio/[slug].vue`](../app/pages/portfolio/[slug].vue)):
 
 1. Enter beats / title scramble (`titleReady`)
-2. `initCaseVideos({ deferKickoff: true })` — listeners + load handlers; skeleton visible immediately
-3. After `pageRevealing`: double rAF → `kickoffDeferredCaseVideos()` — first `play()` so video fetch does not compete with H1/CMS
+2. `initCaseVideos({ deferKickoff: true })` — listeners; warm-start (`preload=auto` + `load()`) so large mp4s buffer during reveal; poster visible immediately
+3. After `pageRevealing`: double rAF → `kickoffDeferredCaseVideos()` — first `play()`; `.is-loaded` also recovered on re-bind when `readyState` already has a frame
 
 **Reduced motion:** no defer kickoff; scroll gating and `controls` remain.
 

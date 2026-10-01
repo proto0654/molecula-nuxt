@@ -256,12 +256,27 @@ html.js-enabled .case-page.is-revealing .case-header .case-facts {
   transition: opacity 0.45s var(--enter-ease);
 }
 
+.case-video-shell__poster {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+  transition: opacity 0.45s var(--enter-ease);
+  pointer-events: none;
+}
+
 .case-video-shell__el {
+  position: relative;
+  z-index: 2;
   opacity: 0;
   transition: opacity 0.45s var(--enter-ease);
 }
 
-.case-video-shell.is-loaded .case-video-shell__skeleton {
+.case-video-shell.is-loaded .case-video-shell__skeleton,
+.case-video-shell.is-loaded .case-video-shell__poster {
   opacity: 0;
   pointer-events: none;
 }
@@ -270,13 +285,30 @@ html.js-enabled .case-page.is-revealing .case-header .case-facts {
   opacity: 1;
 }
 
+/* Keep poster when the mp4 errors / never becomes playable. */
+.case-video-shell.is-failed .case-video-shell__skeleton {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.case-video-shell.is-failed .case-video-shell__poster {
+  opacity: 1;
+}
+
+.case-video-shell.is-failed .case-video-shell__el {
+  opacity: 0;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .case-video-shell__skeleton,
+  .case-video-shell__poster,
   .case-video-shell__el {
     transition: none;
   }
 
-  .case-video-shell.is-loaded .case-video-shell__skeleton {
+  .case-video-shell.is-loaded .case-video-shell__skeleton,
+  .case-video-shell.is-loaded .case-video-shell__poster {
     opacity: 0;
   }
 
