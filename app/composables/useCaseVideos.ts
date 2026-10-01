@@ -42,16 +42,6 @@ function observeTarget(binding: VideoBinding): Element {
   return binding.shell ?? binding.video;
 }
 
-function isFullyOutOfView(el: Element): boolean {
-  const r = el.getBoundingClientRect();
-  return (
-    r.bottom <= 0 ||
-    r.top >= (window.innerHeight || 0) ||
-    r.right <= 0 ||
-    r.left >= (window.innerWidth || 0)
-  );
-}
-
 function playCaseVideo(video: HTMLVideoElement) {
   const binding = bindings.get(video);
   if (binding && !binding.inView) return;
@@ -109,10 +99,17 @@ function onIntersection(entries: IntersectionObserverEntry[]) {
     const target = entry.target;
     for (const binding of bindings.values()) {
       if (observeTarget(binding) !== target) continue;
+      const wasInView = binding.inView;
       binding.inView = entry.isIntersecting;
       // Fully out of viewport → pause if still playing (manual play ok while in view).
       if (!entry.isIntersecting) {
         pauseIfPlaying(binding.video);
+      } else if (
+        !wasInView &&
+        isCaseAtTop() &&
+        !deferredKickoffs.has(binding.video)
+      ) {
+        playCaseVideo(binding.video);
       }
       break;
     }
@@ -188,12 +185,12 @@ function bindVideo(video: HTMLVideoElement, deferKickoff: boolean) {
   video.addEventListener('error', onError);
 
   const target = shell ?? video;
-  const inView = !isFullyOutOfView(target);
 
   bindings.set(video, {
     video,
     shell,
-    inView,
+    // Frame may be unlaid-out during enter beats; IntersectionObserver corrects this.
+    inView: true,
     onLoaded,
     onCanPlay,
     onPlaying,
@@ -203,10 +200,10 @@ function bindVideo(video: HTMLVideoElement, deferKickoff: boolean) {
   ensureObserver();
   observer?.observe(target);
 
-  if (deferKickoff && isCaseAtTop() && inView) {
+  if (deferKickoff && isCaseAtTop()) {
     deferredKickoffs.add(video);
     warmStart(video);
-  } else if (isCaseAtTop() && inView) {
+  } else if (isCaseAtTop()) {
     playCaseVideo(video);
   }
 }

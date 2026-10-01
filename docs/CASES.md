@@ -137,6 +137,9 @@ When ACF `video` is present, hero media is a `<video>`. Playback combines the or
 | Leave top (`scrollTop > 2`) | Auto `pause` once |
 | Still intersects viewport below top | Manual `controls` work — play is **not** blocked |
 | Shell fully leaves viewport (`IntersectionObserver`) | If still playing → `pause()` |
+| Shell re-enters viewport while at top | Auto `play` |
+
+Bind assumes the shell is in view (the frame may have no layout yet during enter beats); the observer's first callback corrects it.
 
 Featured backdrop wash uses the same top band ([`useCaseTopScrollBand`](../app/composables/useCaseTopScrollBand.ts)).
 
