@@ -1,4 +1,5 @@
 import {
+  Color,
   Group,
   type Camera,
   type Object3D,
@@ -165,6 +166,13 @@ export class AtomLabel {
   private remainderScale = 1;
   private remainderVisible = true;
   private titleActive = false;
+  /** Autoplay-next blink 0..1; 0 = plain idle/active color. */
+  private titlePulse = 0;
+  private readonly scratchColor = new Color();
+  private readonly scratchActiveColor = new Color(LETTER_COLOR_ACTIVE);
+  private readonly scratchActiveRemainderColor = new Color(
+    REMAINDER_COLOR_ACTIVE,
+  );
 
   private fullBlurb = '';
   private rawBlurb: string | null = null;
@@ -243,12 +251,40 @@ export class AtomLabel {
   setTitleActive(active: boolean): void {
     if (this.titleActive === active) return;
     this.titleActive = active;
-    this.letter.color = active ? LETTER_COLOR_ACTIVE : LETTER_COLOR_IDLE;
-    this.remainder.color = active
+    this.applyTitleColors();
+  }
+
+  /**
+   * Autoplay-next blink: 0 = idle, 1 = full light chrome. The scene feeds the
+   * eased wireframe pulse here so the caption breathes on the same beat and
+   * in the same color as the accent shell. Pass `null` to settle back.
+   */
+  setTitlePulse(mix: number | null): void {
+    const next = mix === null ? 0 : Math.min(1, Math.max(0, mix));
+    if (next === this.titlePulse) return;
+    this.titlePulse = next;
+    this.applyTitleColors();
+  }
+
+  private applyTitleColors(): void {
+    const mix = this.titlePulse;
+    if (mix > 0) {
+      this.letter.color = this.scratchColor
+        .setHex(LETTER_COLOR_IDLE)
+        .lerp(this.scratchActiveColor, mix)
+        .getHex();
+      this.remainder.color = this.scratchColor
+        .setHex(REMAINDER_COLOR_IDLE)
+        .lerp(this.scratchActiveRemainderColor, mix)
+        .getHex();
+      return;
+    }
+    this.letter.color = this.titleActive
+      ? LETTER_COLOR_ACTIVE
+      : LETTER_COLOR_IDLE;
+    this.remainder.color = this.titleActive
       ? REMAINDER_COLOR_ACTIVE
       : REMAINDER_COLOR_IDLE;
-    this.letter.sync();
-    this.remainder.sync();
   }
 
   /** Surface radius used for camera-facing lift (hub compact layout). */

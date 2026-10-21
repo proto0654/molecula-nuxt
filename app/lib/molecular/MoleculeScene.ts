@@ -38,7 +38,19 @@ const WIREFRAME_OPACITY = 0.22;
 /** Autoplay-next pulse: peak matches committed shell; trough nearly off. */
 const PULSE_OPACITY_MIN = 0.035;
 const PULSE_OPACITY_MAX = WIREFRAME_OPACITY;
+/** Beat rate the dash flow keeps time with (the shell itself follows progress). */
 const PULSE_SPEED = 2.4;
+/**
+ * Caption blink peak as a share of the active ink. Full ink reads too loud on
+ * the beat, so the light phase stops short of it.
+ */
+const TITLE_PULSE_PEAK = 0.55;
+/**
+ * Hold after the hint appears, as a share of the interval. The lighting waits
+ * out the first half — the orbit comet and dust already carry the hint — and
+ * fills over the rest, reaching full exactly when the autoplay commits.
+ */
+const PULSE_DELAY = 0.5;
 /** One bond dash repeat per wireframe pulse cycle (2π / PULSE_SPEED). */
 const BOND_DASH_SIZE = 0.07;
 const BOND_DASH_GAP = 0.05;
@@ -204,6 +216,13 @@ export class MoleculeScene {
   private readonly effects: MoleculeEffects;
   private accentWireframeAtomId: string | null = null;
   private accentWireframeMode: AccentWireframeMode | null = null;
+  /** Atom whose caption currently blinks with the accent wireframe. */
+  private accentPulseAtomId: string | null = null;
+  /**
+   * Share of the autoplay interval already elapsed (0 → 1). One beat per
+   * interval: the next atom lights up as the activation time arrives.
+   */
+  private pulseProgress = 0;
   private accentEnterMix = 0;
   private targetAccentEnterMix = 0;
   private wireframeColorMix = 0;
@@ -487,6 +506,14 @@ export class MoleculeScene {
       return;
     }
     this.targetAccentEnterMix = 0;
+  }
+
+  /**
+   * Autoplay slide progress (0 → 1) driving the single next-atom beat: one
+   * fill per interval instead of a free-running blink.
+   */
+  setPulseProgress(ratio: number): void {
+    this.pulseProgress = Math.min(1, Math.max(0, ratio));
   }
 
   private setBondFlowDashOffset(offset: number): void {
@@ -825,7 +852,10 @@ export class MoleculeScene {
     this.decorativeNodes.setChromeColorMix(chromeMix);
   }
 
-  private updateAccentWireframePulse(deltaSeconds: number, elapsed: number): void {
+  private updateAccentWireframePulse(
+    deltaSeconds: number,
+    _elapsed: number,
+  ): void {
     const enterT = 1 - Math.exp(-ACCENT_ENTER_FOLLOW * deltaSeconds);
     this.accentEnterMix +=
       (this.targetAccentEnterMix - this.accentEnterMix) * enterT;
@@ -839,23 +869,49 @@ export class MoleculeScene {
       this.accentWireframeAtomId = null;
       this.accentWireframeMode = null;
       this.syncAccentWireframe();
+      this.setAccentTitlePulse(null);
       return;
     }
-
-    if (!this.accentWireframe.visible || !this.accentWireframeMode) return;
 
     const enter = smoothstep01(this.accentEnterMix);
-    if (this.accentWireframeMode === 'static') {
-      this.accentWireframeMaterial.opacity = WIREFRAME_OPACITY * enter;
+    if (!this.accentWireframe.visible || !this.accentWireframeMode) {
+      this.setAccentTitlePulse(null);
       return;
     }
 
-    const phase = 0.5 + 0.5 * Math.sin(elapsed * PULSE_SPEED);
-    const eased = smoothstep01(phase);
+    if (this.accentWireframeMode === 'static') {
+      this.accentWireframeMaterial.opacity = WIREFRAME_OPACITY * enter;
+      this.setAccentTitlePulse(null);
+      return;
+    }
+
+    const rise = Math.min(
+      1,
+      Math.max(0, (this.pulseProgress - PULSE_DELAY) / (1 - PULSE_DELAY)),
+    );
+    const eased = smoothstep01(rise);
     const pulse =
       PULSE_OPACITY_MIN +
       (PULSE_OPACITY_MAX - PULSE_OPACITY_MIN) * eased;
     this.accentWireframeMaterial.opacity = pulse * enter;
+    // The next atom's caption rides the same beat: black → wireframe light,
+    // fully lit exactly when the autoplay commits it.
+    this.setAccentTitlePulse(eased * enter * TITLE_PULSE_PEAK);
+  }
+
+  /**
+   * Routes the accent pulse into the captions: only the next atom blinks, and
+   * a hand-off clears the previous caption before the new one starts.
+   */
+  private setAccentTitlePulse(mix: number | null): void {
+    const atomId = mix === null ? null : this.accentWireframeAtomId;
+    if (this.accentPulseAtomId && this.accentPulseAtomId !== atomId) {
+      this.getAtom(this.accentPulseAtomId)?.atomLabel.setTitlePulse(null);
+      this.accentPulseAtomId = null;
+    }
+    if (!atomId) return;
+    this.getAtom(atomId)?.atomLabel.setTitlePulse(mix);
+    this.accentPulseAtomId = atomId;
   }
 
   private updateBondFlow(deltaSeconds: number, elapsed: number): void {
@@ -960,6 +1016,7 @@ export class MoleculeScene {
     this.accentWireframe.visible = false;
     this.accentEnterMix = 0;
     this.targetAccentEnterMix = 0;
+    this.accentPulseAtomId = null;
     this.bondFlowToAtomId = null;
     this.setBondFlowDashOffset(0);
     this.bondFlowEnterMix = 0;

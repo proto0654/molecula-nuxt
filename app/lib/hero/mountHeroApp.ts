@@ -508,6 +508,7 @@ export function mountHeroApp(
   function setSlideProgress(ratio: number): void {
     siteHeader.setSlideProgress(ratio);
     navigation.setSlideProgress(ratio);
+    controller.setPulseProgress(ratio);
   }
 
   const autoplay = new HeroAutoplay({

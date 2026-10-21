@@ -1493,6 +1493,11 @@ export class MoleculeController {
     this.scene.setAccentWireframeAtom(atomId, mode);
   }
 
+  /** Autoplay slide progress (0 → 1) feeding the next-atom beat. */
+  setPulseProgress(ratio: number): void {
+    this.scene.setPulseProgress(ratio);
+  }
+
   /** Animate hub bond dashes flowing toward the target peripheral atom. */
   setBondFlowAtom(atomId: string | null): void {
     this.scene.setBondFlowAtom(atomId);
