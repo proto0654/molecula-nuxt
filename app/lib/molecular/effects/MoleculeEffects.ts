@@ -136,6 +136,19 @@ export class MoleculeEffects {
     this.comet.setLayoutScale(scale);
   }
 
+  /**
+   * Home boot: the same comet instance flies the assembly chain, one orbit at
+   * a time, under the intro clock. `null` hands it back to `setTarget`.
+   */
+  setBootComet(
+    atomId: string | null,
+    head: number,
+    progress: number,
+    opacity: number,
+  ): void {
+    this.comet.setBootArc(atomId, head, progress, opacity);
+  }
+
   applyQuality(settings: QualitySettings): void {
     this.settings = settings;
     this.mist.setCount(settings.particleCount);
@@ -159,8 +172,9 @@ export class MoleculeEffects {
     const fadeT = 1 - Math.exp(-FADE_FOLLOW * delta);
     const targetFade = state.approachBusy ? 0 : 1;
     this.fade += (targetFade - this.fade) * fadeT;
-    // Home boot: the whole atmosphere is gated by its own reveal so dust,
-    // comet and rims arrive after the molecule is assembled, not with it.
+    // Home boot: the field / rims fade in with the assembly; the ambient dust
+    // has its own spawn clock (`introDust`) and ignores that gate, because it
+    // is born at the hub centre rather than fading in place.
     const fade = this.fade * state.introReveal;
 
     const scrollTarget =
@@ -214,7 +228,8 @@ export class MoleculeEffects {
     this.mist.update(
       state.reducedMotion ? 0 : this.streamTime,
       time,
-      fade,
+      this.fade,
+      state.introDust,
     );
 
     this.field.update(

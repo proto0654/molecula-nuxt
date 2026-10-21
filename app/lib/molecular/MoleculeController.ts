@@ -21,7 +21,7 @@ import { projectToScreenInto } from './math/projection';
 import { moleculeConfig } from './moleculeConfig';
 import { getOrbitNormalForAtom } from './moleculeOrbits';
 import { MoleculeScene } from './MoleculeScene';
-import type { MoleculeIntroReveal } from './MoleculeScene';
+import type { MoleculeIntroReveal, MoleculeIntroComet } from './MoleculeScene';
 import type { EffectsFrameState } from './effects/types';
 import type { TagCloudItem } from './TagCloud';
 import {
@@ -391,6 +391,7 @@ export class MoleculeController {
     fillProgress: 0,
     scrollProgress: 0,
     introReveal: 1,
+    introDust: 1,
     reducedMotion: false,
   };
 
@@ -1048,6 +1049,11 @@ export class MoleculeController {
   setIntroReveal(reveal: MoleculeIntroReveal | null): void {
     this.introReveal = reveal;
     this.scene.setIntroReveal(reveal);
+  }
+
+  /** Home boot: comet arc for this frame (the intro flies one orbit at a time). */
+  setIntroComet(comet: MoleculeIntroComet | null): void {
+    this.scene.setIntroComet(comet);
   }
 
   /** Home boot: extra yaw (rad) composed on top of the authored orientation. */
@@ -1781,6 +1787,9 @@ export class MoleculeController {
     this.effectsState.fillProgress = this.fillProgress;
     this.effectsState.scrollProgress = this.scrollProgress;
     this.effectsState.introReveal = this.introReveal
+      ? Math.max(0, Math.min(1, this.introReveal.air))
+      : 1;
+    this.effectsState.introDust = this.introReveal
       ? Math.max(0, Math.min(1, this.introReveal.dust))
       : 1;
     this.effectsState.reducedMotion = this.reducedMotion;

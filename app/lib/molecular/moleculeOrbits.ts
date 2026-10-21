@@ -76,14 +76,30 @@ export function pointOnOrbit(
   ];
 }
 
+/** Quaternion mapping unit XY circle → plane with the given normal (Z → normal). */
+export function orbitQuaternionFromNormal(
+  normal: Vector3,
+  out: Quaternion = new Quaternion(),
+): Quaternion {
+  scratchN.copy(normal).normalize();
+  if (Math.abs(scratchN.y) < 0.9) {
+    scratchTmp.set(0, 1, 0);
+  } else {
+    scratchTmp.set(1, 0, 0);
+  }
+  scratchU.crossVectors(scratchTmp, scratchN).normalize();
+  scratchV.crossVectors(scratchN, scratchU).normalize();
+  scratchM.makeBasis(scratchU, scratchV, scratchN);
+  return out.setFromRotationMatrix(scratchM);
+}
+
 /** Quaternion mapping unit XY circle → orbit plane (Z → normal). */
 export function orbitQuaternion(
   orbit: OrbitDef,
   out: Quaternion = new Quaternion(),
 ): Quaternion {
-  orbitBasis(orbit.normal, scratchU, scratchV, scratchN);
-  scratchM.makeBasis(scratchU, scratchV, scratchN);
-  return out.setFromRotationMatrix(scratchM);
+  scratchN.set(orbit.normal[0], orbit.normal[1], orbit.normal[2]);
+  return orbitQuaternionFromNormal(scratchN, out);
 }
 
 /**

@@ -152,11 +152,24 @@ export type MoleculeIntroReveal = {
   atoms: Readonly<Record<string, number>>;
   /** Keyed by the bond's target atom id - hub bonds only in this molecule. */
   bonds: Readonly<Record<string, number>>;
-  rings: number;
+  /** Per-orbit unfold 0..1 in peripheral order (`PERIPHERAL_ATOM_IDS`). */
+  orbits: readonly number[];
   /** Text layer (atom labels + tag cloud); 0 keeps all readable copy off. */
   text: number;
-  /** Atmosphere gate (`MoleculeEffects`); 0 keeps dust / comet / rims off. */
+  /** Ambient dust spawn from the hub centre (0 = still at the hub, 1 = live). */
   dust: number;
+  /** Atmosphere gate (drafting field + rims); 0 hides, 1 = live. */
+  air: number;
+};
+
+/** Home boot: the comet arc the intro is flying right now. */
+export type MoleculeIntroComet = {
+  atomId: string;
+  /** Ring-frame head angle (rad). */
+  head: number;
+  /** Lit arc behind the head, turns (0..1). */
+  progress: number;
+  opacity: number;
 };
 
 export class MoleculeScene {
@@ -200,6 +213,10 @@ export class MoleculeScene {
   private compactLayout = false;
   /** Set only during the home boot; null at rest. */
   private introReveal: MoleculeIntroReveal | null = null;
+  /** Comet arc owned by the boot; null at rest. */
+  private introComet: MoleculeIntroComet | null = null;
+  /** Molecule-frame direction toward the viewer, for the ring unfold. */
+  private readonly introViewLocal = new Vector3();
   private readonly wireframeBaseColor = new Color(WIREFRAME_COLOR);
   private readonly wireframeDimColor = new Color(WIREFRAME_DIM_COLOR);
   private readonly bondBaseColor = new Color(BOND_COLOR);
@@ -525,15 +542,25 @@ export class MoleculeScene {
    */
   setIntroReveal(reveal: MoleculeIntroReveal | null): void {
     this.introReveal = reveal;
-    this.decorativeNodes.setReveal(reveal ? reveal.rings : 1);
     this.tagCloud.setReveal(reveal ? reveal.text : 1);
     if (reveal) return;
+    this.introComet = null;
+    this.effects.setBootComet(null, 0, 0, 0);
+    this.decorativeNodes.resetOrbitUnfold();
     for (const atom of this.atoms) {
       atom.setIntroReveal(1);
     }
     for (const link of this.bondLinks) {
       link.bond.setDrawProgress(1);
     }
+  }
+
+  /**
+   * Home boot: the comet arc for the current frame. The scene forwards it to
+   * the atmosphere layer on the next update, so the intro only writes state.
+   */
+  setIntroComet(comet: MoleculeIntroComet | null): void {
+    this.introComet = comet;
   }
 
   /**
@@ -645,6 +672,12 @@ export class MoleculeScene {
     this.updateBondFlow(deltaSeconds, elapsed);
     const intro = this.introReveal;
     if (intro) {
+      // Rings unfold from an edge-on line: they need the camera direction in
+      // the molecule frame, which only the scene knows.
+      this.introViewLocal
+        .set(0, 0, 1)
+        .applyQuaternion(this.moleculeGroup.quaternion);
+      this.decorativeNodes.setOrbitUnfold(intro.orbits, this.introViewLocal);
       for (const atom of this.atoms) {
         atom.setIntroReveal(intro.atoms[atom.id] ?? 1);
       }
@@ -668,6 +701,15 @@ export class MoleculeScene {
       }
     }
     this.tagCloud.update(this.camera, this.moleculeGroup);
+    if (intro) {
+      const comet = this.introComet;
+      this.effects.setBootComet(
+        comet ? comet.atomId : null,
+        comet?.head ?? 0,
+        comet?.progress ?? 0,
+        comet?.opacity ?? 0,
+      );
+    }
     this.effects.update(deltaSeconds, elapsed, effectsState);
   }
 

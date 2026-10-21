@@ -7,12 +7,18 @@ import {
   type ViewportMode,
 } from '../molecular/composition/profiles';
 import { moleculeConfig } from '../molecular/moleculeConfig';
+import { ATOM_ORBIT_PLACEMENT, PERIPHERAL_ATOM_IDS } from '../molecular/moleculeOrbits';
 import { hubAtomId } from '../spatial/spatialAtoms';
 
 /**
  * Home boot: the molecule condenses at screen centre, then drifts into the
  * desktop stage bias while the HUD draws in. Direct load of `/` only - an
  * in-app return to home keeps the existing return animation.
+ *
+ * The assembly reads like a gyroscope coming up to speed: rings tumble out of
+ * an edge-on line, dust spirals out of the hub, and a single comet runs the
+ * orbits one at a time - each atom appears where the comet reaches it, on a
+ * connector that was drawn just ahead of the head.
  *
  * One clock drives Three.js values and the CSS phase classes, so the canvas
  * and the chrome can never drift apart. `HeroIntro` owns no DOM besides the
@@ -22,27 +28,35 @@ import { hubAtomId } from '../spatial/spatialAtoms';
 /** Desktop beat sheet (ms from the first rendered frame). */
 const BEATS = {
   hubAt: 60,
-  hubDuration: 440,
-  bondAt: 300,
-  bondGap: 70,
-  bondDuration: 520,
-  /** Atom lands while its bond tip is still travelling - reads as condensation. */
-  atomLag: 180,
-  atomDuration: 520,
-  ringsAt: 1050,
-  ringsDuration: 450,
-  /** Text layer: atom labels + tag cloud, just ahead of the chrome. */
-  textAt: 1150,
-  textDuration: 320,
-  dustAt: 1050,
-  dustDuration: 600,
-  /** Welding pass from the existing light language, once the shells are solid. */
-  sweepAt: 1250,
-  driftAt: 1300,
-  driftDuration: 950,
+  hubDuration: 500,
+  /** Rings start tumbling edge-on; neighbouring starts overlap. */
+  orbitAt: 420,
+  orbitGap: 70,
+  orbitDuration: 700,
+  /** Ambient dust leaves the hub centre while the rings are still unfolding. */
+  dustAt: 700,
+  dustDuration: 1450,
+  /** One comet leg per peripheral atom: a half lap that ends on the atom. */
+  cometAt: 1160,
+  cometLeg: 320,
+  /** Connector draws ahead of the head, so the atom lands on a finished bond. */
+  bondLead: 300,
+  bondDuration: 240,
+  atomDuration: 380,
+  /** Text layer: atom labels + tag cloud, once two atoms are in. */
+  textAt: 1850,
+  textDuration: 340,
+  /** Atmosphere (drafting field + rims) arrives with the last legs. */
+  airAt: 2200,
+  airDuration: 450,
+  /** Welding pass from the existing light language, once the chain is complete. */
+  sweepAt: 2500,
+  /** Desktop stage bias: only once every atom is drawn, and a short push. */
+  driftAt: 2820,
+  driftDuration: 560,
   /** Chrome beats (CSS rides these classes, not timers of its own). */
-  uiAt: 1450,
-  liveAt: 2350,
+  uiAt: 1500,
+  liveAt: 3440,
 } as const;
 
 /** Tablet / mobile have less chrome to draw, so the whole boot runs tighter. */
@@ -57,9 +71,10 @@ const START_GUARD_MS = 1600;
 type MutableReveal = {
   atoms: Record<string, number>;
   bonds: Record<string, number>;
-  rings: number;
+  orbits: number[];
   text: number;
   dust: number;
+  air: number;
 };
 
 type Framing = { screenX: number; screenY: number; approach: number };
@@ -78,13 +93,16 @@ export class HeroIntro {
   private readonly chromeRoot: HTMLElement;
   private readonly onLive: () => void;
   private readonly timeScale: number;
-  private readonly atomIds: string[];
+  private readonly hubId: string;
+  /** Comet chain order - one leg per peripheral atom. */
+  private readonly peripheralIds: readonly string[];
   private readonly reveal: MutableReveal = {
     atoms: {},
     bonds: {},
-    rings: 0,
+    orbits: [],
     text: 0,
     dust: 0,
+    air: 0,
   };
   private readonly clock = { t: 0 };
   private readonly framingFrom: Framing;
@@ -105,14 +123,14 @@ export class HeroIntro {
     this.timeScale = options.mode === 'desktop' ? 1 : COMPACT_TIME_SCALE;
 
     const hubId = hubAtomId();
-    this.atomIds = [
-      hubId,
-      ...moleculeConfig.atoms
-        .map((atom) => atom.id)
-        .filter((id) => id !== hubId),
-    ];
-    for (const id of this.atomIds) {
-      this.reveal.atoms[id] = 0;
+    this.hubId = hubId;
+    this.peripheralIds = PERIPHERAL_ATOM_IDS;
+    for (const atom of moleculeConfig.atoms) {
+      this.reveal.atoms[atom.id] = 0;
+    }
+    this.reveal.atoms[hubId] = 0;
+    for (let i = 0; i < PERIPHERAL_ATOM_IDS.length; i += 1) {
+      this.reveal.orbits.push(0);
     }
     for (const bond of moleculeConfig.bonds) {
       this.reveal.bonds[bond.to] = 0;
@@ -165,6 +183,7 @@ export class HeroIntro {
     this.timeline?.kill();
     this.timeline = null;
     this.chromeRoot.classList.remove('is-boot', 'is-boot-ui');
+    this.controller.setIntroComet(null);
     this.controller.setIntroYaw(0);
     this.controller.setIntroReveal(null);
   }
@@ -206,36 +225,44 @@ export class HeroIntro {
     const t = this.clock.t;
     const { reveal } = this;
 
-    for (let i = 0; i < this.atomIds.length; i += 1) {
-      const id = this.atomIds[i]!;
-      if (i === 0) {
-        reveal.atoms[id] = easeBackOut(
-          clamp01((t - this.beat(BEATS.hubAt)) / this.beat(BEATS.hubDuration)),
-        );
-        continue;
-      }
-      const bondAt =
-        this.beat(BEATS.bondAt) + (i - 1) * this.beat(BEATS.bondGap);
+    reveal.atoms[this.hubId] = easeBackOut(
+      clamp01((t - this.beat(BEATS.hubAt)) / this.beat(BEATS.hubDuration)),
+    );
+
+    for (let i = 0; i < this.peripheralIds.length; i += 1) {
+      const id = this.peripheralIds[i]!;
+      // The comet lands on this atom at the end of its leg; the connector is
+      // drawn just ahead of it, so the atom appears on a finished bond.
+      const arrival =
+        this.beat(BEATS.cometAt) + (i + 1) * this.beat(BEATS.cometLeg);
       reveal.bonds[id] = easeOutCubic(
-        clamp01((t - bondAt) / this.beat(BEATS.bondDuration)),
+        clamp01(
+          (t - arrival + this.beat(BEATS.bondLead)) /
+            this.beat(BEATS.bondDuration),
+        ),
       );
       reveal.atoms[id] = easeBackOut(
+        clamp01((t - arrival) / this.beat(BEATS.atomDuration)),
+      );
+      reveal.orbits[i] = easeInOutCubic(
         clamp01(
-          (t - bondAt - this.beat(BEATS.atomLag)) /
-            this.beat(BEATS.atomDuration),
+          (t - this.beat(BEATS.orbitAt) - i * this.beat(BEATS.orbitGap)) /
+            this.beat(BEATS.orbitDuration),
         ),
       );
     }
 
-    reveal.rings = easeOutCubic(
-      clamp01((t - this.beat(BEATS.ringsAt)) / this.beat(BEATS.ringsDuration)),
-    );
     reveal.text = easeOutCubic(
       clamp01((t - this.beat(BEATS.textAt)) / this.beat(BEATS.textDuration)),
     );
-    reveal.dust = easeOutCubic(
-      clamp01((t - this.beat(BEATS.dustAt)) / this.beat(BEATS.dustDuration)),
+    reveal.dust = clamp01(
+      (t - this.beat(BEATS.dustAt)) / this.beat(BEATS.dustDuration),
     );
+    reveal.air = easeOutCubic(
+      clamp01((t - this.beat(BEATS.airAt)) / this.beat(BEATS.airDuration)),
+    );
+
+    this.applyComet(t);
 
     const drift = easeInOutCubic(
       clamp01(
@@ -262,6 +289,33 @@ export class HeroIntro {
     if (t >= this.beat(BEATS.liveAt)) {
       this.finish();
     }
+  }
+
+  /**
+   * One comet, one leg at a time: it starts on the far side of a ring and
+   * lands on that atom, then jumps to the next ring. The arrival is the atom's
+   * own orbital angle, so the flash and the head coincide.
+   */
+  private applyComet(t: number): void {
+    const legTime = (t - this.beat(BEATS.cometAt)) / this.beat(BEATS.cometLeg);
+    const leg = Math.floor(legTime);
+    if (leg < 0 || leg >= this.peripheralIds.length) {
+      this.controller.setIntroComet(null);
+      return;
+    }
+    const atomId = this.peripheralIds[leg]!;
+    const progress = clamp01(legTime - leg);
+    const theta = ATOM_ORBIT_PLACEMENT[atomId]?.theta ?? 0;
+    this.controller.setIntroComet({
+      atomId,
+      // Far side → the atom's angle (forward half lap), so the tail trails
+      // over the path the head has already flown.
+      head: theta + Math.PI + Math.PI * progress,
+      progress: 0.16 + 0.55 * progress,
+      // Fade in on the new ring; the jump off the finished one is masked by
+      // the atom that appears at the same instant.
+      opacity: Math.min(1, progress / 0.18),
+    });
   }
 }
 

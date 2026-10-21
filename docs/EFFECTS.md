@@ -77,6 +77,11 @@ cycle (`COMET_CYCLE_SECONDS = 5.5s`, the autoplay slide), so the loop stays in p
 cycle. `HeroAutoplay.awaitingTurn` keeps the slide progress moving through the turn
 (`getTurnProgress() ≥ 0.35`) so autoplay does not visibly stall between slides.
 
+The same instance also flies the **home boot chain**: `setBootArc(atomId, head, progress, opacity)`
+freezes the target loop and drives head / arc / opacity from the intro clock, so one comet runs the
+four orbits in order — head from `θ+π` to the atom's `θ`, one half lap per leg — and each atom
+appears where the head lands. `setBootArc(null)` hands the arc back to `setTarget`.
+
 ## Hub connector
 
 The static dashed hub→atom bond stays visible again. Only the animated dash flow
@@ -158,8 +163,10 @@ all be off-screen, so the freeze signature is built from **surface-level** layer
 
 The field fades out while `approachBusy` and back in after settle, so it never competes with the
 route transition. `freeze()`/`unfreeze()` and zoom/fill are unchanged. On a direct load of `/` the
-whole atmosphere (dust, comet, rims, drafting shell) is additionally gated by `EffectsFrameState.introReveal`
-and arrives with the orbit rings after the molecule is assembled — see [MOTION.md](MOTION.md#home-boot-direct-load).
+field and rims are gated by `EffectsFrameState.introReveal` and arrive with the last comet legs,
+while the ambient dust has its own spawn clock: `EffectsFrameState.introDust` drives `uBoot`, every
+point starts at the hub centre and spirals out to its radius (the hub dive mirrored, each on its own
+launch delay) — see [MOTION.md](MOTION.md#home-boot-direct-load).
 
 ## Performance budget
 

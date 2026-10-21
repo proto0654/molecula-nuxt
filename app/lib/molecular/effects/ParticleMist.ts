@@ -37,6 +37,10 @@ const STREAM_PERIOD_MAX = 7.0;
 const STREAM_TRAVEL_SECONDS = 2.2;
 /** Short settle before the first points start after a target change. */
 const STREAM_LAUNCH_DELAY = 0.25;
+/** Home boot: share of the spawn window spread across per-point launch delays. */
+const BOOT_SPREAD = 0.55;
+/** Radians a shell point sweeps while leaving the hub — mirrors `FALL_SWIRL`. */
+const BOOT_SWIRL = 1.9;
 
 /** Small deterministic PRNG so the point set does not reshuffle on HMR. */
 function mulberry32(seed: number): () => number {
@@ -76,6 +80,8 @@ const vertexShader = /* glsl */ `
   uniform vec3 uAccent;
   /** 1 = ambient shell drifts; 0 = ambient is static (LOW). */
   uniform float uDrift;
+  /** Home boot spawn: 0 = every point still at the hub, 1 = live. */
+  uniform float uBoot;
 
   // JS constants are injected as literals — GLSL has no access to module scope.
   const float TAU = ${TAU.toFixed(8)};
@@ -88,6 +94,8 @@ const vertexShader = /* glsl */ `
   const float STREAM_TRAVEL_SECONDS = ${STREAM_TRAVEL_SECONDS.toFixed(2)};
   const float STREAM_LAUNCH_DELAY = ${STREAM_LAUNCH_DELAY.toFixed(2)};
   const float FALL_SWIRL = ${FALL_SWIRL.toFixed(2)};
+  const float BOOT_SPREAD = ${BOOT_SPREAD.toFixed(2)};
+  const float BOOT_SWIRL = ${BOOT_SWIRL.toFixed(2)};
 
   attribute vec3 aNode;   // x = shell radius 0..1, yz = direction hash
   attribute vec3 aLink;   // x = progress lane, y = swirl lane, z = energy
@@ -180,6 +188,9 @@ const vertexShader = /* glsl */ `
           * (1.0 - smoothstep(0.94, 1.0, travel));
       }
       accent = 0.25 + 0.5 * uLinkMix;
+      // Boot: the bond stream is born with the live phase, not from a hub
+      // that is still condensing.
+      depthFade *= step(0.999, uBoot);
     } else {
       // Data dust: thin shell in the molecule frame, yaw + pitch over time.
       // LOW freezes this ambient drift; the bond stream still moves. This uses
@@ -195,8 +206,25 @@ const vertexShader = /* glsl */ `
       vec3 dir = normalize(vec3(aNode.y, aNode.z, phase * 2.0 - 1.0) + 1e-4);
       vec3 d = vec3(cy * dir.x + sy * dir.z, dir.y, -sy * dir.x + cy * dir.z);
       d = vec3(d.x, cp * d.y - sp * d.z, sp * d.y + cp * d.z);
+
+      // Home boot: the shell is born at the hub and spirals out to its place -
+      // the hub dive mirrored. Each point leaves on its own delay and
+      // decelerates into its radius, so the cloud freezes point by point.
+      float bootFade = 1.0;
+      if (uBoot < 1.0) {
+        float launch = phase * BOOT_SPREAD;
+        float p = clamp((uBoot - launch) / (1.0 - BOOT_SPREAD), 0.0, 1.0);
+        float grow = 1.0 - pow(1.0 - p, 3.0);
+        float swept = (1.0 - grow) * BOOT_SWIRL;
+        vec3 axis = abs(d.y) > 0.9 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+        vec3 side = normalize(cross(d, axis));
+        d = d * cos(swept) + side * sin(swept);
+        radius *= grow;
+        bootFade = smoothstep(0.02, 0.16, p);
+      }
+
       local = d * radius;
-      depthFade = 0.35 + 0.65 * (1.0 - aNode.x);
+      depthFade = (0.35 + 0.65 * (1.0 - aNode.x)) * bootFade;
       accent = aNode.x > 0.86 ? 0.5 : 0.0;
     }
 
@@ -363,6 +391,7 @@ export class ParticleMist {
         uFallOuter: { value: 0.7 },
         uFallInner: { value: 0.33 },
         uDrift: { value: 1 },
+        uBoot: { value: 1 },
         uFogNear: { value: DUST_FOG_NEAR },
         uFogFar: { value: DUST_FOG_FAR },
         uFogDensity: { value: 0 },
@@ -496,12 +525,19 @@ export class ParticleMist {
   /**
    * @param streamTime  clock of the bond stream; restarts on a target change
    * @param ambientTime monotonic scene clock for the ambient shell drift
+   * @param boot        0..1 home-boot spawn of the ambient shell (1 = live)
    */
-  update(streamTime: number, ambientTime: number, opacity: number): void {
+  update(
+    streamTime: number,
+    ambientTime: number,
+    opacity: number,
+    boot = 1,
+  ): void {
     const uniforms = this.material.uniforms;
     uniforms.uTime!.value = streamTime;
     uniforms.uAmbientTime!.value = ambientTime;
     uniforms.uOpacity!.value = opacity;
+    uniforms.uBoot!.value = boot;
     this.syncVisibility();
   }
 

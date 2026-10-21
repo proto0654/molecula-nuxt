@@ -74,7 +74,21 @@ const fragmentShader = /* glsl */ `
  * Note: the approach pose spins the focused atom toward the viewer and its
  * orbit can collapse to an edge-on line there, so callers point the comet at
  * the *next* atom, not the committed one.
+ *
+ * The same instance also flies the home boot chain through `setBootArc`: the
+ * intro clock then owns head / length / opacity, and the target loop is frozen
+ * until the boot hands back.
  */
+
+/** Explicit arc for the home boot — head / length / opacity from the intro. */
+type BootArc = {
+  /** Ring-frame head angle (rad). */
+  head: number;
+  /** Arc length behind the head, turns (0..1). */
+  progress: number;
+  opacity: number;
+};
+
 export class OrbitComet {
   private readonly line: LineLoop;
   private readonly material: ShaderMaterial;
@@ -87,6 +101,13 @@ export class OrbitComet {
   private birthAngle = 0;
   /** Seconds since the arc was born. */
   private age = 0;
+  /** Home boot arc; while set, the target loop is frozen. */
+  private bootArc: BootArc | null = null;
+  private readonly scratchBoot: BootArc = {
+    head: 0,
+    progress: 0,
+    opacity: 0,
+  };
 
   constructor(
     cache: GeometryCache,
@@ -142,6 +163,8 @@ export class OrbitComet {
    * @returns true when a new arc was born
    */
   setTarget(atomId: string | null, intensity: number): boolean {
+    // The boot chain owns the arc until it hands back.
+    if (this.bootArc) return false;
     this.intensity = Math.max(0, Math.min(1, intensity));
     if (this.activeAtomId === atomId) {
       this.syncPose();
@@ -151,6 +174,36 @@ export class OrbitComet {
     this.age = 0;
     this.syncPose();
     return atomId !== null;
+  }
+
+  /**
+   * Home boot: fly one arc along one orbit under the intro clock. `head` is a
+   * ring-frame angle, so the caller can start on the far side of the ring and
+   * land on the atom; `progress` is the lit arc behind the head (turns).
+   * Pass `null` to hand control back to `setTarget`.
+   */
+  setBootArc(
+    atomId: string | null,
+    head: number,
+    progress: number,
+    opacity: number,
+  ): void {
+    if (atomId === null) {
+      if (!this.bootArc) return;
+      this.bootArc = null;
+      this.age = 0;
+      this.syncPose();
+      return;
+    }
+    this.scratchBoot.head = head;
+    this.scratchBoot.progress = progress;
+    this.scratchBoot.opacity = opacity;
+    this.bootArc = this.scratchBoot;
+    if (this.activeAtomId !== atomId) {
+      this.activeAtomId = atomId;
+      this.age = 0;
+      this.syncPose();
+    }
   }
 
   update(
@@ -163,6 +216,16 @@ export class OrbitComet {
       this.line.visible = false;
       return;
     }
+
+    const boot = this.bootArc;
+    if (boot) {
+      this.material.uniforms.uHead!.value = boot.head % TAU;
+      this.material.uniforms.uProgress!.value = boot.progress;
+      this.material.uniforms.uOpacity!.value = boot.opacity;
+      this.line.visible = boot.opacity > 0.01;
+      return;
+    }
+
     this.age += delta;
 
     const grow = reducedMotion
@@ -207,6 +270,6 @@ export class OrbitComet {
     );
     // Born where the atom sits on its own ring.
     this.birthAngle = placement.theta;
-    this.line.visible = this.intensity > 0.01;
+    this.line.visible = (this.bootArc?.opacity ?? this.intensity) > 0.01;
   }
 }

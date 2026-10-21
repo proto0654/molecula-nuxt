@@ -5,12 +5,14 @@ import {
   LineLoop,
   LineSegments,
   Quaternion,
+  Vector3,
   type Material,
 } from 'three';
 import {
   ATOM_ORBIT_PLACEMENT,
   PERIPHERAL_ATOM_IDS,
   orbitQuaternion,
+  orbitQuaternionFromNormal,
   type OrbitDef,
 } from './moleculeOrbits';
 import type { GeometryCache } from './resources/GeometryCache';
@@ -27,8 +29,13 @@ const NODE_OPACITY = 0.18;
 const ORBIT_OPACITY = 0.42;
 const ORBIT_ACTIVE_OPACITY = 0.55;
 const ORBIT_DIM_OPACITY = 0.42;
-/** Home boot: rings start at this share of their radius and grow out. */
-const REVEAL_ORBIT_MIN_SCALE = 0.86;
+const TAU = Math.PI * 2;
+/** Home boot: extra full turns a ring makes while unfolding into its pose. */
+const UNFOLD_TURNS = 1;
+/** Share of an orbit's unfold spent fading in from transparency. */
+const UNFOLD_FADE = 0.14;
+/** Normal / view sine below this means they are parallel — no unique start. */
+const UNFOLD_PARALLEL = 0.08;
 
 /** Extra ghost fragments that ride with the molecule (not pick targets). */
 const EXTRA_NODES: readonly {
@@ -62,8 +69,19 @@ export class DecorativeNodes {
   private ghostNodesEnabled = false;
   private zoomFade = 1;
   private orbitScale = 1;
-  /** Home boot: rings grow / fade in as one drafting layer. 1 at rest. */
-  private reveal = 1;
+  /**
+   * Home boot: per-orbit unfold 0..1 in peripheral order. A ring starts as an
+   * edge-on line (normal ⊥ view) and tumbles into its authored plane; 1 at rest.
+   */
+  private readonly unfoldProgress: number[] = [];
+  private readonly unfoldStart: Vector3[] = [];
+  private readonly unfoldAxis: Vector3[] = [];
+  private readonly unfoldAngle: number[] = [];
+  private readonly unfoldView = new Vector3(0, 0, 1);
+  private readonly scratchNormal = new Vector3();
+  private readonly scratchTangent = new Vector3();
+  private readonly scratchFinalNormal = new Vector3();
+  private unfoldPrepared = false;
   private activeAtomId: string | null = null;
   private chromeColorMix = 0;
   private readonly scratchOrbitBase = new Color();
@@ -129,22 +147,50 @@ export class DecorativeNodes {
 
     this.materials = materials;
     this.baseOpacities = baseOpacities;
+
+    for (let i = 0; i < this.orbitLoops.length; i += 1) {
+      this.unfoldProgress.push(1);
+      this.unfoldStart.push(new Vector3());
+      this.unfoldAxis.push(new Vector3());
+      this.unfoldAngle.push(0);
+    }
   }
 
   /** Match decorative rings to compact peripheral layout. */
   setOrbitScale(scale: number): void {
     this.orbitScale = scale;
-    this.applyOrbitTransforms();
+    this.applyOrbitPose();
   }
 
-  /** Home boot: rings condense outward with the atom assembly. */
-  setReveal(reveal: number): void {
-    const next = Math.max(0, Math.min(1, reveal));
-    if (Math.abs(next - this.reveal) < 1e-4) return;
-    this.reveal = next;
-    this.applyOrbitTransforms();
+  /**
+   * Home boot: unfold every ring from an edge-on line into its authored plane.
+   * `progress` is per orbit in peripheral order (see `PERIPHERAL_ATOM_IDS`).
+   * `viewLocal` is the camera direction in the molecule frame; it is captured
+   * once, so the tumble path stays stable while the framing drifts.
+   */
+  setOrbitUnfold(progress: readonly number[], viewLocal: Vector3): void {
+    if (!this.unfoldPrepared) this.prepareUnfold(viewLocal);
+    let changed = false;
+    for (let i = 0; i < this.orbitLoops.length; i += 1) {
+      const next = Math.max(0, Math.min(1, progress[i] ?? 1));
+      if (Math.abs(next - this.unfoldProgress[i]!) < 1e-4) continue;
+      this.unfoldProgress[i] = next;
+      changed = true;
+    }
+    if (!changed) return;
+    this.applyOrbitPose();
     this.syncOrbitColors();
-    this.syncOpacity();
+    this.syncVisibility();
+  }
+
+  /** Hand the rings back to their authored pose (boot finished / disposed). */
+  resetOrbitUnfold(): void {
+    this.unfoldPrepared = false;
+    for (let i = 0; i < this.orbitLoops.length; i += 1) {
+      this.unfoldProgress[i] = 1;
+    }
+    this.applyOrbitPose();
+    this.syncOrbitColors();
     this.syncVisibility();
   }
 
@@ -186,14 +232,79 @@ export class DecorativeNodes {
     this.materials.length = 0;
   }
 
-  private applyOrbitTransforms(): void {
-    const revealScale =
-      REVEAL_ORBIT_MIN_SCALE + (1 - REVEAL_ORBIT_MIN_SCALE) * this.reveal;
-    const scale = this.orbitScale * revealScale;
+  private applyOrbitPose(): void {
     for (let i = 0; i < this.orbitLoops.length; i += 1) {
+      const orbit = this.orbitLoops[i]!;
       const def = this.orbitDefs[i]!;
-      this.orbitLoops[i]!.scale.setScalar(def.radius * scale);
+      orbit.scale.setScalar(def.radius * this.orbitScale);
+      const progress = this.unfoldProgress[i]!;
+      if (progress >= 1) {
+        orbitQuaternion(def, this.scratchQ);
+      } else {
+        // Rotate the normal off its edge-on start by a couple of full turns
+        // plus the shortest arc: the ring sweeps past the viewer twice.
+        const angle =
+          (this.unfoldAngle[i]! + UNFOLD_TURNS * TAU) * progress;
+        const normal = this.scratchNormal
+          .copy(this.unfoldStart[i]!)
+          .multiplyScalar(Math.cos(angle));
+        this.scratchTangent.crossVectors(
+          this.unfoldAxis[i]!,
+          this.unfoldStart[i]!,
+        );
+        normal.addScaledVector(this.scratchTangent, Math.sin(angle));
+        orbitQuaternionFromNormal(normal, this.scratchQ);
+      }
+      orbit.quaternion.copy(this.scratchQ);
     }
+  }
+
+  /** Capture each ring's edge-on start normal and its tumble axis, once. */
+  private prepareUnfold(viewLocal: Vector3): void {
+    this.unfoldPrepared = true;
+    this.unfoldView.copy(viewLocal).normalize();
+    for (let i = 0; i < this.orbitDefs.length; i += 1) {
+      const def = this.orbitDefs[i]!;
+      const final = this.scratchFinalNormal
+        .set(def.normal[0], def.normal[1], def.normal[2])
+        .normalize();
+      const start = this.unfoldStart[i]!;
+      start.crossVectors(this.unfoldView, final);
+      if (start.length() < UNFOLD_PARALLEL) {
+        // Authored plane already contains the view axis: any edge-on start.
+        const ref =
+          Math.abs(this.unfoldView.y) > 0.9
+            ? this.scratchNormal.set(1, 0, 0)
+            : this.scratchNormal.set(0, 1, 0);
+        start.crossVectors(this.unfoldView, ref);
+      }
+      start.normalize();
+      const axis = this.unfoldAxis[i]!;
+      axis.crossVectors(start, final);
+      if (axis.lengthSq() < 1e-8) axis.crossVectors(start, this.unfoldView);
+      if (axis.lengthSq() < 1e-8) axis.set(0, 1, 0);
+      axis.normalize();
+      this.unfoldAngle[i] = Math.acos(
+        Math.max(-1, Math.min(1, start.dot(final))),
+      );
+    }
+  }
+
+  /** 0..1 opacity factor of one ring during the boot unfold. */
+  private orbitRevealAt(index: number): number {
+    const progress = this.unfoldProgress[index]!;
+    if (progress >= UNFOLD_FADE) return 1;
+    const t = progress / UNFOLD_FADE;
+    return t * t * (3 - 2 * t);
+  }
+
+  /** Ghost fragments arrive with the first ring, so they share its gate. */
+  private ghostReveal(): number {
+    let max = 0;
+    for (let i = 0; i < this.unfoldProgress.length; i += 1) {
+      max = Math.max(max, this.unfoldProgress[i]!);
+    }
+    return max;
   }
 
   private syncOrbitColors(): void {
@@ -217,7 +328,7 @@ export class DecorativeNodes {
         this.baseOpacities[i] =
           baseOp + (ORBIT_DIM_OPACITY - baseOp) * this.chromeColorMix;
       }
-      material.opacity = this.baseOpacities[i]! * this.zoomFade * this.reveal;
+      material.opacity = this.baseOpacities[i]! * this.zoomFade * this.orbitRevealAt(i);
     }
   }
 
@@ -225,22 +336,28 @@ export class DecorativeNodes {
     for (let i = 0; i < this.orbitMaterials.length; i += 1) {
       const material = this.orbitMaterials[i]!;
       material.opacity =
-        this.baseOpacities[i]! * this.zoomFade * this.reveal;
+        this.baseOpacities[i]! * this.zoomFade * this.orbitRevealAt(i);
     }
     const nodeMat = this.materials[this.nodeMaterialIndex] as LineBasicMaterial;
     nodeMat.opacity =
-      this.baseOpacities[this.nodeMaterialIndex]! * this.zoomFade * this.reveal;
+      this.baseOpacities[this.nodeMaterialIndex]! *
+      this.zoomFade *
+      this.ghostReveal();
   }
 
   private syncVisibility(): void {
-    const show = this.zoomFade > 0.02 && this.reveal > 0.02;
-    for (const orbit of this.orbitLoops) {
-      orbit.visible = show && this.orbitsEnabled;
+    const zoom = this.zoomFade > 0.02;
+    let anyOrbit = false;
+    for (let i = 0; i < this.orbitLoops.length; i += 1) {
+      const visible =
+        zoom && this.orbitsEnabled && this.orbitRevealAt(i) > 0.02;
+      this.orbitLoops[i]!.visible = visible;
+      anyOrbit = anyOrbit || visible;
     }
+    const ghosts = zoom && this.ghostNodesEnabled && this.ghostReveal() > 0.02;
     for (const node of this.ghostNodes) {
-      node.visible = show && this.ghostNodesEnabled;
+      node.visible = ghosts;
     }
-    this.object.visible =
-      show && (this.orbitsEnabled || this.ghostNodesEnabled);
+    this.object.visible = anyOrbit || ghosts;
   }
 }
