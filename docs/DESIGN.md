@@ -248,7 +248,7 @@ Part of the site-wide [hairline language](#hairline-language). Bottom bars (tabl
 ### 9. Atom caption block (troika, not DOM)
 
 - First letter centered on the camera-facing surface point; remainder to local `+X`.
-- Idle titles are pure black; committed and hover-preview atoms brighten letter + remainder via `setAtomTitleHighlight` (orchestrated in `applyVisuals`; blurb is separate).
+- Idle titles are pure black; committed and hover-preview atoms brighten letter + remainder via `setAtomTitleHighlight` (orchestrated in `applyVisuals`; blurb is separate). Autoplay-next is the exception: its caption fills on the slide beat (`setTitlePulse`) from pure black to dimmed `CHROME_LIGHT_COLOR` — the outline's own ink, not the accent — reaching full at the commit. Hover previews do not pulse.
 - On commit, typewriter `// blurb` under the title in the **same** group.
 - Screen-flat: scene-parented group, `quaternion.copy(camera.quaternion)`, scale by distance. Lift toward camera (`SURFACE_PAD`) so glyphs clear the atom.
 - Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; outer rings more transparent; camera-quat billboard under molecule parent; not raycast targets. Committed reticle uses `CHROME_SOFT_COLOR` (`#c4cbd3`, one step below the next-atom wireframe); hover stays `RING_COLOR`. Settled off-home freeze lerps toward `CHROME_DIM_COLOR`; leave restores base.
