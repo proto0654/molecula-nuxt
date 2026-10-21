@@ -17,11 +17,16 @@ const AMBIENT_POINTS = 70;
 /** Align the scene fog to the dust's visible range; the data cloud is small. */
 const DUST_FOG_NEAR = 6.5;
 const DUST_FOG_FAR = 22;
-/** Share of the budget that streams out of the hub toward the upcoming atom. */
+/** Share of the budget that streams toward the upcoming atom (bond or hub dive). */
 const STREAM_RATIO = 0.18;
 const TAU = Math.PI * 2;
 const HUB_YAW = 0.022;
 const HUB_PITCH = 0.009;
+/** Dive shell in hub radii: where a point is born, and where it touches the surface. */
+const FALL_OUTER_RADIUS = 2.2;
+const FALL_INNER_RADIUS = 1.02;
+/** Radians a dive point sweeps tangentially while falling — a spiral, not a spoke. */
+const FALL_SWIRL = 2.4;
 /** Few, chunky squares — no blur to hide the aliasing. */
 const DUST_POINT_PX = 3.4;
 const DUST_POINT_MAX_PX = 5;
@@ -57,6 +62,12 @@ const vertexShader = /* glsl */ `
   uniform vec3 uLinkTo;
   uniform float uLinkMix;
 
+  /** 0 = hub→atom bond stream, 1 = shell→hub dive (upcoming atom is the hub). */
+  uniform float uLinkMode;
+  uniform vec3 uFallFrom;
+  uniform float uFallOuter;
+  uniform float uFallInner;
+
   uniform float uFogNear;
   uniform float uFogFar;
   uniform float uFogDensity;
@@ -76,6 +87,7 @@ const vertexShader = /* glsl */ `
   const float STREAM_PERIOD_MAX = ${STREAM_PERIOD_MAX.toFixed(2)};
   const float STREAM_TRAVEL_SECONDS = ${STREAM_TRAVEL_SECONDS.toFixed(2)};
   const float STREAM_LAUNCH_DELAY = ${STREAM_LAUNCH_DELAY.toFixed(2)};
+  const float FALL_SWIRL = ${FALL_SWIRL.toFixed(2)};
 
   attribute vec3 aNode;   // x = shell radius 0..1, yz = direction hash
   attribute vec3 aLink;   // x = progress lane, y = swirl lane, z = energy
@@ -119,24 +131,54 @@ const vertexShader = /* glsl */ `
       float age = phaseTime - launch;
       float travel = clamp(age / STREAM_TRAVEL_SECONDS, 0.0, 1.0);
       float alive = step(0.0, age) * step(age, STREAM_TRAVEL_SECONDS);
-      vec3 p = mix(uLinkFrom, uLinkTo, travel);
 
-      // New scatter direction each cycle, but kept close to the connector so
-      // the stream reads as one cohesive band rather than a loose cloud.
-      float scatter = fract(
-        sin((cycle + 1.0) * 39.346 + aLink.z * 11.135) * 24634.6345
-      );
-      float angle = scatter * TAU;
-      float radius = 0.012 + fract(scatter * 5.71) * 0.05;
-      p.x += cos(angle) * radius;
-      p.y += sin(angle) * radius;
-      p.z += (scatter - 0.5) * 0.04;
+      // Two trajectories share these rows. A bond stream runs hub → upcoming
+      // peripheral atom; when that atom IS the hub there is no bond and no
+      // orbit of its own, so the same points dive in from the shell around it.
+      if (uLinkMode > 0.5) {
+        // Fresh bearing on the shell every cycle: the dive never repeats a ray.
+        float dirHash = fract(
+          sin((cycle + 1.0) * 23.1406926 + aLink.x * 61.8033989) * 41509.27148
+        );
+        float turnHash = fract(
+          sin((cycle + 1.0) * 47.7641237 + aLink.y * 27.3710108) * 23711.51733
+        );
+        float y = dirHash * 2.0 - 1.0;
+        float ring = sqrt(max(0.0, 1.0 - y * y));
+        float bearing = turnHash * TAU;
+        vec3 dir = normalize(
+          vec3(cos(bearing) * ring, y, sin(bearing) * ring) + 1e-4
+        );
+        vec3 axis = abs(dir.y) > 0.9
+          ? vec3(1.0, 0.0, 0.0)
+          : vec3(0.0, 1.0, 0.0);
+        vec3 side = normalize(cross(dir, axis));
+        float swept = travel * FALL_SWIRL;
+        vec3 fall = dir * cos(swept) + side * sin(swept);
+        local = uFallFrom + fall * mix(uFallOuter, uFallInner, travel);
+        // Dies on the surface: contact fade starts earlier than the bond's
+        // arrival fade so a point never sinks through the hub shell.
+        depthFade = alive * smoothstep(0.0, 0.08, travel)
+          * (1.0 - smoothstep(0.88, 1.0, travel));
+      } else {
+        vec3 p = mix(uLinkFrom, uLinkTo, travel);
 
-      local = p;
-      // Fade in at the hub, disappear exactly at the atom — never park there.
-      float born = smoothstep(0.0, 0.08, travel);
-      float arrival = 1.0 - smoothstep(0.94, 1.0, travel);
-      depthFade = alive * born * arrival;
+        // New scatter direction each cycle, but kept close to the connector so
+        // the stream reads as one cohesive band rather than a loose cloud.
+        float scatter = fract(
+          sin((cycle + 1.0) * 39.346 + aLink.z * 11.135) * 24634.6345
+        );
+        float angle = scatter * TAU;
+        float radius = 0.012 + fract(scatter * 5.71) * 0.05;
+        p.x += cos(angle) * radius;
+        p.y += sin(angle) * radius;
+        p.z += (scatter - 0.5) * 0.04;
+
+        local = p;
+        // Fade in at the hub, disappear exactly at the atom — never park there.
+        depthFade = alive * smoothstep(0.0, 0.08, travel)
+          * (1.0 - smoothstep(0.94, 1.0, travel));
+      }
       accent = 0.25 + 0.5 * uLinkMix;
     } else {
       // Data dust: thin shell in the molecule frame, yaw + pitch over time.
@@ -222,8 +264,10 @@ function gather(
  * Molecular dust as data: one `Points` draw call of chunky squares.
  *
  * - Free points drift on a thin shell around the hub in the molecule frame.
- * - ~18% of rows stream the active bond hub → upcoming atom; each point has
- *   its own launch/travel/rest loop and never parks on the destination.
+ * - ~18% of rows stream toward the upcoming atom. For a peripheral atom that
+ *   is the hub → atom bond; for the hub itself the same rows dive from a shell
+ *   around it onto its surface. Each point has its own launch/travel/rest loop
+ *   and never parks on the destination.
  * - Drift is computed in the vertex shader from `uAmbientTime`; the stream runs
  *   on `uTime`, which a target change restarts. Two clocks on purpose: a stream
  *   re-emission must not snap the ambient shell. The CPU writes uniforms only.
@@ -314,6 +358,10 @@ export class ParticleMist {
         uLinkFrom: { value: [0, 0, 0] },
         uLinkTo: { value: [0, 0, 0] },
         uLinkMix: { value: 0 },
+        uLinkMode: { value: 0 },
+        uFallFrom: { value: [0, 0, 0] },
+        uFallOuter: { value: 0.7 },
+        uFallInner: { value: 0.33 },
         uDrift: { value: 1 },
         uFogNear: { value: DUST_FOG_NEAR },
         uFogFar: { value: DUST_FOG_FAR },
@@ -384,6 +432,30 @@ export class ParticleMist {
     toUniform[0] = to[0];
     toUniform[1] = to[1];
     toUniform[2] = to[2];
+    this.material.uniforms.uLinkMode!.value = 0;
+    this.setActive(active);
+  }
+
+  /**
+   * Central-atom variant of the same rows. The hub owns no bond and no orbit,
+   * so points are born on a shell around it and spiral onto its surface. The
+   * loop (launch → travel → vanish → period) is identical to the bond stream;
+   * only the trajectory differs. `hubRadius` is live (compact layout shrinks
+   * the hub), so the caller may write it every frame.
+   */
+  setFall(
+    center: { x: number; y: number; z: number },
+    hubRadius: number,
+    active: boolean,
+  ): void {
+    const uniforms = this.material.uniforms;
+    const fallFrom = uniforms.uFallFrom!.value as number[];
+    fallFrom[0] = center.x;
+    fallFrom[1] = center.y;
+    fallFrom[2] = center.z;
+    uniforms.uFallOuter!.value = hubRadius * FALL_OUTER_RADIUS;
+    uniforms.uFallInner!.value = hubRadius * FALL_INNER_RADIUS;
+    uniforms.uLinkMode!.value = 1;
     this.setActive(active);
   }
 
@@ -402,9 +474,9 @@ export class ParticleMist {
 
   /**
    * Stream lifecycle: the caller restarts its local clock at 0, so every
-   * stream point is born at the hub in the same frame. Nothing is left
-   * "paused" mid-trajectory from the previous target. The ambient shell runs on
-   * its own monotonic clock and is untouched here.
+   * stream point is born at its start (hub mouth or dive shell) in the same
+   * frame. Nothing is left "paused" mid-trajectory from the previous target.
+   * The ambient shell runs on its own monotonic clock and is untouched here.
    */
   restartStream(): void {
     this.material.uniforms.uTime!.value = 0;

@@ -94,9 +94,10 @@ export class MoleculeEffects {
   }
 
   /**
-   * Orbit + dust target. One entry point keeps the comet birth angle and the
-   * dust re-emission on the same frame: a new upcoming atom restarts the arc
-   * at that atom AND re-emits the stream from the hub.
+   * Dust target (hover / autoplay-next). A peripheral atom gets the hub→atom
+   * bond stream; the hub itself gets the shell dive, because it owns no bond
+   * and no orbit. One entry point keeps the comet birth and the dust
+   * re-emission on the same frame.
    */
   setTarget(atomId: string | null, orbitAtomId: string | null): void {
     const targetChanged = this.upcomingAtomId !== atomId;
@@ -259,19 +260,32 @@ export class MoleculeEffects {
   }
 
   /**
-   * Dust streams along the hub -> upcoming bond (hover / autoplay-next).
-   * Anchors are pose data: recomputed only when the target atom changed.
+   * Dust trajectory for the upcoming atom (hover / autoplay-next).
+   *
+   * - Peripheral target: stream runs along the hub → atom bond. Anchors are
+   *   pose data, recomputed only when the target atom changed.
+   * - Hub target: there is no hub → hub bond and no orbit placement for the
+   *   hub, so the same rows dive in from the shell around it. Centre and radii
+   *   are written every frame because the compact layout resizes the hub.
    */
   private syncDustLink(state: EffectsFrameState, targetChanged: boolean): void {
     const hub = this.atomsById.get('C');
     const target = this.upcomingAtomId
       ? this.atomsById.get(this.upcomingAtomId)
       : undefined;
-    if (!hub || !target || target === hub) {
+    if (!hub || !target) {
       this.mist.setLink(this.linkFrom, this.linkTo, false);
       return;
     }
+
     const active = state.home && !state.frozen && !state.approachBusy;
+
+    if (target === hub) {
+      this.mist.setFall(hub.object.position, hub.radius, active);
+      this.linkReady = false;
+      return;
+    }
+
     if (active && (targetChanged || !this.linkReady)) {
       writeInset(
         hub.object.position,

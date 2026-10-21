@@ -267,7 +267,7 @@ Part of the site-wide [hairline language](#hairline-language). Bottom bars (tabl
 ### 11. Atom drafting field (freeze)
 
 - Owned by [`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts) — scene geometry, not DOM, not ScrollTrigger.
-- **Home:** data dust (shell drift + hub→next bond stream), rim edges, one rotating drafting shell, comet on the **upcoming** atom's orbit. **Frozen route:** one drafting shell that turns only with scroll on HIGH/MEDIUM (static on LOW), plus a horizon ring around the focused atom.
+- **Home:** data dust (shell drift + hub→next bond stream, or a shell dive when the next atom is the hub itself), rim edges, one rotating drafting shell, comet on the **upcoming** atom's orbit. **Frozen route:** one drafting shell that turns only with scroll on HIGH/MEDIUM (static on LOW), plus a horizon ring around the focused atom.
 - 1px lines only. The shell is a single wire grid and the horizon ring is a single accent hairline.
 - On HIGH/MEDIUM scroll rotates the shell and drives the ring position; LOW keeps the shell static. Draw-in uses the listing cadence (1.25s, 55ms stagger); reduced motion is static.
 - Rims are switched off when frozen: a back-side shell on a planet-sized atom floods the viewport. The ring is the freeze signature.

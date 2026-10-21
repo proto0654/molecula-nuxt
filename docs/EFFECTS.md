@@ -23,7 +23,7 @@ The reveal uses the same cadence as the HTML listings: `1.25s` draw, `55ms` per-
 
 | Layer | Module | Draw cost | Home | Frozen route |
 |-------|--------|-----------|------|--------------|
-| Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream | slower drift |
+| Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream (hub target → shell dive) | slower drift |
 | Atom rim | [`AtomRim.ts`](../app/lib/molecular/effects/AtomRim.ts) | 1 per atom | back-side fresnel edge | **off** (see gotcha) |
 | Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one soft-light rotating shell | one gray shell, scroll-rotated on HIGH/MEDIUM; static on LOW |
 | Horizon ring | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 `LineLoop` | off | scroll-driven latitude line |
@@ -41,7 +41,15 @@ edge-on. Motion is therefore pointed at the atom the user will land on:
 | Signal | Home | Frozen route |
 |--------|------|--------------|
 | Orbit comet | hovered atom, else autoplay-next **from the commit frame** | focused atom (centred, so the comet reads) |
-| Dust bond stream | hub → same upcoming atom, re-emitted on every target change | off |
+| Dust stream | hub → same upcoming atom, re-emitted on every target change | off |
+
+The hub atom `C` is a valid upcoming target (hover over the centre, or autoplay-next wrapping to
+`home`). It owns no bond and has no orbit placement, so the regular comet + bond stream would be
+dead there. The **same stream rows** run a different trajectory instead: points are born on a shell
+around the hub (`2.2 × hub radius`) at a fresh random bearing and spiral onto its surface, then
+vanish — the per-point launch/travel/period loop, sizing, fog fade and alpha are unchanged. The
+comet stays hidden (there is nothing to lap) and the pulsing accent wireframe / reticle still mark
+the hub as the upcoming atom.
 
 `mountHeroApp.resolveUpcomingAtomId()` is the single source (`NavigationState` preview or
 `HeroAutoplay.getNextItemId()` via `isNextHinted()`). It reaches the scene as
@@ -106,6 +114,7 @@ points, chunky and legible, cheap to fill.
 |----------|----------------|
 | Drift | vertex shader from `uAmbientTime` (monotonic `elapsed`); yaw + pitch of a thin shell around the hub (`dustDrift` off on LOW) |
 | Bond stream | `STREAM_RATIO = 0.18` rows; each point has its **own loop**: launch delay → travel to the atom → vanish on arrival → wait out its own period (5.2–7.0s) → launch again |
+| Hub dive | the same rows when the upcoming atom is the hub: `uLinkMode = 1` switches the trajectory to `uFallFrom` + a per-cycle random bearing, radius `uFallOuter → uFallInner`, with a tangential `FALL_SWIRL`; contact fade starts at `0.88` so a point dies on the surface |
 | Re-emission | a new target resets the local stream clock (`uTime`); the whole stream is destroyed and re-emitted, never resumed mid-flight |
 | Two clocks | stream `uTime` (restarted per target) and ambient `uAmbientTime` (never restarted) are separate uniforms — a hover must not snap the ambient shell |
 | Spacing | each period re-rolls the launch phase and a **narrow** lateral cone around the hub→atom connector, so the flow is continuous, tight and never repeats a path |
@@ -178,6 +187,7 @@ route transition. `freeze()`/`unfreeze()` and zoom/fill are unchanged.
 | `STREAM_LAUNCH_DELAY` | `ParticleMist.ts` | pause before the first points start after a target change |
 | `STREAM_TRAVEL_SECONDS` / `STREAM_PERIOD_MIN` / `STREAM_PERIOD_MAX` | `ParticleMist.ts` | travel time and per-point loop period |
 | stream `phase` / `scatter` hashes | `ParticleMist.ts` (vertex shader) | random launch + tight cone per period, no repeated path |
+| `FALL_OUTER_RADIUS` / `FALL_INNER_RADIUS` / `FALL_SWIRL` | `ParticleMist.ts` | hub dive: birth shell, contact radius (in hub radii) and spiral sweep |
 | `DUST_FOG_NEAR` / `DUST_FOG_FAR` | `ParticleMist.ts` | far-dust dissolve |
 | `COMET_CYCLE_SECONDS` / `COMET_GROW_SECONDS` | `OrbitComet.ts` | one lap per active-atom cycle; unfurl time |
 | comet `intensity` (`1` upcoming, `0.45` committed) | `MoleculeEffects.ts` | comet weight |
