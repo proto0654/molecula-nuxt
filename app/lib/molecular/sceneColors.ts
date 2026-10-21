@@ -12,3 +12,6 @@ export const CHROME_DIM_COLOR = 0x2a2e38;
 
 /** Cold graphite for atmospheric dust — must stay below caption ink. */
 export const SCENE_DUST_COLOR = 0x7e8994;
+
+/** Muted gray drafting shell on frozen routes — darker than dust, still legible. */
+export const SHELL_ROUTE_COLOR = 0x5a636c;

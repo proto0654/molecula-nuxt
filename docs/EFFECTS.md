@@ -25,7 +25,7 @@ The reveal uses the same cadence as the HTML listings: `1.25s` draw, `55ms` per-
 |-------|--------|-----------|------|--------------|
 | Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream | slower drift |
 | Atom rim | [`AtomRim.ts`](../app/lib/molecular/effects/AtomRim.ts) | 1 per atom | back-side fresnel edge | **off** (see gotcha) |
-| Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one rotating shell | one shell, scroll-rotated |
+| Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one rotating accent shell | one gray shell, scroll-rotated on HIGH/MEDIUM; static on LOW |
 | Horizon ring | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 `LineLoop` | off | scroll-driven latitude line |
 | Orbit comet | [`OrbitComet.ts`](../app/lib/molecular/effects/OrbitComet.ts) | 1 line | **upcoming** atom's orbit (hover / next) | focused atom's orbit |
 
@@ -79,16 +79,17 @@ for autoplay-next), and the committed atom keeps its reticle.
 
 [`quality/presets.ts`](../app/lib/molecular/quality/presets.ts) is the single source of truth.
 
-| Level | Dust rows | Rim | Comet | Scan ring |
-|-------|-----------|-----|-------|-----------|
-| HIGH | 120 | yes | yes | yes |
-| MEDIUM | 112 | yes | yes | yes |
-| LOW | 104 | no | no | yes |
+| Level | Dust rows | Drift | Rim | Comet | Route shell spin | Scan ring |
+|-------|-----------|-------|-----|-------|------------------|-----------|
+| HIGH | 120 | yes | yes | yes | yes | yes |
+| MEDIUM | 112 | yes | yes | yes | yes | yes |
+| LOW | 104 | **no** | no | no | **no** | yes |
 
 - Dust rows are authored once: a sparse stream, then an ambient shell
   (`AMBIENT_POINTS = 70`). A lower grade only shrinks the draw range, so the stream is never cut.
   Quality changes never rebuild attributes.
-- HIGH/MEDIUM keep the rims; LOW drops the full-screen fill costs (rims).
+- HIGH/MEDIUM keep the rims, ambient drift and route-shell scroll spin; LOW freezes the ambient
+  shell and the route shell (both static) and drops the full-screen fill costs (rims).
 
 ## Data dust (particles)
 
@@ -97,7 +98,7 @@ points, chunky and legible, cheap to fill.
 
 | Property | Implementation |
 |----------|----------------|
-| Drift | vertex shader from `uTime`; yaw + pitch of a thin shell around the hub |
+| Drift | vertex shader from `uTime`; yaw + pitch of a thin shell around the hub (`dustDrift` off on LOW) |
 | Bond stream | `STREAM_RATIO = 0.18` rows; each point has its **own loop**: launch delay → travel to the atom → vanish on arrival → wait out its own period (5.2–7.0s) → launch again |
 | Re-emission | a new target resets the local stream clock; the whole stream is destroyed and re-emitted, never resumed mid-flight |
 | Spacing | each period re-rolls the launch phase and a **narrow** lateral cone around the hub→atom connector, so the flow is continuous, tight and never repeats a path |

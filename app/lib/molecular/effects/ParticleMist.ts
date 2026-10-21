@@ -60,6 +60,8 @@ const vertexShader = /* glsl */ `
 
   uniform vec3 uInk;
   uniform vec3 uAccent;
+  /** 1 = ambient shell drifts; 0 = ambient is static (LOW). */
+  uniform float uDrift;
 
   // JS constants are injected as literals — GLSL has no access to module scope.
   const float TAU = ${TAU.toFixed(8)};
@@ -135,9 +137,11 @@ const vertexShader = /* glsl */ `
       accent = 0.25 + 0.5 * uLinkMix;
     } else {
       // Data dust: thin shell in the molecule frame, yaw + pitch over time.
+      // LOW freezes this ambient drift; the bond stream still moves.
+      float driftTime = uTime * uDrift;
       float radius = 1.05 + aNode.x * 2.35;
-      float yaw = uTime * HUB_YAW * speed + phase * TAU;
-      float pitch = uTime * HUB_PITCH * speed + phase * TAU * 0.37;
+      float yaw = driftTime * HUB_YAW * speed + phase * TAU;
+      float pitch = driftTime * HUB_PITCH * speed + phase * TAU * 0.37;
       float cy = cos(yaw);
       float sy = sin(yaw);
       float cp = cos(pitch);
@@ -162,7 +166,9 @@ const vertexShader = /* glsl */ `
     );
 
     float fog = fogFactor(-mv.z);
-    float twinkle = 0.72 + 0.28 * sin(uTime * 0.4 + phase * 31.0);
+    float twinkle = isStream
+      ? 0.72 + 0.28 * sin(uTime * 0.4 + phase * 31.0)
+      : mix(1.0, 0.72 + 0.28 * sin(uTime * 0.4 + phase * 31.0), uDrift);
     float baseAlpha = isStream ? mix(0.15, 0.85, uLinkMix) : 0.8;    vAlpha = uOpacity * baseAlpha * twinkle * depthFade * (1.0 - fog);
 
     // Idle streams fade to a faint residue, never disappear entirely.
@@ -301,6 +307,7 @@ export class ParticleMist {
         uLinkFrom: { value: [0, 0, 0] },
         uLinkTo: { value: [0, 0, 0] },
         uLinkMix: { value: 0 },
+        uDrift: { value: 1 },
         uFogNear: { value: DUST_FOG_NEAR },
         uFogFar: { value: DUST_FOG_FAR },
         uFogDensity: { value: 0 },
@@ -379,6 +386,11 @@ export class ParticleMist {
    */
   setActive(active: boolean): void {
     this.material.uniforms.uLinkMix!.value = active ? 1 : 0;
+  }
+
+  /** LOW freezes the ambient shell; the bond stream never relies on this. */
+  setDrift(enabled: boolean): void {
+    this.material.uniforms.uDrift!.value = enabled ? 1 : 0;
   }
 
   /**

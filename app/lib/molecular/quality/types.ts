@@ -17,6 +17,10 @@ export type QualitySettings = {
   material: QualityMaterialKind;
   /** Dust rows: sparse bond thread + ambient shell (104–120); 0 disables. */
   particleCount: number;
+  /** Ambient shell drift; the bond stream keeps moving on every tier. */
+  dustDrift: boolean;
+  /** Frozen-route drafting shell turns with scroll (LOW keeps it static). */
+  routeShellSpin: boolean;
   /** Additive fresnel edge on each atom (back-side shell). */
   atomRim: boolean;
   /** Comet arc travelling along the upcoming orbit. */

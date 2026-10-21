@@ -180,7 +180,7 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
 | Data dust | `0x7e8994` (mixed toward accent while streaming) | `ParticleMist` additive square points; one draw call |
 | Atom rim | `0xa8e0c4` | `AtomRim` back-side fresnel; home / high+medium only |
-| Drafting shell | `0x6ec99f` | `AtomField` 1px additive wire shell (single) |
+| Drafting shell | `0x6ec99f` home / `0x5a636c` route | `AtomField` 1px additive wire shell (single) |
 | Scan ring / comet | `0x6ec99f` → `0xa8e0c4` | `AtomField` / `OrbitComet`; freeze / **upcoming** orbit |
 
 Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — no Fresnel / gloss). Shell fill is fixed near scene background with boosted key/fill contrast (ambient ~0.24, key ~1.28). Stay darker than captions so troika type does not melt into the mesh.

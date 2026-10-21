@@ -289,15 +289,15 @@ Full contract (tiers, scroll mapping, performance budget, tuning): [`EFFECTS.md`
 
 [`QualityManager`](../app/lib/molecular/quality/QualityManager.ts) is the lock-once source of truth (`high` | `medium` | `low`). It does **not** retune on resize, hover, or tab blur.
 
-| Level | maxPixelRatio | atomDetail | preview wireframe | rings | ticks | decorative | material | dust | rim | comet | freeze scan |
-|-------|---------------|------------|-------------------|-------|-------|------------|----------|------|-----|-------|-------------|
-| HIGH | 1.75 | 1 | yes | 3 | yes | yes | `MeshStandardMaterial` | 120 | yes | yes | ring |
-| MEDIUM | 1.5 | 1 | yes | 2 | no | yes | `MeshStandardMaterial` | 112 | yes | yes | ring |
-| LOW | 1 | 0 | no | 2 | no | no | `MeshLambertMaterial` | 104 | no | no | ring |
+| Level | maxPixelRatio | atomDetail | preview wireframe | rings | ticks | decorative | material | dust | drift | rim | comet | route spin | freeze scan |
+|-------|---------------|------------|-------------------|-------|-------|------------|----------|------|-------|-----|-------|------------|-------------|
+| HIGH | 1.75 | 1 | yes | 3 | yes | yes | `MeshStandardMaterial` | 120 | yes | yes | yes | yes | ring |
+| MEDIUM | 1.5 | 1 | yes | 2 | no | yes | `MeshStandardMaterial` | 112 | yes | yes | yes | yes | ring |
+| LOW | 1 | 0 | no | 2 | no | no | `MeshLambertMaterial` | 104 | no | no | no | no | ring |
 
 Pixel ratio is always `Math.min(devicePixelRatio, settings.maxPixelRatio)` — never raw `window.devicePixelRatio`.
 
-Startup: HIGH, or MEDIUM when `pointer: coarse` or width ≤ 767. `?quality=high|medium|low` skips sampling and locks that level.
+Startup: HIGH, or MEDIUM when `pointer: coarse` or width ≤ 767. `?quality=high|medium|low` skips sampling and locks that level. LOW also freezes ambient dust drift and the route shell's scroll spin; the bond stream still runs.
 
 [`PerformanceSampler`](../app/lib/molecular/quality/PerformanceSampler.ts) (after first `render` in `tick`):
 

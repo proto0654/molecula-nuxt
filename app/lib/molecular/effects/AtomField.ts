@@ -8,7 +8,7 @@ import {
   type Scene,
 } from 'three';
 import type { Atom } from '../Atom';
-import { ACCENT_COLOR, ACCENT_LIGHT_COLOR } from '../sceneColors';
+import { ACCENT_COLOR, SHELL_ROUTE_COLOR } from '../sceneColors';
 import type { GeometryCache } from '../resources/GeometryCache';
 import type { QualitySettings } from '../quality/types';
 import type { EffectsFrameState } from './types';
@@ -39,6 +39,7 @@ export class AtomField {
   private readonly scratchQ = new Quaternion();
   private atom: Atom | null = null;
   private scanEnabled = false;
+  private routeShellSpin = true;
 
   constructor(
     scene: Scene,
@@ -47,6 +48,7 @@ export class AtomField {
   ) {
     this.cache = cache;
     this.scanEnabled = settings.scanBand;
+    this.routeShellSpin = settings.routeShellSpin;
 
     this.shellMaterial = new LineBasicMaterial({
       color: ACCENT_COLOR,
@@ -88,6 +90,7 @@ export class AtomField {
 
   applyQuality(settings: QualitySettings): void {
     this.scanEnabled = settings.scanBand;
+    this.routeShellSpin = settings.routeShellSpin;
     this.shell.geometry = this.cache.getUnitIcosahedronEdges(
       settings.atomDetail,
     );
@@ -144,7 +147,9 @@ export class AtomField {
         ? 0
         : home
           ? elapsed * SHELL_SPEED
-          : scroll * 1.6;
+          : this.routeShellSpin
+            ? scroll * 1.6
+            : 0;
       this.scratchQ.setFromAxisAngle(SHELL_AXIS, spin);
       this.shell.quaternion.copy(this.scratchQ);
       this.shell.scale.setScalar(
@@ -160,7 +165,7 @@ export class AtomField {
         fade * base * breathe * draw * (1 + scroll * 0.35 + pulse * 0.7),
       );
       this.shellMaterial.color.setHex(
-        home ? ACCENT_COLOR : ACCENT_LIGHT_COLOR,
+        home ? ACCENT_COLOR : SHELL_ROUTE_COLOR,
       );
     }
 

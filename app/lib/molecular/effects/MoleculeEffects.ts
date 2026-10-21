@@ -65,6 +65,7 @@ export class MoleculeEffects {
 
     this.mist = new ParticleMist();
     this.mist.setCount(settings.particleCount);
+    this.mist.setDrift(settings.dustDrift);
     this.mist.setFog(scene.fog);
     scene.add(this.mist.object);
 
@@ -137,6 +138,7 @@ export class MoleculeEffects {
   applyQuality(settings: QualitySettings): void {
     this.settings = settings;
     this.mist.setCount(settings.particleCount);
+    this.mist.setDrift(settings.dustDrift);
     this.field.applyQuality(settings);
     this.comet.applyQuality(settings);
 
