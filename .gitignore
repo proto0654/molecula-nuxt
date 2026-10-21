@@ -6,3 +6,8 @@ dist
 .nuxt
 .output
 .data
+
+# local browser/outline inspection artifacts
+.chrome-outline*/
+.outline-check.mjs
+.outline-*.png
