@@ -24,10 +24,15 @@ import { GeometryCache } from './resources/GeometryCache';
 import type { MoleculeConfig } from './types';
 import { MoleculeEffects } from './effects/MoleculeEffects';
 import type { EffectsFrameState } from './effects/types';
-import { ACCENT_LIGHT_COLOR, CHROME_DIM_COLOR, SCENE_BG } from './sceneColors';
+import {
+  ACCENT_LIGHT_COLOR,
+  CHROME_DIM_COLOR,
+  CHROME_LIGHT_COLOR,
+  SCENE_BG,
+} from './sceneColors';
 
 const WIREFRAME_SCALE = 1.04;
-const WIREFRAME_COLOR = 0xd6dbe0;
+const WIREFRAME_COLOR = CHROME_LIGHT_COLOR;
 const WIREFRAME_DIM_COLOR = CHROME_DIM_COLOR;
 const WIREFRAME_OPACITY = 0.22;
 /** Autoplay-next pulse: peak matches committed shell; trough nearly off. */

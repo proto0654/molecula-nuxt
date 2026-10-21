@@ -8,7 +8,7 @@ import {
   type BufferGeometry,
   type Camera,
 } from 'three';
-import { ACCENT_COLOR, CHROME_DIM_COLOR } from './sceneColors';
+import { CHROME_DIM_COLOR, CHROME_SOFT_COLOR } from './sceneColors';
 
 export type HaloMode = 'idle' | 'hover' | 'committed';
 
@@ -27,7 +27,7 @@ const FOLLOW = 10;
 /** Softer than opacity follow — settled freeze chrome fade. */
 const COLOR_FOLLOW = 6;
 const HOVER_OPACITY = 0.4;
-/** Accent committed reads darker than gray ink — keep a bit brighter. */
+/** Committed reticle sits one step below the next-atom wireframe. */
 const COMMITTED_OPACITY = 0.48;
 
 /**
@@ -60,7 +60,7 @@ export class AtomSelectionIndicator {
   private readonly scratchParentQ = new Quaternion();
   private readonly scratchBillboard = new Quaternion();
   private readonly scratchBaseColor = new Color(RING_COLOR);
-  private readonly scratchAccentColor = new Color(ACCENT_COLOR);
+  private readonly scratchCommittedColor = new Color(CHROME_SOFT_COLOR);
   private readonly scratchDimColor = new Color(DIM_COLOR);
   private readonly scratchColor = new Color();
 
@@ -248,7 +248,9 @@ export class AtomSelectionIndicator {
 
   private applyColorMix(): void {
     const base =
-      this.mode === 'committed' ? this.scratchAccentColor : this.scratchBaseColor;
+      this.mode === 'committed'
+        ? this.scratchCommittedColor
+        : this.scratchBaseColor;
     this.scratchColor.lerpColors(base, this.scratchDimColor, this.colorMix);
     for (const material of this.ringMaterials) {
       material.color.copy(this.scratchColor);

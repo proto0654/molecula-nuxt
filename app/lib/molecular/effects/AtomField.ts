@@ -8,7 +8,11 @@ import {
   type Scene,
 } from 'three';
 import type { Atom } from '../Atom';
-import { ACCENT_COLOR, SHELL_ROUTE_COLOR } from '../sceneColors';
+import {
+  ACCENT_COLOR,
+  CHROME_SOFT_COLOR,
+  SHELL_ROUTE_COLOR,
+} from '../sceneColors';
 import type { GeometryCache } from '../resources/GeometryCache';
 import type { QualitySettings } from '../quality/types';
 import type { EffectsFrameState } from './types';
@@ -51,7 +55,7 @@ export class AtomField {
     this.routeShellSpin = settings.routeShellSpin;
 
     this.shellMaterial = new LineBasicMaterial({
-      color: ACCENT_COLOR,
+      color: CHROME_SOFT_COLOR,
       transparent: true,
       opacity: 0,
       depthTest: true,
@@ -165,7 +169,7 @@ export class AtomField {
         fade * base * breathe * draw * (1 + scroll * 0.35 + pulse * 0.7),
       );
       this.shellMaterial.color.setHex(
-        home ? ACCENT_COLOR : SHELL_ROUTE_COLOR,
+        home ? CHROME_SOFT_COLOR : SHELL_ROUTE_COLOR,
       );
     }
 

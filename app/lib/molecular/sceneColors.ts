@@ -10,6 +10,12 @@ export const ACCENT_LIGHT_COLOR = 0xa8e0c4;
 /** Settled off-home approach — wireframe / reticle dim (slightly above scene clear). */
 export const CHROME_DIM_COLOR = 0x2a2e38;
 
+/** Light chrome used by the next-atom wireframe and the active reticle/shell. */
+export const CHROME_LIGHT_COLOR = 0xd6dbe0;
+
+/** Slightly darker chrome for the active reticle / shell, below the next-atom edges. */
+export const CHROME_SOFT_COLOR = 0xc4cbd3;
+
 /** Cold graphite for atmospheric dust — must stay below caption ink. */
 export const SCENE_DUST_COLOR = 0x7e8994;
 

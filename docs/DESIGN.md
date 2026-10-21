@@ -169,7 +169,7 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Caption remainder (active) | `0xb8c0c8` | Committed remainder |
 | Caption blurb | `0x6ec99f` | `AtomLabel` `BLURB_COLOR` → `ACCENT_COLOR` |
 | Selection rings / ticks / cross (hover) | `0xb8c0c8` | `AtomSelectionIndicator` `RING_COLOR` |
-| Selection rings (committed) | `0x6ec99f` | Same indicator — `ACCENT_COLOR`; outer rings fade (`RING_OPACITY_WEIGHTS` 1 / 0.4 / 0.14) |
+| Selection rings (committed) | `0xc4cbd3` | Same indicator — `CHROME_SOFT_COLOR`; outer rings fade (`RING_OPACITY_WEIGHTS` 1 / 0.4 / 0.14) |
 | Selection chrome (settled freeze) | `0x2a2e38` | Lerp toward `CHROME_DIM_COLOR` after approach settle |
 | Entity sweep point light | `0xa8e0c4` | `ACCENT_LIGHT_COLOR` — horizontal / depth facet cues |
 | Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell (base); same chrome-dim lerp when settled |
@@ -180,7 +180,7 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
 | Data dust | `0x7e8994` (mixed toward accent while streaming) | `ParticleMist` additive square points; one draw call |
 | Atom rim | `0xa8e0c4` | `AtomRim` back-side fresnel; home / high+medium only |
-| Drafting shell | `0x6ec99f` home / `0x5a636c` route | `AtomField` 1px additive wire shell (single) |
+| Drafting shell | `0xc4cbd3` home / `0x5a636c` route | `AtomField` 1px additive wire shell (single) |
 | Scan ring / comet | `0x6ec99f` → `0xa8e0c4` | `AtomField` / `OrbitComet`; freeze / **upcoming** orbit |
 
 Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — no Fresnel / gloss). Shell fill is fixed near scene background with boosted key/fill contrast (ambient ~0.24, key ~1.28). Stay darker than captions so troika type does not melt into the mesh.
@@ -251,8 +251,8 @@ Part of the site-wide [hairline language](#hairline-language). Bottom bars (tabl
 - Idle titles are pure black; committed and hover-preview atoms brighten letter + remainder via `setAtomTitleHighlight` (orchestrated in `applyVisuals`; blurb is separate).
 - On commit, typewriter `// blurb` under the title in the **same** group.
 - Screen-flat: scene-parented group, `quaternion.copy(camera.quaternion)`, scale by distance. Lift toward camera (`SURFACE_PAD`) so glyphs clear the atom.
-- Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; outer rings more transparent; camera-quat billboard under molecule parent; not raycast targets. Committed reticle uses brand `ACCENT_COLOR` (`#6ec99f`); hover stays `RING_COLOR`. Settled off-home freeze lerps toward `CHROME_DIM_COLOR`; leave restores base.
-- Wireframe: **preview only** — accent shell for hover preview / autoplay-next pulse (`setAccentWireframeAtom`); shared `EdgesGeometry` icosahedron (~1.04× radius). The committed static shell is retired (`setWireframeAtom` no-op), so the committed atom carries its reticle alone and the thin white outline always means "this is next". Same settled-freeze black lerp via `MoleculeScene.setChromeDimmed`.
+- Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; outer rings more transparent; camera-quat billboard under molecule parent; not raycast targets. Committed reticle uses `CHROME_SOFT_COLOR` (`#c4cbd3`, one step below the next-atom wireframe); hover stays `RING_COLOR`. Settled off-home freeze lerps toward `CHROME_DIM_COLOR`; leave restores base.
+- Wireframe: **preview only** — light wire shell for hover preview / autoplay-next pulse (`setAccentWireframeAtom`); shared `EdgesGeometry` icosahedron (~1.04× radius). The committed static shell is retired (`setWireframeAtom` no-op), so the committed atom carries its reticle alone and the thin white outline always means "this is next". Same settled-freeze black lerp via `MoleculeScene.setChromeDimmed`.
 - Decorative ghost: one hub-centered orbit per peripheral (black idle / dark gray active) + wireframe fragments on `moleculeGroup`; HIGH only; fades with zoom/fill. The comet rides the **upcoming** atom's orbit (hover / autoplay-next), because the committed orbit reads edge-on during the approach pose.
 
 ### 10. USP headline
@@ -267,9 +267,9 @@ Part of the site-wide [hairline language](#hairline-language). Bottom bars (tabl
 ### 11. Atom drafting field (freeze)
 
 - Owned by [`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts) — scene geometry, not DOM, not ScrollTrigger.
-- **Home:** data dust (shell drift + hub→next bond stream), rim edges, one rotating drafting shell, comet on the **upcoming** atom's orbit. **Frozen route:** one drafting shell that turns only with scroll, plus a horizon ring around the focused atom.
+- **Home:** data dust (shell drift + hub→next bond stream), rim edges, one rotating drafting shell, comet on the **upcoming** atom's orbit. **Frozen route:** one drafting shell that turns only with scroll on HIGH/MEDIUM (static on LOW), plus a horizon ring around the focused atom.
 - 1px lines only. The shell is a single wire grid and the horizon ring is a single accent hairline.
-- Scroll rotates the shell and drives the ring position. Draw-in uses the listing cadence (1.25s, 55ms stagger); reduced motion is static.
+- On HIGH/MEDIUM scroll rotates the shell and drives the ring position; LOW keeps the shell static. Draw-in uses the listing cadence (1.25s, 55ms stagger); reduced motion is static.
 - Rims are switched off when frozen: a back-side shell on a planet-sized atom floods the viewport. The ring is the freeze signature.
 - Full contract and quality tiers: [`EFFECTS.md`](EFFECTS.md).
 

@@ -25,7 +25,7 @@ The reveal uses the same cadence as the HTML listings: `1.25s` draw, `55ms` per-
 |-------|--------|-----------|------|--------------|
 | Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream | slower drift |
 | Atom rim | [`AtomRim.ts`](../app/lib/molecular/effects/AtomRim.ts) | 1 per atom | back-side fresnel edge | **off** (see gotcha) |
-| Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one rotating accent shell | one gray shell, scroll-rotated on HIGH/MEDIUM; static on LOW |
+| Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one soft-light rotating shell | one gray shell, scroll-rotated on HIGH/MEDIUM; static on LOW |
 | Horizon ring | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 `LineLoop` | off | scroll-driven latitude line |
 | Orbit comet | [`OrbitComet.ts`](../app/lib/molecular/effects/OrbitComet.ts) | 1 line | **upcoming** atom's orbit (hover / next) | focused atom's orbit |
 
@@ -122,7 +122,7 @@ layout read inside the rAF loop.
 
 | Uniform / transform | Source |
 |---------------------|--------|
-| Shell yaw/tilt | scroll only off-home; elapsed on home |
+| Shell yaw/tilt | scroll only off-home (HIGH/MEDIUM); elapsed on home; static on LOW |
 | Horizon ring latitude | `0.12 + scroll * 0.56` |
 | Shell radius / opacity | scroll + pulse |
 
@@ -137,8 +137,8 @@ all be off-screen, so the freeze signature is built from **surface-level** layer
 1. `scan` is scene-parented at the atom's world position and follows the atom's latitude.
 2. Rims are switched off once frozen. A back-side fresnel shell on a planet-sized atom floods the
    viewport (the camera sits close); the horizon ring replaces it.
-3. The single drafting shell stays on the atom but turns **only with scroll** — no continuous
-   rotation on a route. There is no blurred additive band.
+3. The single drafting shell stays on the atom but turns **only with scroll** on HIGH/MEDIUM and is
+   static on LOW — no continuous rotation on a route. There is no blurred additive band.
 
 The field fades out while `approachBusy` and back in after settle, so it never competes with the
 route transition. `freeze()`/`unfreeze()` and zoom/fill are unchanged.
