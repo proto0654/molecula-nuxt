@@ -9,3 +9,6 @@ export const ACCENT_LIGHT_COLOR = 0xa8e0c4;
 
 /** Settled off-home approach — wireframe / reticle dim (slightly above scene clear). */
 export const CHROME_DIM_COLOR = 0x2a2e38;
+
+/** Cold graphite for atmospheric dust — must stay below caption ink. */
+export const SCENE_DUST_COLOR = 0x7e8994;

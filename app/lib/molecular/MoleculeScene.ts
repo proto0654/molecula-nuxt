@@ -22,6 +22,8 @@ import type { QualityManager } from './quality/QualityManager';
 import type { QualitySettings } from './quality/types';
 import { GeometryCache } from './resources/GeometryCache';
 import type { MoleculeConfig } from './types';
+import { MoleculeEffects } from './effects/MoleculeEffects';
+import type { EffectsFrameState } from './effects/types';
 import { ACCENT_LIGHT_COLOR, CHROME_DIM_COLOR, SCENE_BG } from './sceneColors';
 
 const WIREFRAME_SCALE = 1.04;
@@ -153,6 +155,9 @@ export class MoleculeScene {
   private readonly bondMaterial: LineDashedMaterial;
   private readonly bondFlowMaterial: LineDashedMaterial;
   private bondFlowToAtomId: string | null = null;
+  /** Latest scene-level targets for the atmosphere layer. */
+  private upcomingAtomId: string | null = null;
+  private activeOrbitAtomId: string | null = null;
   private bondFlowDashOffset = 0;
   private bondFlowEnterMix = 0;
   private targetBondFlowEnterMix = 0;
@@ -162,7 +167,7 @@ export class MoleculeScene {
   private readonly accentWireframe: LineSegments;
   private readonly decorativeNodes: DecorativeNodes;
   private readonly tagCloud: TagCloud;
-  private wireframeAtomId: string | null = null;
+  private readonly effects: MoleculeEffects;
   private accentWireframeAtomId: string | null = null;
   private accentWireframeMode: AccentWireframeMode | null = null;
   private accentEnterMix = 0;
@@ -230,6 +235,13 @@ export class MoleculeScene {
     this.entityPointLight = new PointLight(ACCENT_LIGHT_COLOR, 0, 0, 0.45);
     this.entityPointLight.castShadow = false;
     this.scene.add(this.entityPointLight);
+
+    this.effects = new MoleculeEffects(
+      this.scene,
+      this.moleculeGroup,
+      this.cache,
+      quality.get(),
+    );
 
     this.bondMaterial = new LineDashedMaterial({
       color: BOND_COLOR,
@@ -323,6 +335,7 @@ export class MoleculeScene {
     this.syncWireframe();
     this.syncAccentWireframe();
     this.syncBondFlowMaterials();
+    this.effects.syncAtoms(this.atoms);
   }
 
   /**
@@ -354,6 +367,7 @@ export class MoleculeScene {
       );
     }
     this.decorativeNodes.setOrbitScale(orbitScale);
+    this.effects.setOrbitScale(orbitScale);
     this.tagCloud.setLayoutScale(orbitScale);
     this.tagCloud.setMobileInk(compact);
     this.tagCloud.update(this.camera, this.moleculeGroup);
@@ -391,6 +405,7 @@ export class MoleculeScene {
       settings.atomDetail,
     );
     this.applyDecorativeQuality(settings);
+    this.effects.applyQuality(settings);
     this.syncWireframe();
     this.syncAccentWireframe();
     this.resize(this.lastWidth, this.lastHeight);
@@ -403,10 +418,13 @@ export class MoleculeScene {
     });
   }
 
-  /** Committed atom wireframe shell (static). */
-  setWireframeAtom(atomId: string | null): void {
-    this.wireframeAtomId = atomId;
-    this.syncWireframe();
+  /**
+   * Committed wireframe shell is retired: the committed atom keeps only its
+   * reticle, and the outline is reserved for the upcoming (hover / next) atom.
+   */
+  setWireframeAtom(_atomId: string | null): void {
+    this.wireframe.visible = false;
+    this.wireframe.removeFromParent();
   }
 
   /** Preview / autoplay-next wireframe (static or pulsing). */
@@ -438,23 +456,40 @@ export class MoleculeScene {
     if (uniform) uniform.value = offset;
   }
 
-  /** Hub → target atom: animate dash pattern along the bond (not opacity pulse). */
-  setBondFlowAtom(atomId: string | null): void {
-    if (atomId && this.bondLinks.some((link) => link.toId === atomId)) {
-      if (this.bondFlowToAtomId !== atomId) {
-        this.setBondFlowDashOffset(0);
-        this.bondFlowToAtomId = atomId;
-      }
-      this.targetBondFlowEnterMix = 1;
-      this.syncBondFlowMaterials();
-      return;
+  /**
+   * Hub → target atom dash flow is retired: the upcoming atom now reads
+   * through its orbit comet and the dust stream, not through a dashed
+   * connector to the hub.
+   */
+  setBondFlowAtom(_atomId: string | null): void {
+    if (this.bondFlowToAtomId !== null) {
+      this.bondFlowToAtomId = null;
+      this.setBondFlowDashOffset(0);
     }
     this.targetBondFlowEnterMix = 0;
+    this.syncBondFlowMaterials();
   }
 
-  /** White orbit for the active peripheral atom (hover or committed). */
+  /**
+   * Orbit + dust target in one call. Both must switch on the same frame the
+   * upcoming atom changes — the comet is born at that atom and the dust
+   * stream restarts from the hub, before the molecule's commit turn settles.
+   */
+  setTarget(upcomingAtomId: string | null, orbitAtomId: string | null): void {
+    this.upcomingAtomId = upcomingAtomId;
+    this.activeOrbitAtomId = orbitAtomId;
+    this.decorativeNodes.setActiveOrbitAtom(orbitAtomId);
+    this.effects.setTarget(upcomingAtomId, orbitAtomId);
+  }
+
+  /** @deprecated Use `setTarget` — orbit only. */
   setActiveOrbitAtom(atomId: string | null): void {
-    this.decorativeNodes.setActiveOrbitAtom(atomId);
+    this.setTarget(this.upcomingAtomId, atomId);
+  }
+
+  /** @deprecated Use `setTarget` — upcoming atom only. */
+  setUpcomingAtom(atomId: string | null): void {
+    this.setTarget(atomId, this.activeOrbitAtomId);
   }
 
   setLabelsVisible(visible: boolean): void {
@@ -550,6 +585,7 @@ export class MoleculeScene {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
+    this.effects.resize(w, h, this.renderer.getPixelRatio());
   }
 
   /**
@@ -557,7 +593,12 @@ export class MoleculeScene {
    * Typewriter + selection indicator always tick (indicator early-outs when idle).
    * Caller must have already refreshed `moleculeGroup` world matrices.
    */
-  update(deltaSeconds: number, updateLabels = true, elapsed = 0): void {
+  update(
+    deltaSeconds: number,
+    updateLabels: boolean,
+    elapsed: number,
+    effectsState: EffectsFrameState,
+  ): void {
     this.updateEntityLightSweep(deltaSeconds);
     this.updateWireframeDim(deltaSeconds);
     this.updateAccentWireframePulse(deltaSeconds, elapsed);
@@ -570,6 +611,7 @@ export class MoleculeScene {
       atom.updateSelection(this.camera, deltaSeconds, elapsed);
     }
     this.tagCloud.update(this.camera, this.moleculeGroup);
+    this.effects.update(deltaSeconds, elapsed, effectsState);
   }
 
   private clearSweepLightingRelief(): void {
@@ -775,6 +817,7 @@ export class MoleculeScene {
 
   dispose(): void {
     this.clearMolecule();
+    this.effects.dispose();
     this.decorativeNodes.dispose();
     this.tagCloud.dispose();
     this.wireframeMaterial.dispose();
@@ -787,20 +830,9 @@ export class MoleculeScene {
   }
 
   private syncWireframe(): void {
-    const enabled = this.quality.get().selectedWireframe;
-    const atom = this.wireframeAtomId
-      ? this.getAtom(this.wireframeAtomId)
-      : undefined;
-    if (!enabled || !atom) {
-      this.wireframe.visible = false;
-      this.wireframe.removeFromParent();
-      return;
-    }
-    if (this.wireframe.parent !== atom.object) {
-      atom.object.add(this.wireframe);
-    }
-    this.wireframe.scale.setScalar(atom.radius * WIREFRAME_SCALE);
-    this.wireframe.visible = true;
+    // Static committed shell is not rendered any more (see setWireframeAtom).
+    this.wireframe.visible = false;
+    this.wireframe.removeFromParent();
   }
 
   private syncAccentWireframe(): void {
@@ -822,6 +854,7 @@ export class MoleculeScene {
   }
 
   private clearMolecule(): void {
+    this.effects.clearAtoms();
     this.wireframe.removeFromParent();
     this.wireframe.visible = false;
     this.accentWireframe.removeFromParent();
@@ -844,6 +877,8 @@ export class MoleculeScene {
     this.atoms.length = 0;
     this.bonds.length = 0;
     this.bondLinks.length = 0;
+    this.upcomingAtomId = null;
+    this.activeOrbitAtomId = null;
     this.atomMeshes.length = 0;
   }
 }

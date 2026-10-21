@@ -160,6 +160,38 @@ export function mountHeroApp(
   });
 
   let isHome = true;
+  let scrollProgress = 0;
+  let scrollRaf = 0;
+
+  /**
+   * Scroll drives the frozen atom field. Read on scroll/resize only — never
+   * per frame — so the rAF loop stays free of layout reads.
+   */
+  function readScrollProgress(): void {
+    scrollRaf = 0;
+    if (isHome) {
+      scrollProgress = 0;
+      controller.setScrollProgress(0);
+      return;
+    }
+    const max = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight,
+    );
+    const next =
+      max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    if (Math.abs(next - scrollProgress) < 1e-4) return;
+    scrollProgress = next;
+    controller.setScrollProgress(next);
+  }
+
+  function requestScrollRead(): void {
+    if (scrollRaf) return;
+    scrollRaf = requestAnimationFrame(readScrollProgress);
+  }
+
+  window.addEventListener('scroll', requestScrollRead, { passive: true });
+  window.addEventListener('resize', requestScrollRead);
 
   function syncSpatialDebug(state: SpatialState): void {
     spatialOverlay?.set({
@@ -177,6 +209,9 @@ export function mountHeroApp(
     controller.focusAtom(item.atomId);
     controller.setAtomBlurb(item.atomId, buildAtomBlurb(item));
     uspHeadline.arm(item.usp);
+    // Light the next atom together with the turn toward this one — not after
+    // the molecule has already settled.
+    applyUpcomingFocus();
   }
 
   function applyAccentWireframe(): void {
@@ -199,7 +234,7 @@ export function mountHeroApp(
       return;
     }
 
-    if (autoplay.isDwelling()) {
+    if (autoplay.isNextHinted()) {
       const nextId = autoplay.getNextItemId();
       const nextItem = nextId ? getItemById(nextId) : undefined;
       if (nextItem && nextItem.atomId !== committedItem?.atomId) {
@@ -236,7 +271,7 @@ export function mountHeroApp(
       return;
     }
 
-    if (autoplay.isDwelling()) {
+    if (autoplay.isNextHinted()) {
       const nextId = autoplay.getNextItemId();
       const nextItem = nextId ? getItemById(nextId) : undefined;
       if (nextItem && nextItem.atomId !== committedItem?.atomId) {
@@ -248,8 +283,46 @@ export function mountHeroApp(
     controller.setBondFlowAtom(null);
   }
 
-  function syncSettledRouteClass(): void {
-    chromeRoot.classList.toggle(
+  /**
+   * Next atom the user will land on: hover preview first, otherwise the
+   * autoplay-next item while the slide is dwelling. `null` when there is none.
+   */
+  function resolveUpcomingAtomId(): string | null {
+    if (!isHome || navigator.busy) return null;
+    const committedId = navigationState.committedItemId;
+    const previewId = navigationState.previewItemId;
+    const committedItem = committedId ? getItemById(committedId) : undefined;
+    const hasDistinctPreview = Boolean(previewId && previewId !== committedId);
+    const previewItem =
+      hasDistinctPreview && previewId ? getItemById(previewId) : undefined;
+
+    if (previewItem && previewItem.atomId !== committedItem?.atomId) {
+      return previewItem.atomId;
+    }
+
+    if (autoplay.isNextHinted()) {
+      const nextId = autoplay.getNextItemId();
+      const nextItem = nextId ? getItemById(nextId) : undefined;
+      if (nextItem && nextItem.atomId !== committedItem?.atomId) {
+        return nextItem.atomId;
+      }
+    }
+    return null;
+  }
+
+  /** Comet + dust target: the upcoming atom, else the committed orbit (faint). */
+  function applyUpcomingFocus(): void {
+    const upcomingAtomId = resolveUpcomingAtomId();
+    const committedItem = navigationState.committedItemId
+      ? getItemById(navigationState.committedItemId)
+      : undefined;
+    const orbitAtomId = upcomingAtomId ?? committedItem?.atomId ?? null;
+    // One call: the orbit comet is born at the upcoming atom and the dust
+    // stream restarts from the hub on the same frame.
+    controller.setTarget(upcomingAtomId, orbitAtomId);
+  }
+
+  function syncSettledRouteClass(): void {    chromeRoot.classList.toggle(
       'is-settled-route',
       controller.isSettledOffHome(),
     );
@@ -269,20 +342,19 @@ export function mountHeroApp(
       ? previewItem?.atomId
       : committedItem?.atomId ?? previewItem?.atomId ?? null;
     const settledOffHome = controller.isSettledOffHome();
-    // Orbits: black idle + one light active — tied to commit/focus, not hover preview.
-    const orbitAtomId = isHome
-      ? committedItem?.atomId ?? null
-      : controller.getFocusedAtomId();
     controller.setHighlightedAtom(
       settledOffHome ? null : highlightAtomId ?? null,
     );
-    controller.setActiveOrbitAtom(orbitAtomId);
 
     if (!isHome) {
+      // Frozen route: the focused atom's orbit is centred, so the comet reads.
+      // No dust stream on a frozen route.
+      controller.setTarget(null, controller.getFocusedAtomId());
       const focusAtomId = controller.getFocusedAtomId();
       controller.setHaloStates(focusAtomId, null);
       controller.setWireframeAtom(focusAtomId);
     } else {
+      applyUpcomingFocus();
       controller.setHaloStates(
         committedItem?.atomId ?? null,
         hasDistinctPreview ? previewItem?.atomId ?? null : null,
@@ -484,6 +556,9 @@ export function mountHeroApp(
       applyVisuals();
     }
     syncSettledRouteClass();
+    if (!snap.busy) {
+      requestScrollRead();
+    }
     if (snap.phase === 'idle') {
       destination.hide();
     }
@@ -517,6 +592,16 @@ export function mountHeroApp(
     }
     // Re-apply framing: home desktop bias vs centered profile.
     applyViewportMode();
+    if (home) {
+      scrollProgress = 0;
+      controller.setScrollProgress(0);
+      if (scrollRaf) {
+        cancelAnimationFrame(scrollRaf);
+        scrollRaf = 0;
+      }
+    } else {
+      requestScrollRead();
+    }
   }
 
   const spatial = new SpatialController(controller, navigationState, {
@@ -595,10 +680,15 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
       isHome,
       busy: navigator.busy,
       isFocusSettled: controller.isFocusSettled(),
+      turnProgress: controller.getTurnProgress(),
       hasUserPreview: navigationState.previewItemId !== null,
       menuOpen: mobileNav.isOpen,
       committedItemId: navigationState.committedItemId,
     });
+    if (isHome) {
+      // Autoplay dwell can start / end without a nav-state change.
+      applyUpcomingFocus();
+    }
     applyAccentWireframe();
     applyBondFlow();
 
@@ -635,6 +725,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
   function onViewportChange(): void {
     applyViewportMode();
     applyVisuals();
+    requestScrollRead();
   }
 
   applyViewportMode();
@@ -686,6 +777,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
       spatial.apply(state, applyOptions);
       syncSpatialDebug(state);
       applyVisuals();
+      requestScrollRead();
     },
     isBusy: () => navigator.busy,
     onTransition: (listener) => navigator.transitionState.subscribe(listener),
@@ -698,6 +790,12 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     dispose() {
       registerMoleculeCue(null);
       autoplay.stop();
+      if (scrollRaf) {
+        cancelAnimationFrame(scrollRaf);
+        scrollRaf = 0;
+      }
+      window.removeEventListener('scroll', requestScrollRead);
+      window.removeEventListener('resize', requestScrollRead);
       mobileMq.removeEventListener('change', onViewportChange);
       tabletMq.removeEventListener('change', onViewportChange);
       desktopMq.removeEventListener('change', onViewportChange);

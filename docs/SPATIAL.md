@@ -86,6 +86,10 @@ MoleculeController         setMode / restoreOverview / focus* / freeze
 
 `focusEntity` is reserved: entity id is stored on spatial state / debug; 3D framing stays on the context atom.
 
+While frozen, [`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts) renders the
+drafting field around the focused atom. Scroll progress only drives that field's uniforms — it never
+changes the spatial pose, camera or freeze state. Contract: [`EFFECTS.md`](EFFECTS.md).
+
 Home empty-canvas click / logo restore overview (`C`) and re-activate hub blurb + USP; it does not `clearFocus` into an empty rest. Hub π-flip runs only when retargeting onto `C` from another atom, not on initial home.
 
 Off-home, header route menu commits the URL immediately (`transitionTo`); the page overlay stays hidden (`is-awaiting-pose`) until the molecule pose settles. On **home**, **header route links and mobile MENU** call `Navigator.navigateTo` in one shot (parallel orbit sweep + zoom/fill + framing → route-specific **planet framing**, then `transitionTo` at the navigate label — no atom commit step). The **nav rail** and **canvas atom clicks** keep the two-step gesture (first click commit+focus+prefetch, second click `navigateTo`). Second click on already-committed Home is a no-op. Leave-home `navigateTo` has **no separate focus-only beat** — facing, zoom/fill, framing, and orbit sweep start in the same GSAP beat.

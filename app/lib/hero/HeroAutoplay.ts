@@ -6,6 +6,12 @@ export type HeroAutoplayTickContext = {
   menuOpen: boolean;
   /** Currently committed nav item id (sync index after manual select). */
   committedItemId: string | null;
+  /**
+   * Per-frame turn progress toward the committed atom (0 → 1). The next
+   * atom is highlighted as soon as the turn starts, so the effects are lit
+   * while the molecule is still rotating, not after it settles.
+   */
+  turnProgress?: number;
 };
 
 export type HeroAutoplayOptions = {
@@ -19,6 +25,7 @@ export type HeroAutoplayOptions = {
 /**
  * Cycles committed nav items on home after focus settles.
  * Progress fills during dwell; pauses on user interaction; resumes after idle.
+ * The next atom is highlighted as soon as the commit turn starts.
  */
 export class HeroAutoplay {
   private readonly items: readonly string[];
@@ -34,6 +41,13 @@ export class HeroAutoplay {
   private idleElapsedMs = 0;
   private waitingForIdle = false;
   private dwelling = false;
+  /**
+   * The committed item just changed: highlight the next atom immediately and
+   * let the slide clock advance through the turn instead of freezing on it.
+   */
+  private awaitingTurn = false;
+  /** Smaller than the settled value, so the progress bar keeps moving. */
+  private static readonly TURN_SETTLE_GATE = 0.35;
 
   constructor(options: HeroAutoplayOptions) {
     this.items = options.items;
@@ -48,7 +62,7 @@ export class HeroAutoplay {
     this.paused = false;
     this.waitingForIdle = false;
     this.idleElapsedMs = 0;
-    this.syncIndex(fromItemId);
+    this.syncIndex(fromItemId, false);
     this.progress = 0;
     this.onProgress(0);
   }
@@ -83,9 +97,18 @@ export class HeroAutoplay {
     return this.running && this.dwelling;
   }
 
+  /**
+   * True once the next atom may be hinted: from the first frame of the commit
+   * turn, so the orbit / dust / pulsing wireframe light up while the molecule
+   * is still rotating toward the viewer.
+   */
+  isNextHinted(): boolean {
+    return this.running && (this.dwelling || this.awaitingTurn) && !this.paused;
+  }
+
   /** Force index + progress reset (e.g. restore home selection). */
   resetTo(itemId: string | null): void {
-    this.syncIndex(itemId);
+    this.syncIndex(itemId, false);
     this.progress = 0;
     this.onProgress(0);
     this.paused = false;
@@ -133,12 +156,22 @@ export class HeroAutoplay {
     }
 
     if (!ctx.isFocusSettled) {
-      this.dwelling = false;
-      if (this.progress !== 0) {
-        this.progress = 0;
-        this.onProgress(0);
+      // Keep the clock running through the turn once a new atom was committed:
+      // the next atom is already lit while the molecule is still rotating.
+      const turning =
+        this.awaitingTurn &&
+        !ctx.hasUserPreview &&
+        (ctx.turnProgress ?? 0) >= HeroAutoplay.TURN_SETTLE_GATE;
+      if (!turning) {
+        this.dwelling = false;
+        if (this.progress !== 0) {
+          this.progress = 0;
+          this.onProgress(0);
+        }
+        return;
       }
-      return;
+    } else if (this.awaitingTurn) {
+      this.awaitingTurn = false;
     }
 
     this.dwelling = true;
@@ -155,16 +188,25 @@ export class HeroAutoplay {
   private advance(): void {
     if (this.items.length === 0) return;
     this.index = (this.index + 1) % this.items.length;
+    // Arm before notifying: the commit frame must already resolve the next
+    // atom, otherwise the orbit / dust only switch on the following tick.
+    this.awaitingTurn = true;
     this.onAdvance(this.items[this.index]!);
   }
 
-  private syncIndex(itemId: string | null | undefined): void {
+  private syncIndex(
+    itemId: string | null | undefined,
+    armTurn = true,
+  ): void {
     if (!itemId || this.items.length === 0) return;
     const next = this.items.indexOf(itemId);
     if (next >= 0 && next !== this.index) {
       this.index = next;
       this.progress = 0;
       this.onProgress(0);
+      // A new commit starts the turn right now: light the next atom on the
+      // same frame, before the dwell clock even begins.
+      if (armTurn) this.awaitingTurn = true;
     }
   }
 }

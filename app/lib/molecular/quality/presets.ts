@@ -11,6 +11,10 @@ export const QUALITY_PRESETS: Record<QualityLevel, QualitySettings> = {
     decorativeOrbits: true,
     decorativeNodes: true,
     material: 'standard',
+    particleCount: 120,
+    atomRim: true,
+    orbitComet: true,
+    scanBand: true,
   },
   medium: {
     level: 'medium',
@@ -22,6 +26,10 @@ export const QUALITY_PRESETS: Record<QualityLevel, QualitySettings> = {
     decorativeOrbits: true,
     decorativeNodes: true,
     material: 'standard',
+    particleCount: 112,
+    atomRim: true,
+    orbitComet: true,
+    scanBand: true,
   },
   low: {
     level: 'low',
@@ -33,6 +41,10 @@ export const QUALITY_PRESETS: Record<QualityLevel, QualitySettings> = {
     decorativeOrbits: false,
     decorativeNodes: false,
     material: 'lambert',
+    particleCount: 104,
+    atomRim: false,
+    orbitComet: false,
+    scanBand: true,
   },
 };
 

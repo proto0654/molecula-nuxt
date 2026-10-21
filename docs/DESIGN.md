@@ -56,7 +56,7 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--hud-header-inset` | frame inset + corner size + `--hud-chrome-pad` | Desktop header / rail align inside ticks |
 | `--hud-scroll-inset-right` / `--hud-scroll-inset-bottom` | same formula per breakpoint (mobile uses `--corner-size-mobile` + off-home frame bottom + safe-area) | [`ScrollToTop`](../app/components/site/ScrollToTop.vue) inside L-ticks |
 | `--z-hud` / `--z-nav` / `--z-connector` / `--z-header` / `--z-overlay` / `--z-debug` | `1` / `2` / `2` / `3` / `5` / `10` | Inside stage/chrome: HUD → nav → header (above full-height rail) → veil |
-| `--z-stage` / `--z-backdrop` / `--z-page` / `--z-chrome` | `0` / `1` / `2` / `4` | Canvas → persistent featured wash (+ accent overlay) → NuxtPage → molecular chrome |
+| `--z-stage` / `--z-page` / `--z-chrome` | `0` / `2` / `4` | Canvas → NuxtPage → molecular chrome |
 | `--glyph-angle-open` / `--glyph-angle-close` | `⟨ ` / ` ⟩` | Committed nav wrap (tablet/mobile) |
 | `--bp-mobile-max` | `767px` | Match `mountHeroApp` `MOBILE_MQ` |
 | `--bp-tablet-min` / `--bp-tablet-max` | `768px` / `1023px` | Match `TABLET_MQ` |
@@ -178,6 +178,10 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Atom shell (settled) | emissive → `0x14161c` @ ~0.62; shadow facets `0x020306` | Fixed fill — bg-adjacent mean tone, facet contrast from scene lights |
 | Highlight emissive | *(unused)* | `setHighlighted` no-op; hover does not change mesh fill |
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
+| Data dust | `0x7e8994` (mixed toward accent while streaming) | `ParticleMist` additive square points; one draw call |
+| Atom rim | `0xa8e0c4` | `AtomRim` back-side fresnel; home / high+medium only |
+| Drafting shell | `0x6ec99f` | `AtomField` 1px additive wire shell (single) |
+| Scan ring / comet | `0x6ec99f` → `0xa8e0c4` | `AtomField` / `OrbitComet`; freeze / **upcoming** orbit |
 
 Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — no Fresnel / gloss). Shell fill is fixed near scene background with boosted key/fill contrast (ambient ~0.24, key ~1.28). Stay darker than captions so troika type does not melt into the mesh.
 
@@ -188,7 +192,7 @@ Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — 
 - 1px lines at `--grid-opacity` on `--grid-size`.
 - Radial **mask**: center transparent so the molecule sits in empty space; grid reads only at the edges.
 - Desktop **home** (`.molecular-chrome.is-home`): mask centered near ~62% X (stage bias beside the rail). Desktop **off-home** / tablet / mobile: near center (matches centered composition profiles).
-- `pointer-events: none`. Markup: `.hud__grid` via [`HudFrame`](../src/ui/HudFrame.ts).
+- `pointer-events: none`. Markup: `.hud__grid` via [`HudFrame`](../app/lib/hero-ui/HudFrame.ts).
 
 ### 2. Corner ticks
 
@@ -248,8 +252,8 @@ Part of the site-wide [hairline language](#hairline-language). Bottom bars (tabl
 - On commit, typewriter `// blurb` under the title in the **same** group.
 - Screen-flat: scene-parented group, `quaternion.copy(camera.quaternion)`, scale by distance. Lift toward camera (`SURFACE_PAD`) so glyphs clear the atom.
 - Selection: `AtomSelectionIndicator` — concentric billboarded `LineLoop`s + radial ticks + center cross (quality may hide extras), pulse on hover, freeze on commit; outer rings more transparent; camera-quat billboard under molecule parent; not raycast targets. Committed reticle uses brand `ACCENT_COLOR` (`#6ec99f`); hover stays `RING_COLOR`. Settled off-home freeze lerps toward `CHROME_DIM_COLOR`; leave restores base.
-- Wireframe: committed static shell (`setWireframeAtom`) + accent shell for hover preview / autoplay-next pulse (`setAccentWireframeAtom`); shared `EdgesGeometry` icosahedron (~1.04× radius); quality may disable both. Same settled-freeze black lerp via `MoleculeScene.setChromeDimmed`.
-- Decorative ghost: one hub-centered orbit per peripheral (black idle / dark gray active) + wireframe fragments on `moleculeGroup`; HIGH only; fades with zoom/fill.
+- Wireframe: **preview only** — accent shell for hover preview / autoplay-next pulse (`setAccentWireframeAtom`); shared `EdgesGeometry` icosahedron (~1.04× radius). The committed static shell is retired (`setWireframeAtom` no-op), so the committed atom carries its reticle alone and the thin white outline always means "this is next". Same settled-freeze black lerp via `MoleculeScene.setChromeDimmed`.
+- Decorative ghost: one hub-centered orbit per peripheral (black idle / dark gray active) + wireframe fragments on `moleculeGroup`; HIGH only; fades with zoom/fill. The comet rides the **upcoming** atom's orbit (hover / autoplay-next), because the committed orbit reads edge-on during the approach pose.
 
 ### 10. USP headline
 
@@ -257,14 +261,23 @@ Part of the site-wide [hairline language](#hairline-language). Bottom bars (tabl
 - **Desktop:** left void between rail and molecule; vertically centered (`top: 50%`); larger adaptive type (`clamp` ~1.35–2.15rem).
 - **Mobile:** golden section between header bottom and molecule center (`screenY` via `--composition-screen-y`); smaller segment on top (`1/φ²`); type `clamp` ~1.45–2rem — hierarchically above troika atom captions.
 - **Tablet:** top band under meta, centered.
-- Appears only after focus settle; scramble via [`textScramble`](../src/ui/textScramble.ts) (~1s); uppercase tracked; muted ink while scrambling, bright when locked. Hidden measure span reserves final line breaks; scramble charset is limited to target glyphs so lines do not jump. Zoom/fill fades via `--usp-zoom-fade`.
+- Appears only after focus settle; scramble via [`textScramble`](../app/lib/hero-ui/textScramble.ts) (~1s); uppercase tracked; muted ink while scrambling, bright when locked. Hidden measure span reserves final line breaks; scramble charset is limited to target glyphs so lines do not jump. Zoom/fill fades via `--usp-zoom-fade`.
 - No card, no background, `pointer-events: none`.
+
+### 11. Atom drafting field (freeze)
+
+- Owned by [`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts) — scene geometry, not DOM, not ScrollTrigger.
+- **Home:** data dust (shell drift + hub→next bond stream), rim edges, one rotating drafting shell, comet on the **upcoming** atom's orbit. **Frozen route:** one drafting shell that turns only with scroll, plus a horizon ring around the focused atom.
+- 1px lines only. The shell is a single wire grid and the horizon ring is a single accent hairline.
+- Scroll rotates the shell and drives the ring position. Draw-in uses the listing cadence (1.25s, 55ms stagger); reduced motion is static.
+- Rims are switched off when frozen: a back-side shell on a planet-sized atom floods the viewport. The ring is the freeze signature.
+- Full contract and quality tiers: [`EFFECTS.md`](EFFECTS.md).
 
 ## 3D vs HTML
 
-Three.js: molecule, bonds, troika captions, billboarded selection rings, wireframe, decorative orbits/nodes, lights, composition profile (world offset from viewport fractions + approach).  
-HTML/CSS/SVG: grid, corners, header, USP headline, nav rail, mobile nav overlay, screen-space SVG connector, overlay.  
-Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connector never mutates Three.js objects. Composition profile never reads CSS sidebar width.
+Three.js: molecule, bonds, troika captions, billboarded selection rings, wireframe, decorative orbits/nodes, atmosphere field (dust, rims, single shell, scan, comet), lights, composition profile (world offset from viewport fractions + approach).
+HTML/CSS/SVG: grid, corners, header, USP headline, nav rail, mobile nav overlay, screen-space SVG connector, overlay.
+Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connector never mutates Three.js objects. Composition profile never reads CSS sidebar width. Scroll effects are visual-only and never write the spatial pose.
 
 ## Copy conventions
 
@@ -288,6 +301,8 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 | Desktop rail as light overlay | Application dashboard chrome |
 | Scroll-to-top: 1px `--wl-line` square, `--hud-scroll-inset-*` from L-ticks | Mint filled circles / flush-to-viewport FAB |
 | Footer legal: desktop pad `--hud-header-inset` (inside ticks) | Flush to frame corners |
+| 1px additive drafting lines, scroll-driven freeze scan, quality-tiered dust | Full-screen bloom, lens flares, opaque particle fog, effects mounted from pages |
+| Atmosphere understated relative to captions | Atom field brighter than the title / HUD |
 
 ## Layout chrome (document)
 

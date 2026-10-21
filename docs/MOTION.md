@@ -14,7 +14,7 @@ Tokens live on `:root` in [`app/assets/css/main.css`](../app/assets/css/main.css
 | Atom change (home approach or off-home retarget) | `.app-shell.is-awaiting-pose` until Navigator idle | Same beats, no extra hold (user already watched the molecule) |
 | Same atom (`/portfolio` ↔ case, `/services` ↔ slug) | No | Archive uses this system; case body stays on [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) + ScrollTrigger |
 
-`.is-revealing` on the page shell is the **EnterGate**. Choreography is identical after the gate opens. Portfolio wash ([`usePortfolioWashGate`](../app/composables/usePortfolioWashGate.ts) ~700ms) is atmosphere *after* the first rows, not a second act.
+`.is-revealing` on the page shell is the **EnterGate**. Choreography is identical after the gate opens.
 
 ```mermaid
 flowchart TD
@@ -102,6 +102,17 @@ Line tokens are part of the global design language ([`DESIGN.md` § Hairline lan
 - Specimen enter = opacity + small translate — no filters, no scale.
 - Hover `width` on `.archive-row__line` must not run during enter (gated on `.is-revealed`).
 
+## Scene field (WebGL)
+
+The home molecule's motion is **data**: dust points drift on a shell and stream along the bond
+toward the upcoming atom (hover / autoplay-next), and the orbit comet rides that same upcoming
+atom — the committed orbit reads edge-on after the approach pose. The frozen atom's drafting field
+is **not** HTML and **not** ScrollTrigger. Both live in
+[`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts) and follow the listing cadence:
+1.25s draw, 55ms per-layer stagger, line-first. A passive scroll listener only writes normalized
+progress into the scene; it does not move the page content or the spatial pose. Reduced motion pins
+the field static. Details: [`EFFECTS.md`](EFFECTS.md).
+
 ## Reduced motion / no-JS
 
 - `prefers-reduced-motion: reduce`: no keyframes; final state immediately.
@@ -112,5 +123,5 @@ Line tokens are part of the global design language ([`DESIGN.md` § Hairline lan
 - Persistent HUD / molecule / connector.
 - Title scramble (already gated).
 - Case gallery, mobile mockup (lift), slices (L3 scrub) — ScrollTrigger owns inner motion; listing reveal handles section shell + marker line only.
-- Portfolio wash timing (existing gate).
 - Navigator / `poseReveal` direct-load semantics.
+- Atom drafting field — owned by `MoleculeEffects`, not CSS / ScrollTrigger.

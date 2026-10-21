@@ -21,6 +21,7 @@ import { projectToScreenInto } from './math/projection';
 import { moleculeConfig } from './moleculeConfig';
 import { getOrbitNormalForAtom } from './moleculeOrbits';
 import { MoleculeScene } from './MoleculeScene';
+import type { EffectsFrameState } from './effects/types';
 import type { TagCloudItem } from './TagCloud';
 import {
   calibrateGyro,
@@ -111,6 +112,9 @@ const ZOOM_FOCUS_STRENGTH_GATE = 0.92;
 
 /** Max angle (rad) between focus orient and target before zoom-in may advance. */
 const ZOOM_FOCUS_ANGLE_GATE = 0.08;
+
+/** Angle span (rad) that maps to a full 0→1 commit turn (≈ 103°). */
+const TURN_ANGLE_SPAN = Math.PI * 0.57;
 
 /** Base framing fill used by `getAtomFocusDistance` at `fillProgress = 0`. */
 const ZOOM_VIEWPORT_FILL = 0.9;
@@ -372,6 +376,18 @@ export class MoleculeController {
   private readonly scratchNdc = new Vector2();
   private readonly scratchPixels = new Vector2();
   private elapsed = 0;
+  private scrollProgress = 0;
+  private readonly effectsState: EffectsFrameState = {
+    home: true,
+    frozen: false,
+    approachBusy: false,
+    focusedAtomId: null,
+    focusStrength: 0,
+    zoomProgress: 0,
+    fillProgress: 0,
+    scrollProgress: 0,
+    reducedMotion: false,
+  };
 
   private rafId = 0;
   private lastTime = 0;
@@ -855,6 +871,14 @@ export class MoleculeController {
 
   getSpatialMode(): SpatialMode {
     return this.spatialMode;
+  }
+
+  /**
+   * Normalized document scroll on peripheral routes. The shell passes 0 on
+   * home; the atmosphere layer smooths it before touching uniforms.
+   */
+  setScrollProgress(value: number): void {
+    this.scrollProgress = Math.max(0, Math.min(1, value));
   }
 
   getFocusedAtomId(): string | null {
@@ -1424,9 +1448,22 @@ export class MoleculeController {
     this.scene.setBondFlowAtom(atomId);
   }
 
-  /** White decorative orbit for the active peripheral (others stay black). */
+  /**
+   * Upcoming-atom target (hover / autoplay-next). One call switches the orbit
+   * comet and the dust stream together, so both light on the same frame.
+   */
+  setTarget(upcomingAtomId: string | null, orbitAtomId: string | null): void {
+    this.scene.setTarget(upcomingAtomId, orbitAtomId);
+  }
+
+  /** Decorative orbit carrying the comet (hover / autoplay-next orbit). */
   setActiveOrbitAtom(atomId: string | null): void {
     this.scene.setActiveOrbitAtom(atomId);
+  }
+
+  /** Atom the dust bond streams toward (hover / autoplay-next). */
+  setUpcomingAtom(atomId: string | null): void {
+    this.scene.setUpcomingAtom(atomId);
   }
 
   setCaptionsCompact(compact: boolean): void {
@@ -1670,7 +1707,8 @@ export class MoleculeController {
     }
 
     this.elapsed += delta;
-    this.scene.update(delta, updateLabels, this.elapsed);
+    this.syncEffectsState();
+    this.scene.update(delta, updateLabels, this.elapsed, this.effectsState);
     if (!this.frozen && !this.touchInput) {
       if (!this.lastHoverQuaternion.equals(this.scratchCompose)) {
         this.lastHoverQuaternion.copy(this.scratchCompose);
@@ -1682,6 +1720,19 @@ export class MoleculeController {
     for (const listener of this.afterUpdateListeners) {
       listener(delta);
     }
+  }
+
+  /** Mirror the controller's pose into the atmosphere layer without allocations. */
+  private syncEffectsState(): void {
+    this.effectsState.home = this.spatialMode === 'home';
+    this.effectsState.frozen = this.frozen;
+    this.effectsState.approachBusy = this.approachBusy;
+    this.effectsState.focusedAtomId = this.focusedAtomId;
+    this.effectsState.focusStrength = this.focusStrength;
+    this.effectsState.zoomProgress = this.zoomProgress;
+    this.effectsState.fillProgress = this.fillProgress;
+    this.effectsState.scrollProgress = this.scrollProgress;
+    this.effectsState.reducedMotion = this.reducedMotion;
   }
 
   /** Settled off-home freeze: dim chrome; busy approach or home: base colors. */
@@ -1795,6 +1846,17 @@ export class MoleculeController {
   isFocusSettled(): boolean {
     if (this.focusStrength < ZOOM_FOCUS_STRENGTH_GATE) return false;
     return this.focusOrientation.angleTo(this.targetFocusOrientation) <= ZOOM_FOCUS_ANGLE_GATE;
+  }
+
+  /**
+   * 0 → 1 turn progress toward the committed atom (angle + strength).
+   * 0 = start of the rotation, 1 = settled. Used to light the next atom's
+   * effects while the molecule is still turning.
+   */
+  getTurnProgress(): number {
+    const angle = this.focusOrientation.angleTo(this.targetFocusOrientation);
+    const angleProgress = 1 - Math.min(1, angle / TURN_ANGLE_SPAN);
+    return Math.min(angleProgress, this.focusStrength);
   }
 
   private isFocusReadyForZoom(): boolean {
