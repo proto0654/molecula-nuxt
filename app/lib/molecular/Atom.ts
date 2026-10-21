@@ -27,6 +27,10 @@ const COLOR_BY_LABEL: Record<string, number> = {
 const SWEEP_SHELL_RELIEF = 0.72;
 /** Shell always uses settled off-home dim — no hover/freeze fill changes. */
 const FIXED_SHELL_COLOR_MIX = 1;
+/** Home boot: spheres condense from this share of their authored radius. */
+const INTRO_MIN_SCALE = 0.32;
+/** Cap on the landing overshoot (`back.out` pushes reveal slightly past 1). */
+const INTRO_OVERSHOOT_CAP = 1.12;
 /** Shadow facets — deeper than scene bg so directional light reads on faces. */
 const SHELL_SHADOW_COLOR = 0x020306;
 /** Below 1 so lit facets pop; mean tone still tracks scene background. */
@@ -48,6 +52,8 @@ export class Atom {
   private material: MeshStandardMaterial | MeshLambertMaterial;
   private shellColorMix = FIXED_SHELL_COLOR_MIX;
   private sweepLightingRelief = 0;
+  /** Home boot reveal 0..1 (>1 = landing overshoot). 1 at rest. */
+  private introReveal = 1;
   private readonly baseShellColor = new Color();
   private readonly dimShellColor = new Color(SCENE_BG);
   private readonly shellShadow = new Color(SHELL_SHADOW_COLOR);
@@ -112,7 +118,7 @@ export class Atom {
   ): void {
     const radiusScale = this.isHub ? hubRadiusScale : peripheralRadiusScale;
     this.radius = this.baseRadius * radiusScale;
-    this.mesh.scale.setScalar(this.radius);
+    this.syncIntroScale();
     this.selection.setRadius(this.radius);
     this.atomLabel.setSurfaceRadius(this.radius);
 
@@ -127,6 +133,18 @@ export class Atom {
       this.basePosition[1] * orbitScale,
       this.basePosition[2] * orbitScale,
     );
+  }
+
+  /**
+   * Home boot: condense the sphere from a fraction of its radius.
+   * Mesh-only - orbit positions, radii, gizmos and labels keep authored size,
+   * so bond endpoints and projections stay valid mid-assembly.
+   */
+  setIntroReveal(reveal: number): void {
+    const next = Math.max(0, reveal);
+    if (Math.abs(next - this.introReveal) < 1e-4) return;
+    this.introReveal = next;
+    this.syncIntroScale();
   }
 
   applyQuality(settings: QualitySettings, cache: GeometryCache): void {
@@ -186,6 +204,14 @@ export class Atom {
     this.atomLabel.dispose();
     this.selection.dispose();
     this.material.dispose();
+  }
+
+  private syncIntroScale(): void {
+    const reveal = Math.min(INTRO_OVERSHOOT_CAP, this.introReveal);
+    const scale =
+      this.radius * (INTRO_MIN_SCALE + (1 - INTRO_MIN_SCALE) * reveal);
+    this.mesh.scale.setScalar(scale);
+    this.mesh.visible = this.introReveal > 0.004;
   }
 
   private applySelectionQuality(settings: QualitySettings): void {

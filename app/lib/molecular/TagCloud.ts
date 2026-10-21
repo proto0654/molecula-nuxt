@@ -79,6 +79,8 @@ export class TagCloud {
   private readonly tags: TagEntry[] = [];
   private layoutScale = 1;
   private zoomFade = 1;
+  /** Home boot gate; 1 at rest. */
+  private reveal = 1;
   private mobileInk = false;
   private readonly scratchWorld = new Vector3();
   private readonly scratchLocal = new Vector3();
@@ -160,6 +162,14 @@ export class TagCloud {
     this.syncVisibility();
   }
 
+  /** Home boot: tag copy arrives with the rest of the text layer, not before it. */
+  setReveal(reveal: number): void {
+    const next = Math.max(0, Math.min(1, reveal));
+    if (Math.abs(next - this.reveal) < 1e-4) return;
+    this.reveal = next;
+    this.syncVisibility();
+  }
+
   update(camera: Camera, moleculeGroup: Object3D): void {
     if (!this.object.visible) return;
     camera.getWorldPosition(this.scratchCamera);
@@ -179,7 +189,8 @@ export class TagCloud {
   }
 
   private syncVisibility(): void {
-    this.object.visible = this.tags.length > 0 && this.zoomFade > 0.02;
+    this.object.visible =
+      this.tags.length > 0 && this.zoomFade > 0.02 && this.reveal > 0.02;
   }
 
   private colorForTier(tier: TagCloudItem['tier']): number {

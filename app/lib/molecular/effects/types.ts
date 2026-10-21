@@ -15,5 +15,7 @@ export type EffectsFrameState = {
   fillProgress: number;
   /** Normalized document scroll progress on peripheral routes (0–1). */
   scrollProgress: number;
+  /** Home boot: 0 hides the whole atmosphere, 1 = live. */
+  introReveal: number;
   reducedMotion: boolean;
 };

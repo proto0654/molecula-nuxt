@@ -418,6 +418,46 @@ html.hero-lock #__nuxt {
   pointer-events: none;
 }
 
+/* --- Home boot (direct load of `/`) - see docs/MOTION.md --- */
+
+/*
+ * Phase 1 (`is-boot`): canvas + dim grid only - the instrument is warming up.
+ * Phase 2 (`is-boot-ui`): chrome draws in on the boot clock, staggered like the
+ * off-home enter beats, so the molecule drift and the HUD land together.
+ * Animations use `backwards` (never `both`): removing the class cannot pin
+ * opacity / transform on a hoverable element.
+ */
+.molecular-chrome.is-boot:not(.is-boot-ui) .site-header,
+.molecular-chrome.is-boot:not(.is-boot-ui) .nav,
+.molecular-chrome.is-boot:not(.is-boot-ui) .usp-headline,
+.molecular-chrome.is-boot:not(.is-boot-ui) .hero-slide-progress,
+.molecular-chrome.is-boot:not(.is-boot-ui) .hud__frame,
+.molecular-chrome.is-boot:not(.is-boot-ui) .hud__meta {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.molecular-chrome .hud__grid {
+  transition: opacity 0.6s var(--enter-ease);
+}
+
+.molecular-chrome.is-boot:not(.is-boot-ui) .hud__grid {
+  opacity: 0.45;
+}
+
+.molecular-chrome.is-boot-ui .hud__frame,
+.molecular-chrome.is-boot-ui .site-header {
+  animation: wl-enter-fade var(--enter-duration) var(--enter-ease) backwards;
+}
+
+.molecular-chrome.is-boot-ui .nav__item {
+  animation: wl-enter-fade-up var(--enter-duration) var(--enter-ease)
+    backwards;
+  animation-delay: calc(
+    var(--enter-beat-list) + (var(--reveal-i, 0) * var(--enter-stagger))
+  );
+}
+
 .app-shell {
   position: relative;
   min-height: 100%;

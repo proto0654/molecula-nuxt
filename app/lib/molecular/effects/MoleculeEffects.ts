@@ -159,6 +159,9 @@ export class MoleculeEffects {
     const fadeT = 1 - Math.exp(-FADE_FOLLOW * delta);
     const targetFade = state.approachBusy ? 0 : 1;
     this.fade += (targetFade - this.fade) * fadeT;
+    // Home boot: the whole atmosphere is gated by its own reveal so dust,
+    // comet and rims arrive after the molecule is assembled, not with it.
+    const fade = this.fade * state.introReveal;
 
     const scrollTarget =
       state.home || state.reducedMotion ? 0 : state.scrollProgress;
@@ -211,19 +214,19 @@ export class MoleculeEffects {
     this.mist.update(
       state.reducedMotion ? 0 : this.streamTime,
       time,
-      this.fade,
+      fade,
     );
 
     this.field.update(
       stillTime,
       state,
-      this.fade,
+      fade,
       this.scroll,
       this.pulse,
       reveal,
     );
 
-    this.comet.update(delta, this.scroll, this.fade, state.reducedMotion);
+    this.comet.update(delta, this.scroll, fade, state.reducedMotion);
 
     for (const atom of this.atoms) {
       const rim = this.rims.get(atom.id);
@@ -234,7 +237,7 @@ export class MoleculeEffects {
       const focused = atom.id === state.focusedAtomId;
       const intensity = state.frozen || focused ? 0 : 0.16;
       rim.setRadius(atom.radius);
-      rim.setIntensity(this.fade * intensity * (0.75 + 0.25 * reveal));
+      rim.setIntensity(fade * intensity * (0.75 + 0.25 * reveal));
     }
   }
 

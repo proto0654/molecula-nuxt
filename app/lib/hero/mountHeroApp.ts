@@ -8,6 +8,8 @@ import { MoleculeController } from '../molecular/MoleculeController';
 import { QualityManager } from '../molecular/quality/QualityManager';
 import { PerfOverlay } from '../debug/PerfOverlay';
 import { SpatialOverlay } from '../debug/SpatialOverlay';
+import { HeroIntro } from './HeroIntro';
+import { spatialFromRoute } from '../spatial/spatialFromRoute';
 import {
   buildAtomBlurb,
   setNavVerbCopy,
@@ -92,6 +94,8 @@ export function mountHeroApp(
 ): MountedHeroApp {
   const chromeRoot = options.chromeRoot;
   chromeRoot.classList.add('is-home');
+  /** Home boot (direct load only); null once it hands control back. */
+  let intro: HeroIntro | null = null;
 
   const canvas = document.createElement('canvas');
   canvas.id = 'hero-canvas';
@@ -584,12 +588,14 @@ export function mountHeroApp(
     chromeRoot.classList.toggle('is-home', home);
     canvas.classList.toggle('is-atom-hover', false);
     if (!home) {
+      // Leaving home mid-boot: never animate an approach with hidden atoms.
+      intro?.finish();
       autoplay.stop();
       uspHeadline.hide();
       destination.hide();
       connector.setEnabled(false);
       if (mobileNav.isOpen) setMenuOpen(false);
-    } else {
+    } else if (!intro?.active) {
       autoplay.start(navigationState.committedItemId ?? HOME_ITEM_ID);
     }
     // Re-apply framing: home desktop bias vs centered profile.
@@ -617,7 +623,7 @@ export function mountHeroApp(
     },
     onHomeActivated: () => {
       activateCommittedItem(HOME_ITEM_ID);
-      autoplay.start(HOME_ITEM_ID);
+      if (!intro?.active) autoplay.start(HOME_ITEM_ID);
     },
   });
 
@@ -644,7 +650,8 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     // Skip while Navigator owns framing (approach / retarget center override).
     // Leaving rest toward an off-home approach: keep the current override so
     // approachTo can tween it — same capture as retarget from a settled pose.
-    if (!navigator.busy) {
+    // Skip while the boot owns it (centred assembly -> drift right).
+    if (!navigator.busy && !intro?.active) {
       if (isHome && mode === 'desktop') {
         controller.setCompositionFramingOverride(HOME_DESKTOP_FRAMING);
       } else if (isHome) {
@@ -662,7 +669,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
           : profile.screenY,
       ),
     );
-    connector.setEnabled(isHome && mode === 'desktop');
+    connector.setEnabled(isHome && mode === 'desktop' && !intro?.active);
     if (mode !== 'mobile' && mobileNav.isOpen) {
       setMenuOpen(false);
     }
@@ -700,6 +707,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
 
     if (
       isHome &&
+      !intro?.active &&
       !navigator.busy &&
       navigationState.committedItemId &&
       controller.isFocusSettled()
@@ -713,13 +721,13 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
   });
 
   const unsubscribeHover = controller.onAtomHover((atomId) => {
-    if (!isHome) return;
+    if (!isHome || intro?.active) return;
     navigationState.setAtomHover(atomId);
     canvas.classList.toggle('is-atom-hover', atomId !== null);
   });
 
   const unsubscribeClick = controller.onAtomClick((atomId) => {
-    if (!isHome) return;
+    if (!isHome || intro?.active) return;
     if (atomId) {
       const item = getItemByAtomId(atomId);
       if (item) selectItem(item.id);
@@ -732,6 +740,36 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     applyViewportMode();
     applyVisuals();
     requestScrollRead();
+  }
+
+  /**
+   * Direct load of home only: assemble at centre, then hand the shell back to
+   * autoplay / connector / settled HUD. In-app returns to home keep the
+   * existing return animation.
+   */
+  function concludeBoot(): void {
+    applyViewportMode();
+    applyVisuals();
+    uspHeadline.tryReveal();
+    if (isHome && !navigator.busy) {
+      autoplay.start(navigationState.committedItemId ?? HOME_ITEM_ID);
+    }
+  }
+
+  if (
+    !prefersReducedMotion() &&
+    spatialFromRoute({ path: window.location.pathname }).mode === 'home'
+  ) {
+    intro = new HeroIntro({
+      controller,
+      chromeRoot,
+      mode: resolveViewportMode({
+        desktop: desktopMq.matches,
+        tablet: tabletMq.matches,
+      }),
+      onLive: concludeBoot,
+    });
+    intro.startOnFirstFrame();
   }
 
   applyViewportMode();
@@ -795,6 +833,8 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     playEntityLightSweep: cueApi.playEntityLightSweep,
     dispose() {
       registerMoleculeCue(null);
+      intro?.dispose();
+      intro = null;
       autoplay.stop();
       if (scrollRaf) {
         cancelAnimationFrame(scrollRaf);

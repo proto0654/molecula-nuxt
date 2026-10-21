@@ -21,6 +21,7 @@ import { projectToScreenInto } from './math/projection';
 import { moleculeConfig } from './moleculeConfig';
 import { getOrbitNormalForAtom } from './moleculeOrbits';
 import { MoleculeScene } from './MoleculeScene';
+import type { MoleculeIntroReveal } from './MoleculeScene';
 import type { EffectsFrameState } from './effects/types';
 import type { TagCloudItem } from './TagCloud';
 import {
@@ -63,6 +64,8 @@ let nextControllerInstanceId = 0;
 /** Limited yaw / pitch from gyro (radians) — not a full turn. */
 const MAX_YAW = Math.PI / 5;
 const MAX_PITCH = Math.PI / 7;
+/** Home boot yaw turns the assembling constellation toward its rest pose. */
+const INTRO_YAW_AXIS = new Vector3(0, 1, 0);
 
 /** Movement below this (CSS px) counts as tap; above as drag. */
 const TAP_MOVE_THRESHOLD_PX = 10;
@@ -358,6 +361,7 @@ export class MoleculeController {
   private readonly scratchHalfTurn = new Quaternion();
   private readonly scratchSpinAxis = new Vector3();
   private readonly scratchSpinDelta = new Quaternion();
+  private readonly scratchIntroYaw = new Quaternion();
   private readonly pointerNorm: PointerNorm = { x: 0, y: 0 };
   /** Latest fine-pointer NDC (screen center = 0). */
   private readonly pointerNdc = new Vector2();
@@ -386,8 +390,15 @@ export class MoleculeController {
     zoomProgress: 0,
     fillProgress: 0,
     scrollProgress: 0,
+    introReveal: 1,
     reducedMotion: false,
   };
+
+  /** Home boot hand-off; null once the intro hands control to autoplay. */
+  private introReveal: MoleculeIntroReveal | null = null;
+
+  /** Extra boot yaw (rad) composed on top of the authored orientation. */
+  private introYaw = 0;
 
   private rafId = 0;
   private lastTime = 0;
@@ -1028,6 +1039,39 @@ export class MoleculeController {
     }
     this.setZoomProgress(1);
     this.setFillProgress(1);
+  }
+
+  /**
+   * Home boot: per-atom / per-bond assembly reveal. Pass `null` to hand the
+   * molecule back to the settled state (labels, reticles, atmosphere).
+   */
+  setIntroReveal(reveal: MoleculeIntroReveal | null): void {
+    this.introReveal = reveal;
+    this.scene.setIntroReveal(reveal);
+  }
+
+  /** Home boot: extra yaw (rad) composed on top of the authored orientation. */
+  setIntroYaw(yaw: number): void {
+    this.introYaw = Math.abs(yaw) < 1e-4 ? 0 : yaw;
+  }
+
+  /**
+   * Home boot: horizontal welding pass across the finished shells.
+   * Unlike `playEntityLightSweep`, this does not need a frozen route.
+   */
+  playHomeBootSweep(): void {
+    if (this.reducedMotion) return;
+    const atomId = this.focusedAtomId ?? hubAtomId();
+    const atom = this.scene.getAtom(atomId);
+    if (!atom) return;
+    this.scene.moleculeGroup.updateMatrixWorld(true);
+    atom.mesh.getWorldPosition(this.scratchAtomWorldCenter);
+    this.scene.startEntityLightSweep(
+      atomId,
+      this.scratchAtomWorldCenter,
+      1,
+      'horizontal',
+    );
   }
 
   /**
@@ -1683,6 +1727,10 @@ export class MoleculeController {
       .copy(this.scratchAppliedFocus)
       .multiply(this.mouseOrientation)
       .multiply(this.baseOrientation);
+    if (this.introYaw !== 0) {
+      this.scratchIntroYaw.setFromAxisAngle(INTRO_YAW_AXIS, this.introYaw);
+      this.scratchCompose.multiply(this.scratchIntroYaw);
+    }
     this.scene.moleculeGroup.quaternion.copy(this.scratchCompose);
 
     this.applyZoomTranslation();
@@ -1732,6 +1780,9 @@ export class MoleculeController {
     this.effectsState.zoomProgress = this.zoomProgress;
     this.effectsState.fillProgress = this.fillProgress;
     this.effectsState.scrollProgress = this.scrollProgress;
+    this.effectsState.introReveal = this.introReveal
+      ? Math.max(0, Math.min(1, this.introReveal.dust))
+      : 1;
     this.effectsState.reducedMotion = this.reducedMotion;
   }
 

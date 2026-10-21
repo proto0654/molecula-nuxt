@@ -68,6 +68,8 @@ export class Navigation {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'nav__item';
+      // Boot entrance stagger (home direct load); inert otherwise.
+      button.style.setProperty('--reveal-i', String(index));
       button.dataset.navId = item.id;
       if (item.route) {
         button.dataset.route = item.route;

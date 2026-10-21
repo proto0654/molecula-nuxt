@@ -1,10 +1,35 @@
-# Page entrance motion
+﻿# Page entrance motion
 
-Source of truth for how HTML/UI appears on off-home routes. Persistent molecular HUD (logo, grid, ticks, rail) is **not** replayed here — it already hides on `.is-approaching` and returns with the pose. Home (`/`) has no page overlay choreography.
+Source of truth for how HTML/UI appears on off-home routes. Persistent molecular HUD (logo, grid, ticks, rail) is **not** replayed here — it already hides on `.is-approaching` and returns with the pose. Home (`/`) has no page overlay choreography; a direct load of `/` instead runs the [home boot](#home-boot-direct-load) below.
 
 **Hairline draw** on enter is the motion layer of the site-wide hairline language — static rules and tokens are defined in [`DESIGN.md` § Hairline language](DESIGN.md#hairline-language). Same `--wl-line`, same left → right wipe, same line-before-content cadence everywhere listings appear.
 
 Tokens live on `:root` in [`app/assets/css/main.css`](../app/assets/css/main.css). Archive listing CSS: [`archive.css`](../app/assets/css/archive.css). Case first-viewport CSS: [`case.css`](../app/assets/css/case.css). Gate: [`usePageContentReveal`](../app/composables/usePageContentReveal.ts). Listing split: [`useListingReveal`](../app/composables/useListingReveal.ts).
+
+## Home boot (direct load)
+
+Direct load of home assembles the molecule instead of cutting to a finished scene. Code:
+[`HeroIntro`](../app/lib/hero/HeroIntro.ts), wired in [`mountHeroApp`](../app/lib/hero/mountHeroApp.ts). In-app returns to home (atom → home, logo click) keep the existing return animation — the boot is created only when `spatialFromRoute(pathname).mode === 'home'`.
+
+One GSAP clock drives both layers: Three.js values are read from a mutable `MoleculeIntroReveal` object every frame, and the CSS side only reacts to phase classes on `.molecular-chrome` (`is-boot` → `is-boot-ui`). No second timeline in CSS, so the canvas and the chrome cannot drift.
+
+| Beat (desktop, ms from first rendered frame) | Layer | What happens |
+|------|-------|--------------|
+| 0 | chrome | `is-boot`: header, rail, USP, connector, progress, HUD frame + meta hidden; grid dimmed to `0.45` |
+| 60 | molecule | hub shell condenses (`mesh.scale` 0.32 → 1, `back.out` landing) |
+| 300 + 70/link | molecule | each hub bond grows out of the hub (`Bond.setDrawProgress`), atom lands on its tip |
+| 1050 | molecule | orbit rings grow out (`DecorativeNodes.setReveal`), atmosphere (dust / comet / rims / drafting field) fades in |
+| 1150 | text | atom labels + tag cloud appear together (`text` gate) |
+| 1250 | molecule | horizontal entity light sweep (same light language as cases, no frozen route needed) |
+| 1300 → 2250 | framing | `screenX 0.5 → 0.62`, `screenY 0.5 → 0.45`, `approach −0.85 → 0` (`setCompositionFramingOverride`); extra boot yaw returns to 0 |
+| 1450 | chrome | `is-boot-ui`: HUD frame + header fade, rail items stagger by `--reveal-i`, grid returns to full |
+| 2350 | both | hand-off: `is-boot*` removed, committed reticle / connector / USP return, autoplay starts |
+
+- Tablet / mobile: no lateral drift (starts and ends on the profile framing, `0.50 → 0.56` y at most), whole clock × `0.86`.
+- Skip: first `pointerdown` / `keydown` fast-forwards the timeline (`timeScale(6)`) instead of snapping, so phases stay ordered. Atom hover / click are gated while the boot is active.
+- Guard: if no frame is rendered within 1.6s (WebGL failure), the boot finishes immediately so the HUD is never hostage to the canvas.
+- `prefers-reduced-motion: reduce`: no boot at all — `is-boot` is never added.
+- Leaving home mid-boot (`applyHudMode(false)`) finishes it first: an approach must never run with hidden atoms.
 
 ## Two entries, one sequence
 
@@ -120,7 +145,7 @@ the field static. Details: [`EFFECTS.md`](EFFECTS.md).
 
 ## What not to animate
 
-- Persistent HUD / molecule / connector.
+- Persistent HUD / molecule / connector (the one exception is the [home boot](#home-boot-direct-load) on a direct load of `/`).
 - Title scramble (already gated).
 - Case gallery, mobile mockup (lift), slices (L3 scrub) — ScrollTrigger owns inner motion; listing reveal handles section shell + marker line only.
 - Navigator / `poseReveal` direct-load semantics.

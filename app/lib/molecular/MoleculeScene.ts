@@ -143,6 +143,22 @@ type BondLink = {
   toId: string;
 };
 
+/**
+ * Home boot hand-off. Values are read by the scene every frame while set, so
+ * the intro tween can mutate one plain object instead of calling the API.
+ * Missing atom / bond keys mean "already at rest" (1).
+ */
+export type MoleculeIntroReveal = {
+  atoms: Readonly<Record<string, number>>;
+  /** Keyed by the bond's target atom id - hub bonds only in this molecule. */
+  bonds: Readonly<Record<string, number>>;
+  rings: number;
+  /** Text layer (atom labels + tag cloud); 0 keeps all readable copy off. */
+  text: number;
+  /** Atmosphere gate (`MoleculeEffects`); 0 keeps dust / comet / rims off. */
+  dust: number;
+};
+
 export class MoleculeScene {
   readonly scene: Scene;
   readonly camera: PerspectiveCamera;
@@ -182,6 +198,8 @@ export class MoleculeScene {
   private lastWidth = 1;
   private lastHeight = 1;
   private compactLayout = false;
+  /** Set only during the home boot; null at rest. */
+  private introReveal: MoleculeIntroReveal | null = null;
   private readonly wireframeBaseColor = new Color(WIREFRAME_COLOR);
   private readonly wireframeDimColor = new Color(WIREFRAME_DIM_COLOR);
   private readonly bondBaseColor = new Color(BOND_COLOR);
@@ -502,6 +520,23 @@ export class MoleculeScene {
   }
 
   /**
+   * Home boot: per-atom / per-bond reveal plus the draft-ring layer.
+   * `null` restores the settled molecule immediately (labels, reticles, bonds).
+   */
+  setIntroReveal(reveal: MoleculeIntroReveal | null): void {
+    this.introReveal = reveal;
+    this.decorativeNodes.setReveal(reveal ? reveal.rings : 1);
+    this.tagCloud.setReveal(reveal ? reveal.text : 1);
+    if (reveal) return;
+    for (const atom of this.atoms) {
+      atom.setIntroReveal(1);
+    }
+    for (const link of this.bondLinks) {
+      link.bond.setDrawProgress(1);
+    }
+  }
+
+  /**
    * Settled frozen approach: lerp selection reticle + wireframe toward dim chrome.
    * Leaving the state restores base chrome colors.
    */
@@ -608,12 +643,29 @@ export class MoleculeScene {
     this.updateWireframeDim(deltaSeconds);
     this.updateAccentWireframePulse(deltaSeconds, elapsed);
     this.updateBondFlow(deltaSeconds, elapsed);
+    const intro = this.introReveal;
+    if (intro) {
+      for (const atom of this.atoms) {
+        atom.setIntroReveal(intro.atoms[atom.id] ?? 1);
+      }
+      for (const link of this.bondLinks) {
+        link.bond.setDrawProgress(intro.bonds[link.toId] ?? 1);
+      }
+    }
     for (const atom of this.atoms) {
       if (updateLabels) {
         atom.updateLabel(this.camera);
       }
       atom.tickLabelTypewriter(deltaSeconds);
       atom.updateSelection(this.camera, deltaSeconds, elapsed);
+      if (intro) {
+        // Boot owns the text layer: labels arrive together with the chrome,
+        // and the committed halo waits for the live phase.
+        atom.setLabelVisible(
+          intro.text >= 0.5 && (intro.atoms[atom.id] ?? 1) >= 0.98,
+        );
+        atom.selection.object.visible = false;
+      }
     }
     this.tagCloud.update(this.camera, this.moleculeGroup);
     this.effects.update(deltaSeconds, elapsed, effectsState);

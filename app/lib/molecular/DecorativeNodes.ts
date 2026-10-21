@@ -27,6 +27,8 @@ const NODE_OPACITY = 0.18;
 const ORBIT_OPACITY = 0.42;
 const ORBIT_ACTIVE_OPACITY = 0.55;
 const ORBIT_DIM_OPACITY = 0.42;
+/** Home boot: rings start at this share of their radius and grow out. */
+const REVEAL_ORBIT_MIN_SCALE = 0.86;
 
 /** Extra ghost fragments that ride with the molecule (not pick targets). */
 const EXTRA_NODES: readonly {
@@ -60,6 +62,8 @@ export class DecorativeNodes {
   private ghostNodesEnabled = false;
   private zoomFade = 1;
   private orbitScale = 1;
+  /** Home boot: rings grow / fade in as one drafting layer. 1 at rest. */
+  private reveal = 1;
   private activeAtomId: string | null = null;
   private chromeColorMix = 0;
   private readonly scratchOrbitBase = new Color();
@@ -130,10 +134,18 @@ export class DecorativeNodes {
   /** Match decorative rings to compact peripheral layout. */
   setOrbitScale(scale: number): void {
     this.orbitScale = scale;
-    for (let i = 0; i < this.orbitLoops.length; i += 1) {
-      const def = this.orbitDefs[i]!;
-      this.orbitLoops[i]!.scale.setScalar(def.radius * this.orbitScale);
-    }
+    this.applyOrbitTransforms();
+  }
+
+  /** Home boot: rings condense outward with the atom assembly. */
+  setReveal(reveal: number): void {
+    const next = Math.max(0, Math.min(1, reveal));
+    if (Math.abs(next - this.reveal) < 1e-4) return;
+    this.reveal = next;
+    this.applyOrbitTransforms();
+    this.syncOrbitColors();
+    this.syncOpacity();
+    this.syncVisibility();
   }
 
   /** White orbit for the active peripheral; others stay black. */
@@ -174,6 +186,16 @@ export class DecorativeNodes {
     this.materials.length = 0;
   }
 
+  private applyOrbitTransforms(): void {
+    const revealScale =
+      REVEAL_ORBIT_MIN_SCALE + (1 - REVEAL_ORBIT_MIN_SCALE) * this.reveal;
+    const scale = this.orbitScale * revealScale;
+    for (let i = 0; i < this.orbitLoops.length; i += 1) {
+      const def = this.orbitDefs[i]!;
+      this.orbitLoops[i]!.scale.setScalar(def.radius * scale);
+    }
+  }
+
   private syncOrbitColors(): void {
     for (let i = 0; i < this.orbitMaterials.length; i += 1) {
       const material = this.orbitMaterials[i]!;
@@ -195,22 +217,23 @@ export class DecorativeNodes {
         this.baseOpacities[i] =
           baseOp + (ORBIT_DIM_OPACITY - baseOp) * this.chromeColorMix;
       }
-      material.opacity = this.baseOpacities[i]! * this.zoomFade;
+      material.opacity = this.baseOpacities[i]! * this.zoomFade * this.reveal;
     }
   }
 
   private syncOpacity(): void {
     for (let i = 0; i < this.orbitMaterials.length; i += 1) {
       const material = this.orbitMaterials[i]!;
-      material.opacity = this.baseOpacities[i]! * this.zoomFade;
+      material.opacity =
+        this.baseOpacities[i]! * this.zoomFade * this.reveal;
     }
     const nodeMat = this.materials[this.nodeMaterialIndex] as LineBasicMaterial;
     nodeMat.opacity =
-      this.baseOpacities[this.nodeMaterialIndex]! * this.zoomFade;
+      this.baseOpacities[this.nodeMaterialIndex]! * this.zoomFade * this.reveal;
   }
 
   private syncVisibility(): void {
-    const show = this.zoomFade > 0.02;
+    const show = this.zoomFade > 0.02 && this.reveal > 0.02;
     for (const orbit of this.orbitLoops) {
       orbit.visible = show && this.orbitsEnabled;
     }

@@ -1,4 +1,4 @@
-# Molecular atmosphere effects
+﻿# Molecular atmosphere effects
 
 Atmosphere layer for the persistent molecule. Code: [`MoleculeEffects.ts`](../app/lib/molecular/effects/MoleculeEffects.ts).
 Pose, freeze and route semantics stay in [`SPATIAL.md`](SPATIAL.md); this document only covers the
@@ -157,7 +157,9 @@ all be off-screen, so the freeze signature is built from **surface-level** layer
    static on LOW — no continuous rotation on a route. There is no blurred additive band.
 
 The field fades out while `approachBusy` and back in after settle, so it never competes with the
-route transition. `freeze()`/`unfreeze()` and zoom/fill are unchanged.
+route transition. `freeze()`/`unfreeze()` and zoom/fill are unchanged. On a direct load of `/` the
+whole atmosphere (dust, comet, rims, drafting shell) is additionally gated by `EffectsFrameState.introReveal`
+and arrives with the orbit rings after the molecule is assembled — see [MOTION.md](MOTION.md#home-boot-direct-load).
 
 ## Performance budget
 

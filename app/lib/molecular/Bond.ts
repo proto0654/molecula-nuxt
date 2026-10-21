@@ -21,6 +21,11 @@ export class Bond {
   readonly id: string;
   readonly line: Line;
   private readonly geometry: BufferGeometry;
+  /** Authored inset endpoints - draw progress lerps the far vertex along it. */
+  private readonly startPoint = new Vector3();
+  private readonly endPoint = new Vector3();
+  /** 0 = collapsed into the start point, 1 = authored connector. */
+  private drawProgress = 1;
 
   constructor(
     config: BondConfig,
@@ -57,7 +62,9 @@ export class Bond {
 
     this.line = new Line(this.geometry, material);
     this.line.name = `bond-${config.id}`;
-    this.line.computeLineDistances();
+    this.startPoint.copy(scratchStart);
+    this.endPoint.copy(scratchEnd);
+    this.syncDraw();
     this.line.raycast = () => {};
     this.line.frustumCulled = false;
   }
@@ -93,7 +100,33 @@ export class Bond {
     attr.setXYZ(0, scratchStart.x, scratchStart.y, scratchStart.z);
     attr.setXYZ(1, scratchEnd.x, scratchEnd.y, scratchEnd.z);
     attr.needsUpdate = true;
+    this.startPoint.copy(scratchStart);
+    this.endPoint.copy(scratchEnd);
+    this.syncDraw();
+  }
+
+  /**
+   * Home boot: grow the connector out of its start atom.
+   * The dashed pattern is recomputed so dash size stays authored.
+   */
+  setDrawProgress(progress: number): void {
+    const next = Math.max(0, Math.min(1, progress));
+    if (Math.abs(next - this.drawProgress) < 1e-4) return;
+    this.drawProgress = next;
+    this.syncDraw();
+  }
+
+  private syncDraw(): void {
+    const attr = this.geometry.getAttribute('position') as BufferAttribute;
+    attr.setXYZ(
+      1,
+      this.startPoint.x + (this.endPoint.x - this.startPoint.x) * this.drawProgress,
+      this.startPoint.y + (this.endPoint.y - this.startPoint.y) * this.drawProgress,
+      this.startPoint.z + (this.endPoint.z - this.startPoint.z) * this.drawProgress,
+    );
+    attr.needsUpdate = true;
     this.line.computeLineDistances();
+    this.line.visible = this.drawProgress > 0.002;
   }
 
   dispose(): void {
