@@ -44,8 +44,8 @@
 - [x] Wire hero `Navigator` to real Nuxt routes (`/portfolio`) (STEP 17–18 foundation)
 - [x] STEP 9–19 + acceptance §28 (без case redesign)
 - [x] Document scroll unlock on portfolio/case (`html.hero-lock` only on home)
-- [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, video hero + featured backdrop, Screens = landing+repeater (inner-pages), lightbox, ScrollTrigger entry
-- [x] Persistent portfolio backdrop: CSS hover wash on archive rows; layout `PortfolioBackdrop` on case routes; `usePortfolioWashGate` soft entrance from outside portfolio; accent overlay; no JS hover / specimen VT morph
+- [x] Case visual redesign (§25): editorial 12-col case pages, CaseShell chrome, video hero + featured-image fallback, Screens = landing+repeater (inner-pages), lightbox, ScrollTrigger entry
+- [x] Portfolio archive hover chrome: CSS-only row hover (specimen shift + accent line); no JS preview store, no specimen View Transition. *The featured-wash layer (`PortfolioBackdrop`, `usePortfolioBackdrop`, `usePortfolioWashGate`, `--backdrop-accent`) was built in `68ffa03` / `ddb0e14` and removed in `43c2de4` — do not re-add it and do not document it as current.*
 - [x] Persistent molecular shell: layout-owned canvas, spatial state machine, home hub always focused, freeze off-home
 - [x] Case composition pass: sequential markers (including NEXT), density recipes A–G, motion L1/L2/L3, in-page case→case reveal + delayed accent
 - [x] Portfolio archive + Home/Case integration: editorial numbered rows, SiteChrome, veil handoff, session restore, case→case without generic loader

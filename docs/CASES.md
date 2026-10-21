@@ -8,7 +8,7 @@ Principles: scientific / technical / editorial / minimal. Large type, hairlines,
 
 | File | Role |
 |------|------|
-| [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page shell; density + body-phase classes. Featured wash lives in layout [`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue). Decorative grid/frame/logo come from the persistent HUD. |
+| [`CaseShell.vue`](../app/components/case/CaseShell.vue) | Page shell; density + body-phase classes. The page background stays transparent over the frozen molecule — no backdrop layer. Decorative grid/frame/logo come from the persistent HUD. |
 | [`CaseHeader.vue`](../app/components/case/CaseHeader.vue) | Title (USP-style scramble reveal), excerpt; facts only when there is no CMS body. Entity/index (`CASE / NN`) lives in [`SiteChrome`](../app/components/site/SiteChrome.vue) only — no duplicate above the H1 |
 | [`EditorialHero.vue`](../app/components/EditorialHero.vue) | Unified 50/50 hero shell (all detail pages; variants `archive` / `case` / `about`) |
 | [`EditorialHeroMedia.vue`](../app/components/EditorialHeroMedia.vue) | Left column frame: video, image, or outline placeholder |
@@ -34,7 +34,7 @@ Narrative (not printed on the page): INTRO → INSPECT → EXPLORE → MOBILE �
 
 | Narrative | Block | Marker | When |
 |-----------|--------|--------|------|
-| INTRO | Header + hero media; featured = persistent backdrop | none | always header |
+| INTRO | Header + hero media (video → featured image → placeholder) | none | always header |
 | INSPECT | Overview | `NN / OVERVIEW` | `contentHtml` |
 | EXPLORE | Interface (`landing_screen` + repeater) | `NN / INTERFACE` | any screen item |
 | MOBILE | Composite mockup | `NN / MOBILE` | `c.mobile` |
@@ -64,7 +64,7 @@ Marker tones: **editorial** (Overview, Next) = horizontal rail + occasional vert
 
 ## Tokens
 
-Set `--case-accent` from `case.accentColor` **after hydrate + reveal** (`@property` interpolates). [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) keeps `appliedAccent` null through the first client render (including `prefers-reduced-motion`, which skips the timed delay but still waits for `onMounted`) so SSR HTML has no inline `--case-accent` style. Until accent applies, the page uses the ink default. **Never** use accent as the page background (`--wl-bg` stays). Atmosphere tint on `/portfolio*` goes through the layout wash’s solid overlay (`--backdrop-accent`), not a page fill.
+Set `--case-accent` from `case.accentColor` **after hydrate + reveal** (`@property` interpolates). [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) keeps `appliedAccent` null through the first client render (including `prefers-reduced-motion`, which skips the timed delay but still waits for `onMounted`) so SSR HTML has no inline `--case-accent` style. Until accent applies, the page uses the ink default. **Never** use accent as the page background (`--wl-bg` stays) or as a page fill.
 
 Accent belongs on: section marker number, metadata labels, hover/active nav, selected lines. Not on section fills or gallery cards.
 
@@ -72,12 +72,10 @@ Accent belongs on: section marker number, metadata labels, hover/active nav, sel
 |-------|------|
 | `--case-accent` | Lines, ticks, hover borders |
 | `--case-accent-ink` | `color-mix` of accent + bright ink — readable labels on dark bg |
-| `--backdrop-accent` | Layout wash solid overlay color (PortfolioBackdrop; not page bg) |
 | `--case-space-hero` / `--case-space-first` / `--case-space-section` / `--case-space-visual` / `--case-space-footer` | Vertical rhythm |
 | `--case-pad-x` / `--case-pad-y` | Body inset inside corner ticks |
 | `--text-case-title` / `--text-case-title-split` | Large all-caps titles (USP-style tracking) |
-| `--text-case-intro` | Header excerpt / mobile caption (Exo 2 300) |
-| `--text-case-body` | CMS Overview body (~1–1.0625rem; Exo 2 300) |
+| `--text-case-intro` | Header excerpt, mobile caption and CMS prose body (0.8125 → 0.9375rem; Exo 2 300) |
 | `--text-case-nav-title` | Footer case titles on lg (`clamp(0.9375rem, 1.35vw, 1.1875rem)`) |
 | `--case-media-max` | Cap tall **CMS prose** media only — **not** gallery / landing screens |
 | `--case-screen-max` | Desktop screens: `min(52rem, 78vw)` absolute + relative |
@@ -125,7 +123,7 @@ Media resolution ([`editorialHero.ts`](../app/domain/editorialHero.ts)):
 | About | `photo` → placeholder |
 | Contact | placeholder always |
 
-**Featured image** also drives the persistent layout wash ([`PortfolioBackdrop`](../app/components/portfolio/PortfolioBackdrop.vue)) on cases. **`landing_screen`** is Interface index 0 (with repeater). `screenshot_image` is not a hero.
+**Featured image** is the hero fallback and the archive specimen (it does not drive a page backdrop). **`landing_screen`** is Interface index 0 (with repeater). `screenshot_image` is not a hero.
 
 ### Case hero video (top-band autoplay + free controls)
 
@@ -143,7 +141,7 @@ Bind assumes the shell is in view (the frame may have no layout yet during enter
 
 **SSG gotcha:** right after hydration the router fires a same-path `replace`. `onBeforeRouteUpdate` in `useCaseVideoBoot` ignores updates where the path (minus trailing slash) is unchanged — otherwise it disposes the bindings between init and kickoff and the video never autoplays. Only reproducible on `generate` output, not `npm run dev`.
 
-Featured backdrop wash uses the same top band ([`useCaseTopScrollBand`](../app/composables/useCaseTopScrollBand.ts)).
+The hero video top-band autoplay reads the same scroll band ([`useCaseTopScrollBand`](../app/composables/useCaseTopScrollBand.ts)).
 
 **Markup** ([`CaseVideo.vue`](../app/components/case/CaseVideo.vue)): `[data-case-video-shell]` + featured `poster` (and dark skeleton fallback) until `.is-loaded`; `[data-case-video]` with `controls`, `playsinline`, `muted`, `preload="none"` — no `autoplay` attribute. On error the shell gets `.is-failed` and keeps the poster.
 
@@ -163,7 +161,7 @@ Featured backdrop wash uses the same top band ([`useCaseTopScrollBand`](../app/c
 - `.case-content__body` — cols 4–9 (**3/6/3**; no `max-width: 65ch`, not centered)
 - `.case-content__facts` — cols 10–12 when any fact exists; otherwise that span stays empty (negative space)
 
-CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong, figcaption) — not a single typography utility. `p` / `li` / `.wp-block-paragraph` share one inherited `--text-case-body` size (WP `has-*-font-size` classes are neutralized). Paragraph gap ~`1.15em`; list items ~`0.7em`. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph. Mixed list rows (`strong` + text nodes) are normalized via [`prepareCaseProseHtml`](../app/domain/wp/htmlPlain.ts) / `wrapCaseListItemBodies` so listing reveal fades one `li > *` unit.
+CMS markup is styled as `.case-content__prose` (paragraphs, headings, lists, links, strong, figcaption) — not a single typography utility. `p` / `li` / `.wp-block-paragraph` share one inherited `--text-case-intro` size (WP `has-*-font-size` classes are neutralized). Paragraph gap ~`1.15em`; list items ~`0.7em`. Hairlines sit on `h1`/`h2`/`h3` that are not the first child: controlled width with a fade-out (h3 shorter), not between every paragraph. Mixed list rows (`strong` + text nodes) are normalized via [`prepareCaseProseHtml`](../app/domain/wp/htmlPlain.ts) / `wrapCaseListItemBodies` so listing reveal fades one `li > *` unit.
 
 ## Visual media blocks
 
@@ -182,7 +180,7 @@ Data: `landing_screen` (index 0) + `repeater[].repeater_field`. Section in cente
 | **Grid** | ≥2 screens | &lt;1024: 2-col CSS masonry; ≥1024: always 3 flex cols via `balanceCaseScreenColumns` (items[0] pinned first in col0; taller stacks prefer earlier cols / descending; then equalize; no 2-col collapse); stair on col0/col1 | per-card `rotateY` flip (±56° by column); opacity leads, then flip. Desktop scrub `top 70%`→`top 52%`; mobile `top 64%`→`top 42%`. CSS fallback: `grid-screen-flip-y` (`animation-timeline: view()`, entry 42%–68%, hold-edge keyframe) |
 | **Landing-only** | only `landing_screen` | one card; mobile: full viewport width; desktop: centered in center column (`--case-landing-max`) | kinetic float (`translateZ` −140 + `rotateX` 24° + `translateY` 40); specular tilt + glare on pointer |
 
-Stair (desktop, first card in col): `--stair-0` `clamp(7rem, 28vw, 18rem)`, `--stair-1` `clamp(3.5rem, 14vw, 9rem)`. Reset under `prefers-reduced-motion`.
+Stair (desktop, first card in col): `.case-inner-pages__card-wrapper--stair-0` → `margin-top: clamp(7rem, 28vw, 18rem)`, `.case-inner-pages__card-wrapper--stair-1` → `clamp(3.5rem, 14vw, 9rem)`. Reset under `prefers-reduced-motion`.
 
 Perspective desktop stage: 1000px / origin 50% 42%. Card shadow `10px 18px 36px rgba(0,0,0,0.28)`. **Full intrinsic height always** — never clip or scan-window a landing / repeater screen. Landing-only width: mobile full bleed; desktop `--case-landing-max` centered in center column. Pointer tilt is nested inside ScrollTrigger so the two transforms do not fight. Interactive listeners idle unless [`caseMotionGate`](../app/composables/caseMotionGate.ts) is on (body `idle`, payload ready, pose settled) and the lightbox is closed.
 
@@ -225,7 +223,7 @@ Minimal dark overlay, technical index, close; gallery prev/next. Full source ima
 
 [`/portfolio`](../app/pages/portfolio/index.vue) is an editorial index, not a molecular scene and not agency cards. CSS: [`archive.css`](../app/assets/css/archive.css).
 
-Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, category/meta, compact specimen (`featuredImage ?? landingScreen`). Pagination `01 02 03 →` as crawlable `NuxtLink`s (`--text-nav`, hidden while the next page loads — see [`MOTION.md`](MOTION.md)). Desktop (`≥1024px`): `.archive-page__body` is a 12-col grid; each row uses **3-6-3** (index cols 1–3, copy 4–9, specimen 10–12). Detail repeaters (offers, skills, contacts) use **3-9** (index 1–3, copy 4–12). Page titles (`archive-heading`, `editorial-section-title`) stay full width; pagination and about CTA align to the copy column (cols 4–12). Row hairlines stay full bleed. Tablet: compressed row; mobile: specimen above text. Hover: small specimen shift + title + accent line + arrow (off under reduced motion). Featured wash + accent overlay are **CSS-only** per row (`:hover` / `:focus-within` on `.archive-row__backdrop`) — no JS preview store. Landing-only rows have no wash layer. First-viewport rows draw full-width hairlines in a capped stagger; below-fold rows draw once on intersect — [`MOTION.md`](MOTION.md). Do not put GSAP or ScrollTrigger on archive listings.
+Numbered rows (`NN` from slim production order — same as `CASE / NN`): title, category/meta, compact specimen (`featuredImage ?? landingScreen`). Pagination `01 02 03 →` as crawlable `NuxtLink`s (`--text-nav`, hidden while the next page loads — see [`MOTION.md`](MOTION.md)). Desktop (`≥1024px`): `.archive-page__body` is a 12-col grid; each row uses **3-6-3** (index cols 1–3, copy 4–9, specimen 10–12). Detail repeaters (offers, skills, contacts) use **3-9** (index 1–3, copy 4–12). Page titles (`archive-heading`, `editorial-section-title`) stay full width; pagination and about CTA align to the copy column (cols 4–12). Row hairlines stay full bleed. Tablet: compressed row; mobile: specimen above text. Hover: small specimen shift + title + accent line + arrow (off under reduced motion). Hover chrome is **CSS-only** per row — no JS preview store, no backdrop layer. First-viewport rows draw full-width hairlines in a capped stagger; below-fold rows draw once on intersect — [`MOTION.md`](MOTION.md). Do not put GSAP or ScrollTrigger on archive listings.
 
 ## Footer / NEXT
 
@@ -235,20 +233,18 @@ Optional thanks line ([`CaseThanks`](../app/components/case/CaseThanks.vue) from
 
 Molecular → archive: [`Navigator`](../app/lib/navigation/Navigator.ts) zoom/fill/veil, then [`routeVeil`](../app/lib/navigation/routeVeil.ts) handoff so the overlay survives hero unmount. Archive dismisses the veil (opacity). Reduced motion skips zoom/fill (`immediate` overlay + navigate). Do not add a second veil or a WebGL scene on archive/case.
 
-Archive → case: click commits featured URL + accent; case layout wash shows when washes-ready (immediate within portfolio). No View Transition specimen morph. Landing-only cases fade wash out if they have no featured. Case L1 body enter only. Do not morph into the video hero.
+Archive → case: click commits the case URL + accent; the frozen molecule stays on the same atom, so only the case L1 body enter plays. No View Transition specimen morph. Do not morph into the video hero.
 
-Entering `/portfolio*` from home/sections: pose settle, then ~700ms hold, then washes fade in (~1.15s). Archive↔case does not re-gate.
+Entering `/portfolio*` from home/sections: pose settle, then the listing enter beats ([`MOTION.md`](MOTION.md)). Archive↔case does not re-gate.
 
-Case → archive: existing body L1 exit, then archive reveal; wash **stays** (sticky). `useCasePageTransition` does **not** run `beginEnter` on `onBeforeRouteLeave` (avoids a double fade of the departing post). [`sessionStorage`](../app/lib/navigation/archiveReturn.ts) `wl:archive-return` restores `?page=` and scroll to the row. Index / Back to portfolio hrefs stay SSR-stable (base path) on first paint; storage pagination is applied after mount in [`CaseShell`](../app/components/case/CaseShell.vue) / [`DetailNav`](../app/components/archive/DetailNav.vue). No accent reveal on the archive.
+Case → archive: existing body L1 exit, then archive reveal. `useCasePageTransition` does **not** run `beginEnter` on `onBeforeRouteLeave` (avoids a double fade of the departing post). [`sessionStorage`](../app/lib/navigation/archiveReturn.ts) `wl:archive-return` restores `?page=` and scroll to the row. Index / Back to portfolio hrefs stay SSR-stable (base path) on first paint; storage pagination is applied after mount in [`CaseShell`](../app/components/case/CaseShell.vue) / [`DetailNav`](../app/components/archive/DetailNav.vue). No accent reveal on the archive.
 
-Case → case: same `[slug].vue` watches the param, so Nuxt page transitions do not run. [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) runs body L1 exit **in parallel** with the slug swap (route is not blocked); content reveal may start while the veil is up (`contentRevealReady`). Previous payload is held so the generic `Loading…` string does not flash. Prev/next on [`DetailNav`](../app/components/archive/DetailNav.vue) arms sweep direction before navigation; the frozen atom plays a subtle directional facet sweep (see [`WEBGL_HERO.md`](WEBGL_HERO.md)). New `--case-accent` is applied after reveal and interpolates. Featured wash + accent overlay crossfade via the same layout layer when the new case’s featured URL / accent differ. Services detail uses the same transition + [`archive.css`](../app/assets/css/archive.css) body phases on `ArchiveShell`.
-
-Leaving `/portfolio*`: wash clears with a short opacity fade.
+Case → case: same `[slug].vue` watches the param, so Nuxt page transitions do not run. [`useCasePageTransition`](../app/composables/useCasePageTransition.ts) runs body L1 exit **in parallel** with the slug swap (route is not blocked); content reveal may start while the veil is up (`contentRevealReady`). Previous payload is held so the generic `Loading…` string does not flash. Prev/next on [`DetailNav`](../app/components/archive/DetailNav.vue) arms sweep direction before navigation; the frozen atom plays a subtle directional facet sweep (see [`WEBGL_HERO.md`](WEBGL_HERO.md)). New `--case-accent` is applied after reveal and interpolates. Services detail uses the same transition + [`archive.css`](../app/assets/css/archive.css) body phases on `ArchiveShell`.
 
 ## Gotchas
 
 - Do not put Three.js on case pages.
-- `case_dark_bg_color` is a **subtle accent**, not a full-page wash. Use for UI chrome (`--case-accent-ink`) and a solid low-opacity overlay on the persistent featured wash (`--backdrop-accent`) — never as `--wl-bg`. Do not nest the overlay under the wash’s `0.22` opacity.
+- `case_dark_bg_color` is a **subtle accent**, not a full-page background. Use it for chrome (`--case-accent` / `--case-accent-ink`) — never as `--wl-bg`.
 - Slim index `_fields` include `title` for prev/next labels (`getCasePosition`).
 - Case pages must not set `html.hero-lock`. Document scroll is on `html` only (`main.css`) — `scrollbar-gutter: stable both-edges` prevents layout shift on route change; avoid `overflow-y: auto` on `body` / `#__nuxt` (double scrollbar with 3D overflow).
 - Legacy mapping: `screenshot_image` = composite mockup; `screen-mobile` = slice source — do not swap.

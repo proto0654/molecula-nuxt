@@ -117,7 +117,7 @@ Only one term returned:
 
 `about` (`template: page-about`, id `12896`), `home-2`, `portfolio`, `privacy-policy`.
 
-About ACF (RU rendered; EN typed, unused in UI):
+About ACF (RU rendered; EN used on `/en/*`):
 
 | Key | Role |
 |-----|------|
@@ -126,21 +126,21 @@ About ACF (RU rendered; EN typed, unused in UI):
 | `about-repeater` | `[{ cf_title, cf_text }]` |
 | `about-repeater_en` | `[{ cf_title_en, cf_text_en }]` |
 | `about_cta_label` / `_en` | CTA → `/contact` |
-| `post_title_en` / `post_content_en` | i18n later |
+| `post_title_en` / `post_content_en` | EN route copy (`/en/about`) |
 
 Embed `_embed=wp:term` for hero tags.
 
 ## Services CPT
 
-`GET /wp/v2/services` — 6 published posts (2026-08-27). Taxonomies: `post_tag`. Order: `menu_order ASC`, then `date DESC`. Featured image is listing-only (some posts `featured_media: 0`).
+`GET /wp/v2/services` — 6 published posts (2026-08-27). Taxonomies: `post_tag`. Order: `menu_order ASC`, then `date ASC` (oldest first — [`sortServiceSlimIndex`](../app/domain/services/adjacent.ts)). Featured image is listing-only (some posts `featured_media: 0`).
 
 ACF on a service post:
 
 | Key | Role |
 |-----|------|
 | `service-repeater` | `[{ cf_title, cf_text, cf_price, cf_features }]` — features not rendered |
-| `service-repeater_en` | `[{ cf_title_en, cf_text_en, cf_price_en, cf_features_en }]` — unused in UI |
-| `post_title_en` / `post_content_en` | also on `meta` (`weblaba_title_en`) — unused in UI |
+| `service-repeater_en` | `[{ cf_title_en, cf_text_en, cf_price_en, cf_features_en }]` — used on `/en/*` |
+| `post_title_en` / `post_content_en` | also on `meta` (`weblaba_title_en`) — used on `/en/*` |
 | `service-thumb` | legacy; often `false` — ignore |
 
 Theme options chrome (same options payload):
@@ -157,10 +157,9 @@ Theme options chrome (same options payload):
 | `footer_*`, `scroll_to_top_*`, `schema_org_*` | wired (`SiteFooterLegal`, `SiteScrollToTop` HUD hairline + `enabled`/`trigger` only, JSON-LD) |
 | `gtm_container_id` | wired (script + noscript); **empty** on live API |
 | Menus `social` | wired → `SiteFooterMenu` (hidden on `/contact`) |
-| Header/drawer aria, archive headings, case nav, lightbox aria | wired — see [`THEME_OPTIONS.md`](THEME_OPTIONS.md) |
-| `header_portfolio_*`, `header_about_*` | in API; **skipped** — duplicate of page / hero nav titles |
+| Header/drawer aria, archive headings, case nav, lightbox aria, `lang_switch_aria` | wired — see [`THEME_OPTIONS.md`](THEME_OPTIONS.md) |
 | `case_thanks_message` | wired → `CaseThanks` |
-| legacy portfolio strings, `lang_switch_aria` | in API; **not wired** in UI yet |
+| `header_portfolio_*`, `header_about_*` | in API; **skipped** — duplicate of page / hero nav titles |
 
 Molecule hero copy (pages, not Options): `post_title` + `hero_usp` / `hero_blurb` / `hero_blurb_cta` on `home-2`, `about`, `services`, `portfolio`, `contact` — see [`HERO_WP_FIELDS.md`](HERO_WP_FIELDS.md). Options repeater `hero_nav_items` is deprecated/removed.
 

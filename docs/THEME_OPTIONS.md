@@ -114,7 +114,6 @@ This table is **Options only**. Molecule HUD copy (`hero_usp` / `hero_blurb` / p
 | `seo_hidden_h1` | Home SEO |
 | `hero_order_label` | Service CTA label (via `normalizeServiceChrome`) |
 | `screenshot_lightbox_*` | `CaseLightbox` aria |
-
 | `lang_switch_aria` | Locale switch (now inline in `SiteHeader.ts`; `LocaleSwitch.vue` is a no-op stub) |
 
 ### UI strings — not wired yet (later)

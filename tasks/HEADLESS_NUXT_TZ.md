@@ -17,6 +17,13 @@
 **Ветка:** `main` (`origin` = `molecula-nuxt`)  
 **Удалено намеренно:** ветка `feat/headless-api-foundation` (неудачная Vite-API итерация; не переносить)
 
+**Актуализация 2026-10-20** (что изменилось после чекпоинта; текст §A ниже местами историчен):
+
+- **Featured wash удалён** — коммит `43c2de4` (`PortfolioBackdrop`, `usePortfolioBackdrop`, `usePortfolioWashGate`, `--backdrop-accent`, `--z-backdrop`). Фон `/portfolio*` прозрачный, слой-подложка не возвращается; акцент кейса (`--case-accent`) работает только в chrome.
+- **EN i18n сделан** — `/en/*` через `pages:extend`, `useLocale`, `pickLocalized`; `lang_switch_aria` подключён в `SiteHeader`.
+- **API-хост** — `https://api.weblaba.ru/wp-json`; §1/§5 хранят исходный текст дословно, ориентироваться на §C и `docs/api-real-response.md`.
+- **§12 (серверная пагинация)** вытеснена клиентской нарезкой полного shelf-пейлоада; **§14** упоминает `CaseNavigation.vue` — фактически [`DetailNav.vue`](../app/components/archive/DetailNav.vue).
+
 ## Статус шагов из §27 IMPLEMENTATION ORDER
 
 | STEP | Описание | Статус |
@@ -47,19 +54,19 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 ## Что уже в репозитории (факт)
 
 - **Стек:** Nuxt 4.5 + Vue 3 + TypeScript + Tailwind 4 + Three.js + GSAP
-- **Node:** `^22.19.0` (`engines` в `package.json`)
+- **Node:** `^22.19.0 || ^24.11.0 || >=26.0.0` (`engines` в `package.json`)
 - **Home `/`:** empty page slot; molecule lives in [`layouts/default.vue`](../app/layouts/default.vue)
 - **Persistent shell:** one canvas / `MoleculeController` / rAF across routes — [`docs/SPATIAL.md`](../docs/SPATIAL.md)
 - **Mobile viewport:** `#hero-canvas` bottom-aligned `100svh` (stable WebGL); stage/chrome dynamic `inset: 0` (HUD frame); burger veil `lvh` / frame `dvh`; scroll-to-top `--hud-scroll-inset-*` inside L-ticks — [`docs/WEBGL_HERO.md`](../docs/WEBGL_HERO.md), [`docs/DESIGN.md`](../docs/DESIGN.md)
 - **Spatial:** `/` home (hub `C` always focused, pointer live); other routes frozen + page overlay
 - **API:** `app/api/client.ts` + portfolio/services/options/menus/pages/media; components не знают REST URL
-- **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw, unused in UI. **`normalizeAcfImage`** accepts ACF image objects **and** bare URL strings (`repeater_field` mix on live cases) — otherwise Interface `SCREEN` cards get empty `src`.
+- **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw and resolved on `/en/*` (`pickLocalized`). **`normalizeAcfImage`** accepts ACF image objects **and** bare URL strings (`repeater_field` mix on live cases) — otherwise Interface `SCREEN` cards get empty `src`.
 - **Theme Options:** [`useThemeOptions`](../app/composables/useThemeOptions.ts) — footer, scroll-top, GTM/schema, HUD chrome UI strings (`nav_verb_*`, `hud_*`, `chrome_*`, `case_section_*`); empty → visible `[key]`; coverage `[theme-options]`; docs [`THEME_OPTIONS.md`](../docs/THEME_OPTIONS.md). WP: Tools → **Seed empty UI string Options**.
 - **Molecule hero copy:** five pages `post_title` + `hero_*` / `*_en` via [`useMoleculeHeroNav`](../app/composables/useMoleculeHeroNav.ts); structure in `navStructure`; Options `hero_nav_items` removed — [`HERO_WP_FIELDS.md`](../docs/HERO_WP_FIELDS.md). Live WP + seed refreshed 2026-09-19 (marketing USP/blurb; About CTA = стек/подход, not Telegram). `navBlurbCta` inserts space after trim so EN does not become `clickto…`. Prod shows new copy only after generate deploy (strict SSG).
-- **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); **full shelf** in one SSG payload, `?page=N` slices client-side; SiteChrome meta `ARCHIVE`; transparent page over frozen molecule; featured wash on hover is CSS-only (`.archive-row__backdrop`), gated by `is-washes-ready` / [`usePortfolioWashGate`](../app/composables/usePortfolioWashGate.ts)
-- **Case page:** editorial inspection (12-col grid, SiteChrome `CASE / NN`); Interface = `landing_screen` + repeater; sequential `getCaseComposition` markers including NEXT; lightbox + `useCaseScrollEntry`; in-page case→case via `useCasePageTransition` (hold previous payload, no generic loader); Index restores `?page=` + scroll (`wl:archive-return`); featured wash is layout-owned (not remounted in CaseShell); same wash entrance gate from outside portfolio
+- **Portfolio archive:** editorial numbered rows (`NN` = slim index, same as `CASE / NN`); **full shelf** in one SSG payload, `?page=N` slices client-side; SiteChrome meta `ARCHIVE`; transparent page over frozen molecule; row hover is CSS-only (no JS preview store, no backdrop layer)
+- **Case page:** editorial inspection (12-col grid, SiteChrome `CASE / NN`); Interface = `landing_screen` + repeater; sequential `getCaseComposition` markers including NEXT; lightbox + `useCaseScrollEntry`; in-page case→case via `useCasePageTransition` (hold previous payload, no generic loader); Index restores `?page=` + scroll (`wl:archive-return`)
 - **Typography:** `--font-ui` JetBrains Mono (HUD / all-caps titles / troika); `--font-body` Exo 2 300 (case prose / intro / captions). Titles via [`SiteScrambleTitle`](../app/components/site/ScrambleTitle.vue) — absolute paint layer, pose-gated (+ case `revealReady`); archive/section body fade via [`usePageContentReveal`](../app/composables/usePageContentReveal.ts)
-- **Services:** `/services` editorial archive (no featured wash; full list in SSG payload + client page slice); `/services/[slug]` on `ArchiveShell` — Index/`SERVICE / NN` kicker, intro, numbered offer repeater (`archive-row--detail`), `ArchiveDetailNav`; [`useServices`](../app/composables/useServices.ts); return key `wl:archive-return:services`
+- **Services:** `/services` editorial archive (no case visual system; full list in SSG payload + client page slice); `/services/[slug]` on `ArchiveShell` — Index/`SERVICE / NN` kicker, intro, numbered offer repeater (`archive-row--detail`), `ArchiveDetailNav`; [`useServices`](../app/composables/useServices.ts); return key `wl:archive-return:services`
 - **About:** `/about` on `ArchiveShell` — Index kicker, tags, photo, intro, numbered skills repeater, CTA → `/contact`; [`useAbout`](../app/composables/useAbout.ts); empty repeater hides skills (no PHP demo fallback)
 - **Contact:** `/contact` on `ArchiveShell` — Index kicker, intro, optional section H2, [`ContactArchiveRow`](../app/components/contact/ContactArchiveRow.vue) list; [`useContacts`](../app/composables/useContacts.ts); empty repeater → `[]` (no PHP defaults); `_blank` → `rel="noopener noreferrer"`
 - **Off-home chrome:** header route menu (direct `transitionTo`); molecule rail / bottom nav / MENU hidden; logo clickable (`pointer-events: auto`)
@@ -73,10 +80,10 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 
 ## Следующая итерация
 
-**Выбранный scope:** EN i18n (`*_en` / `service-repeater_en` / contact `label_en` уже типизированы, UI RU-only). Опционально: case defaults, `lang_switch_aria`.
+**EN i18n закрыт** (`/en/*` через `pages:extend`, `useLocale`, `*_en` через `pickLocalized`; `lang_switch_aria` подключён в `SiteHeader`). Опционально: case defaults, `gtm_container_id`.
 
 Foundation gaps закрыты: `useWpMenu('social')` → SiteFooterMenu (не на `/contact`); privacy prerender/sitemap; GTM noscript; `caseImageSrcSet`; `case_thanks_message` → CaseThanks. Live `gtm_container_id` still empty in WP (ops).
-Не ломать content pipeline, conditional rendering, case visual / wash, services archive (no wash), persistent shell, Theme Options / molecule page hero wiring.
+Не ломать content pipeline, conditional rendering, case visual, services archive, persistent shell, Theme Options / molecule page hero wiring.
 
 ---
 
@@ -1131,6 +1138,6 @@ Do NOT continue automatically into visual case redesign.
 Content: docs/CONTENT.md + docs/api-real-response.md + docs/HERO_WP_FIELDS.md
 Case / archive visual: docs/CASES.md
 
-Scope: polish EN i18n / remaining chrome. Optional: case defaults, lang_switch_aria. Fill WP gtm_container_id when ready.
-Не ломать absence-as-null, case wash, services-without-wash, persistent shell, contact options normalize, strict SSG (no prod client /wp-json), hero blurb CTA grammar (verb + tail), SSR-safe cookie footer / archive href / case accent.
+Scope: EN i18n и chrome готовы; остались мелкие полировки. Optional: case defaults. Fill WP gtm_container_id when ready.
+Не ломать absence-as-null, archive row hover chrome, services archive, persistent shell, contact options normalize, strict SSG (no prod client /wp-json), hero blurb CTA grammar (verb + tail), SSR-safe cookie footer / archive href / case accent.
 ```

@@ -46,7 +46,7 @@ Shared media/text helpers live in [`app/domain/wp/`](../app/domain/wp/) (`emptyT
 
 [`normalizeHeroTagCloud`](../app/domain/hero/normalizeHeroTagCloud.ts) maps ACF `hero_tag_cloud` → `HeroTag[]`. Empty / false repeater → `[]`. Rows without `label` are dropped; unknown `tier` → `secondary`. Rendered as a decorative Troika cloud around the molecule ([`TagCloud.ts`](../app/lib/molecular/TagCloud.ts)).
 
-**EN fields are typed on raw ACF and documented below; normalizers and UI do not read them yet.**
+**EN fields are typed on raw ACF and resolved on `/en/*` routes** (`pickLocalized`, RU fallback) — see [EN fields](#en-fields-en-uselocale).
 
 Rules:
 
@@ -66,8 +66,8 @@ Rules:
 | `/` | Molecular hero (`ClientOnly` → `MolecularHero`) |
 | `/portfolio` | `usePortfolio({ shelf: 'current' })` — full-shelf SSG payload, client `?page=` slice; editorial rows; cross-link to legacy shelf |
 | `/portfolio/legacy` | `usePortfolio({ shelf: 'legacy' })` — same pattern for `portfolio_category: legacy`; cross-link back to current |
-| `/portfolio/[slug]` | `CaseShell` + [`usePortfolioCaseNav`](../app/composables/usePortfolioCaseNav.ts) (CASE / NN + prev/next within shelf) + video hero + layout featured wash / accent overlay + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT; archive return (Index, footer, hero menu «Портфолио») restores shelf + pagination when opened from archive row |
-| `/services` | `useServices(page)` — full-list SSG payload, client `?page=` slice; editorial rows **without** featured wash; same archive pagination scroll gate |
+| `/portfolio/[slug]` | `CaseShell` + [`usePortfolioCaseNav`](../app/composables/usePortfolioCaseNav.ts) (CASE / NN + prev/next within shelf) + video hero + case accent + Overview / Interface (`landing_screen`+repeater) / Mobile / Slices / NEXT; archive return (Index, footer, hero menu «Портфолио») restores shelf + pagination when opened from archive row |
+| `/services` | `useServices(page)` — full-list SSG payload, client `?page=` slice; editorial rows **without** the case visual system; same archive pagination scroll gate |
 | `/services/[slug]` | `ArchiveShell` (`SERVICE / NN`) + Index kicker + title/tags + intro + offer repeater (`archive-list` rows: index, price meta, hover line/arrow, body + order CTA) + [`ArchiveDetailNav`](../app/components/archive/DetailNav.vue) |
 | `/about` | `ArchiveShell` + Index kicker + title/tags + optional photo + intro + skills repeater (`archive-list`) + CTA → `/contact` |
 | `/contact` | `ArchiveShell` + Index kicker «Контакты» + intro (`contact_popup_text`) + optional H2 (`contact_popup_title`) + contacts (`ContactArchiveRow` / `archive-list`) |
