@@ -98,9 +98,10 @@ points, chunky and legible, cheap to fill.
 
 | Property | Implementation |
 |----------|----------------|
-| Drift | vertex shader from `uTime`; yaw + pitch of a thin shell around the hub (`dustDrift` off on LOW) |
+| Drift | vertex shader from `uAmbientTime` (monotonic `elapsed`); yaw + pitch of a thin shell around the hub (`dustDrift` off on LOW) |
 | Bond stream | `STREAM_RATIO = 0.18` rows; each point has its **own loop**: launch delay → travel to the atom → vanish on arrival → wait out its own period (5.2–7.0s) → launch again |
-| Re-emission | a new target resets the local stream clock; the whole stream is destroyed and re-emitted, never resumed mid-flight |
+| Re-emission | a new target resets the local stream clock (`uTime`); the whole stream is destroyed and re-emitted, never resumed mid-flight |
+| Two clocks | stream `uTime` (restarted per target) and ambient `uAmbientTime` (never restarted) are separate uniforms — a hover must not snap the ambient shell |
 | Spacing | each period re-rolls the launch phase and a **narrow** lateral cone around the hub→atom connector, so the flow is continuous, tight and never repeats a path |
 | Lifecycle | a point is visible only while `0 ≤ age ≤ travel`; it never parks on the destination atom |
 | Sizing | `DUST_POINT_PX` (3.4), same square for stream and ambient; clamped 1–5 |

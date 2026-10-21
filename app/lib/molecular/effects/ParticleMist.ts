@@ -46,7 +46,10 @@ function mulberry32(seed: number): () => number {
 }
 
 const vertexShader = /* glsl */ `
+  /** Stream clock — restarted from 0 whenever the target atom changes. */
   uniform float uTime;
+  /** Ambient clock — monotonic scene time, never restarted by a target change. */
+  uniform float uAmbientTime;
   uniform float uOpacity;
   uniform float uPixelRatio;
 
@@ -137,8 +140,9 @@ const vertexShader = /* glsl */ `
       accent = 0.25 + 0.5 * uLinkMix;
     } else {
       // Data dust: thin shell in the molecule frame, yaw + pitch over time.
-      // LOW freezes this ambient drift; the bond stream still moves.
-      float driftTime = uTime * uDrift;
+      // LOW freezes this ambient drift; the bond stream still moves. This uses
+      // its own clock so a stream re-emission never snaps the shell.
+      float driftTime = uAmbientTime * uDrift;
       float radius = 1.05 + aNode.x * 2.35;
       float yaw = driftTime * HUB_YAW * speed + phase * TAU;
       float pitch = driftTime * HUB_PITCH * speed + phase * TAU * 0.37;
@@ -168,8 +172,9 @@ const vertexShader = /* glsl */ `
     float fog = fogFactor(-mv.z);
     float twinkle = isStream
       ? 0.72 + 0.28 * sin(uTime * 0.4 + phase * 31.0)
-      : mix(1.0, 0.72 + 0.28 * sin(uTime * 0.4 + phase * 31.0), uDrift);
-    float baseAlpha = isStream ? mix(0.15, 0.85, uLinkMix) : 0.8;    vAlpha = uOpacity * baseAlpha * twinkle * depthFade * (1.0 - fog);
+      : mix(1.0, 0.72 + 0.28 * sin(uAmbientTime * 0.4 + phase * 31.0), uDrift);
+    float baseAlpha = isStream ? mix(0.15, 0.85, uLinkMix) : 0.8;
+    vAlpha = uOpacity * baseAlpha * twinkle * depthFade * (1.0 - fog);
 
     // Idle streams fade to a faint residue, never disappear entirely.
     if (isStream && uLinkMix < 0.05) {
@@ -219,8 +224,9 @@ function gather(
  * - Free points drift on a thin shell around the hub in the molecule frame.
  * - ~18% of rows stream the active bond hub → upcoming atom; each point has
  *   its own launch/travel/rest loop and never parks on the destination.
- * - Drift is computed in the vertex shader from `uTime`; the CPU writes
- *   uniforms only.
+ * - Drift is computed in the vertex shader from `uAmbientTime`; the stream runs
+ *   on `uTime`, which a target change restarts. Two clocks on purpose: a stream
+ *   re-emission must not snap the ambient shell. The CPU writes uniforms only.
  * - Distance fade reuses the scene fog, so the dust sits in the scene depth.
  *
  * The object mirrors the molecule transform (position + quaternion), so `local`
@@ -302,6 +308,7 @@ export class ParticleMist {
     this.material = new ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
+        uAmbientTime: { value: 0 },
         uOpacity: { value: 0 },
         uPixelRatio: { value: 1 },
         uLinkFrom: { value: [0, 0, 0] },
@@ -396,7 +403,8 @@ export class ParticleMist {
   /**
    * Stream lifecycle: the caller restarts its local clock at 0, so every
    * stream point is born at the hub in the same frame. Nothing is left
-   * "paused" mid-trajectory from the previous target.
+   * "paused" mid-trajectory from the previous target. The ambient shell runs on
+   * its own monotonic clock and is untouched here.
    */
   restartStream(): void {
     this.material.uniforms.uTime!.value = 0;
@@ -413,9 +421,14 @@ export class ParticleMist {
     this.material.uniforms.uPixelRatio!.value = pixelRatio;
   }
 
-  update(time: number, opacity: number): void {
+  /**
+   * @param streamTime  clock of the bond stream; restarts on a target change
+   * @param ambientTime monotonic scene clock for the ambient shell drift
+   */
+  update(streamTime: number, ambientTime: number, opacity: number): void {
     const uniforms = this.material.uniforms;
-    uniforms.uTime!.value = time;
+    uniforms.uTime!.value = streamTime;
+    uniforms.uAmbientTime!.value = ambientTime;
     uniforms.uOpacity!.value = opacity;
     this.syncVisibility();
   }

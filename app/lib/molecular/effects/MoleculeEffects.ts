@@ -209,6 +209,7 @@ export class MoleculeEffects {
 
     this.mist.update(
       state.reducedMotion ? 0 : this.streamTime,
+      time,
       this.fade,
     );
 
