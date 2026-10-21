@@ -3,6 +3,12 @@ export type HeroAutoplayTickContext = {
   busy: boolean;
   isFocusSettled: boolean;
   hasUserPreview: boolean;
+  /**
+   * Hover preview on an atom that is not the committed one. Hovering the
+   * committed atom pauses the clock but must not take the next-atom hint away:
+   * right after a click the pointer sits on the atom that was just committed.
+   */
+  hasDistinctPreview: boolean;
   menuOpen: boolean;
   /** Currently committed nav item id (sync index after manual select). */
   committedItemId: string | null;
@@ -46,6 +52,13 @@ export class HeroAutoplay {
    * let the slide clock advance through the turn instead of freezing on it.
    */
   private awaitingTurn = false;
+  /**
+   * Manual selection pauses the slide clock for the idle hold, but the next
+   * atom must stay hinted for that whole hold: otherwise the orbit comet,
+   * dust stream and pulsing wireframe sit on the clicked atom and only move
+   * once the idle resume starts the dwell.
+   */
+  private hintWhilePaused = false;
   /** Smaller than the settled value, so the progress bar keeps moving. */
   private static readonly TURN_SETTLE_GATE = 0.35;
 
@@ -61,6 +74,7 @@ export class HeroAutoplay {
     this.running = true;
     this.paused = false;
     this.waitingForIdle = false;
+    this.hintWhilePaused = false;
     this.idleElapsedMs = 0;
     this.syncIndex(fromItemId, false);
     this.progress = 0;
@@ -71,6 +85,7 @@ export class HeroAutoplay {
     this.running = false;
     this.paused = false;
     this.waitingForIdle = false;
+    this.hintWhilePaused = false;
     this.idleElapsedMs = 0;
     this.progress = 0;
     this.onProgress(0);
@@ -83,6 +98,18 @@ export class HeroAutoplay {
     this.waitingForIdle = true;
     this.idleElapsedMs = 0;
     this.dwelling = false;
+  }
+
+  /**
+   * Manual atom selection (click / HUD / connector): pause the slide clock for
+   * the idle hold, yet hint the next atom from this frame on. The commit turn
+   * and the effects then move together, exactly like an autoplay advance.
+   */
+  selectCommitted(itemId: string): void {
+    this.pause();
+    if (!this.items.includes(itemId)) return;
+    this.hintWhilePaused = true;
+    this.syncIndex(itemId);
   }
 
   /** Next item in autoplay order (wraps). */
@@ -100,10 +127,13 @@ export class HeroAutoplay {
   /**
    * True once the next atom may be hinted: from the first frame of the commit
    * turn, so the orbit / dust / pulsing wireframe light up while the molecule
-   * is still rotating toward the viewer.
+   * is still rotating toward the viewer. A manual commit keeps the hint
+   * through the idle pause that follows it.
    */
   isNextHinted(): boolean {
-    return this.running && (this.dwelling || this.awaitingTurn) && !this.paused;
+    if (!this.running) return false;
+    if (this.hintWhilePaused) return true;
+    return (this.dwelling || this.awaitingTurn) && !this.paused;
   }
 
   /** Force index + progress reset (e.g. restore home selection). */
@@ -113,6 +143,7 @@ export class HeroAutoplay {
     this.onProgress(0);
     this.paused = false;
     this.waitingForIdle = false;
+    this.hintWhilePaused = false;
     this.idleElapsedMs = 0;
   }
 
@@ -123,6 +154,7 @@ export class HeroAutoplay {
     }
 
     if (!ctx.isHome || ctx.busy) {
+      this.hintWhilePaused = false;
       this.dwelling = false;
       if (this.progress !== 0) {
         this.progress = 0;
@@ -134,6 +166,9 @@ export class HeroAutoplay {
     this.syncIndex(ctx.committedItemId);
 
     if (ctx.hasUserPreview || ctx.menuOpen) {
+      // Only a preview of another atom (or the menu) owns the effects. A
+      // pointer resting on the just-committed atom keeps the manual hint.
+      if (ctx.hasDistinctPreview || ctx.menuOpen) this.hintWhilePaused = false;
       this.paused = true;
       this.waitingForIdle = true;
       this.idleElapsedMs = 0;
@@ -147,6 +182,8 @@ export class HeroAutoplay {
       if (this.idleElapsedMs < this.idleResumeMs) return;
       this.waitingForIdle = false;
       this.paused = false;
+      // Dwell takes over the hint from here on.
+      this.hintWhilePaused = false;
       this.idleElapsedMs = 0;
     }
 

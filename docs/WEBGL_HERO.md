@@ -222,6 +222,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 | Fill | Progress 0→1 over `SLIDE_DURATION_MS` (~5500) |
 | Advance | Next item in `navigationConfig.items` order (wraps) |
 | Next preview | From the **commit frame** (`isNextHinted()` is armed by `syncIndex` the moment the committed item changes): **pulsing light wireframe** on the next item's atom (`setAccentWireframeAtom` pulse mode), the **dust stream** (re-emitted from the hub) and the **orbit comet** (born at that atom) toward it. The static dashed hub→atom connector stays visible; the animated dash flow is retired. |
+| Manual select | Atom click / HUD / connector commits via `selectCommitted`: the clock pauses for the idle hold, but the next preview stays latched (`hintWhilePaused`) so the effects move on the click frame, not after the resume. Hovering the just-clicked atom pauses the clock but keeps the latch (`hasDistinctPreview` = preview of *another* atom) |
 | Turn clock | `awaitingTurn` lets the slide progress keep advancing through the turn once `getTurnProgress() ≥ 0.35` (instead of freezing at 0 until settle), so the cycle reads as one continuous move |
 | Comet lap | A new target restarts the arc **at that atom**; the head laps its ring exactly once per active-atom cycle (`COMET_CYCLE_SECONDS` = slide duration) |
 | Pause | Hover (atom or nav), manual select, mobile menu open, `navigator.busy`, off-home |

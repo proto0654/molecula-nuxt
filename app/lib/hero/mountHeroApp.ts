@@ -443,7 +443,9 @@ export function mountHeroApp(
     if (item.route && item.route !== '/') {
       options.prefetchRoute?.(item.route);
     }
-    autoplay.pause();
+    // Manual commit: stop the slide clock but move the next-atom effects on
+    // this frame, so the click reads like an autoplay slide, not a stall.
+    autoplay.selectCommitted(itemId);
     navigationState.setCommitted(itemId);
     activateCommittedItem(itemId);
   }
@@ -682,6 +684,10 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
       isFocusSettled: controller.isFocusSettled(),
       turnProgress: controller.getTurnProgress(),
       hasUserPreview: navigationState.previewItemId !== null,
+      hasDistinctPreview: Boolean(
+        navigationState.previewItemId &&
+          navigationState.previewItemId !== navigationState.committedItemId,
+      ),
       menuOpen: mobileNav.isOpen,
       committedItemId: navigationState.committedItemId,
     });

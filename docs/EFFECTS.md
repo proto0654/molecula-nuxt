@@ -53,7 +53,13 @@ re-emission land on the same frame.
 `isFocusSettled()`. `HeroAutoplay.syncIndex` arms `awaitingTurn` the moment the committed item
 changes, so the hint is live on the commit frame; `activateCommittedItem` also calls
 `applyUpcomingFocus()` right after `focusAtom`. Measured: dust + orbit are lit at ~90ms after the
-autoplay commit while `fill ≈ 0`, i.e. before the slide clock starts.
+autoplay commit while `fill ≈ 0`, i.e. before the slide clock starts. A **manual select**
+(atom click, HUD, connector) goes through `HeroAutoplay.selectCommitted`: the slide clock pauses
+for the idle hold, but `hintWhilePaused` keeps the next atom hinted for the whole hold, so the
+effects move on the click frame instead of after the ~2s idle resume. Only a **distinct** preview
+(hover on an atom other than the committed one, `hasDistinctPreview`), an open mobile menu,
+`navigator.busy` or off-home clear that latch — hovering the atom that was just clicked pauses the
+clock but must not take the hint away.
 
 The comet arc starts at the atom's own orbital angle (`placement.theta`) and unwinds from there
 with `easeOutCubic` over the growth window. **Every new target restarts it** at that atom
