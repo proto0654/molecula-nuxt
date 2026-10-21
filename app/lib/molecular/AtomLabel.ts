@@ -1,4 +1,10 @@
-import { Group, type Camera, type Object3D, Vector3 } from 'three';
+import {
+  Group,
+  type Camera,
+  type Object3D,
+  type PerspectiveCamera,
+  Vector3,
+} from 'three';
 import { Text } from 'troika-three-text';
 import { fixOrphanPrepositions } from '../../domain/wp';
 import { ACCENT_COLOR } from './sceneColors';
@@ -19,6 +25,10 @@ const SURFACE_PAD = 0.55;
 const BLURB_WIDTH_EM = 14;
 /** Right inset so the typed line does not hug / clip the wrap edge. */
 const BLURB_RIGHT_PAD_EM = 1.25;
+/** Free gap kept at the viewport edge, as a share of the half-viewport width. */
+const BLURB_EDGE_MARGIN_NDC = 0.06;
+/** Never squeeze the blurb below this share of its authored wrap width. */
+const BLURB_MIN_WIDTH_RATIO = 0.45;
 /** JetBrains Mono advance width as a fraction of fontSize. */
 const MONO_ADVANCE = 0.6;
 /** Self-hosted JetBrains Mono (Cyrillic); troika needs ttf/woff, not woff2. */
@@ -167,6 +177,14 @@ export class AtomLabel {
   private readonly scratchAtom = new Vector3();
   private readonly scratchNormal = new Vector3();
   private readonly scratchLabel = new Vector3();
+  private readonly scratchNdc = new Vector3();
+  /**
+   * Blurb wrap box clamped to the viewport edge, in label-local units.
+   * Infinity = the authored width fits.
+   */
+  private edgeMaxWidth = Number.POSITIVE_INFINITY;
+  /** Character budget the current wrap was built for; -1 = not built yet. */
+  private appliedBlurbChars = -1;
 
   constructor(caption: string, radius: number, fontSize = radius * 0.7) {
     this.radius = radius;
@@ -361,6 +379,38 @@ export class AtomLabel {
 
     const distance = this.scratchCamera.distanceTo(this.scratchLabel);
     this.object.scale.setScalar(distance / REF_DISTANCE);
+    this.clampBlurbToViewport(camera, distance);
+  }
+
+  /**
+   * The label is pinned to its atom, so on the right half of the screen the
+   * authored wrap box runs past the canvas edge (home framing sits at
+   * `screenX 0.62`). Measure the free NDC space at the label's depth, convert
+   * it to label-local units and re-wrap only when the character budget
+   * actually changes — troika re-layout is not free.
+   */
+  private clampBlurbToViewport(camera: Camera, distance: number): void {
+    if (!(camera as PerspectiveCamera).isPerspectiveCamera) return;
+    const perspective = camera as PerspectiveCamera;
+    this.scratchNdc.copy(this.scratchLabel).project(perspective);
+    const halfHeight =
+      Math.tan((perspective.fov * Math.PI) / 360) * distance;
+    const halfWidth = halfHeight * perspective.aspect;
+    const scale = this.object.scale.x;
+    const authored = this.blurbAuthoredWidth();
+    const freeNdc = 1 - BLURB_EDGE_MARGIN_NDC - this.scratchNdc.x;
+    const limit =
+      scale > 0 && halfWidth > 0
+        ? (Math.max(0.15, freeNdc) * halfWidth) / scale
+        : Number.POSITIVE_INFINITY;
+    this.edgeMaxWidth = Math.max(
+      authored * BLURB_MIN_WIDTH_RATIO,
+      Math.min(authored, limit),
+    );
+    const chars = this.blurbMaxChars();
+    if (chars === this.appliedBlurbChars) return;
+    this.appliedBlurbChars = chars;
+    this.applyFontSizes();
   }
 
   dispose(): void {
@@ -378,10 +428,19 @@ export class AtomLabel {
     return this.baseBlurbFontSize * this.fontScale * this.blurbScale;
   }
 
-  private blurbMaxWidth(): number {
+  /** Authored wrap box, from the caption em-box. */
+  private blurbAuthoredWidth(): number {
     return (
       this.effectiveLetterFontSize * (BLURB_WIDTH_EM - BLURB_RIGHT_PAD_EM)
     );
+  }
+
+  /**
+   * Wrap box actually used: the authored width, clamped so a label pinned on
+   * the right half of the viewport does not type its blurb past the canvas.
+   */
+  private blurbMaxWidth(): number {
+    return Math.min(this.blurbAuthoredWidth(), this.edgeMaxWidth);
   }
 
   private blurbMaxChars(): number {
