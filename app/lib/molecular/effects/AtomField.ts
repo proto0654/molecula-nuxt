@@ -19,7 +19,7 @@ import type { EffectsFrameState } from './types';
 
 const SHELL_SCALE = 1.12;
 /** Single drafting shell — one wrap, not a stack. */
-const SHELL_HOME_OPACITY = 0.22;
+const SHELL_HOME_OPACITY = 0.14;
 const SHELL_FROZEN_OPACITY = 0.3;
 /** Home-only continuous spin; frozen routes rotate with scroll only. */
 const SHELL_SPEED = 0.12;

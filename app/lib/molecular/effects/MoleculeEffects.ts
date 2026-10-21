@@ -226,10 +226,11 @@ export class MoleculeEffects {
     for (const atom of this.atoms) {
       const rim = this.rims.get(atom.id);
       if (!rim) continue;
-      // Once frozen the camera sits close to a planet-sized atom; a back-side
-      // rim shell would flood the viewport. Freeze uses the horizon ring.
+      // The focused atom carries captions over its silhouette: a fresnel edge
+      // there reads like an MMO selection ring, so only peripheral atoms get
+      // a faint rim. Frozen routes also drop it (planet-sized atom).
       const focused = atom.id === state.focusedAtomId;
-      const intensity = state.frozen ? 0 : focused ? 0.58 : 0.16;
+      const intensity = state.frozen || focused ? 0 : 0.16;
       rim.setRadius(atom.radius);
       rim.setIntensity(this.fade * intensity * (0.75 + 0.25 * reveal));
     }

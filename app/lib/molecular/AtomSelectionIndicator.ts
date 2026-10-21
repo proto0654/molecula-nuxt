@@ -28,7 +28,7 @@ const FOLLOW = 10;
 const COLOR_FOLLOW = 6;
 const HOVER_OPACITY = 0.4;
 /** Committed reticle sits one step below the next-atom wireframe. */
-const COMMITTED_OPACITY = 0.48;
+const COMMITTED_OPACITY = 0.36;
 
 /**
  * Screen-flat measurement reticle around an atom (camera billboard).
