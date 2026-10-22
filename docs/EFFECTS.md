@@ -24,7 +24,7 @@ The reveal uses the same cadence as the HTML listings: `1.25s` draw, `55ms` per-
 
 | Layer | Module | Draw cost | Home | Frozen route |
 |-------|--------|-----------|------|--------------|
-| Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream (hub target → shell dive) | slower drift |
+| Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream (hub target → shell dive) | ambient drift only (stream gated off) |
 | Atom rim | [`AtomRim.ts`](../app/lib/molecular/effects/AtomRim.ts) | 1 per atom | back-side fresnel edge | **off** (see gotcha) |
 | Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one soft-light rotating shell | one gray shell, fixed pose |
 | Orbit comet | [`OrbitComet.ts`](../app/lib/molecular/effects/OrbitComet.ts) | 1 line | **upcoming** atom's orbit (hover / next) | **off** |
@@ -172,7 +172,7 @@ launch delay) — see [MOTION.md](MOTION.md#home-boot-direct-load).
 ## Reduced motion
 
 - `elapsed` is clamped to `0` for all effect clocks.
-- The shell stays static, the comet holds its arc, the dust stream is gated off off-home.
+- The shell stays static, the comet holds its arc, the dust stream is gated off away from home.
 - No focus pulse, no breathing opacity. The field remains as a static drafting overlay.
 
 ## Tuning
