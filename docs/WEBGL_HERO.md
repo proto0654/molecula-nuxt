@@ -31,7 +31,7 @@ layouts/default.vue (persists)
           │     empty canvas / logo → restoreOverview + re-activate hub readout
           ├─ HeroAutoplay (home only)
           │     after focus settle → progress 0→100% (~5.5s) → next committed item
-          │     pause on hover / click / mobile menu; resume after ~2s idle
+          │     hold on hover / click / mobile menu (rewind to 0); resume after ~2s idle
           │     does not call navigateTo — same commit path as first click
           ├─ viewport MQ → setCompositionProfile + connector.enable (desktop ∩ home)
           └─ Navigator.onNavigate
@@ -353,7 +353,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `navigation/archiveReturn.ts` | `sessionStorage` restore of archive `?page=` + scroll |
 | `navigation/TransitionController.ts` | `transitionTo(route)` → Nuxt (handler from MolecularHero) |
 | `navigation/TransitionState.ts` | Centralized transition phase / progress snapshot |
-| `hero/HeroAutoplay.ts` | Home idle cycle: settle-gated progress, pause/resume, advance callback |
+| `hero/HeroAutoplay.ts` | Home idle cycle: settle-gated progress, hold-rewind/resume, next-hint latch, cycle-restart signal, advance callback |
 | `hero-ui/HeroSlideProgress.ts` | Desktop header + mobile nav progress track |
 | `hero-ui/HudFrame.ts` | Grid + corner ticks (pointer-events none) |
 | `hero-ui/SiteHeader.ts` | WebLaba SVG logo (`sign-weblaba.svg`, `assetBaseURL`); **inline locale** (RU \| ENG) + chrome **INDEX** — left-click → `transitionTo` (same SPA hop as menu/burger; modified clicks keep native `<a>`); `syncLocale()` after hop / nav change; home desktop: slide progress + NODE; off-home desktop/tablet: centered route links; mobile: MENU |
