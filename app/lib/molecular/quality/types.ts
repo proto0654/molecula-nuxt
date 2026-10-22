@@ -19,14 +19,10 @@ export type QualitySettings = {
   particleCount: number;
   /** Ambient shell drift; the bond stream keeps moving on every tier. */
   dustDrift: boolean;
-  /** Frozen-route drafting shell turns with scroll (LOW keeps it static). */
-  routeShellSpin: boolean;
   /** Additive fresnel edge on each atom (back-side shell). */
   atomRim: boolean;
   /** Comet arc travelling along the upcoming orbit. */
   orbitComet: boolean;
-  /** Scroll-driven horizon ring on the frozen atom. */
-  scanBand: boolean;
 };
 
 export type QualityListener = (settings: QualitySettings) => void;

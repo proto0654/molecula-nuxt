@@ -13,10 +13,8 @@ export const QUALITY_PRESETS: Record<QualityLevel, QualitySettings> = {
     material: 'standard',
     particleCount: 120,
     dustDrift: true,
-    routeShellSpin: true,
     atomRim: true,
     orbitComet: true,
-    scanBand: true,
   },
   medium: {
     level: 'medium',
@@ -30,10 +28,8 @@ export const QUALITY_PRESETS: Record<QualityLevel, QualitySettings> = {
     material: 'standard',
     particleCount: 112,
     dustDrift: true,
-    routeShellSpin: true,
     atomRim: true,
     orbitComet: true,
-    scanBand: true,
   },
   low: {
     level: 'low',
@@ -47,10 +43,8 @@ export const QUALITY_PRESETS: Record<QualityLevel, QualitySettings> = {
     material: 'lambert',
     particleCount: 104,
     dustDrift: false,
-    routeShellSpin: false,
     atomRim: false,
     orbitComet: false,
-    scanBand: true,
   },
 };
 

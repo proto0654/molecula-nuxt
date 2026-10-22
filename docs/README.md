@@ -5,7 +5,7 @@
 | [../tasks/HEADLESS_NUXT_TZ.md](../tasks/HEADLESS_NUXT_TZ.md) | Full headless TZ + checkpoint (section A) |
 | [SPATIAL.md](SPATIAL.md) | Persistent molecular shell, spatial state machine, route mapping, Three.js lifecycle |
 | [WEBGL_HERO.md](WEBGL_HERO.md) | Three.js molecule math / HUD wiring |
-| [EFFECTS.md](EFFECTS.md) | Molecular atmosphere: particles, rim, single drafting shell, scroll horizon ring, quality grades |
+| [EFFECTS.md](EFFECTS.md) | Molecular atmosphere: particles, rim, single drafting shell, still freeze, quality grades |
 | [CONTENT.md](CONTENT.md) | WP API → normalize → portfolio / services / about → prerender |
 | [CASES.md](CASES.md) | Case + archive visual system (composition, chrome, listing, transitions) |
 | [MOTION.md](MOTION.md) | Off-home HTML entrance: pose gate, beats, listing chain vs viewport |

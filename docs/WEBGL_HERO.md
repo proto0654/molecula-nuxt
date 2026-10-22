@@ -255,7 +255,7 @@ Orbit sweep is applied each frame as `stableFocus * axisAngle(progress * 2π)` o
 
 [`AtomHover.ts`](../app/lib/molecular/AtomHover.ts): raycasts **atom meshes only** (`MoleculeScene.getAtomMeshes()`). Dirty when pointer NDC changes, molecule quaternion / zoom progress changes, or resize. Enter/leave notifies `mountHeroApp.ts` → `NavigationState.setAtomHover`. Selection rings are siblings of the icosahedron on the atom **Group** (not children of the scaled mesh); labels live on `labelsGroup` (scene). Neither is in `atomMeshes` (empty `raycast`). Decorative ghost geometry and the selection wireframe are also not pick targets.
 
-Highlight is separate from focus orientation: `setHighlightedAtom` is a no-op for mesh fill (atoms use a fixed shell-dim palette). Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloStates` (dual committed + preview). Committed reticle color is `CHROME_SOFT_COLOR` (`#c4cbd3` in [`sceneColors.ts`](../app/lib/molecular/sceneColors.ts)), one step below the next-atom wireframe; concentric rings fade outward. Committed static wireframe shell is **retired** (`setWireframeAtom` is a no-op) — the outline is reserved for the upcoming atom. Hover preview and autoplay-next hint: `setAccentWireframeAtom` (static on hover, pulse while autoplay dwelling). Hub bond dash flow (`setBondFlowAtom`) is **retired** — the upcoming atom reads through its orbit comet, wireframe and the dust stream. Title brightness: `setAtomTitleHighlight` (committed with blurb + distinct preview); typewriter blurb uses `ACCENT_COLOR`. Decorative orbit / comet: `setActiveOrbitAtom` targets the **upcoming** atom on home (`setUpcomingAtom` from hover / autoplay-next) and the focused atom off-home. Desktop top routes (`SiteHeader`) are direct SPA hops — no molecule `is-active` / `is-committed` chrome; focus indication stays in the sidebar rail.
+Highlight is separate from focus orientation: `setHighlightedAtom` is a no-op for mesh fill (atoms use a fixed shell-dim palette). Selection mode (`idle` / `hover` pulse / `committed` freeze) is set via `setHaloStates` (dual committed + preview). Committed reticle color is `CHROME_SOFT_COLOR` (`#c4cbd3` in [`sceneColors.ts`](../app/lib/molecular/sceneColors.ts)), one step below the next-atom wireframe; concentric rings fade outward. Committed static wireframe shell is **retired** (`setWireframeAtom` is a no-op) — the outline is reserved for the upcoming atom. Hover preview and autoplay-next hint: `setAccentWireframeAtom` (static on hover, pulse while autoplay dwelling). Hub bond dash flow (`setBondFlowAtom`) is **retired** — the upcoming atom reads through its orbit comet, wireframe and the dust stream. Title brightness: `setAtomTitleHighlight` (committed with blurb + distinct preview); typewriter blurb uses `ACCENT_COLOR`. Decorative orbit / comet: `setActiveOrbitAtom` targets the **upcoming** atom on home (`setUpcomingAtom` from hover / autoplay-next); a peripheral route clears both, so no comet laps the focused atom. Desktop top routes (`SiteHeader`) are direct SPA hops — no molecule `is-active` / `is-committed` chrome; focus indication stays in the sidebar rail.
 
 **Atom shell fill:** HIGH/MEDIUM (standard) — always settled dim; emissive lifts toward `SCENE_BG` with facet contrast from directional key/fill (ambient ~0.24, key ~1.28). LOW (Lambert) — base `COLOR_BY_LABEL` graphite, no dim/emissive fill. No hover/freeze shell mix on any level. During light sweeps, `setSweepLightingRelief` eases shell dim/emissive on standard only (~0.72 max) so the shared `PointLight` reads on flat facets — focused atom full envelope; secondary atoms ~0.92 of envelope.
 
@@ -278,27 +278,27 @@ Pages call `playEntityLightSweep` via a module bridge (`registerMoleculeCue` in 
 
 The molecule carries a quality-tiered atmosphere layer owned by
 [`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts): data dust (shell drift plus a
-bond stream toward the upcoming atom), atom rims, one rotating 1px shell and a horizon ring, and a
-comet on the upcoming atom's orbit. Home is data-driven motion; peripheral routes turn the frozen
-atom into a drafting scan, and the shell turns only with scroll on HIGH/MEDIUM (static on LOW). The field fades with
-`approachBusy`, attaches to the focused atom, and never changes the molecule pose, camera or freeze
-logic. There is **no glow plane**, **no blurred sweep** and **no lat/long surface lattice**.
+bond stream toward the upcoming atom), atom rims, one rotating 1px shell, and a comet on the
+upcoming atom's orbit. Home is data-driven motion; a peripheral route freezes down to one still
+shell in a fixed pose — no rotation, no scroll-driven scale, no comet and no stream. The field fades
+with `approachBusy`, attaches to the focused atom, and never changes the molecule pose, camera or
+freeze logic. There is **no glow plane**, **no blurred sweep** and **no lat/long surface lattice**.
 
-Full contract (tiers, scroll mapping, performance budget, tuning): [`EFFECTS.md`](EFFECTS.md).
+Full contract (tiers, route motion, performance budget, tuning): [`EFFECTS.md`](EFFECTS.md).
 
 ## Quality and performance
 
 [`QualityManager`](../app/lib/molecular/quality/QualityManager.ts) is the lock-once source of truth (`high` | `medium` | `low`). It does **not** retune on resize, hover, or tab blur.
 
-| Level | maxPixelRatio | atomDetail | preview wireframe | rings | ticks | decorative | material | dust | drift | rim | comet | route spin | freeze scan |
-|-------|---------------|------------|-------------------|-------|-------|------------|----------|------|-------|-----|-------|------------|-------------|
-| HIGH | 1.75 | 1 | yes | 3 | yes | yes | `MeshStandardMaterial` | 120 | yes | yes | yes | yes | ring |
-| MEDIUM | 1.5 | 1 | yes | 2 | no | yes | `MeshStandardMaterial` | 112 | yes | yes | yes | yes | ring |
-| LOW | 1 | 0 | no | 2 | no | no | `MeshLambertMaterial` | 104 | no | no | no | no | ring |
+| Level | maxPixelRatio | atomDetail | preview wireframe | rings | ticks | decorative | material | dust | drift | rim | comet |
+|-------|---------------|------------|-------------------|-------|-------|------------|----------|------|-------|-----|-------|
+| HIGH | 1.75 | 1 | yes | 3 | yes | yes | `MeshStandardMaterial` | 120 | yes | yes | yes |
+| MEDIUM | 1.5 | 1 | yes | 2 | no | yes | `MeshStandardMaterial` | 112 | yes | yes | yes |
+| LOW | 1 | 0 | no | 2 | no | no | `MeshLambertMaterial` | 104 | no | no | no |
 
 Pixel ratio is always `Math.min(devicePixelRatio, settings.maxPixelRatio)` — never raw `window.devicePixelRatio`.
 
-Startup: HIGH, or MEDIUM when `pointer: coarse` or width ≤ 767. `?quality=high|medium|low` skips sampling and locks that level. LOW also freezes ambient dust drift and the route shell's scroll spin; the bond stream still runs.
+Startup: HIGH, or MEDIUM when `pointer: coarse` or width ≤ 767. `?quality=high|medium|low` skips sampling and locks that level. LOW also freezes ambient dust drift; the bond stream still runs.
 
 [`PerformanceSampler`](../app/lib/molecular/quality/PerformanceSampler.ts) (after first `render` in `tick`):
 
@@ -326,10 +326,10 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `composition/approachFraming.ts` | Per-atom approach targets: top / bottom / center + edge fill scale |
 | `quality/QualityManager.ts` | Lock-once quality presets; `?quality=` / coarse-pointer start heuristic |
 | `quality/PerformanceSampler.ts` | Startup sample → lock + one emergency downgrade |
-| `effects/MoleculeEffects.ts` | Atmosphere orchestrator: fade/reveal, focus attach, upcoming-atom target, scroll smoothing, quality in place |
+| `effects/MoleculeEffects.ts` | Atmosphere orchestrator: fade/reveal, focus attach, upcoming-atom target, quality in place |
 | `effects/ParticleMist.ts` | Data dust: one `Points` call, 104–120 chunky squares, shell drift + hub→upcoming stream, per-point life cycle, fog-faded |
 | `effects/AtomRim.ts` | Back-side fresnel edge per atom (home / medium+high) |
-| `effects/AtomField.ts` | Single drafting shell and scroll-driven horizon ring |
+| `effects/AtomField.ts` | Single drafting shell: home spin + breathe, fixed pose on a frozen route |
 | `effects/OrbitComet.ts` | Comet arc on the upcoming (hover / next) orbit |
 | `resources/GeometryCache.ts` | Shared unit icosahedron / edges / circle / ticks / cross |
 | `moleculeOrbits.ts` | One hub orbit per peripheral (varied radius); equal spherical angles |
@@ -383,7 +383,7 @@ Separate concerns so nothing hidden reallocates every frame:
 | **TRANSFORM DEPENDENT** | Labels when orientation / `zoomProgress` / `fillProgress` changed |
 | **STATE DRIVEN** | Highlight / selection / wireframe / blurb / nav from `NavigationState` (`mountHeroApp.ts`) |
 | **DECORATIVE** | Selection pulse (early-out when idle); ghost layer HIGH-only, fades with zoom/fill |
-| **ATMOSPHERE** | Uniform/transform writes only; scroll progress cached from passive listener; quality toggles visibility / draw range — no geometry rebuild and no per-frame layout reads |
+| **ATMOSPHERE** | Uniform/transform writes only; quality toggles visibility / draw range - no geometry rebuild and no per-frame layout reads |
 
 | Kind | What |
 |------|------|
@@ -440,8 +440,8 @@ Fonts live in `public/fonts/` (copied to dist root). Troika font URL must use Nu
 - Gyro must write `targetMouseOrientation` (composed with drag); do not add a fourth quaternion layer or `moleculeGroup.rotation +=`. Recalibrate rest on focus / drag-end / `orientationchange`. Do not bind until `PerformanceSampler` has locked.
 - Dispose path: HMR / home unmount disposes navigator, destination, USP, hud, nav, controller. `Navigator.dispose()` kills the timeline and calls `releaseRouteVeil()` — the overlay is **not** removed if it was handed off to the destination page. `MoleculeScene.dispose` clears meshes, `renderer.dispose()`, then `forceContextLoss()`.
 - Graphite colors in `COLOR_BY_LABEL` must stay darker than caption ink (see [`DESIGN.md`](DESIGN.md) scene tokens).
-- Atmosphere is shell-owned ([`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts)); never mount it from a page and never add a second renderer. It reads only `EffectsFrameState` (focus, frozen, busy, scroll, pointer, reduced motion).
-- Settled freeze must keep **rims off**: on a centre-approach atom the camera sits close to a planet-sized sphere, and a back-side fresnel shell floods the viewport. The horizon ring replaces it ([`EFFECTS.md`](EFFECTS.md#freeze-at-any-atom-size)).
-- Scroll is visual-only: `mountHeroApp` normalizes document scroll on a passive listener and calls `MoleculeController.setScrollProgress`; it must never write `SpatialState`, the pose or the route. No `scrollY` / `scrollHeight` reads inside the rAF loop.
+- Atmosphere is shell-owned ([`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts)); never mount it from a page and never add a second renderer. It reads only `EffectsFrameState` (focus, frozen, busy, reveal, reduced motion).
+- Settled freeze must keep **rims off**: on a centre-approach atom the camera sits close to a planet-sized sphere, and a back-side fresnel shell floods the viewport. The fixed drafting shell carries the freeze instead ([`EFFECTS.md`](EFFECTS.md#freeze-at-any-atom-size)).
+- A peripheral route is scroll-free: nothing in the atmosphere layer listens to document scroll, and the shell keeps one pose. Do not re-add a scroll listener or a per-frame `scrollY` / `scrollHeight` read.
 - `ParticleMist` keeps one static buffer; quality changes only `setDrawRange`. Single shell / ring reuse cached or owned geometry and disposables; do not allocate inside `update`.
 - Keep the drafting shell at 1px and understated relative to captions. If it reads as a bloom pass, lower shell opacity before adding any postprocessing.

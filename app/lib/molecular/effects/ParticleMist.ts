@@ -82,6 +82,8 @@ const vertexShader = /* glsl */ `
   uniform float uDrift;
   /** Home boot spawn: 0 = every point still at the hub, 1 = live. */
   uniform float uBoot;
+  /** 1 = stream rows may draw; 0 = no stream at all (frozen routes). */
+  uniform float uStreamGate;
 
   // JS constants are injected as literals — GLSL has no access to module scope.
   const float TAU = ${TAU.toFixed(8)};
@@ -187,6 +189,7 @@ const vertexShader = /* glsl */ `
         depthFade = alive * smoothstep(0.0, 0.08, travel)
           * (1.0 - smoothstep(0.94, 1.0, travel));
       }
+      depthFade *= uStreamGate;
       accent = 0.25 + 0.5 * uLinkMix;
       // Boot: the bond stream is born with the live phase, not from a hub
       // that is still condensing.
@@ -392,6 +395,7 @@ export class ParticleMist {
         uFallInner: { value: 0.33 },
         uDrift: { value: 1 },
         uBoot: { value: 1 },
+        uStreamGate: { value: 1 },
         uFogNear: { value: DUST_FOG_NEAR },
         uFogFar: { value: DUST_FOG_FAR },
         uFogDensity: { value: 0 },
@@ -494,6 +498,15 @@ export class ParticleMist {
    */
   setActive(active: boolean): void {
     this.material.uniforms.uLinkMix!.value = active ? 1 : 0;
+  }
+
+  /**
+   * Hard gate for the stream rows. `setActive` only dims them to the idle
+   * residue that keeps the home field alive; a frozen route must draw none of
+   * them, otherwise the last target's stream keeps flying at a stale atom.
+   */
+  setStreamEnabled(enabled: boolean): void {
+    this.material.uniforms.uStreamGate!.value = enabled ? 1 : 0;
   }
 
   /** LOW freezes the ambient shell; the bond stream never relies on this. */

@@ -11,7 +11,6 @@ import type { EffectsFrameState } from './types';
 /** Matches `--line-draw-duration` — the field draws in with the listing hairlines. */
 const REVEAL_DURATION = 1.25;
 const FADE_FOLLOW = 4.2;
-const SCROLL_FOLLOW = 5;
 const PULSE_DECAY = 2.6;
 /**
  * Phase-lock the dust emission to the active-atom cycle: a new upcoming atom
@@ -36,7 +35,6 @@ export class MoleculeEffects {
   private atoms: readonly Atom[] = [];
   private settings: QualitySettings;
   private fade = 0;
-  private scroll = 0;
   private pulse = 0;
   private revealElapsed = 0;
   private lastFocusAtomId: string | null = null;
@@ -69,7 +67,7 @@ export class MoleculeEffects {
     this.mist.setFog(scene.fog);
     scene.add(this.mist.object);
 
-    this.field = new AtomField(scene, cache, settings);
+    this.field = new AtomField(cache, settings);
     this.comet = new OrbitComet(cache, moleculeGroup, settings);
   }
 
@@ -177,11 +175,6 @@ export class MoleculeEffects {
     // is born at the hub centre rather than fading in place.
     const fade = this.fade * state.introReveal;
 
-    const scrollTarget =
-      state.home || state.reducedMotion ? 0 : state.scrollProgress;
-    const scrollT = 1 - Math.exp(-SCROLL_FOLLOW * delta);
-    this.scroll += (scrollTarget - this.scroll) * scrollT;
-
     if (state.approachBusy) {
       this.revealElapsed = 0;
     } else {
@@ -222,7 +215,6 @@ export class MoleculeEffects {
     this.syncDustTransform();
 
     const time = state.reducedMotion ? 0 : elapsed;
-    const stillTime = state.frozen ? time * 0.55 : time;
     this.streamTime += delta;
 
     this.mist.update(
@@ -232,16 +224,9 @@ export class MoleculeEffects {
       state.introDust,
     );
 
-    this.field.update(
-      stillTime,
-      state,
-      fade,
-      this.scroll,
-      this.pulse,
-      reveal,
-    );
+    this.field.update(time, state, fade, this.pulse, reveal);
 
-    this.comet.update(delta, this.scroll, fade, state.reducedMotion);
+    this.comet.update(delta, fade, state.reducedMotion);
 
     for (const atom of this.atoms) {
       const rim = this.rims.get(atom.id);
@@ -287,6 +272,10 @@ export class MoleculeEffects {
    *   are written every frame because the compact layout resizes the hub.
    */
   private syncDustLink(state: EffectsFrameState, targetChanged: boolean): void {
+    // The bond stream belongs to the live home field. `setActive` only dims it
+    // to an idle residue, so a frozen route needs the hard gate or the last
+    // target's stream keeps flying at a stale atom.
+    this.mist.setStreamEnabled(state.home);
     const hub = this.atomsById.get('C');
     const target = this.upcomingAtomId
       ? this.atomsById.get(this.upcomingAtomId)

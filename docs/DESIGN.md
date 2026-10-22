@@ -181,7 +181,7 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Data dust | `0x7e8994` (mixed toward accent while streaming) | `ParticleMist` additive square points; one draw call |
 | Atom rim | `0xa8e0c4` | `AtomRim` back-side fresnel; home / high+medium only |
 | Drafting shell | `0xc4cbd3` home / `0x5a636c` route | `AtomField` 1px additive wire shell (single) |
-| Scan ring / comet | `0x6ec99f` → `0xa8e0c4` | `AtomField` / `OrbitComet`; freeze / **upcoming** orbit |
+| Orbit comet | `0x6ec99f` → `0xa8e0c4` | `OrbitComet`; **upcoming** orbit, home only |
 
 Matte faceted graphite (`flatShading`, roughness ~0.94, near-zero metalness — no Fresnel / gloss). Shell fill is fixed near scene background with boosted key/fill contrast (ambient ~0.24, key ~1.28). Stay darker than captions so troika type does not melt into the mesh.
 
@@ -267,15 +267,15 @@ Part of the site-wide [hairline language](#hairline-language). Bottom bars (tabl
 ### 11. Atom drafting field (freeze)
 
 - Owned by [`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts) — scene geometry, not DOM, not ScrollTrigger.
-- **Home:** data dust (shell drift + hub→next bond stream, or a shell dive when the next atom is the hub itself), rim edges, one rotating drafting shell, comet on the **upcoming** atom's orbit. **Frozen route:** one drafting shell that turns only with scroll on HIGH/MEDIUM (static on LOW), plus a horizon ring around the focused atom.
-- 1px lines only. The shell is a single wire grid and the horizon ring is a single accent hairline.
-- On HIGH/MEDIUM scroll rotates the shell and drives the ring position; LOW keeps the shell static. Draw-in uses the listing cadence (1.25s, 55ms stagger); reduced motion is static.
-- Rims are switched off when frozen: a back-side shell on a planet-sized atom floods the viewport. The ring is the freeze signature.
+- **Home:** data dust (shell drift + hub→next bond stream, or a shell dive when the next atom is the hub itself), rim edges, one rotating drafting shell, comet on the **upcoming** atom's orbit. **Frozen route:** one drafting shell in a fixed pose — no rotation, no scroll-driven scale, no comet, no stream.
+- 1px lines only. The shell is a single wire grid.
+- On HIGH/MEDIUM the shell spins with `elapsed` on home; a frozen route holds one pose on every grade. Draw-in uses the listing cadence (1.25s, 55ms stagger); reduced motion is static.
+- Rims are switched off when frozen: a back-side shell on a planet-sized atom floods the viewport. The fixed shell is the freeze signature.
 - Full contract and quality tiers: [`EFFECTS.md`](EFFECTS.md).
 
 ## 3D vs HTML
 
-Three.js: molecule, bonds, troika captions, billboarded selection rings, wireframe, decorative orbits/nodes, atmosphere field (dust, rims, single shell, scan, comet), lights, composition profile (world offset from viewport fractions + approach).
+Three.js: molecule, bonds, troika captions, billboarded selection rings, wireframe, decorative orbits/nodes, atmosphere field (dust, rims, single shell, comet), lights, composition profile (world offset from viewport fractions + approach).
 HTML/CSS/SVG: grid, corners, header, USP headline, nav rail, mobile nav overlay, screen-space SVG connector, overlay.
 Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connector never mutates Three.js objects. Composition profile never reads CSS sidebar width. Scroll effects are visual-only and never write the spatial pose.
 
@@ -301,7 +301,7 @@ Bridge: world → `projectAtom` / `projectToScreenInto` → CSS pixels. Connecto
 | Desktop rail as light overlay | Application dashboard chrome |
 | Scroll-to-top: 1px `--wl-line` square, `--hud-scroll-inset-*` from L-ticks | Mint filled circles / flush-to-viewport FAB |
 | Footer legal: desktop pad `--hud-header-inset` (inside ticks) | Flush to frame corners |
-| 1px additive drafting lines, scroll-driven freeze scan, quality-tiered dust | Full-screen bloom, lens flares, opaque particle fog, effects mounted from pages |
+| 1px additive drafting lines, still freeze shell, quality-tiered dust | Full-screen bloom, lens flares, opaque particle fog, effects mounted from pages |
 | Atmosphere understated relative to captions | Atom field brighter than the title / HUD |
 
 ## Layout chrome (document)

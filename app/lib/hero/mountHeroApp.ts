@@ -164,38 +164,6 @@ export function mountHeroApp(
   });
 
   let isHome = true;
-  let scrollProgress = 0;
-  let scrollRaf = 0;
-
-  /**
-   * Scroll drives the frozen atom field. Read on scroll/resize only — never
-   * per frame — so the rAF loop stays free of layout reads.
-   */
-  function readScrollProgress(): void {
-    scrollRaf = 0;
-    if (isHome) {
-      scrollProgress = 0;
-      controller.setScrollProgress(0);
-      return;
-    }
-    const max = Math.max(
-      0,
-      document.documentElement.scrollHeight - window.innerHeight,
-    );
-    const next =
-      max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
-    if (Math.abs(next - scrollProgress) < 1e-4) return;
-    scrollProgress = next;
-    controller.setScrollProgress(next);
-  }
-
-  function requestScrollRead(): void {
-    if (scrollRaf) return;
-    scrollRaf = requestAnimationFrame(readScrollProgress);
-  }
-
-  window.addEventListener('scroll', requestScrollRead, { passive: true });
-  window.addEventListener('resize', requestScrollRead);
 
   function syncSpatialDebug(state: SpatialState): void {
     spatialOverlay?.set({
@@ -351,9 +319,9 @@ export function mountHeroApp(
     );
 
     if (!isHome) {
-      // Frozen route: the focused atom's orbit is centred, so the comet reads.
-      // No dust stream on a frozen route.
-      controller.setTarget(null, controller.getFocusedAtomId());
+      // Frozen route: the drafting field is the only atmosphere — no comet
+      // under the camera and no dust stream flying at a stale atom.
+      controller.setTarget(null, null);
       const focusAtomId = controller.getFocusedAtomId();
       controller.setHaloStates(focusAtomId, null);
       controller.setWireframeAtom(focusAtomId);
@@ -563,9 +531,6 @@ export function mountHeroApp(
       applyVisuals();
     }
     syncSettledRouteClass();
-    if (!snap.busy) {
-      requestScrollRead();
-    }
     if (snap.phase === 'idle') {
       destination.hide();
     }
@@ -601,16 +566,6 @@ export function mountHeroApp(
     }
     // Re-apply framing: home desktop bias vs centered profile.
     applyViewportMode();
-    if (home) {
-      scrollProgress = 0;
-      controller.setScrollProgress(0);
-      if (scrollRaf) {
-        cancelAnimationFrame(scrollRaf);
-        scrollRaf = 0;
-      }
-    } else {
-      requestScrollRead();
-    }
   }
 
   const spatial = new SpatialController(controller, navigationState, {
@@ -740,7 +695,6 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
   function onViewportChange(): void {
     applyViewportMode();
     applyVisuals();
-    requestScrollRead();
   }
 
   /**
@@ -822,7 +776,6 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
       spatial.apply(state, applyOptions);
       syncSpatialDebug(state);
       applyVisuals();
-      requestScrollRead();
     },
     isBusy: () => navigator.busy,
     onTransition: (listener) => navigator.transitionState.subscribe(listener),
@@ -837,12 +790,6 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
       intro?.dispose();
       intro = null;
       autoplay.stop();
-      if (scrollRaf) {
-        cancelAnimationFrame(scrollRaf);
-        scrollRaf = 0;
-      }
-      window.removeEventListener('scroll', requestScrollRead);
-      window.removeEventListener('resize', requestScrollRead);
       mobileMq.removeEventListener('change', onViewportChange);
       tabletMq.removeEventListener('change', onViewportChange);
       desktopMq.removeEventListener('change', onViewportChange);

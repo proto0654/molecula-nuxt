@@ -380,7 +380,6 @@ export class MoleculeController {
   private readonly scratchNdc = new Vector2();
   private readonly scratchPixels = new Vector2();
   private elapsed = 0;
-  private scrollProgress = 0;
   private readonly effectsState: EffectsFrameState = {
     home: true,
     frozen: false,
@@ -389,7 +388,6 @@ export class MoleculeController {
     focusStrength: 0,
     zoomProgress: 0,
     fillProgress: 0,
-    scrollProgress: 0,
     introReveal: 1,
     introDust: 1,
     reducedMotion: false,
@@ -883,14 +881,6 @@ export class MoleculeController {
 
   getSpatialMode(): SpatialMode {
     return this.spatialMode;
-  }
-
-  /**
-   * Normalized document scroll on peripheral routes. The shell passes 0 on
-   * home; the atmosphere layer smooths it before touching uniforms.
-   */
-  setScrollProgress(value: number): void {
-    this.scrollProgress = Math.max(0, Math.min(1, value));
   }
 
   getFocusedAtomId(): string | null {
@@ -1790,7 +1780,6 @@ export class MoleculeController {
     this.effectsState.focusStrength = this.focusStrength;
     this.effectsState.zoomProgress = this.zoomProgress;
     this.effectsState.fillProgress = this.fillProgress;
-    this.effectsState.scrollProgress = this.scrollProgress;
     this.effectsState.introReveal = this.introReveal
       ? Math.max(0, Math.min(1, this.introReveal.air))
       : 1;

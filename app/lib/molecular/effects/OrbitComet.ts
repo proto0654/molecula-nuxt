@@ -206,12 +206,7 @@ export class OrbitComet {
     }
   }
 
-  update(
-    delta: number,
-    scroll: number,
-    opacity: number,
-    reducedMotion: boolean,
-  ): void {
+  update(delta: number, opacity: number, reducedMotion: boolean): void {
     if (!this.enabled) {
       this.line.visible = false;
       return;
@@ -235,10 +230,10 @@ export class OrbitComet {
     this.material.uniforms.uProgress!.value = 0.12 + 0.88 * grow * grow;
 
     // Grow from the atom: the head leaves the birth point and laps the ring
-    // once per cycle. Scroll adds a small frozen-route offset only.
+    // once per cycle.
     const head = reducedMotion
       ? this.birthAngle
-      : this.birthAngle + this.age * COMET_SPEED + scroll * 0.6;
+      : this.birthAngle + this.age * COMET_SPEED;
     this.material.uniforms.uHead!.value = head % TAU;
 
     // Visible immediately: a faint short arc at the atom on frame 0, fully

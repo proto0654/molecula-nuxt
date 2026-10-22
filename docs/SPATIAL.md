@@ -87,8 +87,8 @@ MoleculeController         setMode / restoreOverview / focus* / freeze
 `focusEntity` is reserved: entity id is stored on spatial state / debug; 3D framing stays on the context atom.
 
 While frozen, [`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts) renders the
-drafting field around the focused atom. Scroll progress only drives that field's uniforms — it never
-changes the spatial pose, camera or freeze state. Contract: [`EFFECTS.md`](EFFECTS.md).
+drafting field around the focused atom as a still pose — nothing there follows document scroll — and
+it never changes the spatial pose, camera or freeze state. Contract: [`EFFECTS.md`](EFFECTS.md).
 
 Home empty-canvas click / logo restore overview (`C`) and re-activate hub blurb + USP; it does not `clearFocus` into an empty rest. Hub π-flip runs only when retargeting onto `C` from another atom, not on initial home.
 

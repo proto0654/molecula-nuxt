@@ -11,7 +11,8 @@ The field reads as a **drafting / measurement instrument**, not a game VFX layer
 - 1px hairlines and soft additive light, same palette as the HUD (`#6ec99f` / `#a8e0c4`).
 - Home is **data**, not atmosphere for its own sake: dust drifts on a shell around the hub and a
   share of it streams along the bond toward the atom that will be activated next.
-- Peripheral routes are a scan: one drafting shell and a horizon ring.
+- Peripheral routes are **still**: one drafting shell pinned in place — no rotation, no scale drift,
+  no comet and no stream.
 - No postprocessing, no bloom pass, no render targets, no second canvas or renderer.
 - The molecule pose, focus and freeze logic are untouched. The field attaches to the focused
   atom and is rendered inside the existing scene.
@@ -25,12 +26,11 @@ The reveal uses the same cadence as the HTML listings: `1.25s` draw, `55ms` per-
 |-------|--------|-----------|------|--------------|
 | Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream (hub target → shell dive) | slower drift |
 | Atom rim | [`AtomRim.ts`](../app/lib/molecular/effects/AtomRim.ts) | 1 per atom | back-side fresnel edge | **off** (see gotcha) |
-| Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one soft-light rotating shell | one gray shell, scroll-rotated on HIGH/MEDIUM; static on LOW |
-| Horizon ring | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 `LineLoop` | off | scroll-driven latitude line |
-| Orbit comet | [`OrbitComet.ts`](../app/lib/molecular/effects/OrbitComet.ts) | 1 line | **upcoming** atom's orbit (hover / next) | focused atom's orbit |
+| Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one soft-light rotating shell | one gray shell, fixed pose |
+| Orbit comet | [`OrbitComet.ts`](../app/lib/molecular/effects/OrbitComet.ts) | 1 line | **upcoming** atom's orbit (hover / next) | **off** |
 
 The orchestrator is [`MoleculeEffects.ts`](../app/lib/molecular/effects/MoleculeEffects.ts). It owns
-the fade/reveal clock, focus pulse, upcoming-atom target and scroll smoothing; sub-effects only write
+the fade/reveal clock, focus pulse and upcoming-atom target; sub-effects only write
 uniforms/transforms.
 
 ## Upcoming atom (hover / autoplay-next)
@@ -40,7 +40,7 @@ edge-on. Motion is therefore pointed at the atom the user will land on:
 
 | Signal | Home | Frozen route |
 |--------|------|--------------|
-| Orbit comet | hovered atom, else autoplay-next **from the commit frame** | focused atom (centred, so the comet reads) |
+| Orbit comet | hovered atom, else autoplay-next **from the commit frame** | off |
 | Dust stream | hub → same upcoming atom, re-emitted on every target change | off |
 
 The hub atom `C` is a valid upcoming target (hover over the centre, or autoplay-next wrapping to
@@ -98,17 +98,17 @@ for autoplay-next), and the committed atom keeps its reticle.
 
 [`quality/presets.ts`](../app/lib/molecular/quality/presets.ts) is the single source of truth.
 
-| Level | Dust rows | Drift | Rim | Comet | Route shell spin | Scan ring |
-|-------|-----------|-------|-----|-------|------------------|-----------|
-| HIGH | 120 | yes | yes | yes | yes | yes |
-| MEDIUM | 112 | yes | yes | yes | yes | yes |
-| LOW | 104 | **no** | no | no | **no** | yes |
+| Level | Dust rows | Drift | Rim | Comet |
+|-------|-----------|-------|-----|-------|
+| HIGH | 120 | yes | yes | yes |
+| MEDIUM | 112 | yes | yes | yes |
+| LOW | 104 | **no** | no | no |
 
 - Dust rows are authored once: a sparse stream, then an ambient shell
   (`AMBIENT_POINTS = 70`). A lower grade only shrinks the draw range, so the stream is never cut.
   Quality changes never rebuild attributes.
-- HIGH/MEDIUM keep the rims, ambient drift and route-shell scroll spin; LOW freezes the ambient
-  shell and the route shell (both static) and drops the full-screen fill costs (rims).
+- HIGH/MEDIUM keep the rims and the ambient drift; LOW freezes the ambient shell and drops the
+  full-screen fill costs (rims).
 
 ## Data dust (particles)
 
@@ -121,6 +121,7 @@ points, chunky and legible, cheap to fill.
 | Bond stream | `STREAM_RATIO = 0.18` rows; each point has its **own loop**: launch delay → travel to the atom → vanish on arrival → wait out its own period (5.2–7.0s) → launch again |
 | Hub dive | the same rows when the upcoming atom is the hub: `uLinkMode = 1` switches the trajectory to `uFallFrom` + a per-cycle random bearing, radius `uFallOuter → uFallInner`, with a tangential `FALL_SWIRL`; contact fade starts at `0.88` so a point dies on the surface |
 | Re-emission | a new target resets the local stream clock (`uTime`); the whole stream is destroyed and re-emitted, never resumed mid-flight |
+| Route gate | stream rows are hard-gated by `uStreamGate` (`setStreamEnabled`): off home they draw none of them, so the idle residue never keeps flying at the last target |
 | Two clocks | stream `uTime` (restarted per target) and ambient `uAmbientTime` (never restarted) are separate uniforms — a hover must not snap the ambient shell |
 | Spacing | each period re-rolls the launch phase and a **narrow** lateral cone around the hub→atom connector, so the flow is continuous, tight and never repeats a path |
 | Lifecycle | a point is visible only while `0 ≤ age ≤ travel`; it never parks on the destination atom |
@@ -134,32 +135,22 @@ GLSL gotcha: module constants (`TAU`, `HUB_YAW`, `HUB_PITCH`) must be **injected
 GLSL has no access to JS scope and a bare identifier fails shader compilation silently (the layer
 then renders nothing). A broken shader is only visible via console errors, not the build.
 
-## Scroll mapping
+## Route motion
 
-`mountHeroApp` owns one passive `scroll` + `resize` listener. It computes
-`scrollY / (scrollHeight - innerHeight)` on peripheral routes only and passes it through
-`MoleculeController.setScrollProgress` → `MoleculeEffects` (exponential smoothing). There is **no**
-layout read inside the rAF loop.
-
-| Uniform / transform | Source |
-|---------------------|--------|
-| Shell yaw/tilt | scroll only off-home (HIGH/MEDIUM); elapsed on home; static on LOW |
-| Horizon ring latitude | `0.12 + scroll * 0.56` |
-| Shell radius / opacity | scroll + pulse |
-
-Home forces progress to `0` (document scroll is locked). Off-home it follows the page; scrolling
-back runs the scan backwards. Reduced motion pins progress to `0` and freezes all clocks.
+A frozen route is deliberately **scroll-free**: routing no longer feeds the atmosphere layer, so
+there is no `scroll` listener and no per-frame layout read. Off home the shell keeps one fixed
+orientation, scale and opacity, and nothing else in the field animates except the ambient dust drift
+(and even that stops on LOW). Reduced motion freezes the remaining clocks.
 
 ## Freeze at any atom size
 
 A centre-approach atom can fill the viewport. Its silhouette, reticle and single drafting shell may
 all be off-screen, so the freeze signature is built from **surface-level** layers:
 
-1. `scan` is scene-parented at the atom's world position and follows the atom's latitude.
-2. Rims are switched off once frozen. A back-side fresnel shell on a planet-sized atom floods the
-   viewport (the camera sits close); the horizon ring replaces it.
-3. The single drafting shell stays on the atom but turns **only with scroll** on HIGH/MEDIUM and is
-   static on LOW — no continuous rotation on a route. There is no blurred additive band.
+1. Rims are switched off once frozen. A back-side fresnel shell on a planet-sized atom floods the
+   viewport (the camera sits close).
+2. The single drafting shell stays on the atom in one fixed pose — no rotation, no scroll-driven
+   scale or opacity, on any grade. There is no blurred additive band and no horizon ring.
 
 The field fades out while `approachBusy` and back in after settle, so it never competes with the
 route transition. `freeze()`/`unfreeze()` and zoom/fill are unchanged. On a direct load of `/` the
@@ -170,8 +161,8 @@ launch delay) — see [MOTION.md](MOTION.md#home-boot-direct-load).
 
 ## Performance budget
 
-- HIGH: about 9 extra draw calls (5 rims + shell + dust + ring + comet);
-  MEDIUM: 9; LOW: 3 (no rims/comet, one shell + dust + ring).
+- HIGH: about 8 extra draw calls (5 rims + shell + dust + comet);
+  MEDIUM: 8; LOW: 2 (no rims/comet, one shell + dust).
 - CPU: uniform and transform writes only; no per-frame allocations; rims iterate the five atoms.
 - Static buffers: 120 dust rows max, visible count via `setDrawRange`; the single shell reuses
   `GeometryCache` edges.
@@ -180,8 +171,8 @@ launch delay) — see [MOTION.md](MOTION.md#home-boot-direct-load).
 
 ## Reduced motion
 
-- `elapsed` is clamped to `0` for all effect clocks; scroll influence is `0`.
-- The shell stays static, the scan band sits at its reduced-motion latitude, the comet holds.
+- `elapsed` is clamped to `0` for all effect clocks.
+- The shell stays static, the comet holds its arc, the dust stream is gated off off-home.
 - No focus pulse, no breathing opacity. The field remains as a static drafting overlay.
 
 ## Tuning
@@ -190,7 +181,6 @@ launch delay) — see [MOTION.md](MOTION.md#home-boot-direct-load).
 |----------|------|--------|
 | `SHELL_HOME_OPACITY` / `SHELL_FROZEN_OPACITY` | `AtomField.ts` | single shell weight per state |
 | `SHELL_SPEED` | `AtomField.ts` | home-only continuous shell spin |
-| `SCAN_OPACITY` | `AtomField.ts` | horizon ring brightness |
 | `MAX_PARTICLES` / `STREAM_RATIO` / `AMBIENT_POINTS` | `ParticleMist.ts` | dust budget, stream share, ambient shell size |
 | `DUST_POINT_PX` | `ParticleMist.ts` | square point size (1–5 clamp) |
 | `STREAM_LAUNCH_DELAY` | `ParticleMist.ts` | pause before the first points start after a target change |
