@@ -516,6 +516,11 @@ export class MoleculeScene {
     this.pulseProgress = Math.min(1, Math.max(0, ratio));
   }
 
+  /** Re-enter the upcoming-atom scenario (comet birth + dust re-emission). */
+  restartUpcomingCycle(): void {
+    this.effects.restartUpcomingCycle();
+  }
+
   private setBondFlowDashOffset(offset: number): void {
     this.bondFlowDashOffset = offset;
     const uniform = (this.bondFlowMaterial.userData as BondFlowMaterialUserData)

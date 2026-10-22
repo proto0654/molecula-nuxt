@@ -657,16 +657,24 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
       isFocusSettled: controller.isFocusSettled(),
       turnProgress: controller.getTurnProgress(),
       hasUserPreview: navigationState.previewItemId !== null,
-      hasDistinctPreview: Boolean(
-        navigationState.previewItemId &&
-          navigationState.previewItemId !== navigationState.committedItemId,
-      ),
       menuOpen: mobileNav.isOpen,
       committedItemId: navigationState.committedItemId,
     });
+    // A user hold freezes the next-atom scenario (comet lap, dust stream);
+    // when it rewinds the slide phase, the effects restart from frame 0 so
+    // the progress bar and the effects always share one timeline. A hover
+    // preview of another atom owns the effects instead — it stays live.
+    const hasDistinctPreview = Boolean(
+      navigationState.previewItemId &&
+        navigationState.previewItemId !== navigationState.committedItemId,
+    );
+    controller.setScenarioHeld(autoplay.isHolding() && !hasDistinctPreview);
     if (isHome) {
       // Autoplay dwell can start / end without a nav-state change.
       applyUpcomingFocus();
+    }
+    if (autoplay.consumeCycleRestart()) {
+      controller.restartUpcomingCycle();
     }
     applyAccentWireframe();
     applyBondFlow();

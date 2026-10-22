@@ -391,7 +391,11 @@ export class MoleculeController {
     introReveal: 1,
     introDust: 1,
     reducedMotion: false,
+    scenarioHeld: false,
   };
+
+  /** Autoplay hold: freeze the upcoming-atom scenario clocks. */
+  private scenarioHeld = false;
 
   /** Home boot hand-off; null once the intro hands control to autoplay. */
   private introReveal: MoleculeIntroReveal | null = null;
@@ -1488,6 +1492,19 @@ export class MoleculeController {
     this.scene.setPulseProgress(ratio);
   }
 
+  /**
+   * Autoplay is held by user interaction: freeze the upcoming-atom scenario
+   * clocks (comet lap, dust stream) so they cannot run ahead of the slide.
+   */
+  setScenarioHeld(held: boolean): void {
+    this.scenarioHeld = held;
+  }
+
+  /** Re-enter the upcoming-atom scenario from its first frame. */
+  restartUpcomingCycle(): void {
+    this.scene.restartUpcomingCycle();
+  }
+
   /** Animate hub bond dashes flowing toward the target peripheral atom. */
   setBondFlowAtom(atomId: string | null): void {
     this.scene.setBondFlowAtom(atomId);
@@ -1787,6 +1804,7 @@ export class MoleculeController {
       ? Math.max(0, Math.min(1, this.introReveal.dust))
       : 1;
     this.effectsState.reducedMotion = this.reducedMotion;
+    this.effectsState.scenarioHeld = this.scenarioHeld;
   }
 
   /** Settled off-home freeze: dim chrome; busy approach or home: base colors. */

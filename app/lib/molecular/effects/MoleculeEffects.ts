@@ -117,6 +117,18 @@ export class MoleculeEffects {
     this.mist.restartStream();
   }
 
+  /**
+   * Slide phase rewound to 0 (user hold / home restore): re-enter the whole
+   * upcoming-atom scenario on the current target instead of resuming mid-lap.
+   */
+  restartUpcomingCycle(): void {
+    this.streamTime = STREAM_ORIGIN_TIME;
+    this.linkReady = false;
+    this.linkDirty = true;
+    this.mist.restartStream();
+    this.comet.restartCycle();
+  }
+
   /** @deprecated Use `setTarget` — kept for scene-level call sites. */
   setActiveOrbitAtom(atomId: string | null): void {
     this.setTarget(
@@ -215,7 +227,10 @@ export class MoleculeEffects {
     this.syncDustTransform();
 
     const time = state.reducedMotion ? 0 : elapsed;
-    this.streamTime += delta;
+    // Scenario clocks (comet lap + stream) ride the slide, so a user hold
+    // freezes them together with the progress bar; ambient drift keeps going.
+    const cycleDelta = state.scenarioHeld ? 0 : delta;
+    this.streamTime += cycleDelta;
 
     this.mist.update(
       state.reducedMotion ? 0 : this.streamTime,
@@ -226,7 +241,7 @@ export class MoleculeEffects {
 
     this.field.update(time, state, fade, this.pulse, reveal);
 
-    this.comet.update(delta, fade, state.reducedMotion);
+    this.comet.update(cycleDelta, fade, state.reducedMotion);
 
     for (const atom of this.atoms) {
       const rim = this.rims.get(atom.id);

@@ -80,10 +80,14 @@ changes, so the hint is live on the commit frame; `activateCommittedItem` also c
 autoplay commit while `fill ≈ 0`, i.e. before the slide clock starts. A **manual select**
 (atom click, HUD, connector) goes through `HeroAutoplay.selectCommitted`: the slide clock pauses
 for the idle hold, but `hintWhilePaused` keeps the next atom hinted for the whole hold, so the
-effects move on the click frame instead of after the ~2s idle resume. Only a **distinct** preview
-(hover on an atom other than the committed one, `hasDistinctPreview`), an open mobile menu,
-`navigator.busy` or off-home clear that latch — hovering the atom that was just clicked pauses the
-clock but must not take the hint away.
+effects move on the click frame instead of after the ~2s idle resume. Any **user hold** (hover
+preview, manual select, open menu) also rewinds the slide phase to 0: `isHolding()` freezes the
+comet age and the dust stream clock through `EffectsFrameState.scenarioHeld`, and
+`consumeCycleRestart()` → `MoleculeController.restartUpcomingCycle()` restarts both from their
+first frame when the hold expires, so the progress bar and the effects never resume out of phase.
+A hover preview of another atom owns the target and keeps animating; its target change restarts
+the scenario on the next atom when the pointer leaves. Hovering the atom that was just committed
+keeps the hint latched instead of dropping it.
 
 The comet arc starts at the atom's own orbital angle (`placement.theta`) and unwinds from there
 with `easeOutCubic` over the growth window. **Every new target restarts it** at that atom
@@ -138,6 +142,7 @@ points, chunky and legible, cheap to fill.
 | Atom dive | `ATOM_DIVE_RATIO = STREAM_RATIO` (50 rows at the 280 ceiling): the hub dive copied onto the upcoming peripheral atom (`uDiveFrom` / `uDiveOuter` / `uDiveInner`, gate `uDiveGate`), same loop, contact fade and density |
 | Hub dive | the stream rows when the upcoming atom is the hub: `uLinkMode = 1` switches the trajectory to `uFallFrom` + a per-cycle random bearing, radius `uFallOuter → uFallInner`, with a tangential `FALL_SWIRL`; contact fade starts at `0.88` so a point dies on the surface |
 | Re-emission | a new target resets the local stream clock (`uTime`); the whole stream and the dive are destroyed and re-emitted, never resumed mid-flight |
+| Hold | `EffectsFrameState.scenarioHeld` freezes `uTime` (and the comet age) while autoplay is held; `restartUpcomingCycle()` resets it to 0 together with the slide phase, so the stream re-enters on the same frame as the progress bar |
 | Route gate | stream and dive rows are hard-gated by `uStreamGate` (`setStreamEnabled`): off home they draw none of them, so the idle residue never keeps flying at the last target |
 | Two clocks | stream `uTime` (restarted per target) and ambient `uAmbientTime` (never restarted) are separate uniforms — a hover must not snap the ambient shell |
 | Spacing | each period re-rolls the launch phase and a **narrow** lateral cone around the hub→atom connector, so the flow is continuous, tight and never repeats a path |

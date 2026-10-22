@@ -176,6 +176,13 @@ export class OrbitComet {
     return atomId !== null;
   }
 
+  /** Re-enter the lap at the atom's own angle (slide phase rewound to 0). */
+  restartCycle(): void {
+    // The boot chain owns the arc until it hands back.
+    if (this.bootArc) return;
+    this.age = 0;
+  }
+
   /**
    * Home boot: fly one arc along one orbit under the intro clock. `head` is a
    * ring-frame angle, so the caller can start on the far side of the ring and

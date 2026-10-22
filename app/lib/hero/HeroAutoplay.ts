@@ -3,12 +3,6 @@ export type HeroAutoplayTickContext = {
   busy: boolean;
   isFocusSettled: boolean;
   hasUserPreview: boolean;
-  /**
-   * Hover preview on an atom that is not the committed one. Hovering the
-   * committed atom pauses the clock but must not take the next-atom hint away:
-   * right after a click the pointer sits on the atom that was just committed.
-   */
-  hasDistinctPreview: boolean;
   menuOpen: boolean;
   /** Currently committed nav item id (sync index after manual select). */
   committedItemId: string | null;
@@ -30,7 +24,8 @@ export type HeroAutoplayOptions = {
 
 /**
  * Cycles committed nav items on home after focus settles.
- * Progress fills during dwell; pauses on user interaction; resumes after idle.
+ * Progress fills during dwell; user interaction rewinds it to 0 and holds it,
+ * then the next dwell replays the whole phase after idle.
  * The next atom is highlighted as soon as the commit turn starts.
  */
 export class HeroAutoplay {
@@ -46,6 +41,8 @@ export class HeroAutoplay {
   private index = 0;
   private idleElapsedMs = 0;
   private waitingForIdle = false;
+  /** Idle hold expired, but the focus settle still gates the first dwell frame. */
+  private awaitingDwell = false;
   private dwelling = false;
   /**
    * The committed item just changed: highlight the next atom immediately and
@@ -53,12 +50,17 @@ export class HeroAutoplay {
    */
   private awaitingTurn = false;
   /**
-   * Manual selection pauses the slide clock for the idle hold, but the next
-   * atom must stay hinted for that whole hold: otherwise the orbit comet,
-   * dust stream and pulsing wireframe sit on the clicked atom and only move
-   * once the idle resume starts the dwell.
+   * Any user hold (hover preview, open menu, manual commit) keeps the next
+   * atom hinted for the whole hold: the effects freeze on it instead of
+   * dropping to the committed atom and jumping back on resume.
    */
   private hintWhilePaused = false;
+  /**
+   * The slide phase was sent back to 0 while the effects were sitting at a
+   * later phase. The next frame must re-enter the upcoming-atom scenario from
+   * its first frame (comet birth, dust re-emission) so both clocks agree.
+   */
+  private cycleRestartPending = false;
   /** Smaller than the settled value, so the progress bar keeps moving. */
   private static readonly TURN_SETTLE_GATE = 0.35;
 
@@ -74,7 +76,11 @@ export class HeroAutoplay {
     this.running = true;
     this.paused = false;
     this.waitingForIdle = false;
+    this.awaitingDwell = false;
+    this.dwelling = false;
+    this.awaitingTurn = false;
     this.hintWhilePaused = false;
+    this.cycleRestartPending = false;
     this.idleElapsedMs = 0;
     this.syncIndex(fromItemId, false);
     this.progress = 0;
@@ -85,7 +91,11 @@ export class HeroAutoplay {
     this.running = false;
     this.paused = false;
     this.waitingForIdle = false;
+    this.awaitingDwell = false;
+    this.dwelling = false;
+    this.awaitingTurn = false;
     this.hintWhilePaused = false;
+    this.cycleRestartPending = false;
     this.idleElapsedMs = 0;
     this.progress = 0;
     this.onProgress(0);
@@ -94,10 +104,29 @@ export class HeroAutoplay {
   /** Soft pause (hover / click / menu). Resume after idle when interactions clear. */
   pause(): void {
     if (!this.running) return;
+    this.hold();
+  }
+
+  /**
+   * Freeze the slide for a user hold and rewind its phase to 0. The upcoming
+   * atom's scenario (caption beat, comet lap, dust stream) is frozen by the
+   * renderer for the whole hold and replayed from its first frame when the
+   * hold expires, so the progress bar and the effects cannot drift apart.
+   */
+  private hold(): void {
+    const entering = !(this.paused && this.waitingForIdle);
     this.paused = true;
     this.waitingForIdle = true;
+    this.awaitingDwell = false;
     this.idleElapsedMs = 0;
     this.dwelling = false;
+    this.hintWhilePaused = true;
+    // A hold interrupts the turn clock too; the next dwell starts from 0.
+    this.awaitingTurn = false;
+    if (entering) this.cycleRestartPending = true;
+    if (this.progress === 0) return;
+    this.progress = 0;
+    this.onProgress(0);
   }
 
   /**
@@ -125,10 +154,32 @@ export class HeroAutoplay {
   }
 
   /**
+   * True while a user interaction holds the cycle (hover preview, open menu,
+   * idle wait after a click). The upcoming-atom scenario clocks must freeze.
+   */
+  isHolding(): boolean {
+    return (
+      this.running &&
+      (this.paused || this.waitingForIdle || this.awaitingDwell)
+    );
+  }
+
+  /**
+   * One-shot: the slide phase was rewound to 0, so the upcoming-atom effects
+   * must restart from their first frame on the current target.
+   */
+  consumeCycleRestart(): boolean {
+    if (!this.cycleRestartPending) return false;
+    this.cycleRestartPending = false;
+    return true;
+  }
+
+  /**
    * True once the next atom may be hinted: from the first frame of the commit
    * turn, so the orbit / dust / pulsing wireframe light up while the molecule
-   * is still rotating toward the viewer. A manual commit keeps the hint
-   * through the idle pause that follows it.
+   * is still rotating toward the viewer. A user hold keeps the hint latched on
+   * the next atom for the whole hold, so the effects never jump to the
+   * committed atom and back.
    */
   isNextHinted(): boolean {
     if (!this.running) return false;
@@ -143,8 +194,12 @@ export class HeroAutoplay {
     this.onProgress(0);
     this.paused = false;
     this.waitingForIdle = false;
+    this.awaitingDwell = false;
+    this.dwelling = false;
+    this.awaitingTurn = false;
     this.hintWhilePaused = false;
     this.idleElapsedMs = 0;
+    this.cycleRestartPending = true;
   }
 
   tick(dtMs: number, ctx: HeroAutoplayTickContext): void {
@@ -166,13 +221,10 @@ export class HeroAutoplay {
     this.syncIndex(ctx.committedItemId);
 
     if (ctx.hasUserPreview || ctx.menuOpen) {
-      // Only a preview of another atom (or the menu) owns the effects. A
-      // pointer resting on the just-committed atom keeps the manual hint.
-      if (ctx.hasDistinctPreview || ctx.menuOpen) this.hintWhilePaused = false;
-      this.paused = true;
-      this.waitingForIdle = true;
-      this.idleElapsedMs = 0;
-      this.dwelling = false;
+      // Any preview (even the committed atom itself) or the open menu owns
+      // the effects. The phase rewinds to 0 and the renderer freezes the
+      // next-atom scenario until the hold expires.
+      this.hold();
       return;
     }
 
@@ -182,9 +234,10 @@ export class HeroAutoplay {
       if (this.idleElapsedMs < this.idleResumeMs) return;
       this.waitingForIdle = false;
       this.paused = false;
-      // Dwell takes over the hint from here on.
-      this.hintWhilePaused = false;
+      this.awaitingDwell = true;
       this.idleElapsedMs = 0;
+      // The hint stays latched until the dwell actually starts, so a slow
+      // settle cannot drop the effects back to the committed atom.
     }
 
     if (this.paused) {
@@ -211,6 +264,8 @@ export class HeroAutoplay {
       this.awaitingTurn = false;
     }
 
+    this.hintWhilePaused = false;
+    this.awaitingDwell = false;
     this.dwelling = true;
     this.progress += dtMs / this.slideDurationMs;
     if (this.progress >= 1) {

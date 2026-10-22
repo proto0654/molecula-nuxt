@@ -18,4 +18,10 @@ export type EffectsFrameState = {
   /** Home boot: ambient dust spawn from the hub (0 = still at the hub, 1 = live). */
   introDust: number;
   reducedMotion: boolean;
+  /**
+   * Autoplay is held by user interaction: the upcoming-atom scenario clocks
+   * (orbit comet, dust stream) freeze so the progress bar and the effects
+   * never drift apart. Ambient shell drift is not affected.
+   */
+  scenarioHeld: boolean;
 };
