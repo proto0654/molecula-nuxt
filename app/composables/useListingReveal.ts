@@ -53,12 +53,19 @@ function collectItems(scope: HTMLElement): HTMLElement[] {
 }
 
 /**
+ * Called on the frame a reveal class lands. Do not measure layout here — a
+ * listener should queue its work and read the DOM in one batched rAF.
+ */
+export type ListingRevealListener = (el: HTMLElement) => void;
+
+/**
  * In-view listing rows (and tails) chain with a capped stagger; below-fold
  * items play once on intersect. See docs/MOTION.md.
  */
 export function useListingReveal(
   root: MaybeRefOrGetter<HTMLElement | null | undefined>,
   gate: MaybeRefOrGetter<boolean>,
+  onReveal?: ListingRevealListener,
 ) {
   const processed = new WeakSet<HTMLElement>();
   let io: IntersectionObserver | null = null;
@@ -108,6 +115,7 @@ export function useListingReveal(
     item.dataset.reveal = 'chain';
     item.style.setProperty('--reveal-i', String(index));
     item.classList.add('is-revealed');
+    onReveal?.(item);
     armWillChange(item);
   }
 
@@ -116,6 +124,7 @@ export function useListingReveal(
     item.dataset.reveal = 'in';
     item.style.setProperty('--reveal-i', '0');
     item.classList.add('is-revealed');
+    onReveal?.(item);
     armWillChange(item);
   }
 

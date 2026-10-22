@@ -152,6 +152,11 @@
   --reveal-content-delay: 500ms;
   --reveal-i: 0;
 
+  /* Hairline dust — page-space shed from the listing line wipe.
+     Mirrors SCENE_DUST_COLOR in app/lib/molecular/sceneColors.ts. */
+  --dust-ink: #7e8994;
+  --dust-accent: var(--color-accent);
+
   /* Type — Mono HUD/titles; Exo 2 for case reading text */
   --font-ui: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Consolas,
     monospace;
@@ -313,6 +318,89 @@
   to {
     transform: scaleX(1);
     transform-origin: left center;
+  }
+}
+
+/*
+ * Hairline dust — page-space DOM particles shed from the listing line wipe.
+ * Lives inside .archive-page__body / .case-page__body, whose z-index creates a
+ * stacking context: z-index -1 stays above the frozen molecule and behind the
+ * content, and document scroll carries the grains with the page. No canvas,
+ * no scroll listener, no render loop. See docs/MOTION.md.
+ */
+.hairline-dust {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout style paint;
+}
+
+/*
+ * One shared keyframe and no per-particle WAAPI objects or `will-change`
+ * layers. JS only sets the four travel vars, the peak opacity and duration.
+ */
+.hairline-dust__particle {
+  position: absolute;
+  display: block;
+  width: 2px;
+  height: 2px;
+  border-radius: 0;
+  background: var(--dust-ink);
+  pointer-events: none;
+  animation-name: wl-dust-fall;
+  animation-duration: 900ms;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.hairline-dust__particle.is-accent {
+  background: var(--dust-accent);
+}
+
+@keyframes wl-dust-fall {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: var(--dust-peak);
+  }
+  20% {
+    transform: translate(
+      calc(var(--dust-travel) * 0.2 + var(--dust-drift) * 0.04),
+      calc(var(--dust-fall) * 0.04)
+    );
+  }
+  45% {
+    transform: translate(
+      calc(var(--dust-travel) * 0.45 + var(--dust-drift) * 0.2025),
+      calc(var(--dust-fall) * 0.2025)
+    );
+  }
+  60% {
+    opacity: var(--dust-peak);
+  }
+  70% {
+    transform: translate(
+      calc(var(--dust-travel) * 0.7 + var(--dust-drift) * 0.49),
+      calc(var(--dust-fall) * 0.49)
+    );
+    opacity: calc(var(--dust-peak) * 0.55);
+  }
+  100% {
+    transform: translate(
+      calc(var(--dust-travel) + var(--dust-drift)),
+      var(--dust-fall)
+    );
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hairline-dust {
+    display: none;
   }
 }
 

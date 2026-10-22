@@ -42,6 +42,7 @@ Headless UI aliases: `--wl-bg`, `--wl-text`, `--wl-muted`, `--wl-line`, `--wl-ac
 | `--wl-line` | → `rgb(214 219 224 / var(--line-opacity))` | **Hairline language** — structural 1px rules |
 | `--wl-accent` | → `--color-accent` | Interactive accent (listing hover titles, pagination) |
 | `--line-draw-duration` / `--line-draw-ease` / `--reveal-content-delay` | `1.25s` / `cubic-bezier(0.33, 0, 0.18, 1)` / `500ms` | Animated draw — see [Hairline language](#hairline-language) + [`MOTION.md`](MOTION.md) |
+| `--dust-ink` / `--dust-accent` | `#7e8994` / `--color-accent` | Page-space hairline dust squares (scene dust ink + accent) |
 | `--enter-*` / `--reveal-cap` | see [`MOTION.md`](MOTION.md) | Off-home HTML entrance (beats, listing chain) |
 | `--font-ui` | `'JetBrains Mono'`, ui-monospace fallbacks | HUD / titles / markers (self-hosted Cyrillic) |
 | `--font-body` | `'Exo 2'`, system sans | Case reading text — prose, intro, captions (300 / 400) |
@@ -95,6 +96,7 @@ Motion choreography (chain vs viewport, `--reveal-cap`, `--enter-stagger`) lives
    - Full bleed: `clip-path: inset(0 100% 0 0)` → `inset(0 0 0 0)` (`wl-enter-line`).
    - Short tick: `transform: scaleX(0 → 1)` + `transform-origin: left` (`wl-enter-line-scale`).
 6. **Content waits on the line** when listed: row / section / list item body fades in after `--reveal-content-delay` so the wipe reads first.
+7. **Dust is a byproduct, not a new rule.** Only full-width `wl-enter-line` wipes shed 2–5px hard squares — `--dust-ink` with 24% `--dust-accent`. Short ticks and prose rules stay clean; never use round or soft particles.
 
 ### Where it applies
 
@@ -102,6 +104,7 @@ Motion choreography (chain vs viewport, `--reveal-cap`, `--enter-stagger`) lives
 |---------|----------------|
 | HUD | Mobile nav top gradient; desktop rail right divider ([§4](#4-hairline-rule--rail-divider)) |
 | Archive index | Row top (+ last row bottom); short `.archive-row__line` tick |
+| Archive / case hairline wipes | Full-width rules shed page-space dust as they draw — see [`MOTION.md`](MOTION.md#hairline-dust) |
 | Archive / service detail footer | Separator above Previous only (`.case-nav__prev`); case NEXT uses marker rail |
 | Case sections | Marker rail (`editorial` / `visual` tone); NEXT footer same as editorial |
 | Case CMS prose | Subheading partial rules; `ul`/`ol` item separators |
@@ -118,6 +121,7 @@ New listings, sections, or footer blocks **must** use this language — not a on
 | Match static border position when swapping to pseudo | Section-level full-bleed line when the design is editorial-rail only |
 | One draw curve site-wide | Per-page line timing or direction |
 | Line → content on enter | Fade the whole block including the line |
+| Dust as a byproduct of full-width hairlines | Dust on short ticks / prose rules; round or soft particles |
 
 Case-specific marker tones and grid columns: [`CASES.md`](CASES.md). Enter implementation: [`MOTION.md`](MOTION.md).
 
@@ -178,7 +182,7 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Atom shell (settled) | emissive → `0x14161c` @ ~0.62; shadow facets `0x020306` | Fixed fill — bg-adjacent mean tone, facet contrast from scene lights |
 | Highlight emissive | *(unused)* | `setHighlighted` no-op; hover does not change mesh fill |
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
-| Data dust | `0x7e8994` (mixed toward accent while streaming) | `ParticleMist` additive square points; one draw call |
+| Data dust | `0x7e8994` (mixed toward accent while streaming) | `ParticleMist` additive square points; one draw call. DOM hairline dust reuses the same ink |
 | Atom rim | `0xa8e0c4` | `AtomRim` back-side fresnel; home / high+medium only |
 | Drafting shell | `0xc4cbd3` home / `0x5a636c` route | `AtomField` 1px additive wire shell (single) |
 | Orbit comet | `0x6ec99f` → `0xa8e0c4` | `OrbitComet`; **upcoming** orbit, home only |

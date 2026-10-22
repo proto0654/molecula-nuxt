@@ -3,6 +3,7 @@ import {
   archiveIndexHref,
   type ArchiveReturnScope,
 } from '~/lib/navigation/archiveReturn';
+import { queueHairlineDust } from '~/lib/motion/hairlineDust';
 import { localizedPath } from '~/domain/i18n';
 
 const props = withDefaults(
@@ -24,7 +25,7 @@ const root = ref<HTMLElement | null>(null);
 const revealingGate = computed(() => Boolean(props.revealing));
 const { locale } = useLocale();
 
-useListingReveal(root, revealingGate);
+useListingReveal(root, revealingGate, queueHairlineDust);
 
 function defaultHref(scope: ArchiveReturnScope): string {
   if (scope === 'services') return localizedPath('/services', locale.value);
@@ -69,6 +70,7 @@ const chromeVariant = computed(() =>
       :archive-scope="chromeScope"
     />
     <div class="archive-page__body" :class="bodyClass">
+      <HairlineDustLayer />
       <slot />
     </div>
   </div>

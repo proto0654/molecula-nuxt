@@ -20,6 +20,10 @@ The field reads as a **drafting / measurement instrument**, not a game VFX layer
 The reveal uses the same cadence as the HTML listings: `1.25s` draw, `55ms` per-layer stagger
 (see [`MOTION.md`](MOTION.md) and the hairline language in [`DESIGN.md`](DESIGN.md)).
 
+The enter-time dust shed by listing hairlines is **page-space DOM**, not part of this
+atmosphere layer — see [`MOTION.md`](MOTION.md#hairline-dust). It reuses the `0x7e8994`
+dust ink and the accent but has no `Points` draw call, no scene uniform and no scroll input.
+
 ## Layers
 
 | Layer | Module | Draw cost | Home | Frozen route |

@@ -8,7 +8,7 @@
 | [EFFECTS.md](EFFECTS.md) | Molecular atmosphere: particles, rim, single drafting shell, still freeze, quality grades |
 | [CONTENT.md](CONTENT.md) | WP API → normalize → portfolio / services / about → prerender |
 | [CASES.md](CASES.md) | Case + archive visual system (composition, chrome, listing, transitions) |
-| [MOTION.md](MOTION.md) | Off-home HTML entrance: pose gate, beats, listing chain vs viewport |
+| [MOTION.md](MOTION.md) | Off-home HTML entrance: pose gate, beats, listing chain vs viewport, hairline dust |
 | [SEO.md](SEO.md) | `usePageSeo`, canonical/OG, sitemap/robots, `NUXT_PUBLIC_INDEXABLE`, WP plain text, a11y landmarks |
 | [DEPLOY.md](DEPLOY.md) | Production (REG.RU rsync) + GitHub Pages preview + SSH secrets setup |
 | [DESIGN.md](DESIGN.md) | HUD tokens, **hairline language**, decorative patterns, scene palette |

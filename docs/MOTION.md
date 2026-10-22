@@ -104,6 +104,23 @@ Layout **social footer** (`SiteFooterMenu`) is outside the page shell: pose-gate
 - Empty / pending list: no-op.
 - `prefers-reduced-motion`: everything visible, no IO, no delays.
 
+### Hairline dust
+
+Full-width hairlines shed a few page-space grains as they wipe. Code:
+[`hairlineDust.ts`](../app/lib/motion/hairlineDust.ts) and
+[`HairlineDustLayer.vue`](../app/components/HairlineDustLayer.vue), mounted once inside
+`.archive-page__body` / `.case-page__body`.
+
+- **Trigger** — `useListingReveal` calls `queueHairlineDust(item)` on the frame `is-revealed` lands, for both chain and IO. `snapReveal` (reduced motion / no animation) never sheds. The queue measures in one batched rAF, never per frame.
+- **Clock** — the line pseudo's computed `animation-name`, `animation-delay`, `animation-duration`, `animation-timing-function` and `top` / `bottom` are the only source of truth. Only `wl-enter-line` qualifies; `wl-enter-line-scale` ticks and prose rules stay clean.
+- **Surfaces** — `.archive-row::before` / `::after`, `.case-marker--editorial` / `--visual::after`, `.case-nav__prev::after`.
+- **Emission** — 3–10 grains per line over the first `78%` of the draw, biased toward the line start (`u^1.6`). Horizontal travel is clamped to the page-body right edge, so late grains cannot fly off-screen.
+- **Particles** — 2–5px hard squares (integer size, no radius), 24% `--dust-accent`, otherwise `--dust-ink` (`#7e8994`, the scene dust ink). Normal life `720–1100ms`, travel `50–160px`; a `28%` fast subset lives `600–860ms` and travels `150–270px`. Fall `36–146px`, lateral fan `±18px`.
+- **Trajectory** — flat launch along the line, then `y = fall · u²`: the grain moves horizontally first and accelerates downward. Opacity fades in over the first `12%`, holds to `60%`, then fades out.
+- **DOM, not scene** — absolute layer at `z-index: -1` inside the page-body stacking context; `pointer-events: none`, `contain: layout style paint`, document scroll carries it. No canvas, no Three.js, no scroll listener, no render loop.
+- **Cost** — one shared `@keyframes wl-dust-fall`; JS only writes `--dust-travel` / `--dust-fall` / `--dust-drift` / `--dust-peak` and `animation-duration`. No per-particle WAAPI objects, no `will-change` layers, global cap `72`; a cleanup timer removes each grain.
+- **Reduced motion** — `queueHairlineDust` no-ops and `.hairline-dust` is `display: none`.
+
 ## Tokens
 
 Line tokens are part of the global design language ([`DESIGN.md` § Hairline language](DESIGN.md#hairline-language)). Motion-only tokens below.
@@ -119,6 +136,7 @@ Line tokens are part of the global design language ([`DESIGN.md` § Hairline lan
 | `--line-draw-ease` | `cubic-bezier(0.33, 0, 0.18, 1)` | Draw easing |
 | `--reveal-cap` | `6` | Max distinct chain delays |
 | `--reveal-content-delay` | `500ms` | Line → content overlap (~40% into draw) |
+| `--dust-ink` / `--dust-accent` | `#7e8994` / `--color-accent` | Hairline dust squares — neutral / accent |
 
 ## Performance
 
@@ -127,6 +145,7 @@ Line tokens are part of the global design language ([`DESIGN.md` § Hairline lan
 - Do not animate off-screen rows.
 - Cap the chain; do not sequence 12 acts.
 - `will-change` only while an item is playing; clear on `animationend`.
+- Hairline dust: one shared keyframe, no `will-change`, no per-particle WAAPI objects; cap `72`.
 - Specimen enter = opacity + small translate — no filters, no scale.
 - Hover `width` on `.archive-row__line` must not run during enter (gated on `.is-revealed`).
 

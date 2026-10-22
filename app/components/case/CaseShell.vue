@@ -4,6 +4,7 @@ import {
   resolveCasePortfolioArchiveHref,
   type ArchiveReturnScope,
 } from '~/lib/navigation/archiveReturn';
+import { queueHairlineDust } from '~/lib/motion/hairlineDust';
 import { localizedPath } from '~/domain/i18n';
 
 const props = withDefaults(
@@ -26,7 +27,7 @@ const { locale } = useLocale();
 const root = ref<HTMLElement | null>(null);
 const revealingGate = computed(() => Boolean(props.revealing));
 
-useListingReveal(root, revealingGate);
+useListingReveal(root, revealingGate, queueHairlineDust);
 
 function defaultArchiveHref(scope: ArchiveReturnScope): string {
   if (scope === 'services') return localizedPath('/services', locale.value);
@@ -80,6 +81,7 @@ defineExpose({ root });
     />
 
     <div class="case-page__body" :class="bodyClass">
+      <HairlineDustLayer />
       <slot />
     </div>
   </div>
