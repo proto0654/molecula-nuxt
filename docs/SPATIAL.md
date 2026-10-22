@@ -17,13 +17,13 @@ app.vue
 
 | Layer | Lives | Notes |
 |---|---|---|
-| Canvas / molecule / HudFrame | layout, stage `position: fixed; inset: 0`; canvas `bottom: 0; height: 100svh` | One renderer, scene, camera, rAF. Not remounted on navigation. Canvas height locked to small viewport (bottom-aligned); HUD frame stays dynamic with the visible area. |
+| Canvas / molecule / HudFrame | layout, stage `position: fixed; inset: 0`; canvas `bottom: 0; height: 100lvh` | One renderer, scene, camera, rAF. Not remounted on navigation. Canvas locked to the large viewport (bottom-aligned, top cropped behind the URL bar); HUD frame stays dynamic with the visible area. |
 | SiteHeader, nav rail, mobile overlay | chrome root (`inset: 0`) | Persistent chrome. Home: header slide progress (desktop) + nav progress above bottom rail (mobile) + molecule nav. Off-home desktop/tablet: centered header route links (direct hops). Off-home mobile: LOGO + MENU + overlay (direct hops). Molecule rail hidden off-home. USP + connectors home-only. |
 | Route veil | `document.body` via `routeVeil` | Survives the hop; destination dismisses it. |
 | Page content | `<NuxtPage />` | Archive / case / section content over the frozen molecule (no page scrim). |
 | SiteChrome | page | Meta only (`ARCHIVE`, `CASE / NN`, Index). No duplicate grid / frame / logo. |
 
-`html.hero-lock` (no document scroll, `100dvh`) is applied only while spatial mode is `home`. `scrollbar-gutter: stable both-edges` on `html` keeps viewport width stable across home ↔ off-home hops. Stage/chrome stay on dynamic `inset: 0`; only `#hero-canvas` uses bottom-aligned `100svh`.
+`html.hero-lock` (no document scroll, `100dvh`) is applied only while spatial mode is `home`. `scrollbar-gutter: stable both-edges` on `html` keeps viewport width stable across home ↔ off-home hops. Stage/chrome stay on dynamic `inset: 0`; only `#hero-canvas` uses bottom-aligned `100lvh`.
 
 ## State machine
 

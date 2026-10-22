@@ -10,7 +10,7 @@ Principles: the molecule is primary; HUD is secondary. No cards, no filled butto
 - Default: `html` scrolls (`overflow-y: auto`); `body` / `#__nuxt` stay `overflow: visible` (do not set `overflow-y` there — double scrollbar with 3D overflow). Document / page shells use `min-height: 100dvh`.
 - Home only: `html.hero-lock` (from [`app/layouts/default.vue`](../app/layouts/default.vue) when spatial mode is `home`) sets `overflow: hidden` + `height: 100dvh` — document scroll locked for the fullscreen hero.
 - Stage / chrome (`.molecular-hero`, `.molecular-chrome`, fallback) stay on dynamic **`position: fixed; inset: 0`** so the HUD corner frame tracks the visible viewport.
-- `#hero-canvas` alone is **bottom-aligned `100svh`** (fallback `100%`) so the WebGL drawing buffer does not resize when mobile browser chrome shows or hides — see [`WEBGL_HERO.md`](WEBGL_HERO.md).
+- `#hero-canvas` alone is **bottom-aligned `100lvh`** (fallback `100vh`) so neither the WebGL drawing buffer nor the canvas box moves when mobile browser chrome shows or hides — the top edge is cropped behind the URL bar instead of the scene jumping on a scroll-direction change — see [`WEBGL_HERO.md`](WEBGL_HERO.md).
 - Mobile nav overlay veil is **`position: fixed` + `100lvh`/`100lvw`** (always covers when the URL bar hides); inner `__frame` uses **`100dvh`** so list/header track the visible area.
 - Portfolio / case pages must **not** set `hero-lock`.
 - Full-bleed breakout: use `--content-bleed-width` (`calc(100% + 2 * var(--content-bleed-x))`) instead of `100vw` where horizontal scrollbar gutter matters.

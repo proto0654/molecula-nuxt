@@ -134,7 +134,7 @@ export class NavigationConnector {
       return;
     }
 
-    // Match the canvas CSS box (bottom-aligned `svh`), not visualViewport
+    // Match the canvas CSS box (bottom-aligned `lvh`), not visualViewport
     // which jumps when mobile browser chrome shows/hides.
     const vw = this.root.clientWidth || window.innerWidth;
     const vh = this.root.clientHeight || window.innerHeight;

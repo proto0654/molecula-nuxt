@@ -654,8 +654,11 @@ html.hero-lock #__nuxt {
   background: var(--wl-bg, #14161c);
 }
 
-/* Fixed svh height, bottom-aligned: drawing buffer stays stable when mobile
-   browser chrome shows/hides; HUD chrome stays on dynamic `inset: 0`. */
+/* Large-viewport lock, bottom-aligned: the drawing buffer and the canvas box
+   never resize or shift when mobile browser chrome shows/hides, so a scroll
+   direction change cannot jerk the scene. The top edge may sit behind the URL
+   bar while it is visible - a cropped frame is preferred over a moving one.
+   Stage / HUD chrome stay on dynamic `inset: 0`. */
 #hero-canvas {
   position: absolute;
   left: 0;
@@ -663,7 +666,8 @@ html.hero-lock #__nuxt {
   display: block;
   width: 100%;
   height: 100%;
-  height: 100svh;
+  height: 100vh;
+  height: 100lvh;
   cursor: crosshair;
 }
 

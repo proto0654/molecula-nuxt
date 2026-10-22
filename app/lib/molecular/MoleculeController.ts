@@ -149,8 +149,8 @@ const AXIS_X = new Vector3(1, 0, 0);
 
 /**
  * Layout size for camera aspect / renderer from the canvas CSS box.
- * Prefer client box (stable `100svh` bottom-aligned canvas) over `visualViewport`,
- * which jumps when mobile browser chrome shows/hides.
+ * Prefer client box (stable `100lvh` bottom-aligned canvas) over
+ * `visualViewport`, which jumps when mobile browser chrome shows/hides.
  */
 function getViewportSize(canvas: HTMLCanvasElement): {
   width: number;

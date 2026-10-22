@@ -57,7 +57,7 @@ Foundation-итерация закрыта. **Case visual redesign (§25) + comp
 - **Node:** `^22.19.0 || ^24.11.0 || >=26.0.0` (`engines` в `package.json`)
 - **Home `/`:** empty page slot; molecule lives in [`layouts/default.vue`](../app/layouts/default.vue)
 - **Persistent shell:** one canvas / `MoleculeController` / rAF across routes — [`docs/SPATIAL.md`](../docs/SPATIAL.md)
-- **Mobile viewport:** `#hero-canvas` bottom-aligned `100svh` (stable WebGL); stage/chrome dynamic `inset: 0` (HUD frame); burger veil `lvh` / frame `dvh`; scroll-to-top `--hud-scroll-inset-*` inside L-ticks — [`docs/WEBGL_HERO.md`](../docs/WEBGL_HERO.md), [`docs/DESIGN.md`](../docs/DESIGN.md)
+- **Mobile viewport:** `#hero-canvas` bottom-aligned `100lvh` (drawing buffer и canvas box не двигаются при показе/скрытии URL-бара; верх кадрируется); stage/chrome dynamic `inset: 0` (HUD frame); burger veil `lvh` / frame `dvh`; scroll-to-top `--hud-scroll-inset-*` inside L-ticks — [`docs/WEBGL_HERO.md`](../docs/WEBGL_HERO.md), [`docs/DESIGN.md`](../docs/DESIGN.md)
 - **Spatial:** `/` home (hub `C` always focused, pointer live); other routes frozen + page overlay
 - **API:** `app/api/client.ts` + portfolio/services/options/menus/pages/media; components не знают REST URL
 - **Normalize:** `normalizePortfolioPost` → `Case`; `normalizeServicePost` → `Service`; `normalizeAboutPage` → `AboutPage`; `normalizeContactPage` → `ContactPage`; shared helpers in [`app/domain/wp/`](../app/domain/wp/); absence = `null` / `[]`. EN ACF keys typed on raw and resolved on `/en/*` (`pickLocalized`). **`normalizeAcfImage`** accepts ACF image objects **and** bare URL strings (`repeater_field` mix on live cases) — otherwise Interface `SCREEN` cards get empty `src`.
