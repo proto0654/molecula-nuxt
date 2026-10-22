@@ -94,6 +94,16 @@ export function mountHeroApp(
 ): MountedHeroApp {
   const chromeRoot = options.chromeRoot;
   chromeRoot.classList.add('is-home');
+  /**
+   * Arm the boot phase before any chrome exists. `is-boot` added after the nav
+   * rail is in the DOM starts its opacity transition from the live value and
+   * flashes the sidebar for ~200ms before the entrance; with the class already
+   * present the first computed style is hidden. `HeroIntro` takes over the
+   * class from here and drops it on teardown.
+   */
+  if (homeBootEnabled()) {
+    chromeRoot.classList.add('is-boot');
+  }
   /** Home boot (direct load only); null once it hands control back. */
   let intro: HeroIntro | null = null;
 
@@ -711,10 +721,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     }
   }
 
-  if (
-    !prefersReducedMotion() &&
-    spatialFromRoute({ path: window.location.pathname }).mode === 'home'
-  ) {
+  if (homeBootEnabled()) {
     intro = new HeroIntro({
       controller,
       chromeRoot,
@@ -814,4 +821,12 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
       canvas.remove();
     },
   };
+}
+
+/** Home boot: direct load of `/` only, never under reduced motion. */
+function homeBootEnabled(): boolean {
+  return (
+    !prefersReducedMotion() &&
+    spatialFromRoute({ path: window.location.pathname }).mode === 'home'
+  );
 }

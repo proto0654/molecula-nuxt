@@ -9,7 +9,7 @@ Tokens live on `:root` in [`app/assets/css/main.css`](../app/assets/css/main.css
 ## Home boot (direct load)
 
 Direct load of home assembles the molecule instead of cutting to a finished scene. Code:
-[`HeroIntro`](../app/lib/hero/HeroIntro.ts), wired in [`mountHeroApp`](../app/lib/hero/mountHeroApp.ts). In-app returns to home (atom → home, logo click) keep the existing return animation — the boot is created only when `spatialFromRoute(pathname).mode === 'home'`.
+[`HeroIntro`](../app/lib/hero/HeroIntro.ts), wired in [`mountHeroApp`](../app/lib/hero/mountHeroApp.ts). In-app returns to home (atom → home, logo click) keep the existing return animation — the boot is created only when `spatialFromRoute(pathname).mode === 'home'`. `mountHeroApp` arms `is-boot` **before** it builds the chrome DOM, so the first painted frame is already empty.
 
 One GSAP clock drives both layers: Three.js values are read from a mutable `MoleculeIntroReveal` object every frame, and the CSS side only reacts to phase classes on `.molecular-chrome` (`is-boot` → `is-boot-ui`). No second timeline in CSS, so the canvas and the chrome cannot drift.
 
@@ -30,6 +30,7 @@ One GSAP clock drives both layers: Three.js values are read from a mutable `Mole
 - Tablet / mobile: no lateral drift (starts and ends on the profile framing, `0.50 → 0.56` y at most), whole clock × `0.86`.
 - Skip: first `pointerdown` / `keydown` fast-forwards the timeline (`timeScale(6)`) instead of snapping, so phases stay ordered. Atom hover / click are gated while the boot is active.
 - Guard: if no frame is rendered within 1.6s (WebGL failure), the boot finishes immediately so the HUD is never hostage to the canvas.
+- Phase 1 hides chrome **instantly**: the hidden state sets `transition: none`. A class applied after the rail exists would fade it out over the nav's 0.2s opacity transition — a flash of the committed rail before the entrance.
 - `prefers-reduced-motion: reduce`: no boot at all — `is-boot` is never added.
 - Leaving home mid-boot (`applyHudMode(false)`) finishes it first: an approach must never run with hidden atoms.
 

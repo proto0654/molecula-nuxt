@@ -435,6 +435,9 @@ html.hero-lock #__nuxt {
 .molecular-chrome.is-boot:not(.is-boot-ui) .hud__meta {
   opacity: 0;
   pointer-events: none;
+  /* Never fade out here: a transition would flash the chrome on the first
+     painted frame before the entrance starts. */
+  transition: none;
 }
 
 .molecular-chrome .hud__grid {
