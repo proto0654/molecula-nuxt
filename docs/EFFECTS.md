@@ -9,8 +9,9 @@ visual field around the focused atom.
 The field reads as a **drafting / measurement instrument**, not a game VFX layer:
 
 - 1px hairlines and soft additive light, same palette as the HUD (`#6ec99f` / `#a8e0c4`).
-- Home is **data**, not atmosphere for its own sake: dust drifts on a shell around the hub and a
-  share of it streams along the bond toward the atom that will be activated next.
+- Home is **data**, not atmosphere for its own sake: dust drifts on a shell around the hub, a
+  share of it streams along the bond toward the atom that will be activated next, and a further
+  share converges on that atom's own shell — the same dive the hub gets when it is the next atom.
 - Peripheral routes are **still**: one drafting shell pinned in place — no rotation, no scale drift,
   no comet and no stream.
 - No postprocessing, no bloom pass, no render targets, no second canvas or renderer.
@@ -28,7 +29,7 @@ dust ink and the accent but has no `Points` draw call, no scene uniform and no s
 
 | Layer | Module | Draw cost | Home | Frozen route |
 |-------|--------|-----------|------|--------------|
-| Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream (hub target → shell dive) | ambient drift only (stream gated off) |
+| Data dust | [`ParticleMist.ts`](../app/lib/molecular/effects/ParticleMist.ts) | 1 `Points` | shell drift + hub→next bond stream + shell dive onto the next peripheral atom (hub target → shell dive) | ambient drift only (stream gated off) |
 | Atom rim | [`AtomRim.ts`](../app/lib/molecular/effects/AtomRim.ts) | 1 per atom | back-side fresnel edge | **off** (see gotcha) |
 | Drafting shell | [`AtomField.ts`](../app/lib/molecular/effects/AtomField.ts) | 1 line | one soft-light rotating shell | one gray shell, fixed pose |
 | Orbit comet | [`OrbitComet.ts`](../app/lib/molecular/effects/OrbitComet.ts) | 1 line | **upcoming** atom's orbit (hover / next) | **off** |
@@ -46,6 +47,17 @@ edge-on. Motion is therefore pointed at the atom the user will land on:
 |--------|------|--------------|
 | Orbit comet | hovered atom, else autoplay-next **from the commit frame** | off |
 | Dust stream | hub → same upcoming atom, re-emitted on every target change | off |
+| Atom dive | shell → **upcoming peripheral atom itself**, riding the same stream clock | off |
+
+The bond stream lands on the atom and vanishes; the dive rows back that arrival
+with the effect the hub already had: points are born on a shell around the
+upcoming atom (`2.2 × atom radius`) at a fresh random bearing, spiral onto its
+surface and die on contact. It runs on the same stream clock (`uTime`), so both
+parts of the effect are re-emitted on the target frame and arrive together;
+sizing, accent, fog fade and the per-point launch/travel/period loop are
+identical to the hub dive ([`spiralFall`](../app/lib/molecular/effects/ParticleMist.ts)
+in the vertex shader). It is gated by `uDiveGate`, so a hub target — whose own
+dive owns the stream rows — and off-home states draw none of it.
 
 The hub atom `C` is a valid upcoming target (hover over the centre, or autoplay-next wrapping to
 `home`). It owns no bond and has no orbit placement, so the regular comet + bond stream would be
@@ -104,28 +116,29 @@ for autoplay-next), and the committed atom keeps its reticle.
 
 | Level | Dust rows | Drift | Rim | Comet |
 |-------|-----------|-------|-----|-------|
-| HIGH | 120 | yes | yes | yes |
-| MEDIUM | 112 | yes | yes | yes |
-| LOW | 104 | **no** | no | no |
+| HIGH | 170 | yes | yes | yes |
+| MEDIUM | 162 | yes | yes | yes |
+| LOW | 154 | **no** | no | no |
 
-- Dust rows are authored once: a sparse stream, then an ambient shell
-  (`AMBIENT_POINTS = 70`). A lower grade only shrinks the draw range, so the stream is never cut.
-  Quality changes never rebuild attributes.
+- Dust rows are authored once: a sparse stream, the atom-dive rows, then an ambient shell
+  (`AMBIENT_POINTS = 70`). A lower grade only shrinks the draw range, so the stream and the dive
+  are never cut. Quality changes never rebuild attributes.
 - HIGH/MEDIUM keep the rims and the ambient drift; LOW freezes the ambient shell and drops the
   full-screen fill costs (rims).
 
 ## Data dust (particles)
 
-One `Points` call, 104–120 rows, hard square 1–5px, no sprite texture and no soft disc — few
+One `Points` call, 154–170 rows, hard square 1–5px, no sprite texture and no soft disc — few
 points, chunky and legible, cheap to fill.
 
 | Property | Implementation |
 |----------|----------------|
 | Drift | vertex shader from `uAmbientTime` (monotonic `elapsed`); yaw + pitch of a thin shell around the hub (`dustDrift` off on LOW) |
 | Bond stream | `STREAM_RATIO = 0.18` rows; each point has its **own loop**: launch delay → travel to the atom → vanish on arrival → wait out its own period (5.2–7.0s) → launch again |
-| Hub dive | the same rows when the upcoming atom is the hub: `uLinkMode = 1` switches the trajectory to `uFallFrom` + a per-cycle random bearing, radius `uFallOuter → uFallInner`, with a tangential `FALL_SWIRL`; contact fade starts at `0.88` so a point dies on the surface |
-| Re-emission | a new target resets the local stream clock (`uTime`); the whole stream is destroyed and re-emitted, never resumed mid-flight |
-| Route gate | stream rows are hard-gated by `uStreamGate` (`setStreamEnabled`): off home they draw none of them, so the idle residue never keeps flying at the last target |
+| Atom dive | `ATOM_DIVE_RATIO = STREAM_RATIO` (50 rows at the 280 ceiling): the hub dive copied onto the upcoming peripheral atom (`uDiveFrom` / `uDiveOuter` / `uDiveInner`, gate `uDiveGate`), same loop, contact fade and density |
+| Hub dive | the stream rows when the upcoming atom is the hub: `uLinkMode = 1` switches the trajectory to `uFallFrom` + a per-cycle random bearing, radius `uFallOuter → uFallInner`, with a tangential `FALL_SWIRL`; contact fade starts at `0.88` so a point dies on the surface |
+| Re-emission | a new target resets the local stream clock (`uTime`); the whole stream and the dive are destroyed and re-emitted, never resumed mid-flight |
+| Route gate | stream and dive rows are hard-gated by `uStreamGate` (`setStreamEnabled`): off home they draw none of them, so the idle residue never keeps flying at the last target |
 | Two clocks | stream `uTime` (restarted per target) and ambient `uAmbientTime` (never restarted) are separate uniforms — a hover must not snap the ambient shell |
 | Spacing | each period re-rolls the launch phase and a **narrow** lateral cone around the hub→atom connector, so the flow is continuous, tight and never repeats a path |
 | Lifecycle | a point is visible only while `0 ≤ age ≤ travel`; it never parks on the destination atom |
@@ -168,7 +181,7 @@ launch delay) — see [MOTION.md](MOTION.md#home-boot-direct-load).
 - HIGH: about 8 extra draw calls (5 rims + shell + dust + comet);
   MEDIUM: 8; LOW: 2 (no rims/comet, one shell + dust).
 - CPU: uniform and transform writes only; no per-frame allocations; rims iterate the five atoms.
-- Static buffers: 120 dust rows max, visible count via `setDrawRange`; the single shell reuses
+- Static buffers: 170 dust rows max, visible count via `setDrawRange`; the single shell reuses
   `GeometryCache` edges.
 - Pixel ratio remains capped by the quality preset. No glow, no blurred sweep, no surface lattice,
   no postprocessing chain, no shadows, no environment maps.
@@ -185,7 +198,7 @@ launch delay) — see [MOTION.md](MOTION.md#home-boot-direct-load).
 |----------|------|--------|
 | `SHELL_HOME_OPACITY` / `SHELL_FROZEN_OPACITY` | `AtomField.ts` | single shell weight per state |
 | `SHELL_SPEED` | `AtomField.ts` | home-only continuous shell spin |
-| `MAX_PARTICLES` / `STREAM_RATIO` / `AMBIENT_POINTS` | `ParticleMist.ts` | dust budget, stream share, ambient shell size |
+| `MAX_PARTICLES` / `STREAM_RATIO` / `ATOM_DIVE_RATIO` / `AMBIENT_POINTS` | `ParticleMist.ts` | dust budget, stream share, peripheral-dive share, ambient shell size |
 | `DUST_POINT_PX` | `ParticleMist.ts` | square point size (1–5 clamp) |
 | `STREAM_LAUNCH_DELAY` | `ParticleMist.ts` | pause before the first points start after a target change |
 | `STREAM_TRAVEL_SECONDS` / `STREAM_PERIOD_MIN` / `STREAM_PERIOD_MAX` | `ParticleMist.ts` | travel time and per-point loop period |

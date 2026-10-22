@@ -93,9 +93,9 @@ focusItemId   = committed               ← click only; hover never centers
 
 Two-step gesture on **home** (app layer in `mountHeroApp.ts`, not inside Three.js). **Header route links and mobile MENU** bypass this — they call `selectFromMenu` → `navigateTo` in one shot (see below).
 
-While committed, hover of another item shows **dual-state preview** on the hovered atom (pulsing reticle, bright title, static wireframe shell) without stealing focus or zoom. The committed atom keeps its frozen reticle and blurb but **no wireframe** — the outline belongs to the upcoming atom. The orbit comet and the dust bond stream also follow the upcoming atom (hover, else autoplay-next).
+While committed, hover of another item shows **dual-state preview** on the hovered atom (pulsing reticle, bright title, static wireframe shell) without stealing focus or zoom. The committed atom keeps its frozen reticle and blurb but **no wireframe** — the outline belongs to the upcoming atom. The orbit comet, the dust bond stream and the shell dive onto that atom also follow the upcoming atom (hover, else autoplay-next).
 
-1. **Hover** (atom raycast or nav): pulsing selection reticle + bright title + static light wireframe on the preview atom. **No** emissive fill change, `focusAtom`, blurb, or USP. The preview atom takes over the decorative orbit (comet) and the hub dust stream; the committed atom keeps its reticle but no wireframe.
+1. **Hover** (atom raycast or nav): pulsing selection reticle + bright title + static light wireframe on the preview atom. **No** emissive fill change, `focusAtom`, blurb, or USP. The preview atom takes over the decorative orbit (comet) and the hub dust stream (bond stream plus a shell dive onto it); the committed atom keeps its reticle but no wireframe.
 2. **First click** (atom or **nav rail**): `setCommitted` + `activateCommittedItem` (`focusAtom` + typewriter blurb via `buildAtomBlurb` + arm USP; scramble after `isFocusSettled`). Blurb part 2 prompts a **second click** to navigate (contextual `{кликай|тапай}{blurbCta}` when CTA is set). Cold load, spatial return to `/`, empty-canvas restore, and header logo on home all commit hub `C` with the **same full readout** — there is no intermediate “deselected” home state.
 3. **Second click on the same item** (atom or rail): `navigator.navigateTo(atomId)` (single approach: orbit + zoom/fill + framing in parallel). Second click on Home is a no-op.
 4. **Header / mobile MENU on home** (one shot): `selectFromMenu` → `navigateTo(atomId)` — no commit step; route fires at the navigate label after the approach pose settles; page stays hidden until idle (`is-awaiting-pose`).
@@ -221,7 +221,7 @@ When `setTransitionDriven(true)`, local zoom damping is skipped — `Navigator` 
 | Wait settle | Progress held at 0 until `isFocusSettled()` |
 | Fill | Progress 0→1 over `SLIDE_DURATION_MS` (~5500) |
 | Advance | Next item in `navigationConfig.items` order (wraps) |
-| Next preview | From the **commit frame** (`isNextHinted()` is armed by `syncIndex` the moment the committed item changes): **pulsing light wireframe** on the next item's atom (`setAccentWireframeAtom` pulse mode), the **dust stream** (re-emitted from the hub, or a shell dive when the next atom is the hub) and the **orbit comet** (born at that atom; hidden for the hub, which has no orbit). The static dashed hub→atom connector stays visible; the animated dash flow is retired. Shell and next-atom **caption** ride the slide progress as one beat per interval (`PULSE_DELAY` 0.5 → dark for the first half, then fill to full at the commit); the caption's `setTitlePulse` walks pure black → `CHROME_LIGHT_COLOR` at `TITLE_PULSE_PEAK`, so it brightens in the outline's own chrome ink instead of the accent. |
+| Next preview | From the **commit frame** (`isNextHinted()` is armed by `syncIndex` the moment the committed item changes): **pulsing light wireframe** on the next item's atom (`setAccentWireframeAtom` pulse mode), the **dust stream** (re-emitted from the hub, with a shell dive onto the next atom — or a hub dive when the next atom is the hub) and the **orbit comet** (born at that atom; hidden for the hub, which has no orbit). The static dashed hub→atom connector stays visible; the animated dash flow is retired. Shell and next-atom **caption** ride the slide progress as one beat per interval (`PULSE_DELAY` 0.5 → dark for the first half, then fill to full at the commit); the caption's `setTitlePulse` walks pure black → `CHROME_LIGHT_COLOR` at `TITLE_PULSE_PEAK`, so it brightens in the outline's own chrome ink instead of the accent. |
 | Manual select | Atom click / HUD / connector commits via `selectCommitted`: the clock pauses for the idle hold, but the next preview stays latched (`hintWhilePaused`) so the effects move on the click frame, not after the resume. Hovering the just-clicked atom pauses the clock but keeps the latch (`hasDistinctPreview` = preview of *another* atom) |
 | Turn clock | `awaitingTurn` lets the slide progress keep advancing through the turn once `getTurnProgress() ≥ 0.35` (instead of freezing at 0 until settle), so the cycle reads as one continuous move |
 | Comet lap | A new target restarts the arc **at that atom**; the head laps its ring exactly once per active-atom cycle (`COMET_CYCLE_SECONDS` = slide duration) |
@@ -277,8 +277,9 @@ Pages call `playEntityLightSweep` via a module bridge (`registerMoleculeCue` in 
 ## Atmosphere effects
 
 The molecule carries a quality-tiered atmosphere layer owned by
-[`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts): data dust (shell drift plus a
-bond stream toward the upcoming atom), atom rims, one rotating 1px shell, and a comet on the
+[`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts): data dust (shell drift, a
+bond stream toward the upcoming atom and a matching shell dive onto that atom), atom rims, one
+rotating 1px shell, and a comet on the
 upcoming atom's orbit. Home is data-driven motion; a peripheral route freezes down to one still
 shell in a fixed pose — no rotation, no scroll-driven scale, no comet and no stream. The field fades
 with `approachBusy`, attaches to the focused atom, and never changes the molecule pose, camera or
@@ -292,9 +293,9 @@ Full contract (tiers, route motion, performance budget, tuning): [`EFFECTS.md`](
 
 | Level | maxPixelRatio | atomDetail | preview wireframe | rings | ticks | decorative | material | dust | drift | rim | comet |
 |-------|---------------|------------|-------------------|-------|-------|------------|----------|------|-------|-----|-------|
-| HIGH | 1.75 | 1 | yes | 3 | yes | yes | `MeshStandardMaterial` | 120 | yes | yes | yes |
-| MEDIUM | 1.5 | 1 | yes | 2 | no | yes | `MeshStandardMaterial` | 112 | yes | yes | yes |
-| LOW | 1 | 0 | no | 2 | no | no | `MeshLambertMaterial` | 104 | no | no | no |
+| HIGH | 1.75 | 1 | yes | 3 | yes | yes | `MeshStandardMaterial` | 170 | yes | yes | yes |
+| MEDIUM | 1.5 | 1 | yes | 2 | no | yes | `MeshStandardMaterial` | 162 | yes | yes | yes |
+| LOW | 1 | 0 | no | 2 | no | no | `MeshLambertMaterial` | 154 | no | no | no |
 
 Pixel ratio is always `Math.min(devicePixelRatio, settings.maxPixelRatio)` — never raw `window.devicePixelRatio`.
 
@@ -327,7 +328,7 @@ Dev overlay: [`PerfOverlay`](../app/lib/debug/PerfOverlay.ts) — FPS, frame tim
 | `quality/QualityManager.ts` | Lock-once quality presets; `?quality=` / coarse-pointer start heuristic |
 | `quality/PerformanceSampler.ts` | Startup sample → lock + one emergency downgrade |
 | `effects/MoleculeEffects.ts` | Atmosphere orchestrator: fade/reveal, focus attach, upcoming-atom target, quality in place |
-| `effects/ParticleMist.ts` | Data dust: one `Points` call, 104–120 chunky squares, shell drift + hub→upcoming stream, per-point life cycle, fog-faded |
+| `effects/ParticleMist.ts` | Data dust: one `Points` call, 154–170 chunky squares, shell drift + hub→upcoming stream + shell dive on the upcoming atom, per-point life cycle, fog-faded |
 | `effects/AtomRim.ts` | Back-side fresnel edge per atom (home / medium+high) |
 | `effects/AtomField.ts` | Single drafting shell: home spin + breathe, fixed pose on a frozen route |
 | `effects/OrbitComet.ts` | Comet arc on the upcoming (hover / next) orbit |

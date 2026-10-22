@@ -15,7 +15,7 @@ export type QualitySettings = {
   /** Ghost wire fragments (octahedron edges). */
   decorativeNodes: boolean;
   material: QualityMaterialKind;
-  /** Dust rows: sparse bond thread + ambient shell (104–120); 0 disables. */
+  /** Dust rows: stream + peripheral dive + ambient shell (154–170); 0 disables. */
   particleCount: number;
   /** Ambient shell drift; the bond stream keeps moving on every tier. */
   dustDrift: boolean;

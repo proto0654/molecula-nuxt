@@ -10,7 +10,7 @@ import {
 } from 'three';
 import { ACCENT_COLOR, SCENE_DUST_COLOR } from '../sceneColors';
 
-/** Hard ceiling; the authored rows are stream + ambient (120 at max). */
+/** Hard ceiling; the authored rows are stream + atom dive + ambient (170 at max). */
 const MAX_PARTICLES = 280;
 /** Ambient shell dust around the molecule — sparse, ~1/4 of the old cloud. */
 const AMBIENT_POINTS = 70;
@@ -19,6 +19,12 @@ const DUST_FOG_NEAR = 6.5;
 const DUST_FOG_FAR = 22;
 /** Share of the budget that streams toward the upcoming atom (bond or hub dive). */
 const STREAM_RATIO = 0.18;
+/**
+ * Share of the budget that dives onto the upcoming peripheral atom itself,
+ * while the bond stream is still running. Same trajectory and density as the
+ * hub dive, so the effect reads identically on any upcoming atom.
+ */
+const ATOM_DIVE_RATIO = STREAM_RATIO;
 const TAU = Math.PI * 2;
 const HUB_YAW = 0.022;
 const HUB_PITCH = 0.009;
@@ -72,6 +78,13 @@ const vertexShader = /* glsl */ `
   uniform float uFallOuter;
   uniform float uFallInner;
 
+  /** Shell→atom dive on the upcoming peripheral atom (rides with the bond stream). */
+  uniform vec3 uDiveFrom;
+  uniform float uDiveOuter;
+  uniform float uDiveInner;
+  /** 1 = dive rows may draw; 0 = no dive (no peripheral target). */
+  uniform float uDiveGate;
+
   uniform float uFogNear;
   uniform float uFogFar;
   uniform float uFogDensity;
@@ -101,7 +114,7 @@ const vertexShader = /* glsl */ `
 
   attribute vec3 aNode;   // x = shell radius 0..1, yz = direction hash
   attribute vec3 aLink;   // x = progress lane, y = swirl lane, z = energy
-  attribute vec4 aParams; // phase, speed, stream flag (>0.5 = stream), size class
+  attribute vec4 aParams; // phase, speed, mode (0 = ambient, 1 = stream, 2 = atom dive), size class
 
   varying vec3 vColor;
   varying float vAlpha;
@@ -117,10 +130,43 @@ const vertexShader = /* glsl */ `
     return 0.0;
   }
 
+  /**
+   * Shell dive: a point is born on a sphere around the atom centre at a fresh
+   * bearing and spirals onto its surface. Shared by the hub dive (the hub owns
+   * no bond) and the peripheral-atom dive that accompanies the bond stream.
+   * The fade output dies on contact so a point never sinks into the shell.
+   */
+  vec3 spiralFall(
+    vec3 center,
+    float outer,
+    float inner,
+    float travel,
+    float dirSeed,
+    float turnSeed,
+    out float fade
+  ) {
+    float y = dirSeed * 2.0 - 1.0;
+    float ring = sqrt(max(0.0, 1.0 - y * y));
+    float bearing = turnSeed * TAU;
+    vec3 dir = normalize(
+      vec3(cos(bearing) * ring, y, sin(bearing) * ring) + 1e-4
+    );
+    vec3 axis = abs(dir.y) > 0.9
+      ? vec3(1.0, 0.0, 0.0)
+      : vec3(0.0, 1.0, 0.0);
+    vec3 side = normalize(cross(dir, axis));
+    float swept = travel * FALL_SWIRL;
+    vec3 fall = dir * cos(swept) + side * sin(swept);
+    fade = smoothstep(0.0, 0.08, travel)
+      * (1.0 - smoothstep(0.88, 1.0, travel));
+    return center + fall * mix(outer, inner, travel);
+  }
+
   void main() {
     float phase = aParams.x;
     float speed = aParams.y;
-    bool isStream = aParams.z > 0.5;
+    float mode = aParams.z;
+    bool isStream = mode > 0.5;
 
     vec3 local;
     float depthFade = 1.0;
@@ -142,10 +188,31 @@ const vertexShader = /* glsl */ `
       float travel = clamp(age / STREAM_TRAVEL_SECONDS, 0.0, 1.0);
       float alive = step(0.0, age) * step(age, STREAM_TRAVEL_SECONDS);
 
-      // Two trajectories share these rows. A bond stream runs hub → upcoming
+      // Three trajectories live in these rows. A bond stream runs hub → upcoming
       // peripheral atom; when that atom IS the hub there is no bond and no
       // orbit of its own, so the same points dive in from the shell around it.
-      if (uLinkMode > 0.5) {
+      // The dedicated dive rows always land on the upcoming peripheral atom,
+      // mirroring that hub dive while the bond stream keeps running.
+      if (mode > 1.5) {
+        // Fresh bearing on the shell every cycle: the dive never repeats a ray.
+        float dirHash = fract(
+          sin((cycle + 1.0) * 29.7314159 + aLink.x * 43.8826951) * 47123.91406
+        );
+        float turnHash = fract(
+          sin((cycle + 1.0) * 53.1917362 + aLink.y * 19.4712206) * 18063.41421
+        );
+        float contactFade;
+        local = spiralFall(
+          uDiveFrom,
+          uDiveOuter,
+          uDiveInner,
+          travel,
+          dirHash,
+          turnHash,
+          contactFade
+        );
+        depthFade = alive * contactFade * uDiveGate;
+      } else if (uLinkMode > 0.5) {
         // Fresh bearing on the shell every cycle: the dive never repeats a ray.
         float dirHash = fract(
           sin((cycle + 1.0) * 23.1406926 + aLink.x * 61.8033989) * 41509.27148
@@ -153,23 +220,19 @@ const vertexShader = /* glsl */ `
         float turnHash = fract(
           sin((cycle + 1.0) * 47.7641237 + aLink.y * 27.3710108) * 23711.51733
         );
-        float y = dirHash * 2.0 - 1.0;
-        float ring = sqrt(max(0.0, 1.0 - y * y));
-        float bearing = turnHash * TAU;
-        vec3 dir = normalize(
-          vec3(cos(bearing) * ring, y, sin(bearing) * ring) + 1e-4
+        float contactFade;
+        local = spiralFall(
+          uFallFrom,
+          uFallOuter,
+          uFallInner,
+          travel,
+          dirHash,
+          turnHash,
+          contactFade
         );
-        vec3 axis = abs(dir.y) > 0.9
-          ? vec3(1.0, 0.0, 0.0)
-          : vec3(0.0, 1.0, 0.0);
-        vec3 side = normalize(cross(dir, axis));
-        float swept = travel * FALL_SWIRL;
-        vec3 fall = dir * cos(swept) + side * sin(swept);
-        local = uFallFrom + fall * mix(uFallOuter, uFallInner, travel);
         // Dies on the surface: contact fade starts earlier than the bond's
-        // arrival fade so a point never sinks through the hub shell.
-        depthFade = alive * smoothstep(0.0, 0.08, travel)
-          * (1.0 - smoothstep(0.88, 1.0, travel));
+        // arrival fade so a point never sinks through the atom shell.
+        depthFade = alive * contactFade;
       } else {
         vec3 p = mix(uLinkFrom, uLinkTo, travel);
 
@@ -299,6 +362,9 @@ function gather(
  *   is the hub → atom bond; for the hub itself the same rows dive from a shell
  *   around it onto its surface. Each point has its own launch/travel/rest loop
  *   and never parks on the destination.
+ * - The dedicated dive rows (same share as the stream) copy that hub dive onto
+ *   the upcoming peripheral atom, so the bond stream's arrival is backed by
+ *   particles converging on the atom itself.
  * - Drift is computed in the vertex shader from `uAmbientTime`; the stream runs
  *   on `uTime`, which a target change restarts. Two clocks on purpose: a stream
  *   re-emission must not snap the ambient shell. The CPU writes uniforms only.
@@ -306,8 +372,8 @@ function gather(
  *
  * The object mirrors the molecule transform (position + quaternion), so `local`
  * is molecule space and bond anchors stay valid while the group rotates/spins.
- * Stream rows occupy the reserved tail of the buffer, so any grade draws them
- * without rebuilding attributes.
+ * Stream and dive rows sit at the head of the buffer, so any grade draws them
+ * and only the ambient tail is trimmed, without rebuilding attributes.
  */
 export class ParticleMist {
   readonly object: Points;
@@ -315,7 +381,7 @@ export class ParticleMist {
   private readonly material: ShaderMaterial;
   private readonly linkAttribute: BufferAttribute;
   private readonly streamSource: Float32Array;
-  /** Rows actually authored: stream rows + ambient shell. */
+  /** Rows actually authored: stream + atom dive + ambient shell. */
   private usedRows = 0;
   private count = 0;
 
@@ -325,22 +391,25 @@ export class ParticleMist {
     const links = new Float32Array(MAX_PARTICLES * 3);
     const params = new Float32Array(MAX_PARTICLES * 4);
     const order = new Uint32Array(MAX_PARTICLES);
-    // Fixed row budget: the first STREAM_ROWS rows stream, the next
-    // AMBIENT_POINTS rows are the ambient shell. Everything else is unused so
-    // a grade can only change the draw range, never the layout.
+    // Fixed row budget: the first STREAM_ROWS rows stream, the next dive rows
+    // land on the upcoming peripheral atom, then the ambient shell. Everything
+    // else is unused so a grade can only change the draw range, never the
+    // layout.
     const streamRows = Math.round(MAX_PARTICLES * STREAM_RATIO);
+    const diveRows = Math.round(MAX_PARTICLES * ATOM_DIVE_RATIO);
     let cursor = 0;
 
-    for (let i = 0; i < streamRows + AMBIENT_POINTS; i += 1) {
+    for (let i = 0; i < streamRows + diveRows + AMBIENT_POINTS; i += 1) {
       const o = i * 3;
       const isStream = i < streamRows;
+      const isDive = !isStream && i < streamRows + diveRows;
       order[cursor++] = i;
 
       links[o] = (i * 0.6180339887) % 1;
       links[o + 1] = (i * 0.3819660113) % 1;
       links[o + 2] = 0.4 + ((i * 0.7548776662) % 1) * 0.6;
 
-      if (isStream) {
+      if (isStream || isDive) {
         nodes[o] = random();
         nodes[o + 1] = random();
         nodes[o + 2] = random();
@@ -355,8 +424,11 @@ export class ParticleMist {
 
       const p = i * 4;
       params[p] = random();
-      params[p + 1] = isStream ? 0.6 + random() * 1.1 : 0.35 + random() * 1.0;
-      params[p + 2] = isStream ? 1 : 0;
+      params[p + 1] = isStream || isDive
+        ? 0.6 + random() * 1.1
+        : 0.35 + random() * 1.0;
+      // 0 = ambient shell, 1 = bond / hub-dive rows, 2 = atom dive rows.
+      params[p + 2] = isStream ? 1 : isDive ? 2 : 0;
       params[p + 3] = random() < 0.6 ? 1 : 1.5;
     }
 
@@ -393,6 +465,10 @@ export class ParticleMist {
         uFallFrom: { value: [0, 0, 0] },
         uFallOuter: { value: 0.7 },
         uFallInner: { value: 0.33 },
+        uDiveFrom: { value: [0, 0, 0] },
+        uDiveOuter: { value: 0.7 },
+        uDiveInner: { value: 0.33 },
+        uDiveGate: { value: 0 },
         uDrift: { value: 1 },
         uBoot: { value: 1 },
         uStreamGate: { value: 1 },
@@ -490,6 +566,30 @@ export class ParticleMist {
     uniforms.uFallInner!.value = hubRadius * FALL_INNER_RADIUS;
     uniforms.uLinkMode!.value = 1;
     this.setActive(active);
+  }
+
+  /**
+   * Peripheral-atom variant of the dive. While the bond stream runs hub → atom,
+   * the dedicated dive rows are born on a shell around that same atom and
+   * spiral onto its surface — the hub dive copied onto the upcoming peripheral
+   * atom. Loop, sizing, fades and accent are identical; only the target and the
+   * row block differ. Centre and radius are live (compact layout moves/shrinks
+   * peripheral atoms), so the caller writes them every frame.
+   */
+  setAtomDive(
+    center: { x: number; y: number; z: number } | null,
+    radius: number,
+    active: boolean,
+  ): void {
+    const uniforms = this.material.uniforms;
+    uniforms.uDiveGate!.value = active && center ? 1 : 0;
+    if (!center) return;
+    const diveFrom = uniforms.uDiveFrom!.value as number[];
+    diveFrom[0] = center.x;
+    diveFrom[1] = center.y;
+    diveFrom[2] = center.z;
+    uniforms.uDiveOuter!.value = radius * FALL_OUTER_RADIUS;
+    uniforms.uDiveInner!.value = radius * FALL_INNER_RADIUS;
   }
 
   /**

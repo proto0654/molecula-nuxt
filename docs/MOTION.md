@@ -152,9 +152,9 @@ Line tokens are part of the global design language ([`DESIGN.md` § Hairline lan
 ## Scene field (WebGL)
 
 The home molecule's motion is **data**: dust points drift on a shell and stream along the bond
-toward the upcoming atom (hover / autoplay-next), and the orbit comet rides that same upcoming
-atom — the committed orbit reads edge-on after the approach pose. The frozen atom's drafting field
-is **not** HTML and **not** ScrollTrigger. Both live in
+toward the upcoming atom (hover / autoplay-next), where a share of them also dives onto that atom's
+shell. The orbit comet rides that same upcoming atom — the committed orbit reads edge-on after the
+approach pose. The frozen atom's drafting field is **not** HTML and **not** ScrollTrigger. Both live in
 [`MoleculeEffects`](../app/lib/molecular/effects/MoleculeEffects.ts) and follow the listing cadence:
 1.25s draw, 55ms per-layer stagger, line-first. A passive scroll listener only writes normalized
 progress into the scene; it does not move the page content or the spatial pose. Reduced motion pins

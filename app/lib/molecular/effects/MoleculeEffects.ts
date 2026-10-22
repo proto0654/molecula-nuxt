@@ -265,8 +265,9 @@ export class MoleculeEffects {
   /**
    * Dust trajectory for the upcoming atom (hover / autoplay-next).
    *
-   * - Peripheral target: stream runs along the hub → atom bond. Anchors are
-   *   pose data, recomputed only when the target atom changed.
+   * - Peripheral target: stream runs along the hub → atom bond, while the dive
+   *   rows copy the hub dive onto that atom (particles converge on its shell).
+   *   Bond anchors are pose data, recomputed only when the target atom changed.
    * - Hub target: there is no hub → hub bond and no orbit placement for the
    *   hub, so the same rows dive in from the shell around it. Centre and radii
    *   are written every frame because the compact layout resizes the hub.
@@ -282,6 +283,7 @@ export class MoleculeEffects {
       : undefined;
     if (!hub || !target) {
       this.mist.setLink(this.linkFrom, this.linkTo, false);
+      this.mist.setAtomDive(null, 0, false);
       return;
     }
 
@@ -289,6 +291,8 @@ export class MoleculeEffects {
 
     if (target === hub) {
       this.mist.setFall(hub.object.position, hub.radius, active);
+      // The stream rows already dive onto the hub — no second dive there.
+      this.mist.setAtomDive(null, 0, false);
       this.linkReady = false;
       return;
     }
@@ -306,6 +310,9 @@ export class MoleculeEffects {
     }
     if (!active) this.linkReady = false;
     this.mist.setLink(this.linkFrom, this.linkTo, active);
+    // Same dive as the central atom, landed on the atom the user will reach:
+    // it rides the bond stream's clock, so both arrive on the same frame.
+    this.mist.setAtomDive(target.object.position, target.radius, active);
   }
 
   /** Dust rides the molecule frame so bond anchors stay valid while it spins. */
