@@ -15,10 +15,10 @@ import { hubAtomId } from '../spatial/spatialAtoms';
  * desktop stage bias while the HUD draws in. Direct load of `/` only - an
  * in-app return to home keeps the existing return animation.
  *
- * The assembly reads like a gyroscope coming up to speed: rings tumble out of
- * an edge-on line, dust spirals out of the hub, and a single comet runs the
- * orbits one at a time - each atom appears where the comet reaches it, on a
- * connector that was drawn just ahead of the head.
+ * The assembly reads like a guided tour: dust spirals out of the hub, and a
+ * single comet runs the orbits one at a time - each atom appears where the
+ * comet reaches it, on a connector that was drawn just ahead of the head, and
+ * its ring fades in where it lives as the head passes over it.
  *
  * One clock drives Three.js values and the CSS phase classes, so the canvas
  * and the chrome can never drift apart. `HeroIntro` owns no DOM besides the
@@ -29,34 +29,32 @@ import { hubAtomId } from '../spatial/spatialAtoms';
 const BEATS = {
   hubAt: 60,
   hubDuration: 500,
-  /** Rings start tumbling edge-on; neighbouring starts overlap. */
-  orbitAt: 420,
-  orbitGap: 70,
-  orbitDuration: 700,
-  /** Ambient dust leaves the hub centre while the rings are still unfolding. */
+  /** Ambient dust leaves the hub centre while the first ring arrives. */
   dustAt: 700,
   dustDuration: 1450,
   /** One comet leg per peripheral atom: a half lap that ends on the atom. */
-  cometAt: 1160,
+  cometAt: 700,
   cometLeg: 320,
+  /** Ring fade-in: the ring is already in its plane, it only appears. */
+  orbitFade: 300,
   /** Connector draws ahead of the head, so the atom lands on a finished bond. */
   bondLead: 300,
   bondDuration: 240,
   atomDuration: 380,
   /** Text layer: atom labels + tag cloud, once two atoms are in. */
-  textAt: 1850,
+  textAt: 1500,
   textDuration: 340,
   /** Atmosphere (drafting field + rims) arrives with the last legs. */
-  airAt: 2200,
+  airAt: 1900,
   airDuration: 450,
   /** Welding pass from the existing light language, once the chain is complete. */
-  sweepAt: 2500,
+  sweepAt: 2200,
   /** Desktop stage bias: only once every atom is drawn, and a short push. */
-  driftAt: 2820,
+  driftAt: 2440,
   driftDuration: 560,
   /** Chrome beats (CSS rides these classes, not timers of its own). */
-  uiAt: 1500,
-  liveAt: 3440,
+  uiAt: 1300,
+  liveAt: 3120,
 } as const;
 
 /** Tablet / mobile have less chrome to draw, so the whole boot runs tighter. */
@@ -231,10 +229,11 @@ export class HeroIntro {
 
     for (let i = 0; i < this.peripheralIds.length; i += 1) {
       const id = this.peripheralIds[i]!;
-      // The comet lands on this atom at the end of its leg; the connector is
-      // drawn just ahead of it, so the atom appears on a finished bond.
-      const arrival =
-        this.beat(BEATS.cometAt) + (i + 1) * this.beat(BEATS.cometLeg);
+      // Leg i starts on ring i; the comet lands on this atom at the end of it.
+      // The connector is drawn just ahead of the head, so the atom appears on
+      // a finished bond, and the ring fades in under the passing head.
+      const legStart = this.beat(BEATS.cometAt) + i * this.beat(BEATS.cometLeg);
+      const arrival = legStart + this.beat(BEATS.cometLeg);
       reveal.bonds[id] = easeOutCubic(
         clamp01(
           (t - arrival + this.beat(BEATS.bondLead)) /
@@ -244,11 +243,8 @@ export class HeroIntro {
       reveal.atoms[id] = easeBackOut(
         clamp01((t - arrival) / this.beat(BEATS.atomDuration)),
       );
-      reveal.orbits[i] = easeInOutCubic(
-        clamp01(
-          (t - this.beat(BEATS.orbitAt) - i * this.beat(BEATS.orbitGap)) /
-            this.beat(BEATS.orbitDuration),
-        ),
+      reveal.orbits[i] = easeOutCubic(
+        clamp01((t - legStart) / this.beat(BEATS.orbitFade)),
       );
     }
 

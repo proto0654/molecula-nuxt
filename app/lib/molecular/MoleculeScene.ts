@@ -164,7 +164,7 @@ export type MoleculeIntroReveal = {
   atoms: Readonly<Record<string, number>>;
   /** Keyed by the bond's target atom id - hub bonds only in this molecule. */
   bonds: Readonly<Record<string, number>>;
-  /** Per-orbit unfold 0..1 in peripheral order (`PERIPHERAL_ATOM_IDS`). */
+  /** Per-orbit fade-in 0..1 in peripheral order (`PERIPHERAL_ATOM_IDS`). */
   orbits: readonly number[];
   /** Text layer (atom labels + tag cloud); 0 keeps all readable copy off. */
   text: number;
@@ -234,8 +234,6 @@ export class MoleculeScene {
   private introReveal: MoleculeIntroReveal | null = null;
   /** Comet arc owned by the boot; null at rest. */
   private introComet: MoleculeIntroComet | null = null;
-  /** Molecule-frame direction toward the viewer, for the ring unfold. */
-  private readonly introViewLocal = new Vector3();
   private readonly wireframeBaseColor = new Color(WIREFRAME_COLOR);
   private readonly wireframeDimColor = new Color(WIREFRAME_DIM_COLOR);
   private readonly bondBaseColor = new Color(BOND_COLOR);
@@ -428,7 +426,6 @@ export class MoleculeScene {
     this.decorativeNodes.setOrbitScale(orbitScale);
     this.effects.setOrbitScale(orbitScale);
     this.tagCloud.setLayoutScale(orbitScale);
-    this.tagCloud.setMobileInk(compact);
     this.tagCloud.update(this.camera, this.moleculeGroup);
     this.syncBondEndpoints();
     this.syncWireframe();
@@ -578,7 +575,7 @@ export class MoleculeScene {
     if (reveal) return;
     this.introComet = null;
     this.effects.setBootComet(null, 0, 0, 0);
-    this.decorativeNodes.resetOrbitUnfold();
+    this.decorativeNodes.resetOrbitReveal();
     for (const atom of this.atoms) {
       atom.setIntroReveal(1);
     }
@@ -704,12 +701,7 @@ export class MoleculeScene {
     this.updateBondFlow(deltaSeconds, elapsed);
     const intro = this.introReveal;
     if (intro) {
-      // Rings unfold from an edge-on line: they need the camera direction in
-      // the molecule frame, which only the scene knows.
-      this.introViewLocal
-        .set(0, 0, 1)
-        .applyQuaternion(this.moleculeGroup.quaternion);
-      this.decorativeNodes.setOrbitUnfold(intro.orbits, this.introViewLocal);
+      this.decorativeNodes.setOrbitReveal(intro.orbits);
       for (const atom of this.atoms) {
         atom.setIntroReveal(intro.atoms[atom.id] ?? 1);
       }

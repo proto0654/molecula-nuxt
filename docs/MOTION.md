@@ -17,15 +17,14 @@ One GSAP clock drives both layers: Three.js values are read from a mutable `Mole
 |------|-------|--------------|
 | 0 | chrome | `is-boot`: header, rail, USP, connector, progress, HUD frame + meta hidden; grid dimmed to `0.45` |
 | 60 | molecule | hub shell condenses (`mesh.scale` 0.32 → 1, `back.out` landing) |
-| 420 + 70/ring | molecule | each orbit fades in edge-on and tumbles into its plane (`DecorativeNodes.setOrbitUnfold`: shortest arc + one full turn); neighbouring starts overlap, so the rings read as one gyroscope spinning up |
+| 700 | molecule | one comet leg per orbit in `PERIPHERAL_ATOM_IDS` order (legs of 320 ms): head from `θ+π` to the atom's `θ`, while its ring fades in where it lives (`DecorativeNodes.setOrbitReveal`, no tumble). The connector is drawn 300 ms ahead, and the atom lands exactly as the head arrives (`scale 0.32 → 1`); then the arc jumps to the next ring. Last atom lands at 1980 |
 | 700 → 2150 | dust | the ambient shell is born at the hub centre and spirals out — the hub dive mirrored — each point on its own delay, decelerating into its resting radius (`ParticleMist` `uBoot`) |
-| 1160, legs of 320 | comet | one comet runs the orbits in `PERIPHERAL_ATOM_IDS` order: head from `θ+π` to the atom's `θ`. The connector is drawn 300 ms ahead, and the atom lands exactly as the head arrives (`scale 0.32 → 1`); then the arc jumps to the next ring. Last atom lands at 2440 |
-| 1850 | text | atom labels + tag cloud appear together (`text` gate); a label still waits for its own atom |
-| 2200 | atmosphere | drafting field + atom rims fade in (`introReveal`) |
-| 2500 | molecule | horizontal entity light sweep (same light language as cases, no frozen route needed) |
-| 2820 → 3380 | framing | the desktop stage bias waits for the finished molecule: a short push of `screenX 0.5 → 0.62`, `screenY 0.5 → 0.45`, `approach −0.85 → 0` (`setCompositionFramingOverride`); extra boot yaw returns to 0 over the same 560 ms |
-| 1500 | chrome | `is-boot-ui`: HUD frame + header fade, rail items stagger by `--reveal-i`, grid returns to full |
-| 3440 | both | hand-off: `is-boot*` removed, committed reticle / connector / USP return, autoplay starts |
+| 1500 | text | atom labels + tag cloud appear together (`text` gate); a label still waits for its own atom |
+| 1900 | atmosphere | drafting field + atom rims fade in (`introReveal`) |
+| 2200 | molecule | horizontal entity light sweep (same light language as cases, no frozen route needed) |
+| 2440 → 3000 | framing | the desktop stage bias waits for the finished molecule: a short push of `screenX 0.5 → 0.62`, `screenY 0.5 → 0.45`, `approach −0.85 → 0` (`setCompositionFramingOverride`); extra boot yaw returns to 0 over the same 560 ms |
+| 1300 | chrome | `is-boot-ui`: HUD frame + header fade, rail items stagger by `--reveal-i`, grid returns to full |
+| 3120 | both | hand-off: `is-boot*` removed, committed reticle / connector / USP return, autoplay starts |
 
 - Tablet / mobile: no lateral drift (starts and ends on the profile framing, `0.50 → 0.56` y at most), whole clock × `0.86`.
 - Skip: first `pointerdown` / `keydown` fast-forwards the timeline (`timeScale(6)`) instead of snapping, so phases stay ordered. Atom hover / click are gated while the boot is active.
