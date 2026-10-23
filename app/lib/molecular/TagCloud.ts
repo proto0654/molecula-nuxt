@@ -15,10 +15,9 @@ export type TagCloudItem = {
   tier: 'primary' | 'secondary';
 };
 
-/** Muted grays — tier via color only; below atom-label ink. */
-const COLOR_PRIMARY = 0x585f67;
-const COLOR_SECONDARY = 0x424950;
-const COLOR_MOBILE = 0x000000;
+/** Muted grays — tier via color only; kept close to the scene bg, below atom-label ink. */
+const COLOR_PRIMARY = 0x474e57;
+const COLOR_SECONDARY = 0x353b43;
 const FONT_PRIMARY = 0.072;
 const FONT_SECONDARY = 0.038;
 /** Match AtomLabel — constant screen size, stable SDF rasterization. */
@@ -37,7 +36,6 @@ type TagEntry = {
   local: Vector3;
   object: Group;
   text: Text;
-  tier: TagCloudItem['tier'];
 };
 
 function hash01(seed: string): number {
@@ -62,6 +60,10 @@ function shuffledIndices(items: readonly TagCloudItem[]): number[] {
   return idx;
 }
 
+function tierColor(tier: TagCloudItem['tier']): number {
+  return tier === 'primary' ? COLOR_PRIMARY : COLOR_SECONDARY;
+}
+
 function hardenTextMaterial(text: Text): void {
   const material = text.material as Material;
   // Troika SDF glyphs need alpha for anti-aliasing — opaque flag causes z-fighting / doubling.
@@ -81,7 +83,6 @@ export class TagCloud {
   private zoomFade = 1;
   /** Home boot gate; 1 at rest. */
   private reveal = 1;
-  private mobileInk = false;
   private readonly scratchWorld = new Vector3();
   private readonly scratchLocal = new Vector3();
   private readonly scratchCamera = new Vector3();
@@ -93,13 +94,6 @@ export class TagCloud {
     this.object = new Group();
     this.object.name = 'tag-cloud';
     this.object.raycast = () => {};
-  }
-
-  /** Match compact mobile layout — black ink instead of muted gray. */
-  setMobileInk(mobile: boolean): void {
-    if (this.mobileInk === mobile) return;
-    this.mobileInk = mobile;
-    this.applyColors();
   }
 
   setTags(items: readonly TagCloudItem[]): void {
@@ -130,7 +124,7 @@ export class TagCloud {
       text.text = item.label;
       text.font = font;
       text.fontSize = primary ? FONT_PRIMARY : FONT_SECONDARY;
-      text.color = this.colorForTier(item.tier);
+      text.color = tierColor(item.tier);
       text.fillOpacity = 1;
       text.anchorX = 'center';
       text.anchorY = 'middle';
@@ -145,7 +139,7 @@ export class TagCloud {
       object.add(text);
 
       this.object.add(object);
-      this.tags.push({ local, object, text, tier: item.tier });
+      this.tags.push({ local, object, text });
     }
 
     this.syncVisibility();
@@ -191,18 +185,6 @@ export class TagCloud {
   private syncVisibility(): void {
     this.object.visible =
       this.tags.length > 0 && this.zoomFade > 0.02 && this.reveal > 0.02;
-  }
-
-  private colorForTier(tier: TagCloudItem['tier']): number {
-    if (this.mobileInk) return COLOR_MOBILE;
-    return tier === 'primary' ? COLOR_PRIMARY : COLOR_SECONDARY;
-  }
-
-  private applyColors(): void {
-    for (const tag of this.tags) {
-      tag.text.color = this.colorForTier(tag.tier);
-      tag.text.sync();
-    }
   }
 
   private clear(): void {

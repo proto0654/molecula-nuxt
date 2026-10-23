@@ -361,21 +361,10 @@ export function mountHeroApp(
       ((committedItem?.atomId !== undefined && committedItem.atomId !== hubId) ||
         (hasDistinctPreview && previewItem?.atomId !== hubId));
 
-    if (mobileMq.matches && isHome) {
-      for (const item of navigationConfig.items) {
-        const atomId = item.atomId;
-        const inFocus =
-          hasDistinctPreview && previewItem?.atomId === atomId
-            ? true
-            : !hasDistinctPreview && committedItem?.atomId === atomId;
-        controller.setAtomLabelVisible(atomId, inFocus);
-      }
-    } else {
-      controller.setAtomLabelVisible(hubId, !hideHubLabel);
-      for (const item of navigationConfig.items) {
-        if (item.atomId !== hubId) {
-          controller.setAtomLabelVisible(item.atomId, true);
-        }
+    controller.setAtomLabelVisible(hubId, !hideHubLabel);
+    for (const item of navigationConfig.items) {
+      if (item.atomId !== hubId) {
+        controller.setAtomLabelVisible(item.atomId, true);
       }
     }
 

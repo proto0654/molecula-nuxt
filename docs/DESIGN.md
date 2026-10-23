@@ -178,7 +178,7 @@ Not CSS — hex in module constants. Background **must** equal `--color-bg`.
 | Entity sweep point light | `0xa8e0c4` | `ACCENT_LIGHT_COLOR` — horizontal / depth facet cues |
 | Selection wireframe | `0xd6dbe0` @ 0.22 | `MoleculeScene` `EdgesGeometry` shell (base); same chrome-dim lerp when settled |
 | Decorative orbits / nodes | black @ ~0.42 / active `#3a3e44` @ ~0.55; nodes `0x6a737c` | `DecorativeNodes` (HIGH only) |
-| Tag cloud | `0x585f67` primary / `0x424950` secondary (`fillOpacity` 1) | `TagCloud` — muted, all quality levels |
+| Tag cloud | `0x474e57` primary / `0x353b43` secondary (`fillOpacity` 1) | `TagCloud` — muted, close to scene bg, all quality levels |
 | Atom shell (settled) | emissive → `0x14161c` @ ~0.62; shadow facets `0x020306` | Fixed fill — bg-adjacent mean tone, facet contrast from scene lights |
 | Highlight emissive | *(unused)* | `setHighlighted` no-op; hover does not change mesh fill |
 | Bonds | `0x5a636c` dashed @ 0.55 | `MoleculeScene` `LineDashedMaterial` |
