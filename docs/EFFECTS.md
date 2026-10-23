@@ -100,7 +100,8 @@ cycle. `HeroAutoplay.awaitingTurn` keeps the slide progress moving through the t
 The same instance also flies the **home boot chain**: `setBootArc(atomId, head, progress, opacity)`
 freezes the target loop and drives head / arc / opacity from the intro clock, so one comet runs the
 four orbits in order — head from `θ+π` to the atom's `θ`, one half lap per leg — and each atom
-appears where the head lands. `setBootArc(null)` hands the arc back to `setTarget`.
+appears where the head lands, while its ring fades in on the spot (no tumble; the boot clock only
+raises `DecorativeNodes.setOrbitReveal`). `setBootArc(null)` hands the arc back to `setTarget`.
 
 ## Hub connector
 
