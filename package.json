@@ -7,6 +7,8 @@
     "node": "^22.19.0 || ^24.11.0 || >=26.0.0"
   },
   "scripts": {
+    "test": "node --test lib/*.test.mjs app/api/*.test.mjs app/domain/i18n/*.test.mjs app/lib/hero/*.test.mjs",
+    "verify:ssg": "node lib/verify-static.mjs",
     "dev": "nuxt dev",
     "build": "nuxt build",
     "generate": "nuxt generate",

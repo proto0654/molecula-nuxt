@@ -12,8 +12,10 @@ Instructions:
 Before editing docs, ensure the codebase matches what we document:
 
 1. Run **`git status -sb`**. Optionally verify if this session changed TypeScript / scene / Nuxt / API / prerender:
-   - `npm run build` — type/runtime smoke
+   - `npm test` — Node regression tests
+   - `npm run build` — compile/runtime smoke (full type checking is disabled)
    - `npm run generate` — if routes, `nitro:config` prerender, WP client, or GitHub Pages config changed
+   - `npm run verify:ssg` — verify expected HTML/payload pairs after generation
 2. If there are **uncommitted** changes from this conversation:
    - Summarize what changed (1–3 bullets).
    - Propose a **Conventional Commit** scoped to the area (`feat(hero):` / `feat(3d):` / `feat(nav):` / `feat(portfolio):` / `feat(api):` / `feat(case):` / `feat(transition):` / `fix(…):` / `docs:`).
@@ -24,7 +26,8 @@ Before editing docs, ensure the codebase matches what we document:
 
 Deploy already exists: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) (Pages preview, `NUXT_PUBLIC_INDEXABLE=false`) and [`.github/workflows/deploy-production.yml`](../../.github/workflows/deploy-production.yml) (weblaba.ru rsync). `NUXT_PUBLIC_WP_API_BASE=https://api.weblaba.ru/wp-json`. Primary remote: `origin` → [proto0654/molecula-nuxt](https://github.com/proto0654/molecula-nuxt). See [docs/DEPLOY.md](../../docs/DEPLOY.md).
 
-Node: `^22.19.0` (see `package.json` engines). Scripts: `npm run dev` / `build` / `generate` / `preview`.
+Node: `^22.19.0 || ^24.11.0 || >=26.0.0` (see `package.json` engines). Scripts:
+`npm run dev` / `build` / `generate` / `preview`, `npm test`, `npm run verify:ssg`.
 
 ---
 
@@ -44,7 +47,7 @@ Route by **what changed**. Skip files that were not affected. The table below is
 | HUD tokens, palette, decorative patterns, `--wl-*` | [`docs/DESIGN.md`](../../docs/DESIGN.md) — keep CSS tables in sync with [`app/assets/css/main.css`](../../app/assets/css/main.css) and Three.js hex duplicates. |
 | WP REST shape, endpoints, ACF, menus, pagination headers | [`docs/api-real-response.md`](../../docs/api-real-response.md). Mirror short facts in TZ section C only if they changed. |
 | Permanent facts: stack, entry points, live preview URL, **current focus** | [`CONTEXT.md`](../../CONTEXT.md) — short only. No session changelog, no full API dumps. Point to domain docs instead of absorbing them. |
-| Tracked milestone (Done / Next) | [`tasks/ROADMAP.md`](../../tasks/ROADMAP.md). Current **Next**: case visual redesign (TZ §25); full molecular → route transition (beyond foundation `transitionTo`); remaining hero routes (`/about`, `/services`, `/contact`) with real content. Skip ROADMAP for docs-only or tiny refactors. |
+| Tracked milestone (Done / Next) | [`tasks/ROADMAP.md`](../../tasks/ROADMAP.md). Read the roadmap and TZ checkpoint for current status; do not duplicate a fixed Next list here. Skip ROADMAP for docs-only or tiny refactors. |
 | Iteration checkpoint (STEP status, “what is in repo”, “start next chat with”) | [`tasks/HEADLESS_NUXT_TZ.md`](../../tasks/HEADLESS_NUXT_TZ.md) **section A** (and the short prompt in **D** if the next starting point changed). **Never rewrite or “improve” section B** (original user TZ). New iteration TZ → new `tasks/*.md`, do not append unrelated specs into this file. |
 | New or renamed doc | Add/update one row in [`docs/README.md`](../../docs/README.md). Hub/TOC only — do **not** append a long “Recent Changes” section. |
 
@@ -78,7 +81,7 @@ Session readiness
 - Branch: …
 - Git clean: yes/no
 - Suggested commit: … (if needed)
-- Verify: npm run build (if TS/scene/Nuxt changed); npm run generate (if prerender/Pages/API routes changed) → npm run preview
+- Verify: npm test; npm run build (if TS/scene/Nuxt changed); npm run generate → npm run verify:ssg (if prerender/Pages/API routes changed); manual browser pass
 - Pages: push to main → Actions `nuxt generate` (base `/molecula-nuxt/`)
 ```
 

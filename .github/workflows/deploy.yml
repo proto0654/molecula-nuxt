@@ -29,6 +29,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm test
+
       # Static generate for GitHub Pages (no Nitro runtime on Pages).
       # NUXT_APP_BASE_URL must match the repo Pages path (e.g. /molecula-nuxt/).
       - run: npm run generate
@@ -37,6 +39,8 @@ jobs:
           NUXT_PUBLIC_WP_API_BASE: https://api.weblaba.ru/wp-json
           NUXT_PUBLIC_SITE_URL: https://proto0654.github.io/molecula-nuxt
           NUXT_PUBLIC_INDEXABLE: false
+
+      - run: npm run verify:ssg
 
       - uses: actions/upload-pages-artifact@v3
         with:

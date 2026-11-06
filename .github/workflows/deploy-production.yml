@@ -24,6 +24,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm test
+
       - name: Generate static site
         run: npm run generate
         env:
@@ -31,6 +33,8 @@ jobs:
           NUXT_PUBLIC_SITE_URL: https://weblaba.ru
           NUXT_PUBLIC_WP_API_BASE: https://api.weblaba.ru/wp-json
           NUXT_PUBLIC_INDEXABLE: true
+
+      - run: npm run verify:ssg
 
       - name: Load SSH deploy key
         uses: webfactory/ssh-agent@v0.9.0

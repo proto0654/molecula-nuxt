@@ -21,6 +21,12 @@ Media URLs come from WordPress as absolute `https://api.weblaba.ru/wp-content/..
 
 **CMS text is SSG-only:** editing WordPress does **not** change weblaba.ru until the next `npm run generate` deploy (push to `main` or Actions → Run workflow). After deploy, DevTools → Network should show **no** `/wp-json` XHR — only `_payload.json` / static assets (and `wp-content` media). `npm run dev` still hits the live API for local editing.
 
+Both workflows run `npm test` before generation and `npm run verify:ssg` before publishing.
+Slug discovery errors abort generation. Static generation also verifies every expected
+HTML/payload pair, including serialized CMS errors in inline HTML. The expected routes
+are recorded in `.output/prerender-routes.json` (not uploaded as a public asset). Do not
+publish the contents left by a failed build. Details: [CONTENT.md](CONTENT.md).
+
 ---
 
 ## Part A — SSH key for GitHub Actions
@@ -119,7 +125,9 @@ Copy [`.env.example`](../.env.example) to `.env` (optional):
 
 ```bash
 npm ci
+npm test
 npm run generate
+npm run verify:ssg
 npm run preview
 ```
 
@@ -160,11 +168,22 @@ npm run generate
 |---------|-----|
 | `Error loading key "(stdin)": error in libcrypto` | Re-create `DEPLOY_SSH_KEY` secret: paste private key again (entire file, Unix newlines). Verify locally: `ssh -i C:\Users\proto\.ssh\weblaba_deploy u1396397@HOST "echo ok"` |
 | rsync `No such file or directory` | Fix `DEPLOY_PATH`; create folder in shell: `mkdir -p ~/www/weblaba.ru` |
-| Build fails fetching slugs | `api.weblaba.ru/wp-json` must be reachable from GitHub runners (public HTTPS) |
+| Build fails fetching slugs | Check CMS availability and pagination; a failed or inconsistent index intentionally stops publication |
+| `[ssg] Invalid generated route` | Check the named route's HTML, inline Nuxt errors, and `_payload.json`; fix the CMS error or missing output and regenerate |
 | Images 404 on weblaba.ru | WP still serving old `weblaba.ru/wp-content` URLs — run `wp search-replace` on api |
 | CORS errors in browser | WordPress must allow `Origin: https://weblaba.ru` (and preview origin if needed) |
 | Production deploy runs before secrets set | Add all four secrets; re-run workflow |
 | Old `_nuxt` hashes after deploy | Normal — `--delete` removes stale assets; hard-refresh browser |
+
+---
+
+## Rollback
+
+Record the successful production Actions run and its commit SHA before pushing a release.
+To roll back code, revert the release commits on `main` in reverse order, verify the
+result, and push normally. The same production workflow regenerates and deploys the
+reverted tree; do not force-push shared history. Generation reads the current CMS, so a
+code rollback does not restore historical WordPress content or media.
 
 ---
 

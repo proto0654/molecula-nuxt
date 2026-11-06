@@ -23,11 +23,14 @@ npm run dev        # live WordPress REST
 npm run generate   # SSG build; fetches slugs + payload from the live API
 npm run build      # server build
 npm run preview
+npm test           # Node built-in regression tests; no extra test dependency
+npm run verify:ssg # verify generated HTML/payload pairs against the build manifest
 ```
 
-There is **no test, lint, or typecheck script**, and `typescript.typeCheck` is `false`.
-Verification today = `npm run generate` plus a manual browser pass. Say so instead of
-claiming a change is tested.
+Regression tests use Node's built-in runner (`npm test`). There is **no lint or full
+typecheck script**, and `typescript.typeCheck` is `false`. Verification = `npm test`,
+`npm run generate`, `npm run verify:ssg`, plus a manual browser pass. Unit tests do not
+replace WebGL, motion, or mobile verification.
 
 ## Hard rules
 
