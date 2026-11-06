@@ -39,11 +39,14 @@ Internal SPA destinations stay app-relative; native anchor `href` values come fr
 `router.resolve`, which adds the configured preview base exactly once. Home boot and
 case-to-archive return use the same app-relative route snapshot.
 
-[`HeroFallback`](../app/components/site/HeroFallback.vue) renders ordinary Nuxt links using
-the same CMS-backed navigation and locale helpers only after startup fails. It is absent
-from SSR HTML and the pending/ready states, so normal loading never flashes a second
-header or the plain home copy. Home SEO copy becomes readable and scrolling is unlocked
-only in failure mode. There is no second scene or renderer.
+[`HeroFallback`](../app/components/site/HeroFallback.vue) mounts only after startup fails.
+It reuses `HudFrame`, `SiteHeader`, `Navigation`, `MobileNavOverlay` and `createSiteLogoMark`
+without WebGL. The home composition centers the existing logo with CMS USP copy; SEO
+copy stays visually hidden. The failed molecular component unmounts before fallback
+chrome mounts, keeping one stage, header and navigation backend. Fallback navigation
+routes directly without pose guards and retains locale/query synchronization and the
+mobile focus trap. It is absent from SSR HTML and pending/ready states, so normal loading
+never flashes a second header or the plain home copy. There is no second scene or renderer.
 
 [`mountHeroApp`](../app/lib/hero/mountHeroApp.ts) owns resources through
 [`disposalScope`](../app/lib/hero/disposalScope.ts), registering cleanup as resources are

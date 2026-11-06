@@ -27,7 +27,11 @@ useHead({
     <a href="#main" class="skip-link">Перейти к содержимому</a>
     <SiteHeroFallback v-if="heroStatus === 'failed'" />
     <ClientOnly>
-      <MolecularHero @ready="heroStatus = 'ready'" @failed="heroStatus = 'failed'" />
+      <MolecularHero
+        v-if="heroStatus !== 'failed'"
+        @ready="heroStatus = 'ready'"
+        @failed="heroStatus = 'failed'"
+      />
       <template #fallback>
         <div class="molecular-hero-fallback" aria-hidden="true" />
       </template>
