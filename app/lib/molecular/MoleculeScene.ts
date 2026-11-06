@@ -41,11 +41,6 @@ const PULSE_OPACITY_MAX = WIREFRAME_OPACITY;
 /** Beat rate the dash flow keeps time with (the shell itself follows progress). */
 const PULSE_SPEED = 2.4;
 /**
- * Caption blink peak as a share of the active ink. Full ink reads too loud on
- * the beat, so the light phase stops short of it.
- */
-const TITLE_PULSE_PEAK = 0.55;
-/**
  * Hold after the hint appears, as a share of the interval. The lighting waits
  * out the first half — the orbit comet and dust already carry the hint — and
  * fills over the rest, reaching full exactly when the autoplay commits.
@@ -891,9 +886,12 @@ export class MoleculeScene {
       PULSE_OPACITY_MIN +
       (PULSE_OPACITY_MAX - PULSE_OPACITY_MIN) * eased;
     this.accentWireframeMaterial.opacity = pulse * enter;
-    // The next atom's caption rides the same beat: black → wireframe light,
-    // fully lit exactly when the autoplay commits it.
-    this.setAccentTitlePulse(eased * enter * TITLE_PULSE_PEAK);
+    // The caption brightens during the final quarter of the comet lap and
+    // reaches its active color as the comet returns to the atom.
+    const titlePhase = this.effects.getUpcomingCycleProgress();
+    const titleProgress = Math.max(0, (titlePhase - 0.75) * 4);
+    const titleRise = smoothstep01(titleProgress ** 3);
+    this.setAccentTitlePulse(titleRise * enter);
   }
 
   /**
