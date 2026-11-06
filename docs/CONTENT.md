@@ -22,6 +22,7 @@ Live response notes: [`api-real-response.md`](api-real-response.md).
 | Module | Role |
 |--------|------|
 | `client.ts` | `wpFetch` / `wpFetchPaginated` + pagination headers; **prod client blocked** (SSG) |
+| [`collections.ts`](../app/api/collections.ts) | shared 100-record limit, complete post batches, validated build-time slug pagination |
 | `portfolio.ts` | list page, posts by ids, case by slug, categories, slim index, slugs |
 | `services.ts` | posts by ids, service by slug, slim index, slugs |
 | `options.ts` | ACF theme options (`/acf/v3/options/options`) — RU chrome for services + contacts + hero tag cloud |
@@ -130,6 +131,25 @@ Mobile field mapping (cases): slices from `screen-mobile` (`block_ratio` default
 - archive bases `/portfolio`, `/portfolio/legacy`, `/services` (+ EN); `?page=N` slices the **full shelf payload** client-side (Nitro skips query-string prerender routes)
 
 `experimental.sharedPrerenderData` + `preferStaticCachedData` reuse payload across routes. `wpFetch` throws on production client if anything tries a live REST call.
+
+Slug discovery fails the build on network errors, malformed responses, missing pagination
+headers, duplicate slugs, or a collection changing between pages. Each request has a 15s
+timeout and up to two retries for transient failures. A successful empty collection with
+zero pagination totals is valid. Route counts are derived from the current CMS response,
+never a historical minimum.
+
+Full archive posts are fetched sequentially in batches of at most 100 by
+[`collectPostsByIds`](../app/api/collections.ts), then restored to the requested ID order.
+Missing IDs or a failed batch reject the operation; no partial archive is returned as a
+success. The fallback without `orderby=include` only applies when WP explicitly rejects
+that parameter. A post unpublished between index and content reads requires a new build.
+
+At the end of static prerendering, [`verify-static.mjs`](../lib/verify-static.mjs) verifies
+every queued route's HTML and extracted payload. It checks the inline Nuxt payload too:
+`useAsyncData` errors live in HTML even when `_payload.json` looks successful. The build
+fails on missing files or serialized errors. Successful verification writes
+`.output/prerender-routes.json` outside the public directory; `npm run verify:ssg` repeats
+the check before deployment. Regression coverage runs with `npm test`.
 
 Deploy: [DEPLOY.md](DEPLOY.md) — production [weblaba.ru](https://weblaba.ru) via [deploy-production.yml](../.github/workflows/deploy-production.yml); preview [proto0654.github.io/molecula-nuxt](https://proto0654.github.io/molecula-nuxt/) via [deploy.yml](../.github/workflows/deploy.yml) (`NUXT_PUBLIC_INDEXABLE=false`). WP API: `https://api.weblaba.ru/wp-json`.
 

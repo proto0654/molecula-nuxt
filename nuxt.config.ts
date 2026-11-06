@@ -2,10 +2,13 @@ import { $fetch } from 'ofetch';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
+import { collectCptSlugs, WP_MAX_PER_PAGE } from './app/api/collections';
+import { verifyStaticOutput } from './lib/verify-static.mjs';
 import {
   buildRobotsTxt,
   buildSitemapXml,
   isIndexable,
+  getPrerenderRoutes,
   setPrerenderRoutes,
 } from './lib/seo-static';
 
@@ -27,34 +30,23 @@ function publicAsset(path: string): string {
 
 const indexable = isIndexable();
 
-type SlimPost = { slug: string };
-
 async function fetchAllCptSlugs(cpt: string): Promise<string[]> {
   const base = wpApiBase();
-  const perPage = 100;
-  let page = 1;
-  let totalPages = 1;
-  const slugs: string[] = [];
-
-  while (page <= totalPages) {
-    const response = await $fetch.raw<SlimPost[]>(`${base}/wp/v2/${cpt}`, {
+  return collectCptSlugs(cpt, async (page) => {
+    const response = await $fetch.raw<unknown>(`${base}/wp/v2/${cpt}`, {
+      timeout: 15_000,
+      retry: 2,
+      retryDelay: 500,
+      retryStatusCodes: [408, 429, 500, 502, 503, 504],
       query: {
         page,
-        per_page: perPage,
+        per_page: WP_MAX_PER_PAGE,
         status: 'publish',
         _fields: 'slug',
       },
     });
-    const batch = response._data ?? [];
-    for (const post of batch) {
-      if (post.slug) slugs.push(post.slug);
-    }
-    const header = response.headers.get('x-wp-totalpages');
-    totalPages = header ? Math.max(1, Number.parseInt(header, 10) || 1) : 1;
-    page += 1;
-  }
-
-  return slugs;
+    return { data: response._data, headers: response.headers };
+  });
 }
 
 function mirrorEnRoutes(routes: string[]): string[] {
@@ -132,6 +124,7 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       crawlLinks: false,
+      failOnError: true,
       routes: [
         '/',
         '/portfolio',
@@ -182,27 +175,25 @@ export default defineNuxtConfig({
 
       pushRoutes(mirrorEnRoutes(existing));
 
-      try {
-        const slugs = await fetchAllCptSlugs('portfolio');
-        const routes = slugs.map((slug) => `/portfolio/${slug}`);
+      for (const cpt of ['portfolio', 'services']) {
+        const slugs = await fetchAllCptSlugs(cpt);
+        const routes = slugs.map((slug) => `/${cpt}/${slug}`);
         pushRoutes(routes);
         pushRoutes(mirrorEnRoutes(routes));
-        console.info(`[prerender] queued ${routes.length} portfolio case routes`);
-      } catch (err) {
-        console.warn('[prerender] failed to fetch portfolio slugs:', err);
-      }
-
-      try {
-        const slugs = await fetchAllCptSlugs('services');
-        const routes = slugs.map((slug) => `/services/${slug}`);
-        pushRoutes(routes);
-        pushRoutes(mirrorEnRoutes(routes));
-        console.info(`[prerender] queued ${routes.length} service routes`);
-      } catch (err) {
-        console.warn('[prerender] failed to fetch service slugs:', err);
+        console.info(`[prerender] queued ${routes.length} ${cpt} routes`);
       }
 
       setPrerenderRoutes(existing);
+    },
+    'nitro:init'(nitro) {
+      if (!nitro.options.static) return;
+      nitro.hooks.hook('prerender:done', () => {
+        const routes = getPrerenderRoutes();
+        const publicDir = nitro.options.output.publicDir;
+        const count = verifyStaticOutput(publicDir, routes);
+        writeFileSync(join(publicDir, '..', 'prerender-routes.json'), JSON.stringify(routes));
+        console.info(`[ssg] verified ${count} HTML/payload route pairs`);
+      });
     },
     'nitro:build:public-assets'(nitro) {
       const publicDir = nitro.options.output.publicDir;
