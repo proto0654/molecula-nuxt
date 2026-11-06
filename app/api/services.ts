@@ -1,5 +1,6 @@
 import type { WpLocalizedMeta, WpServicePost } from '~/types/wp';
 import { resolveEnTitle } from '~/domain/i18n';
+import { collectPostsByIds } from './collections';
 import {
   getWpApiBaseFromEnv,
   wpFetch,
@@ -47,28 +48,17 @@ function mapSlimItem(raw: SlimIndexRaw): ServiceSlimItem {
  * Client-side reorder is the source of truth if WP ignores `orderby=include`.
  */
 export async function getServicePostsByIds(ids: number[]): Promise<WpServicePost[]> {
-  if (!ids.length) return [];
-  const query = {
-    include: ids.join(','),
-    per_page: ids.length,
-    status: 'publish',
-    _embed: SERVICE_EMBED,
-  };
-  let posts: WpServicePost[];
-  try {
-    posts = await wpFetch<WpServicePost[]>('/wp/v2/services', {
-      query: { ...query, orderby: 'include' },
-    });
-  } catch {
-    posts = await wpFetch<WpServicePost[]>('/wp/v2/services', { query });
-  }
-  const byId = new Map(posts.map((post) => [post.id, post]));
-  const ordered: WpServicePost[] = [];
-  for (const id of ids) {
-    const post = byId.get(id);
-    if (post) ordered.push(post);
-  }
-  return ordered;
+  return collectPostsByIds(ids, (batch, orderByInclude) =>
+    wpFetch<WpServicePost[]>('/wp/v2/services', {
+      query: {
+        include: batch.join(','),
+        per_page: batch.length,
+        status: 'publish',
+        _embed: SERVICE_EMBED,
+        ...(orderByInclude ? { orderby: 'include' } : {}),
+      },
+    }),
+  );
 }
 
 export async function getServiceBySlug(slug: string): Promise<WpServicePost | null> {

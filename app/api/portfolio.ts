@@ -1,5 +1,6 @@
 import type { WpLocalizedMeta, WpPortfolioCategory, WpPortfolioPost } from '~/types/wp';
 import { resolveEnTitle } from '~/domain/i18n';
+import { collectPostsByIds } from './collections';
 import {
   getWpApiBaseFromEnv,
   wpFetch,
@@ -91,28 +92,17 @@ export async function getPortfolioPage(
 export async function getPortfolioPostsByIds(
   ids: number[],
 ): Promise<WpPortfolioPost[]> {
-  if (!ids.length) return [];
-  const query = {
-    include: ids.join(','),
-    per_page: ids.length,
-    status: 'publish',
-    _embed: PORTFOLIO_EMBED,
-  };
-  let posts: WpPortfolioPost[];
-  try {
-    posts = await wpFetch<WpPortfolioPost[]>('/wp/v2/portfolio', {
-      query: { ...query, orderby: 'include' },
-    });
-  } catch {
-    posts = await wpFetch<WpPortfolioPost[]>('/wp/v2/portfolio', { query });
-  }
-  const byId = new Map(posts.map((post) => [post.id, post]));
-  const ordered: WpPortfolioPost[] = [];
-  for (const id of ids) {
-    const post = byId.get(id);
-    if (post) ordered.push(post);
-  }
-  return ordered;
+  return collectPostsByIds(ids, (batch, orderByInclude) =>
+    wpFetch<WpPortfolioPost[]>('/wp/v2/portfolio', {
+      query: {
+        include: batch.join(','),
+        per_page: batch.length,
+        status: 'publish',
+        _embed: PORTFOLIO_EMBED,
+        ...(orderByInclude ? { orderby: 'include' } : {}),
+      },
+    }),
+  );
 }
 
 export async function getPortfolioCase(slug: string): Promise<WpPortfolioPost | null> {
