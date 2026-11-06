@@ -68,6 +68,7 @@ Route list is the same set queued in the `nitro:config` hook.
 - [`app/layouts/default.vue`](../app/layouts/default.vue): skip link → `<main id="main">`; `inert` on main while `is-awaiting-pose` off-home.
 - [`app/lib/a11y/focusTrap.ts`](../app/lib/a11y/focusTrap.ts): focus trap + `setPageInert` for mobile nav overlay and case lightbox.
 - Canvas: `role="img"` + Russian `aria-label` on `#hero-canvas` ([`mountHeroApp.ts`](../app/lib/hero/mountHeroApp.ts)).
+- SSR HTML navigation stays available before WebGL readiness and after startup failure; the home H1/description become visible in this mode ([SPATIAL.md](SPATIAL.md)).
 - `:focus-visible` rings in [`main.css`](../app/assets/css/main.css); RU labels on pagination / detail nav / lightbox.
 
 Not in scope yet: Yoast fields from WP, contrast token audit, keyboard navigation into the 3D molecule.

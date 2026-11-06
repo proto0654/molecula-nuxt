@@ -15,9 +15,9 @@ let _href: string | null | undefined = null;
 let _text: string | null | undefined = null;
 
 /** Called once from SiteHeader constructor (replays last payload after remount/HMR). */
-export function registerChromeInfoSetter(fn: ChromeInfoSetter): void {
+export function registerChromeInfoSetter(fn: ChromeInfoSetter | null): void {
   _setter = fn;
-  fn(_label, _href, _text);
+  fn?.(_label, _href, _text);
 }
 
 /** Called from SiteChrome.vue to update the header chrome slot. */

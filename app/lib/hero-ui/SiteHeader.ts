@@ -20,6 +20,7 @@ import { registerChromeInfoSetter } from './chromeInfoBridge';
 
 export type MenuToggleListener = () => void;
 export type HeaderSelectListener = (itemId: string) => void;
+export type HeaderRoute = { path: string; fullPath: string };
 
 /**
  * Site header: LOGO + LOCALE + route links (desktop/tablet) + NODE + MENU.
@@ -29,6 +30,8 @@ export type HeaderSelectListener = (itemId: string) => void;
 export type SiteHeaderOptions = {
   /** Public asset base (Nuxt `app.baseURL`), e.g. `/` or `/molecula-nuxt/`. */
   assetBaseURL?: string;
+  route?: HeaderRoute;
+  resolveHref?: (route: string) => string;
 };
 
 export class SiteHeader {
@@ -51,10 +54,8 @@ export class SiteHeader {
   private chromeCopy: HeroChromeCopy | null = null;
   private onMenuToggle: MenuToggleListener | undefined;
   private onSelect: HeaderSelectListener | undefined;
-
-  private readonly onPopState = (): void => {
-    this.syncLocale();
-  };
+  private route: HeaderRoute;
+  private readonly resolveHref: (route: string) => string;
 
   constructor(
     parent: HTMLElement,
@@ -62,6 +63,8 @@ export class SiteHeader {
     options: SiteHeaderOptions = {},
   ) {
     this.navState = state;
+    this.route = options.route ?? { path: '/', fullPath: '/' };
+    this.resolveHref = options.resolveHref ?? ((route) => route);
     const assetBase = options.assetBaseURL ?? '/';
 
     this.root = document.createElement('header');
@@ -172,11 +175,9 @@ export class SiteHeader {
 
     this.unsubscribe = state.subscribe(() => {
       this.syncNode(state);
-      this.syncLocale();
     });
     this.syncNode(state);
     this.syncRouteLinks();
-    window.addEventListener('popstate', this.onPopState);
   }
 
   onSelectItem(listener: HeaderSelectListener): void {
@@ -263,12 +264,13 @@ export class SiteHeader {
     this.chromeLabelEl.style.display = label ? '' : 'none';
 
     if (linkHref && linkText) {
-      this.chromeLinkEl.href = linkHref;
+      this.setLinkRoute(this.chromeLinkEl, linkHref);
       this.chromeLinkEl.textContent = linkText;
       if (!this.chromeLinkEl.isConnected) this.chromeEl.append(this.chromeLinkEl);
     } else {
       this.chromeLinkEl.remove();
       this.chromeLinkEl.removeAttribute('href');
+      delete this.chromeLinkEl.dataset.route;
       this.chromeLinkEl.textContent = '';
     }
   }
@@ -279,25 +281,32 @@ export class SiteHeader {
       if (event.defaultPrevented) return;
       if (event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const href = el.getAttribute('href');
-      if (!href) return;
+      const route = el.dataset.route;
+      if (!route) return;
       event.preventDefault();
-      void transitionTo(href).then(() => {
-        this.syncLocale();
-        this.syncRouteLinks();
-      });
+      void transitionTo(route);
     });
   }
 
-  /** Update locale links from current URL. Call after any navigation. */
+  private setLinkRoute(el: HTMLAnchorElement, route: string): void {
+    el.dataset.route = route;
+    el.href = this.resolveHref(route);
+  }
+
+  /** Nuxt owns route timing; hover/autoplay must never resample browser history. */
+  setRoute(route: HeaderRoute): void {
+    this.route = { path: route.path, fullPath: route.fullPath };
+    this.syncLocale();
+  }
+
   syncLocale(): void {
-    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const { path, fullPath } = this.route;
     const current: SiteLocale = localeFromPath(path);
 
     this.ruLink.classList.toggle('is-active', current === 'ru');
     this.enLink.classList.toggle('is-active', current === 'en');
-    this.ruLink.href = alternateLocalePath(path, 'ru');
-    this.enLink.href = alternateLocalePath(path, 'en');
+    this.setLinkRoute(this.ruLink, alternateLocalePath(fullPath, 'ru'));
+    this.setLinkRoute(this.enLink, alternateLocalePath(fullPath, 'en'));
     if (current === 'ru') {
       this.ruLink.setAttribute('aria-current', 'page');
       this.enLink.removeAttribute('aria-current');
@@ -310,10 +319,7 @@ export class SiteHeader {
 
   /** Top routes: direct SPA hops — no molecule active/committed chrome. */
   syncRouteLinks(): void {
-    const path =
-      typeof window !== 'undefined'
-        ? stripLocalePrefix(window.location.pathname)
-        : '/';
+    const path = stripLocalePrefix(this.route.path);
     const normalized = path.replace(/\/$/, '') || '/';
 
     for (const [id, el] of this.linkElements) {
@@ -356,7 +362,7 @@ export class SiteHeader {
   }
 
   dispose(): void {
-    window.removeEventListener('popstate', this.onPopState);
+    registerChromeInfoSetter(null);
     this.unsubscribe();
     this.slideProgress.dispose();
     this.root.remove();

@@ -2,6 +2,7 @@
 const spatial = useSpatialState();
 const isHome = computed(() => spatial.value.mode === 'home');
 const awaitingPose = useAwaitingPose();
+const heroStatus = ref<'pending' | 'ready' | 'failed'>('pending');
 
 const pageInert = computed(() => awaitingPose.value && !isHome.value);
 
@@ -9,7 +10,7 @@ useSiteIntegrations();
 
 useHead({
   htmlAttrs: computed(() => ({
-    class: isHome.value ? 'hero-lock' : '',
+    class: isHome.value && heroStatus.value === 'ready' ? 'hero-lock' : '',
   })),
 });
 </script>
@@ -17,11 +18,16 @@ useHead({
 <template>
   <div
     class="app-shell"
-    :class="{ 'is-home': isHome, 'is-awaiting-pose': awaitingPose }"
+    :class="{
+      'is-home': isHome,
+      'is-awaiting-pose': awaitingPose,
+      'has-hero-fallback': heroStatus !== 'ready',
+    }"
   >
     <a href="#main" class="skip-link">Перейти к содержимому</a>
+    <SiteHeroFallback v-if="heroStatus !== 'ready'" />
     <ClientOnly>
-      <MolecularHero />
+      <MolecularHero @ready="heroStatus = 'ready'" @failed="heroStatus = 'failed'" />
       <template #fallback>
         <div class="molecular-hero-fallback" aria-hidden="true" />
       </template>

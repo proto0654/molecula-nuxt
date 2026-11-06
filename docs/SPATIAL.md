@@ -8,6 +8,7 @@ The molecule is the visual shell of the Nuxt app, not a home-only hero. Route ch
 app.vue
   NuxtLayout (layouts/default.vue — persists across routes)
     app-shell
+    ├── HeroFallback (SSR HTML navigation until WebGL is ready, retained on failure)
     ├── MolecularHero (ClientOnly)
     │     ├── .molecular-hero   canvas + HudFrame          z-stage
     │     └── .molecular-chrome header, nav, USP, overlays z-chrome
@@ -23,7 +24,33 @@ app.vue
 | Page content | `<NuxtPage />` | Archive / case / section content over the frozen molecule (no page scrim). |
 | SiteChrome | page | Meta only (`ARCHIVE`, `CASE / NN`, Index). No duplicate grid / frame / logo. |
 
-`html.hero-lock` (no document scroll, `100dvh`) is applied only while spatial mode is `home`. `scrollbar-gutter: stable both-edges` on `html` keeps viewport width stable across home ↔ off-home hops. Stage/chrome stay on dynamic `inset: 0`; only `#hero-canvas` uses bottom-aligned `100lvh`.
+`html.hero-lock` (no document scroll, `100dvh`) is applied only while spatial mode is `home`
+and the molecular shell is ready. `scrollbar-gutter: stable both-edges` on `html` keeps
+viewport width stable across home ↔ off-home hops. Stage/chrome stay on dynamic `inset: 0`;
+only `#hero-canvas` uses bottom-aligned `100lvh`.
+
+### Routing and startup failure
+
+Nuxt owns the header route snapshot. `MolecularHero` passes the initial app-relative route
+to the hero and calls `setRoute` after each successful `router.afterEach`, including
+`NuxtLink` hops and Back/Forward. `SiteHeader` never derives locale or active routes from
+browser pathname or molecular hover state. Locale changes retain query and fragment.
+Internal SPA destinations stay app-relative; native anchor `href` values come from
+`router.resolve`, which adds the configured preview base exactly once. Home boot and
+case-to-archive return use the same app-relative route snapshot.
+
+[`HeroFallback`](../app/components/site/HeroFallback.vue) renders ordinary Nuxt links using
+the same CMS-backed navigation and locale helpers. It is present in SSR HTML, disappears
+after successful initialization, and remains if startup fails. Home SEO copy is readable
+in this mode and scrolling stays available. There is no second scene or renderer.
+
+[`mountHeroApp`](../app/lib/hero/mountHeroApp.ts) owns resources through
+[`disposalScope`](../app/lib/hero/disposalScope.ts), registering cleanup as resources are
+acquired. Failed startup releases acquired resources and DOM; cleanup runs in reverse
+order and is idempotent. Pose-wait guards are registered only after successful startup.
+On failure, `MolecularHero` clears the pose wait and keeps later route changes unblocked.
+Runtime recovery after loss of an already running WebGL context is outside this startup
+fallback contract.
 
 ## State machine
 

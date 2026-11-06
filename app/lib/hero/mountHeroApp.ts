@@ -29,7 +29,8 @@ import { HudFrame } from '../hero-ui/HudFrame';
 import { MobileNavOverlay } from '../hero-ui/MobileNavOverlay';
 import { Navigation } from '../hero-ui/Navigation';
 import { NavigationConnector } from '../hero-ui/NavigationConnector';
-import { SiteHeader } from '../hero-ui/SiteHeader';
+import { SiteHeader, type HeaderRoute } from '../hero-ui/SiteHeader';
+import { createDisposalScope } from './disposalScope';
 import { UspHeadline } from '../hero-ui/UspHeadline';
 import { HeroAutoplay } from './HeroAutoplay';
 import {
@@ -52,12 +53,6 @@ const DESKTOP_MQ = '(min-width: 1024px)';
 const SLIDE_DURATION_MS = 5500;
 const IDLE_RESUME_MS = 2000;
 
-function resolveMenuRoute(itemId: string, route: string | undefined): string | undefined {
-  if (itemId !== 'work' || !route) return route;
-  const locale = localeFromPath(window.location.pathname);
-  return resolveCasePortfolioArchiveHref(window.location.pathname, locale) ?? route;
-}
-
 /**
  * Imperative hero bootstrap (former Vite `main.ts`).
  * Vue owns mount/unmount; Three.js + HUD classes own scene/UI internals.
@@ -68,6 +63,8 @@ export type MountHeroAppOptions = {
   chromeRoot: HTMLElement;
   /** Public asset base (Nuxt `app.baseURL`). */
   assetBaseURL?: string;
+  route?: HeaderRoute;
+  resolveHref?: (route: string) => string;
   /**
    * Called when Navigator finishes the approach and the nav item has a real route.
    * Home `/` still uses the destination stub.
@@ -79,6 +76,7 @@ export type MountHeroAppOptions = {
 
 export type MountedHeroApp = {
   dispose: () => void;
+  setRoute: (route: HeaderRoute) => void;
   applySpatial: (state: SpatialState, options?: SpatialApplyOptions) => void;
   isBusy: () => boolean;
   onTransition: (listener: TransitionListener) => () => void;
@@ -92,7 +90,28 @@ export function mountHeroApp(
   stage: HTMLElement,
   options: MountHeroAppOptions,
 ): MountedHeroApp {
+  const scope = createDisposalScope();
+  try {
+    return createHeroApp(stage, options, scope);
+  } catch (error) {
+    scope.dispose();
+    throw error;
+  }
+}
+
+function createHeroApp(
+  stage: HTMLElement,
+  options: MountHeroAppOptions,
+  scope: ReturnType<typeof createDisposalScope>,
+): MountedHeroApp {
   const chromeRoot = options.chromeRoot;
+  let currentRoute = options.route ?? { path: '/', fullPath: '/' };
+  scope.add(() => {
+    stage.replaceChildren();
+    chromeRoot.replaceChildren();
+    stage.classList.remove('is-interactive');
+    chromeRoot.classList.remove('is-home', 'is-boot', 'is-boot-ui', 'is-approaching', 'is-settled-route');
+  });
   chromeRoot.classList.add('is-home');
   /**
    * Arm the boot phase before any chrome exists. `is-boot` added after the nav
@@ -101,7 +120,7 @@ export function mountHeroApp(
    * present the first computed style is hidden. `HeroIntro` takes over the
    * class from here and drops it on teardown.
    */
-  if (homeBootEnabled()) {
+  if (homeBootEnabled(currentRoute.path)) {
     chromeRoot.classList.add('is-boot');
   }
   /** Home boot (direct load only); null once it hands control back. */
@@ -119,27 +138,36 @@ export function mountHeroApp(
 
   const quality = new QualityManager();
   const controller = new MoleculeController(canvas, quality);
+  scope.add(() => controller.dispose());
   controller.start();
 
   const perfOverlay = PerfOverlay.tryCreate(chromeRoot, quality, () =>
     controller.scene.getPixelRatio(),
   );
+  scope.add(() => perfOverlay?.dispose());
   const unsubscribePerf = perfOverlay
     ? controller.onAfterUpdate((delta) => {
         perfOverlay.record(delta);
       })
     : () => {};
+  scope.add(unsubscribePerf);
 
   const spatialOverlay = SpatialOverlay.tryCreate(chromeRoot);
+  scope.add(() => spatialOverlay?.dispose());
 
   const navigationState = new NavigationState();
   navigationState.setCommitted(HOME_ITEM_ID);
 
   const hud = new HudFrame(stage);
+  scope.add(() => hud.dispose());
   const siteHeader = new SiteHeader(chromeRoot, navigationState, {
     assetBaseURL: options.assetBaseURL,
+    route: currentRoute,
+    resolveHref: options.resolveHref,
   });
+  scope.add(() => siteHeader.dispose());
   const uspHeadline = new UspHeadline(chromeRoot);
+  scope.add(() => uspHeadline.dispose());
 
   const mobileMq = window.matchMedia(MOBILE_MQ);
   const tabletMq = window.matchMedia(TABLET_MQ);
@@ -150,8 +178,10 @@ export function mountHeroApp(
     navigationState,
     overlayParent: stage,
   });
+  scope.add(() => navigator.dispose());
 
   const destination = new DestinationView(navigator.overlayRoot);
+  scope.add(() => destination.dispose());
   destination.setReturnHandler(() => {
     destination.hide();
     navigator.cancel();
@@ -159,7 +189,12 @@ export function mountHeroApp(
 
   async function navigateRoute(route: string): Promise<void> {
     await options.onNavigateRoute?.(route);
-    siteHeader.syncRouteLinks();
+  }
+
+  function resolveMenuRoute(itemId: string, route: string | undefined): string | undefined {
+    if (itemId !== 'work' || !route) return route;
+    const path = currentRoute.path;
+    return resolveCasePortfolioArchiveHref(path, localeFromPath(path)) ?? route;
   }
 
   navigator.onNavigate((atomId) => {
@@ -471,6 +506,7 @@ export function mountHeroApp(
   }
 
   const navigation = new Navigation(chromeRoot, navigationState, selectItem);
+  scope.add(() => navigation.dispose());
 
   function setSlideProgress(ratio: number): void {
     siteHeader.setSlideProgress(ratio);
@@ -488,6 +524,7 @@ export function mountHeroApp(
     },
     onProgress: setSlideProgress,
   });
+  scope.add(() => autoplay.stop());
 
   const mobileNav = new MobileNavOverlay(chromeRoot, navigationState, {
     assetBaseURL: options.assetBaseURL,
@@ -501,6 +538,7 @@ export function mountHeroApp(
     },
     onClose: () => setMenuOpen(false),
   });
+  scope.add(() => mobileNav.dispose());
 
   let suppressMenuToggleUntil = 0;
 
@@ -539,6 +577,7 @@ export function mountHeroApp(
       if (mobileNav.isOpen) setMenuOpen(false);
     }
   });
+  scope.add(unsubscribeTransition);
 
   const connector = new NavigationConnector(
     chromeRoot,
@@ -546,6 +585,7 @@ export function mountHeroApp(
     navigationState,
     (atomId, out) => controller.projectAtom(atomId, out),
   );
+  scope.add(() => connector.dispose());
 
   function applyHudMode(home: boolean): void {
     isHome = home;
@@ -682,12 +722,15 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
   const unsubscribeNav = navigationState.subscribe(() => {
     applyVisuals();
   });
+  scope.add(unsubscribeNav);
+  scope.add(unsubscribeConnector);
 
   const unsubscribeHover = controller.onAtomHover((atomId) => {
     if (!isHome || intro?.active) return;
     navigationState.setAtomHover(atomId);
     canvas.classList.toggle('is-atom-hover', atomId !== null);
   });
+  scope.add(unsubscribeHover);
 
   const unsubscribeClick = controller.onAtomClick((atomId) => {
     if (!isHome || intro?.active) return;
@@ -698,6 +741,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     }
     restoreHomeSelection();
   });
+  scope.add(unsubscribeClick);
 
   function onViewportChange(): void {
     applyViewportMode();
@@ -718,7 +762,7 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     }
   }
 
-  if (homeBootEnabled()) {
+  if (homeBootEnabled(currentRoute.path)) {
     intro = new HeroIntro({
       controller,
       chromeRoot,
@@ -728,13 +772,15 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
       }),
       onLive: concludeBoot,
     });
+    scope.add(() => intro?.dispose());
     intro.startOnFirstFrame();
   }
 
   applyViewportMode();
-  mobileMq.addEventListener('change', onViewportChange);
-  tabletMq.addEventListener('change', onViewportChange);
-  desktopMq.addEventListener('change', onViewportChange);
+  for (const mq of [mobileMq, tabletMq, desktopMq]) {
+    mq.addEventListener('change', onViewportChange);
+    scope.add(() => mq.removeEventListener('change', onViewportChange));
+  }
 
   const unsubscribePointer = subscribePointerInput(() => {
     const committedId = navigationState.committedItemId;
@@ -742,12 +788,14 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     const item = getItemById(committedId);
     if (item) controller.setAtomBlurb(item.atomId, buildAtomBlurb(item));
   });
+  scope.add(unsubscribePointer);
 
   const cueApi = {
     playEntityLightSweep: (direction?: EntityLightSweepDirection) =>
       controller.playEntityLightSweep(direction ?? 1),
   };
   registerMoleculeCue(cueApi);
+  scope.add(() => registerMoleculeCue(null));
 
   function setNavigationItems(items: readonly NavigationItem[]): void {
     applyNavigationItems(items);
@@ -776,6 +824,10 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
   }
 
   return {
+    setRoute(route) {
+      currentRoute = { path: route.path, fullPath: route.fullPath };
+      siteHeader.setRoute(currentRoute);
+    },
     applySpatial(state, applyOptions) {
       spatial.apply(state, applyOptions);
       syncSpatialDebug(state);
@@ -789,41 +841,14 @@ const MOBILE_CAPTION_BLURB_SCALE = 0.88;
     setNavigationItems,
     setChromeCopy,
     playEntityLightSweep: cueApi.playEntityLightSweep,
-    dispose() {
-      registerMoleculeCue(null);
-      intro?.dispose();
-      intro = null;
-      autoplay.stop();
-      mobileMq.removeEventListener('change', onViewportChange);
-      tabletMq.removeEventListener('change', onViewportChange);
-      desktopMq.removeEventListener('change', onViewportChange);
-      unsubscribePointer();
-      unsubscribeNav();
-      unsubscribeHover();
-      unsubscribeClick();
-      unsubscribeTransition();
-      unsubscribeConnector();
-      unsubscribePerf();
-      perfOverlay?.dispose();
-      spatialOverlay?.dispose();
-      navigator.dispose();
-      connector.dispose();
-      navigation.dispose();
-      mobileNav.dispose();
-      siteHeader.dispose();
-      uspHeadline.dispose();
-      destination.dispose();
-      hud.dispose();
-      controller.dispose();
-      canvas.remove();
-    },
+    dispose: scope.dispose,
   };
 }
 
 /** Home boot: direct load of `/` only, never under reduced motion. */
-function homeBootEnabled(): boolean {
+function homeBootEnabled(path: string): boolean {
   return (
     !prefersReducedMotion() &&
-    spatialFromRoute({ path: window.location.pathname }).mode === 'home'
+    spatialFromRoute({ path }).mode === 'home'
   );
 }

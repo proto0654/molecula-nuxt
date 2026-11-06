@@ -35,13 +35,15 @@ export function localizedPath(path: string, locale: SiteLocale = DEFAULT_LOCALE)
   return `${EN_PREFIX}${stripped}`;
 }
 
-/** Swap locale on a route path (keeps query string if passed in fullPath). */
+/** Swap locale on an app-relative route, preserving query and fragment verbatim. */
 export function alternateLocalePath(
   fullPath: string,
   target: SiteLocale,
 ): string {
-  const [pathPart, query = ''] = fullPath.split('?');
+  const suffixAt = fullPath.search(/[?#]/);
+  const pathPart = suffixAt < 0 ? fullPath : fullPath.slice(0, suffixAt);
+  const suffix = suffixAt < 0 ? '' : fullPath.slice(suffixAt);
   const stripped = stripLocalePrefix(pathPart);
   const next = localizedPath(stripped, target);
-  return query ? `${next}?${query}` : next;
+  return `${next}${suffix}`;
 }

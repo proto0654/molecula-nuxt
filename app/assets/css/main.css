@@ -606,6 +606,30 @@ html.hero-lock #__nuxt {
   border: 0;
 }
 
+/* Readable home and ordinary navigation while WebGL is loading or unavailable. */
+.app-shell.has-hero-fallback .home-page__seo {
+  position: relative;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: clamp(2rem, 8vw, 7rem) var(--hud-edge-x, 1.5rem);
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+.app-shell.has-hero-fallback .home-page__seo h1 {
+  max-width: 22ch;
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.5rem, 4vw, 3rem);
+}
+
+.app-shell.has-hero-fallback .home-page__seo p {
+  max-width: 60ch;
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
 .skip-link {
   position: fixed;
   top: 0.75rem;

@@ -14,6 +14,7 @@ import {
 
 const spatial = useSpatialState();
 const router = useRouter();
+const emit = defineEmits<{ ready: []; failed: [] }>();
 const { tags } = useHeroTagCloud();
 const { options } = useThemeOptions();
 const { navItems } = useMoleculeHeroNav();
@@ -25,6 +26,7 @@ const chromeRef = ref<HTMLElement | null>(null);
 let hero: MountedHeroApp | null = null;
 let stopGuard: (() => void) | null = null;
 let stopTransition: (() => void) | null = null;
+let stopRouteSync: (() => void) | null = null;
 
 function applyNavCopy(): void {
   hero?.setNavigationItems(navItems.value);
@@ -38,7 +40,7 @@ function revealWhenSettled(): void {
   if (!hero || hero.isBusy()) return;
   nextTick(() => {
     requestAnimationFrame(() => {
-      if (hero?.isBusy()) return;
+      if (!hero || hero.isBusy()) return;
       setAwaitingPose(false);
     });
   });
@@ -60,29 +62,45 @@ onMounted(() => {
     });
   });
 
-  stopGuard = router.beforeEach((to, from) => {
-    armPoseWaitForRoute(to.path, from.path, from.matched.length);
-  });
+  try {
+    hero = mountHeroApp(stage, {
+      chromeRoot: chrome,
+      assetBaseURL: baseURL,
+      route: router.currentRoute.value,
+      resolveHref: (route) => router.resolve(route).href,
+      onNavigateRoute: (route) => transitionTo(route),
+      prefetchRoute: (route) => {
+        void preloadRouteComponents(route);
+      },
+    });
 
-  hero = mountHeroApp(stage, {
-    chromeRoot: chrome,
-    assetBaseURL: baseURL,
-    onNavigateRoute: (route) => transitionTo(route),
-    prefetchRoute: (route) => {
-      void preloadRouteComponents(route);
-    },
-  });
+    hero.setTagCloud(tags.value);
+    applyNavCopy();
+    applyChromeCopy();
+    hero.applySpatial(spatial.value, { immediate: true });
 
-  hero.setTagCloud(tags.value);
-  applyNavCopy();
-  applyChromeCopy();
-
-  stopTransition = hero.onTransition((snap) => {
-    if (!snap.busy) revealWhenSettled();
-  });
-
-  hero.applySpatial(spatial.value, { immediate: true });
-  setAwaitingPose(false);
+    stopTransition = hero.onTransition((snap) => {
+      if (!snap.busy) revealWhenSettled();
+    });
+    stopGuard = router.beforeEach((to, from) => {
+      if (hero) armPoseWaitForRoute(to.path, from.path, from.matched.length);
+    });
+    stopRouteSync = router.afterEach((to, _from, failure) => {
+      if (!failure) hero?.setRoute(to);
+      else setAwaitingPose(false);
+    });
+    setAwaitingPose(false);
+    emit('ready');
+  } catch (error) {
+    stopGuard?.();
+    stopRouteSync?.();
+    stopTransition?.();
+    hero?.dispose();
+    hero = null;
+    setAwaitingPose(false);
+    console.error('[hero] Failed to initialize molecular shell', error);
+    emit('failed');
+  }
 });
 
 watch(tags, (list) => {
@@ -102,6 +120,10 @@ watch(heroChromeCopy, () => {
 });
 
 watch(spatial, (state) => {
+  if (!hero) {
+    setAwaitingPose(false);
+    return;
+  }
   hero?.applySpatial(state);
   if (state.mode === 'home') {
     setAwaitingPose(false);
@@ -115,6 +137,8 @@ onBeforeUnmount(() => {
   stopGuard = null;
   stopTransition?.();
   stopTransition = null;
+  stopRouteSync?.();
+  stopRouteSync = null;
   setTransitionHandler(null);
   setAwaitingPose(false);
   hero?.dispose();
