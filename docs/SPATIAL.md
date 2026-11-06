@@ -8,7 +8,7 @@ The molecule is the visual shell of the Nuxt app, not a home-only hero. Route ch
 app.vue
   NuxtLayout (layouts/default.vue — persists across routes)
     app-shell
-    ├── HeroFallback (SSR HTML navigation until WebGL is ready, retained on failure)
+    ├── HeroFallback (HTML navigation after WebGL startup failure only)
     ├── MolecularHero (ClientOnly)
     │     ├── .molecular-hero   canvas + HudFrame          z-stage
     │     └── .molecular-chrome header, nav, USP, overlays z-chrome
@@ -24,8 +24,8 @@ app.vue
 | Page content | `<NuxtPage />` | Archive / case / section content over the frozen molecule (no page scrim). |
 | SiteChrome | page | Meta only (`ARCHIVE`, `CASE / NN`, Index). No duplicate grid / frame / logo. |
 
-`html.hero-lock` (no document scroll, `100dvh`) is applied only while spatial mode is `home`
-and the molecular shell is ready. `scrollbar-gutter: stable both-edges` on `html` keeps
+`html.hero-lock` (no document scroll, `100dvh`) is applied while spatial mode is `home`
+unless molecular startup has failed. `scrollbar-gutter: stable both-edges` on `html` keeps
 viewport width stable across home ↔ off-home hops. Stage/chrome stay on dynamic `inset: 0`;
 only `#hero-canvas` uses bottom-aligned `100lvh`.
 
@@ -40,9 +40,10 @@ Internal SPA destinations stay app-relative; native anchor `href` values come fr
 case-to-archive return use the same app-relative route snapshot.
 
 [`HeroFallback`](../app/components/site/HeroFallback.vue) renders ordinary Nuxt links using
-the same CMS-backed navigation and locale helpers. It is present in SSR HTML, disappears
-after successful initialization, and remains if startup fails. Home SEO copy is readable
-in this mode and scrolling stays available. There is no second scene or renderer.
+the same CMS-backed navigation and locale helpers only after startup fails. It is absent
+from SSR HTML and the pending/ready states, so normal loading never flashes a second
+header or the plain home copy. Home SEO copy becomes readable and scrolling is unlocked
+only in failure mode. There is no second scene or renderer.
 
 [`mountHeroApp`](../app/lib/hero/mountHeroApp.ts) owns resources through
 [`disposalScope`](../app/lib/hero/disposalScope.ts), registering cleanup as resources are

@@ -10,7 +10,7 @@ useSiteIntegrations();
 
 useHead({
   htmlAttrs: computed(() => ({
-    class: isHome.value && heroStatus.value === 'ready' ? 'hero-lock' : '',
+    class: isHome.value && heroStatus.value !== 'failed' ? 'hero-lock' : '',
   })),
 });
 </script>
@@ -21,11 +21,11 @@ useHead({
     :class="{
       'is-home': isHome,
       'is-awaiting-pose': awaitingPose,
-      'has-hero-fallback': heroStatus !== 'ready',
+      'has-hero-fallback': heroStatus === 'failed',
     }"
   >
     <a href="#main" class="skip-link">Перейти к содержимому</a>
-    <SiteHeroFallback v-if="heroStatus !== 'ready'" />
+    <SiteHeroFallback v-if="heroStatus === 'failed'" />
     <ClientOnly>
       <MolecularHero @ready="heroStatus = 'ready'" @failed="heroStatus = 'failed'" />
       <template #fallback>

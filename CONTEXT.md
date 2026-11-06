@@ -26,7 +26,7 @@ Headless WebLaba frontend: Nuxt 4 + Vue 3 + molecular WebGL hero, WordPress REST
 
 - Nuxt app: [`app/app.vue`](app/app.vue) → [`layouts/default.vue`](app/layouts/default.vue) (persistent shell) + [`pages/index.vue`](app/pages/index.vue)
 - Persistent molecule: [`MolecularHero.vue`](app/components/molecular/MolecularHero.vue) in the layout, not the home page
-- HTML navigation before WebGL readiness or after startup failure: [`HeroFallback.vue`](app/components/site/HeroFallback.vue); routing and failure lifecycle: [`docs/SPATIAL.md`](docs/SPATIAL.md)
+- HTML navigation after WebGL startup failure: [`HeroFallback.vue`](app/components/site/HeroFallback.vue); routing and failure lifecycle: [`docs/SPATIAL.md`](docs/SPATIAL.md)
 - Hero bootstrap: [`app/lib/hero/mountHeroApp.ts`](app/lib/hero/mountHeroApp.ts)
 - Spatial state: [`app/lib/spatial/`](app/lib/spatial/) (`spatialFromRoute` → `SpatialController`) — [`docs/SPATIAL.md`](docs/SPATIAL.md)
 - Scene / render loop: [`app/lib/molecular/MoleculeController.ts`](app/lib/molecular/MoleculeController.ts), [`MoleculeScene.ts`](app/lib/molecular/MoleculeScene.ts)

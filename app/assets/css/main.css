@@ -606,7 +606,7 @@ html.hero-lock #__nuxt {
   border: 0;
 }
 
-/* Readable home and ordinary navigation while WebGL is loading or unavailable. */
+/* Readable home and ordinary navigation only after WebGL startup fails. */
 .app-shell.has-hero-fallback .home-page__seo {
   position: relative;
   width: auto;
