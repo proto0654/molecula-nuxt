@@ -51,6 +51,11 @@ export class MoleculeEffects {
   private readonly linkTo: [number, number, number] = [0, 0, 0];
   private linkReady = false;
 
+  /** Progress of the current comet lap, including when the comet is hidden. */
+  getUpcomingCycleProgress(): number {
+    return Math.min(1, this.streamTime / OrbitComet.cycleSeconds);
+  }
+
   constructor(
     scene: Scene,
     moleculeGroup: Group,
