@@ -269,13 +269,19 @@ export class AtomLabel {
   private applyTitleColors(): void {
     const mix = this.titlePulse;
     if (mix > 0) {
+      // Match the wireframe's screen-space opacity rather than brightening
+      // prematurely when linear RGB is encoded for display.
       this.letter.color = this.scratchColor
-        .setHex(LETTER_COLOR_IDLE)
-        .lerp(this.scratchActiveColor, mix)
+        .copy(this.scratchActiveColor)
+        .convertLinearToSRGB()
+        .multiplyScalar(mix)
+        .convertSRGBToLinear()
         .getHex();
       this.remainder.color = this.scratchColor
-        .setHex(REMAINDER_COLOR_IDLE)
-        .lerp(this.scratchActiveRemainderColor, mix)
+        .copy(this.scratchActiveRemainderColor)
+        .convertLinearToSRGB()
+        .multiplyScalar(mix)
+        .convertSRGBToLinear()
         .getHex();
       return;
     }

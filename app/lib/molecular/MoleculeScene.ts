@@ -886,12 +886,8 @@ export class MoleculeScene {
       PULSE_OPACITY_MIN +
       (PULSE_OPACITY_MAX - PULSE_OPACITY_MIN) * eased;
     this.accentWireframeMaterial.opacity = pulse * enter;
-    // The caption brightens during the final quarter of the comet lap and
-    // reaches its active color as the comet returns to the atom.
-    const titlePhase = this.effects.getUpcomingCycleProgress();
-    const titleProgress = Math.max(0, (titlePhase - 0.75) * 4);
-    const titleRise = smoothstep01(titleProgress ** 3);
-    this.setAccentTitlePulse(titleRise * enter);
+    // Keep the caption on the same slide phase and easing as the wireframe.
+    this.setAccentTitlePulse(eased * enter);
   }
 
   /**
